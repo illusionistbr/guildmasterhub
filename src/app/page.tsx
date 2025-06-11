@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogIn, Rocket, ShieldEllipsis, Star } from "lucide-react";
+import { LogIn, Rocket, ShieldEllipsis, Star, Users, HeartCrack } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -43,15 +43,15 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
               <div className="flex -space-x-3">
                 <Avatar className="h-10 w-10 border-2 border-background">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=U1" alt="User 1" data-ai-hint="avatar gaming"/>
+                  <AvatarImage src="https://placehold.co/40x40.png?text=U1" alt="Usuário 1" data-ai-hint="avatar gaming"/>
                   <AvatarFallback>U1</AvatarFallback>
                 </Avatar>
                 <Avatar className="h-10 w-10 border-2 border-background">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=U2" alt="User 2" data-ai-hint="avatar gaming"/>
+                  <AvatarImage src="https://placehold.co/40x40.png?text=U2" alt="Usuário 2" data-ai-hint="avatar gaming"/>
                   <AvatarFallback>U2</AvatarFallback>
                 </Avatar>
                 <Avatar className="h-10 w-10 border-2 border-background">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=U3" alt="User 3" data-ai-hint="avatar gaming"/>
+                  <AvatarImage src="https://placehold.co/40x40.png?text=U3" alt="Usuário 3" data-ai-hint="avatar gaming"/>
                   <AvatarFallback>U3</AvatarFallback>
                 </Avatar>
               </div>
@@ -70,7 +70,7 @@ export default function LandingPage() {
           <div className="relative flex justify-center items-center mt-8 md:mt-0">
             <Image
               src="https://placehold.co/600x412.png"
-              alt="Guild Management Preview"
+              alt="Prévia do Gerenciamento de Guilda"
               width={600}
               height={412}
               className="rounded-xl shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-300"
@@ -80,6 +80,31 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
+
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-6">
+            7 em cada 10 guildas enfrentam dificuldades com coordenação e engajamento dos membros
+          </h2>
+          <p className="text-base sm:text-lg text-muted-foreground mb-12">
+            Entre agendas de raides, disponibilidade de membros e planejamento de eventos, gerenciar uma guilda pode se tornar exaustivo. Cada raide perdida ou evento mal coordenado prejudica o moral e o progresso da guilda.
+          </p>
+          <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+            <div className="flex flex-col items-center">
+              <span className="text-5xl mb-4" role="img" aria-label="Rosto angustiado">😫</span>
+              <h3 className="text-xl font-semibold text-foreground mb-2">Caos no planejamento de eventos</h3>
+            </div>
+            <div className="flex flex-col items-center">
+              <Users className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">Membros perdem o interesse</h3>
+            </div>
+            <div className="flex flex-col items-center">
+              <HeartCrack className="h-12 w-12 text-accent mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">Guilda se desfaz lentamente</h3>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Footer removed as per new design */}
     </div>
   );
