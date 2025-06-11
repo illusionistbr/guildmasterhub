@@ -367,7 +367,7 @@ function DashboardPageContent() {
                     <AlertTriangle className="h-4 w-4 text-primary" />
                     <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                     <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                      Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com, postimages.org.
+                      Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com ou postimages.org.
                     </ShadcnAlertDescription>
                   </Alert>
                 </TabsContent>
@@ -452,7 +452,7 @@ function DashboardPageContent() {
                         <AlertTriangle className="h-4 w-4 text-primary" />
                         <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                         <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                        Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com, postimages.org.
+                        Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com ou postimages.org.
                         </ShadcnAlertDescription>
                     </Alert>
                     </TabsContent>
@@ -606,3 +606,4 @@ export default function DashboardPage() {
 }
 
     
+
