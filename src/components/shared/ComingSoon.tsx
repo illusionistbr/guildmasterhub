@@ -1,11 +1,13 @@
+
 import { Button } from "@/components/ui/button";
 import { Construction } from "lucide-react";
 import Link from "next/link";
 import { PageTitle } from "./PageTitle";
+import type { ReactNode } from "react";
 
 interface ComingSoonProps {
   pageName: string;
-  icon?: React.ElementType;
+  icon?: ReactNode; // Changed from React.ElementType to ReactNode
 }
 
 export function ComingSoon({ pageName, icon: Icon }: ComingSoonProps) {
