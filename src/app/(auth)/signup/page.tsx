@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -5,12 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPlus } from "lucide-react";
+import { User, UserPlus, Mail, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function SignupPage() {
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,6 +23,10 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!nickname) {
+      setError("O nickname é obrigatório.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("As senhas não coincidem.");
       return;
@@ -29,7 +35,11 @@ export default function SignupPage() {
     setLoading(true);
     try {
       if (signup) {
-        await signup(email, password);
+        // The mock signup in AuthContext currently only accepts email and password.
+        // In a real app, you'd pass the nickname to your signup function.
+        // For now, we'll just log it or pass it if the function signature changes.
+        // await signup(email, password, nickname); 
+        await signup(email, password); 
         router.push("/dashboard"); // Or a profile setup page
       } else {
         setError("Funcionalidade de cadastro não implementada no mock.");
@@ -52,40 +62,64 @@ export default function SignupPage() {
       <CardContent>
         <form onSubmit={handleSignup} className="space-y-6">
           <div className="space-y-2">
+            <Label htmlFor="nickname">Nickname</Label>
+            <div className="relative flex items-center">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                id="nickname" 
+                type="text" 
+                placeholder="SeuApelidoNoJogo" 
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                required 
+                className="form-input pl-10"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="seuemail@example.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-              className="form-input"
-            />
+            <div className="relative flex items-center">
+              <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="seuemail@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+                className="form-input pl-10"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              placeholder="********" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required 
-              className="form-input"
-            />
+             <div className="relative flex items-center">
+              <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="********" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+                className="form-input pl-10"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-            <Input 
-              id="confirmPassword" 
-              type="password" 
-              placeholder="********" 
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required 
-              className="form-input"
-            />
+            <div className="relative flex items-center">
+              <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                id="confirmPassword" 
+                type="password" 
+                placeholder="********" 
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required 
+                className="form-input pl-10"
+              />
+            </div>
           </div>
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
           <Button type="submit" className="w-full btn-gradient btn-style-primary" disabled={loading}>

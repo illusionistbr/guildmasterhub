@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogIn } from "lucide-react";
+import { LogIn, Mail, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -44,27 +44,33 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="seuemail@example.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-              className="form-input"
-            />
+            <div className="relative flex items-center">
+              <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="seuemail@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+                className="form-input pl-10"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              placeholder="********" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required 
-              className="form-input"
-            />
+            <div className="relative flex items-center">
+              <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="********" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+                className="form-input pl-10"
+              />
+            </div>
           </div>
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
           <Button type="submit" className="w-full btn-gradient btn-style-primary" disabled={loading}>
