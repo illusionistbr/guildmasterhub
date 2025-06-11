@@ -9,6 +9,7 @@ export interface Guild {
   bannerUrl?: string;
   logoUrl?: string;
   ownerId: string;
+  ownerDisplayName?: string; // Adicionado para nome do dono
   memberIds?: string[];
   game?: string;
   tags?: string[];
