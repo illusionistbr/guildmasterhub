@@ -46,8 +46,8 @@ export default function GuildSelectionPage() {
         }
       };
       fetchGuilds();
-    } else if (!authLoading && !user) { // Added !user condition here
-        setLoadingGuilds(false); // Not logged in or auth still loading
+    } else if (!authLoading && !user) { 
+        setLoadingGuilds(false); 
     }
   }, [user, authLoading]);
 
@@ -94,11 +94,11 @@ export default function GuildSelectionPage() {
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="card-bg hover:shadow-primary/50 transition-shadow duration-300">
-          <CardHeader>
+          <CardHeader className="relative z-10">
             <CardTitle className="flex items-center text-2xl"><ShieldPlus className="mr-3 h-8 w-8 text-primary" /> Criar Nova Guilda</CardTitle>
             <CardDescription>Forje sua própria lenda! Comece uma nova guilda e recrute seus campeões.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <Link
               href="/create-guild"
               className="block w-full text-center btn-gradient btn-style-primary text-lg py-3 rounded-md"
@@ -109,11 +109,11 @@ export default function GuildSelectionPage() {
         </Card>
 
         <Card className="card-bg hover:shadow-accent/50 transition-shadow duration-300">
-          <CardHeader>
+          <CardHeader className="relative z-10">
             <CardTitle className="flex items-center text-2xl"><Users className="mr-3 h-8 w-8 text-accent" /> Juntar-se a uma Guilda</CardTitle>
             <CardDescription>Encontre guildas existentes, explore comunidades e solicite para entrar.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
              <Button asChild variant="outline" className="w-full border-accent text-accent hover:bg-accent/10 hover:text-accent-foreground text-lg py-3">
               <Link href="/dashboard/settings?tab=guilds">Explorar Guildas</Link>
             </Button>
@@ -128,7 +128,7 @@ export default function GuildSelectionPage() {
             {allUserGuilds.map(guild => (
               <Card key={guild.id} className="card-bg overflow-hidden">
                 <Link href={`/dashboard?guildId=${guild.id}`} className="block hover:bg-card/50 transition-colors">
-                  <CardContent className="p-4 flex items-center justify-between gap-4">
+                  <CardContent className="p-4 flex items-center justify-between gap-4 relative z-10">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12 border-2 border-primary">
                         <AvatarImage src={guild.logoUrl || `https://placehold.co/64x64.png?text=${guild.name.substring(0,1)}`} alt={`${guild.name} logo`} data-ai-hint="guild logo"/>
