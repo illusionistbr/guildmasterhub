@@ -72,7 +72,7 @@ export default function LoginPage() {
         </form>
       </CardContent>
       <CardFooter className="flex flex-col items-center space-y-2">
-        <Button variant="link" asChild className="text-sm text-muted-foreground hover:text-primary">
+        <Button variant="link" asChild className="text-sm text-primary hover:underline">
           <Link href="#">Esqueceu sua senha?</Link>
         </Button>
         <p className="text-sm text-muted-foreground">
