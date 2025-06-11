@@ -363,13 +363,13 @@ function DashboardPageContent() {
                       className="mt-1 form-input"
                     />
                   </div>
-                  <ShadcnAlert variant="default" className="bg-background border-primary/30">
+                  <Alert variant="default" className="bg-background border-primary/30">
                     <AlertTriangle className="h-4 w-4 text-primary" />
                     <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                     <ShadcnAlertDescription className="text-xs text-muted-foreground">
                       Por favor, use URLs de imagens hospedadas em Imgur, ImgBB, Postimages.org, Placehold.co ou Unsplash.
                     </ShadcnAlertDescription>
-                  </ShadcnAlert>
+                  </Alert>
                 </TabsContent>
                 <TabsContent value="upload" className="space-y-4 pt-4">
                   <div>
@@ -385,13 +385,13 @@ function DashboardPageContent() {
                   {bannerFile && <p className="text-sm text-muted-foreground">Arquivo selecionado: {bannerFile.name}</p>}
                 </TabsContent>
               </Tabs>
-               <ShadcnAlert variant="default" className="mt-4 bg-background border-accent/30">
+               <Alert variant="default" className="mt-4 bg-background border-accent/30">
                   <AlertTriangle className="h-4 w-4 text-accent" />
                   <ShadcnAlertTitle className="font-semibold text-foreground">Tamanho Ideal</ShadcnAlertTitle>
                   <ShadcnAlertDescription className="text-xs text-muted-foreground">
                     Para melhores resultados, use um banner com dimensões de aproximadamente 1200x300 pixels (máx 5MB).
                   </ShadcnAlertDescription>
-              </ShadcnAlert>
+              </Alert>
               <DialogFooter className="mt-6">
                 <Button variant="outline" onClick={() => setShowEditBannerDialog(false)}>Cancelar</Button>
                 <Button onClick={handleSaveBanner} className="btn-gradient btn-style-secondary">Salvar Banner</Button>
@@ -448,13 +448,13 @@ function DashboardPageContent() {
                         className="mt-1 form-input"
                         />
                     </div>
-                    <ShadcnAlert variant="default" className="bg-background border-primary/30">
+                    <Alert variant="default" className="bg-background border-primary/30">
                         <AlertTriangle className="h-4 w-4 text-primary" />
                         <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                         <ShadcnAlertDescription className="text-xs text-muted-foreground">
                         Por favor, use URLs de imagens hospedadas em Imgur, ImgBB, Postimages.org, Placehold.co ou Unsplash.
                         </ShadcnAlertDescription>
-                    </ShadcnAlert>
+                    </Alert>
                     </TabsContent>
                     <TabsContent value="upload" className="space-y-4 pt-4">
                     <div>
@@ -470,13 +470,13 @@ function DashboardPageContent() {
                     {logoFile && <p className="text-sm text-muted-foreground">Arquivo selecionado: {logoFile.name}</p>}
                     </TabsContent>
                   </Tabs>
-                  <ShadcnAlert variant="default" className="mt-4 bg-background border-accent/30">
+                  <Alert variant="default" className="mt-4 bg-background border-accent/30">
                     <AlertTriangle className="h-4 w-4 text-accent" />
                     <ShadcnAlertTitle className="font-semibold text-foreground">Tamanho Ideal</ShadcnAlertTitle>
                     <ShadcnAlertDescription className="text-xs text-muted-foreground">
                         Para melhores resultados, use um logo quadrado (ex: 150x150 pixels). Formatos aceitos: PNG, JPG, GIF, WEBP. Máx 2MB.
                     </ShadcnAlertDescription>
-                  </ShadcnAlert>
+                  </Alert>
                   <DialogFooter className="mt-6">
                     <Button variant="outline" onClick={() => { setShowEditLogoDialog(false); setLogoUrlInput(""); setLogoFile(null); }}>Cancelar</Button>
                     <Button onClick={handleSaveLogo} className="btn-gradient btn-style-secondary">Salvar Logo</Button>
@@ -604,3 +604,5 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+
+    
