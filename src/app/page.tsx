@@ -84,7 +84,7 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-6">
-            7 em cada 10 guildas enfrentam dificuldades com coordenação e engajamento dos membros
+            8 em cada 10 guildas enfrentam dificuldades com coordenação e engajamento dos membros
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-12">
             Entre agendas de raides, disponibilidade de membros e planejamento de eventos, gerenciar uma guilda pode se tornar exaustivo. Cada raide perdida ou evento mal coordenado prejudica o moral e o progresso da guilda.
