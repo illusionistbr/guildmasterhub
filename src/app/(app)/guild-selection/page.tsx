@@ -46,7 +46,7 @@ export default function GuildSelectionPage() {
         }
       };
       fetchGuilds();
-    } else if (!authLoading) {
+    } else if (!authLoading && !user) { // Added !user condition here
         setLoadingGuilds(false); // Not logged in or auth still loading
     }
   }, [user, authLoading]);
@@ -99,9 +99,12 @@ export default function GuildSelectionPage() {
             <CardDescription>Forje sua própria lenda! Comece uma nova guilda e recrute seus campeões.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full btn-gradient btn-style-primary text-lg py-3">
-              <Link href="/create-guild">Criar Guilda</Link>
-            </Button>
+            <Link
+              href="/create-guild"
+              className="block w-full text-center btn-gradient btn-style-primary text-lg py-3 rounded-md"
+            >
+              Criar Guilda
+            </Link>
           </CardContent>
         </Card>
 
@@ -149,4 +152,3 @@ export default function GuildSelectionPage() {
     </div>
   );
 }
-
