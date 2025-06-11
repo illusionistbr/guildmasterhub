@@ -20,17 +20,15 @@ export default function AppLayout({
     const noSidebarExactPaths = [
       "/create-guild",
       "/guild-selection",
+      "/guilds", // Nova rota para explorar guildas
+      "/dashboard/settings", // Página de configurações gerais
     ];
     if (noSidebarExactPaths.includes(pathname)) {
       return false;
     }
 
-    // Caminhos que começam com /dashboard/settings onde a sidebar NÃO deve ser mostrada
-    if (pathname.startsWith("/dashboard/settings")) {
-      return false;
-    }
-
     // Caminhos onde a sidebar DEVE ser mostrada
+    // Basicamente, qualquer coisa sob /dashboard/ que não seja /dashboard/settings
     if (pathname === "/dashboard" || 
         (pathname.startsWith("/dashboard/") && !pathname.startsWith("/dashboard/settings")) || 
         pathname === "/welcome-tool") {

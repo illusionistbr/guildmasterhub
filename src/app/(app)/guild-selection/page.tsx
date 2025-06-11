@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageTitle } from '@/components/shared/PageTitle';
-import { ShieldPlus, Users, Home, Eye, Settings as SettingsIcon } from 'lucide-react'; // Added SettingsIcon
+import { ShieldPlus, Users, Home, Eye, Settings as SettingsIcon } from 'lucide-react'; 
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, where, getDocs } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -115,7 +115,7 @@ export default function GuildSelectionPage() {
           </CardHeader>
           <CardContent className="relative z-10">
              <Button asChild variant="outline" className="w-full border-accent text-accent hover:bg-accent/10 hover:text-accent-foreground text-lg py-3">
-              <Link href="/dashboard/settings?tab=guilds">Explorar Guildas</Link>
+              <Link href="/guilds">Explorar Guildas</Link>
             </Button>
           </CardContent>
         </Card>

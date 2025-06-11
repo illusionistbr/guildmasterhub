@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,19 +61,19 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/settings"> 
               <UserCircle className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings?tab=guilds"> {/* Example for guild settings */}
+            <Link href="/guild-selection">
               <ShieldCheck className="mr-2 h-4 w-4" />
               <span>Minhas Guildas</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings?tab=account"> {/* Example for account settings */}
+            <Link href="/dashboard/settings"> 
               <Settings className="mr-2 h-4 w-4" />
               <span>Configurações</span>
             </Link>
