@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldEllipsis } from 'lucide-react';
 
@@ -8,18 +7,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="https://placehold.co/1920x1080.png"
-          alt="Fantasy background"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-20 blur-sm"
-          data-ai-hint="fantasy landscape"
-        />
-        <div className="absolute inset-0 bg-background opacity-70"></div>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-landing-gradient">
+      {/* The old background image and overlay div have been removed */}
       
       <div className="text-center mb-8 z-10">
         <Link href="/" className="inline-flex items-center gap-2 group">
