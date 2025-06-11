@@ -35,17 +35,20 @@ export default function SignupPage() {
     setLoading(true);
     try {
       if (signup) {
-        // The mock signup in AuthContext currently only accepts email and password.
-        // In a real app, you'd pass the nickname to your signup function.
-        // For now, we'll just log it or pass it if the function signature changes.
-        // await signup(email, password, nickname); 
-        await signup(email, password); 
-        router.push("/dashboard"); // Or a profile setup page
+        await signup(nickname, email, password); 
+        router.push("/dashboard"); 
       } else {
-        setError("Funcionalidade de cadastro não implementada no mock.");
+        setError("Funcionalidade de cadastro não implementada."); // Should not happen with real Firebase
       }
-    } catch (err) {
-      setError("Falha ao criar conta. Tente novamente.");
+    } catch (err: any) {
+      // Firebase errors often have a 'code' property
+      if (err.code === 'auth/email-already-in-use') {
+        setError("Este email já está em uso. Tente outro.");
+      } else if (err.code === 'auth/weak-password') {
+        setError("A senha é muito fraca. Use pelo menos 6 caracteres.");
+      } else {
+        setError("Falha ao criar conta. Verifique os dados e tente novamente.");
+      }
       console.error(err);
     } finally {
       setLoading(false);
