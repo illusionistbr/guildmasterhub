@@ -59,8 +59,8 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <header className="py-6 px-8 md:px-16 flex justify-between items-center sticky top-0 z-50 header-bg">
+    <div className="min-h-screen flex flex-col bg-landing-gradient text-foreground">
+      <header className="sticky top-0 z-50 py-6 px-8 md:px-16 flex justify-between items-center header-bg">
         <Link href="/" className="flex items-center gap-2 text-2xl font-headline font-bold text-primary">
           <ShieldEllipsis className="h-8 w-8" />
           <span>GuildMasterHub</span>
@@ -133,7 +133,7 @@ export default function LandingPage() {
         </div>
       </main>
 
-      <section className="py-16 md:py-24 bg-background">
+      <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-6">
             8 em cada 10 guildas enfrentam dificuldades com coordenação e engajamento dos membros
@@ -163,7 +163,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="benefits" className="py-16 md:py-24 bg-background">
+      <section id="benefits" className="py-16 md:py-24">
         <div className="container mx-auto px-4 md:px-8 max-w-6xl text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-4">
             Um Arsenal Completo de Ferramentas
@@ -186,7 +186,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="testimonials" className="py-16 md:py-24 bg-background">
+      <section id="testimonials" className="py-16 md:py-24">
         <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-4">
             A Lenda Contada Pelos Heróis
@@ -216,7 +216,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-background">
+      <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 md:px-8 max-w-2xl text-center">
           <h2 className="text-4xl sm:text-5xl font-headline font-bold text-foreground mb-6">
             Pronto para elevar o nível da gestão da sua guilda?
@@ -236,4 +236,3 @@ export default function LandingPage() {
     </div>
   );
 }
-

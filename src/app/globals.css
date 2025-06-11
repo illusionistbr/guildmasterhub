@@ -66,7 +66,7 @@
   }
 
   body {
-    background-color: hsl(var(--background)); /* Solid background color */
+    background-color: hsl(var(--background)); /* Solid background color, will be overridden by .bg-landing-gradient on landing page */
     color: hsl(var(--foreground));
     @apply font-body antialiased;
   }
@@ -213,5 +213,11 @@
   }
   .has-tooltip:hover .tooltip {
     @apply visible opacity-100 z-50;
+  }
+}
+
+@layer utilities {
+  .bg-landing-gradient {
+    background-image: linear-gradient(to bottom left, hsl(290, 15%, 15%), hsl(260, 20%, 10%));
   }
 }
