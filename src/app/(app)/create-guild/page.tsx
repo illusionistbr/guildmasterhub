@@ -116,7 +116,7 @@ export default function CreateGuildPage() {
         icon={<ShieldPlus className="h-8 w-8 text-primary" />}
       />
       <Card className="card-bg">
-        <CardHeader>
+        <CardHeader className="relative z-10">
           <CardTitle>Detalhes da Guilda</CardTitle>
           <CardDescription>
             Preencha as informações abaixo para registrar sua guilda. 
@@ -124,7 +124,7 @@ export default function CreateGuildPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 relative z-10">
             <div>
               <Label htmlFor="name">Nome da Guilda <span className="text-destructive">*</span></Label>
               <Input 
@@ -221,7 +221,7 @@ export default function CreateGuildPage() {
             </Alert>
 
           </CardContent>
-          <CardFooter className="flex justify-end gap-4">
+          <CardFooter className="flex justify-end gap-4 relative z-10">
             <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
               Cancelar
             </Button>
@@ -239,5 +239,7 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+    
 
     
