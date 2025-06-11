@@ -1,11 +1,44 @@
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogIn, Rocket, ShieldEllipsis, Star, Users, HeartCrack } from "lucide-react";
+import { LogIn, Rocket, ShieldEllipsis, Star, Users, HeartCrack, CalendarDays, Trophy, MessageSquare, Flag, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function LandingPage() {
+  const benefits = [
+    {
+      icon: Users,
+      title: "Gerenciamento de Membros",
+      description: "Organize sua equipe com cargos, funções e status. Saiba quem está pronto para a batalha a qualquer momento.",
+    },
+    {
+      icon: CalendarDays,
+      title: "Agenda de Eventos",
+      description: "Crie e gerencie raides, dungeons e eventos PvP com um calendário intuitivo e sistema de RSVP integrado.",
+    },
+    {
+      icon: Trophy,
+      title: "Registro de Conquistas",
+      description: "Imortalize os feitos da sua guilda. Registre bosses derrotados, itens lendários e domine os rankings.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Comunicação Integrada",
+      description: "Discuta estratégias, compartilhe guias e fortaleça a comunicação com ferramentas integradas.",
+    },
+    {
+      icon: Flag,
+      title: "Ferramentas de Recrutamento",
+      description: "Atraia os melhores jogadores com uma página de guilda pública e um sistema de aplicação personalizável.",
+    },
+    {
+      icon: Settings,
+      title: "Administração Simplificada",
+      description: "Controle permissões, personalize sua página e exporte dados com facilidade.",
+    },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="py-6 px-8 md:px-16 flex justify-between items-center relative">
@@ -91,7 +124,7 @@ export default function LandingPage() {
           </p>
           <div className="grid md:grid-cols-3 gap-8 md:gap-12">
             <div className="flex flex-col items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
+               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="8" y1="15" x2="16" y2="15"></line>
                 <line x1="9" y1="9" x2="9.01" y2="9"></line>
@@ -110,7 +143,31 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <section id="benefits" className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4 md:px-8 max-w-6xl text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-4">
+            Um Arsenal Completo de Ferramentas
+          </h2>
+          <p className="text-lg text-muted-foreground mb-12">
+            Tudo o que você precisa para levar sua guilda ao próximo nível.
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {benefits.map((benefit, index) => {
+              const IconComponent = benefit.icon;
+              return (
+                <div key={index} className="card-bg p-6 rounded-xl text-left flex flex-col">
+                  <IconComponent className="h-10 w-10 text-primary mb-6" />
+                  <h3 className="text-xl font-semibold text-foreground mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-muted-foreground flex-grow">{benefit.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
       {/* Footer removed as per new design */}
     </div>
   );
 }
+
