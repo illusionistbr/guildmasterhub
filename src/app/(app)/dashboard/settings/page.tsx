@@ -56,10 +56,10 @@ function ExploreGuildsTab() {
 
   const filteredGuilds = useMemo(() => {
     return allPublicGuilds.filter(guild => 
-      guild.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !guild.memberIds?.includes(user?.uid || "") // Exclude guilds the user is already in
+      guild.name.toLowerCase().includes(searchTerm.toLowerCase())
+      // Não filtra mais por memberIds aqui, para listar todas as guildas
     );
-  }, [allPublicGuilds, searchTerm, user?.uid]);
+  }, [allPublicGuilds, searchTerm]);
 
   const paginatedGuilds = useMemo(() => {
     const startIndex = (currentPage - 1) * GUILDS_PER_PAGE;
@@ -101,8 +101,14 @@ function ExploreGuildsTab() {
       });
       setSelectedGuildForPassword(null);
       setPasswordInput("");
-      // Refetch guilds or update local state to remove joined guild from list
-      setAllPublicGuilds(prev => prev.filter(g => g.id !== guild.id));
+      // Atualiza o estado local para refletir a adesão
+      setAllPublicGuilds(prevGuilds => 
+        prevGuilds.map(g => 
+          g.id === guild.id 
+            ? { ...g, memberIds: [...(g.memberIds || []), user.uid], memberCount: (g.memberCount || 0) + 1 } 
+            : g
+        )
+      );
 
     } catch (error) {
       console.error("Error joining guild:", error);
@@ -114,10 +120,12 @@ function ExploreGuildsTab() {
   };
 
   const handleApplyToGuild = (guild: Guild) => {
-    if (!guild.password || guild.isOpen) {
-      handleJoinGuild(guild);
-    } else {
+    if (!user || guild.memberIds?.includes(user.uid)) return; // Não faz nada se já é membro
+
+    if (guild.password && !guild.isOpen) { // Considera isOpen se existir, caso contrário só a senha
       setSelectedGuildForPassword(guild);
+    } else {
+      handleJoinGuild(guild);
     }
   };
   
@@ -127,61 +135,86 @@ function ExploreGuildsTab() {
     }
   };
 
-  const renderGuildCard = (guild: Guild) => (
-    <Card key={guild.id} className="card-bg overflow-hidden">
-      <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-        <div className="flex items-center gap-4 flex-grow">
-          <Avatar className="h-16 w-16 border-2 border-primary flex-shrink-0">
+  const renderGuildCard = (guild: Guild) => {
+    const isUserMember = guild.memberIds?.includes(user?.uid || "");
+    const isLoadingThisGuild = isJoining === guild.id;
+
+    return (
+      <Card key={guild.id} className="card-bg overflow-hidden">
+        <CardContent className="p-3 sm:p-4 grid grid-cols-[auto_minmax(100px,1fr)_auto_auto] items-center gap-x-3 sm:gap-x-4 relative z-10">
+          {/* Col 1: Logo */}
+          <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-primary">
             <AvatarImage src={guild.logoUrl || `https://placehold.co/64x64.png?text=${guild.name.substring(0,1)}`} alt={`${guild.name} logo`} data-ai-hint="guild logo"/>
             <AvatarFallback>{guild.name.substring(0,1).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="flex-grow">
-            <h3 className="text-lg font-semibold text-foreground">{guild.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              Dono: {guild.ownerDisplayName || 'Desconhecido'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Membros: {guild.memberCount || 0}
-            </p>
-          </div>
-        </div>
-        <Button 
-          onClick={() => handleApplyToGuild(guild)} 
-          disabled={isJoining === guild.id}
-          className="w-full sm:w-auto btn-gradient btn-style-secondary mt-2 sm:mt-0"
-        >
-          {isJoining === guild.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (guild.password ? <KeyRound className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />)}
-          {isJoining === guild.id ? 'Entrando...' : 'Aplicar'}
-        </Button>
-      </CardContent>
-    </Card>
-  );
+
+          {/* Col 2: Nome da Guilda */}
+          <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
+            {guild.name}
+          </h3>
+          
+          {/* Col 3: Nome do Líder */}
+          <p className="text-xs sm:text-sm text-muted-foreground truncate text-center px-1 sm:px-2">
+            Líder: {guild.ownerDisplayName || 'Desconhecido'}
+          </p>
+          
+          {/* Col 4: Botão Aplicar/Membro */}
+          <Button 
+            onClick={() => !isUserMember && handleApplyToGuild(guild)} 
+            disabled={isLoadingThisGuild || isUserMember}
+            className={`btn-gradient ${isUserMember ? 'bg-green-600 hover:bg-green-700' : 'btn-style-secondary'} whitespace-nowrap justify-self-end`}
+            size="sm"
+          >
+            {isLoadingThisGuild ? <Loader2 className="h-4 w-4 animate-spin" /> :
+             isUserMember ? <CheckCircle className="h-4 w-4 sm:mr-1" /> :
+             (guild.password && !guild.isOpen ? <KeyRound className="h-4 w-4 sm:mr-1" /> : <UserPlus className="h-4 w-4 sm:mr-1" />)}
+            
+            <span className={` ${isUserMember || isLoadingThisGuild ? 'hidden sm:inline' : 'hidden sm:inline'}`}>
+              {isLoadingThisGuild ? 'Entrando...' : (isUserMember ? "Membro" : 'Aplicar')}
+            </span>
+             {/* Para telas muito pequenas, mostrar apenas ícone se não for loading */}
+            {!isLoadingThisGuild && (
+                 <span className="sm:hidden">
+                    {isUserMember ? <CheckCircle className="h-4 w-4" /> : (guild.password && !guild.isOpen ? <KeyRound className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />)}
+                 </span>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
+
 
   if (loadingGuilds) {
     return (
       <div className="space-y-4">
-        <Input placeholder="Buscar guildas..." className="max-w-lg form-input" disabled/>
-        {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+        <div className="relative max-w-lg">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input placeholder="Buscar pelo nome da guilda..." className="form-input pl-10 text-base" disabled/>
+        </div>
+        {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Input 
-        type="text"
-        placeholder="Buscar pelo nome da guilda..."
-        value={searchTerm}
-        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-        className="max-w-lg form-input text-base"
-        icon={<Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />}
-      />
+        <div className="relative max-w-lg">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input 
+                type="text"
+                placeholder="Buscar pelo nome da guilda..."
+                value={searchTerm || ""}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="form-input pl-10 text-base"
+            />
+        </div>
       {paginatedGuilds.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {paginatedGuilds.map(renderGuildCard)}
         </div>
       ) : (
-        <p className="text-muted-foreground text-center py-8">Nenhuma guilda encontrada com os critérios atuais ou você já faz parte de todas as guildas visíveis.</p>
+        <p className="text-muted-foreground text-center py-8">Nenhuma guilda encontrada com os critérios atuais.</p>
       )}
 
       {totalPages > 1 && (
@@ -221,7 +254,7 @@ function ExploreGuildsTab() {
                 <Input
                   id="guildPasswordInput"
                   type="password"
-                  value={passwordInput}
+                  value={passwordInput || ""}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   className="col-span-3 form-input"
                   autoFocus
@@ -284,7 +317,7 @@ export default function SettingsPage() {
               <CardDescription>Detalhes e preferências da sua conta pessoal.</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <ComingSoon pageName="Gerenciamento de Conta" icon={<Users />} />
+              <ComingSoon pageName="Gerenciamento de Conta" icon={<Users className="h-8 w-8 text-primary" />} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -308,7 +341,7 @@ export default function SettingsPage() {
               <CardDescription>Escolha como e quando você quer ser notificado.</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-                <ComingSoon pageName="Configurações de Notificações" icon={<SettingsIcon />} />
+                <ComingSoon pageName="Configurações de Notificações" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -320,7 +353,7 @@ export default function SettingsPage() {
               <CardDescription>Gerencie sua senha e outras opções de segurança.</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-                 <ComingSoon pageName="Opções de Segurança" icon={<SettingsIcon />} />
+                 <ComingSoon pageName="Opções de Segurança" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -328,3 +361,6 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+
+    
