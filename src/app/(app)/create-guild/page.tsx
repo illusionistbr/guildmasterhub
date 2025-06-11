@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -32,15 +34,33 @@ const guildSchema = z.object({
 
 type GuildFormValues = z.infer<typeof guildSchema>;
 
+const gameOptions = [
+  { value: "Throne and Liberty", label: "Throne and Liberty" },
+  // Adicione mais jogos aqui no futuro, se necessário
+];
+
 export default function CreateGuildPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<GuildFormValues>({
+  const form = useForm<GuildFormValues>({
     resolver: zodResolver(guildSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      game: undefined,
+      password: "",
+      socialFacebook: "",
+      socialX: "",
+      socialYoutube: "",
+      socialDiscord: "",
+    }
   });
+
+  const { register, handleSubmit, control, formState: { errors } } = form;
+
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -123,123 +143,189 @@ export default function CreateGuildPage() {
             Detalhes como logotipo, eventos e outros ajustes finos devem ser feitos diretamente no dashboard da guilda após a criação.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 relative z-10">
-            <div>
-              <Label htmlFor="name">Nome da Guilda <span className="text-destructive">*</span></Label>
-              <Input 
-                id="name" 
-                {...register("name")} 
-                placeholder="Ex: Os Guardiões Alados"
-                className={`mt-1 form-input ${errors.name ? 'border-destructive focus:border-destructive' : ''}`}
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6 relative z-10">
+              <FormField
+                control={control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Guilda <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="Ex: Os Guardiões Alados"
+                        className={`mt-1 form-input ${errors.name ? 'border-destructive focus:border-destructive' : ''}`}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
-            </div>
 
-            <div>
-              <Label htmlFor="password">Senha da Guilda (Opcional)</Label>
-              <div className="relative flex items-center mt-1">
-                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                  id="password"
-                  type="password"
-                  {...register("password")} 
-                  placeholder="Deixe em branco para guilda aberta"
-                  className={`form-input pl-10 ${errors.password ? 'border-destructive focus:border-destructive' : ''}`}
-                />
+              <FormField
+                control={control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha da Guilda (Opcional)</FormLabel>
+                    <FormControl>
+                      <div className="relative flex items-center mt-1">
+                        <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                        <Input 
+                          type="password"
+                          {...field} 
+                          placeholder="Deixe em branco para guilda aberta"
+                          className={`form-input pl-10 ${errors.password ? 'border-destructive focus:border-destructive' : ''}`}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground mt-1">Guildas sem senha podem ficar abertas para qualquer usuário entrar.</p>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Ex: Uma guilda focada em exploração e desafios épicos."
+                        rows={3}
+                        className={`mt-1 form-input ${errors.description ? 'border-destructive focus:border-destructive' : ''}`}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={control}
+                name="game"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Jogo Principal (Opcional)</FormLabel>
+                    <div className="relative flex items-center mt-1">
+                       <Gamepad2 className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className={`form-input pl-10 ${errors.game ? 'border-destructive focus:border-destructive' : ''}`}>
+                              <SelectValue placeholder="Selecione um jogo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
+                            {/* Adicione outras opções de jogo aqui no futuro */}
+                          </SelectContent>
+                        </Select>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+
+              <div className="space-y-1">
+                <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
+                <div className="space-y-3">
+                  <FormField
+                    control={control}
+                    name="socialFacebook"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="socialFacebook">Facebook</FormLabel>
+                        <FormControl>
+                          <div className="relative flex items-center mt-1">
+                              <Facebook className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                              <Input id="socialFacebook" {...field} placeholder="https://facebook.com/suaguilda" className={`form-input pl-10 ${errors.socialFacebook ? 'border-destructive focus:border-destructive' : ''}`} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="socialX"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="socialX">X (Twitter)</FormLabel>
+                        <FormControl>
+                          <div className="relative flex items-center mt-1">
+                              <Twitter className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                              <Input id="socialX" {...field} placeholder="https://x.com/suaguilda" className={`form-input pl-10 ${errors.socialX ? 'border-destructive focus:border-destructive' : ''}`} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="socialYoutube"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="socialYoutube">YouTube</FormLabel>
+                        <FormControl>
+                          <div className="relative flex items-center mt-1">
+                              <Youtube className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                              <Input id="socialYoutube" {...field} placeholder="https://youtube.com/c/suaguilda" className={`form-input pl-10 ${errors.socialYoutube ? 'border-destructive focus:border-destructive' : ''}`} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="socialDiscord"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="socialDiscord">Discord</FormLabel>
+                        <FormControl>
+                          <div className="relative flex items-center mt-1">
+                              <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                              <Input id="socialDiscord" {...field} placeholder="https://discord.gg/suaguilda" className={`form-input pl-10 ${errors.socialDiscord ? 'border-destructive focus:border-destructive' : ''}`} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
-              <p className="text-xs text-muted-foreground mt-1">Guildas sem senha podem ficar abertas para qualquer usuário entrar.</p>
-            </div>
-            
-            <div>
-              <Label htmlFor="description">Descrição (Opcional)</Label>
-              <Textarea 
-                id="description" 
-                {...register("description")} 
-                placeholder="Ex: Uma guilda focada em exploração e desafios épicos."
-                rows={3}
-                className={`mt-1 form-input ${errors.description ? 'border-destructive focus:border-destructive' : ''}`}
-              />
-              {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
-            </div>
+              <Alert variant="default" className="bg-background border-accent/30">
+                  <AlertCircle className="h-4 w-4 text-accent" />
+                  <AlertTitle className="font-semibold">Ajustes Finos no Dashboard</AlertTitle>
+                  <AlertDescription className="text-xs">
+                  Lembre-se: O logotipo, banner, gerenciamento de membros, eventos e outras configurações detalhadas da guilda são gerenciados através do painel da guilda após sua criação.
+                  </AlertDescription>
+              </Alert>
 
-            <div>
-              <Label htmlFor="game">Jogo Principal (Opcional)</Label>
-               <Input 
-                id="game" 
-                {...register("game")} 
-                placeholder="Ex: World of Arcana"
-                className={`mt-1 form-input ${errors.game ? 'border-destructive focus:border-destructive' : ''}`}
-              />
-              {errors.game && <p className="text-sm text-destructive mt-1">{errors.game.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
-              <div className="space-y-3">
-                <div>
-                    <Label htmlFor="socialFacebook">Facebook</Label>
-                    <div className="relative flex items-center mt-1">
-                        <Facebook className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input id="socialFacebook" {...register("socialFacebook")} placeholder="https://facebook.com/suaguilda" className={`form-input pl-10 ${errors.socialFacebook ? 'border-destructive focus:border-destructive' : ''}`} />
-                    </div>
-                    {errors.socialFacebook && <p className="text-sm text-destructive mt-1">{errors.socialFacebook.message}</p>}
-                </div>
-                <div>
-                    <Label htmlFor="socialX">X (Twitter)</Label>
-                    <div className="relative flex items-center mt-1">
-                        <Twitter className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input id="socialX" {...register("socialX")} placeholder="https://x.com/suaguilda" className={`form-input pl-10 ${errors.socialX ? 'border-destructive focus:border-destructive' : ''}`} />
-                    </div>
-                    {errors.socialX && <p className="text-sm text-destructive mt-1">{errors.socialX.message}</p>}
-                </div>
-                <div>
-                    <Label htmlFor="socialYoutube">YouTube</Label>
-                    <div className="relative flex items-center mt-1">
-                        <Youtube className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input id="socialYoutube" {...register("socialYoutube")} placeholder="https://youtube.com/c/suaguilda" className={`form-input pl-10 ${errors.socialYoutube ? 'border-destructive focus:border-destructive' : ''}`} />
-                    </div>
-                    {errors.socialYoutube && <p className="text-sm text-destructive mt-1">{errors.socialYoutube.message}</p>}
-                </div>
-                <div>
-                    <Label htmlFor="socialDiscord">Discord</Label>
-                    <div className="relative flex items-center mt-1">
-                        <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input id="socialDiscord" {...register("socialDiscord")} placeholder="https://discord.gg/suaguilda" className={`form-input pl-10 ${errors.socialDiscord ? 'border-destructive focus:border-destructive' : ''}`} />
-                    </div>
-                    {errors.socialDiscord && <p className="text-sm text-destructive mt-1">{errors.socialDiscord.message}</p>}
-                </div>
-              </div>
-            </div>
-             <Alert variant="default" className="bg-background border-accent/30">
-                <AlertCircle className="h-4 w-4 text-accent" />
-                <AlertTitle className="font-semibold">Ajustes Finos no Dashboard</AlertTitle>
-                <AlertDescription className="text-xs">
-                Lembre-se: O logotipo, banner, gerenciamento de membros, eventos e outras configurações detalhadas da guilda são gerenciados através do painel da guilda após sua criação.
-                </AlertDescription>
-            </Alert>
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-4 relative z-10">
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <ShieldPlus className="mr-2 h-5 w-5" />
-              )}
-              {isSubmitting ? 'Criando Guilda...' : 'Criar Guilda'}
-            </Button>
-          </CardFooter>
-        </form>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-4 relative z-10">
+              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+                Cancelar
+              </Button>
+              <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <ShieldPlus className="mr-2 h-5 w-5" />
+                )}
+                {isSubmitting ? 'Criando Guilda...' : 'Criar Guilda'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
       </Card>
     </div>
   );
 }
-
-    
-
-    
