@@ -2,14 +2,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, UserPlus, Mail, KeyRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Corrected import
 import React, { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SignupPage() {
   const [nickname, setNickname] = useState("");
@@ -20,6 +21,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,26 +37,27 @@ export default function SignupPage() {
     setLoading(true);
     try {
       if (signup) {
-        await signup(nickname, email, password); 
-        router.push("/dashboard"); 
+        const redirectPath = await signup(nickname, email, password); 
+        toast({ title: "Conta criada com sucesso!", description: "Redirecionando..." });
+        router.push(redirectPath); 
       } else {
-        setError("Funcionalidade de cadastro não implementada."); // Should not happen with real Firebase
+        setError("Funcionalidade de cadastro não implementada.");
+        toast({ title: "Erro", description: "Funcionalidade de cadastro não implementada.", variant: "destructive" });
       }
     } catch (err: any) {
-      // Firebase errors often have a 'code' property
+      let errorMessage = "Falha ao criar conta. Verifique os dados e tente novamente.";
       if (err.code === 'auth/email-already-in-use') {
-        setError("Este email já está em uso. Tente outro.");
+        errorMessage = "Este email já está em uso. Tente outro.";
       } else if (err.code === 'auth/weak-password') {
-        setError("A senha é muito fraca. Use pelo menos 6 caracteres.");
-      } else {
-        setError("Falha ao criar conta. Verifique os dados e tente novamente.");
+        errorMessage = "A senha é muito fraca. Use pelo menos 6 caracteres.";
       }
+      setError(errorMessage);
+      toast({ title: "Erro no Cadastro", description: errorMessage, variant: "destructive" });
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <>

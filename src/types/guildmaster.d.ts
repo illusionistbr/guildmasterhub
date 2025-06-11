@@ -1,3 +1,6 @@
+
+import type { Timestamp } from 'firebase/firestore';
+
 export interface Guild {
   id: string;
   name: string;
@@ -9,7 +12,7 @@ export interface Guild {
   memberIds?: string[];
   game?: string;
   tags?: string[];
-  createdAt?: Date; // Or string if storing as ISO string
+  createdAt?: Date | Timestamp; // Can be Firestore Timestamp on read, Date after conversion, or FieldValue on write
 }
 
 export interface Event {

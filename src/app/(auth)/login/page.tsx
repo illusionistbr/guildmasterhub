@@ -2,14 +2,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogIn, Mail, KeyRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Corrected import
 import React, { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,17 +19,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
-      router.push("/dashboard");
-    } catch (err) {
+      const redirectPath = await login(email, password);
+      toast({ title: "Login bem-sucedido!", description: "Redirecionando..." });
+      router.push(redirectPath);
+    } catch (err: any) {
       setError("Falha ao fazer login. Verifique suas credenciais.");
       console.error(err);
+      toast({ title: "Erro no Login", description: err.message || "Verifique suas credenciais.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

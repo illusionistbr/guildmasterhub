@@ -1,30 +1,33 @@
+
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } // Added useRouter
+from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3 } from "lucide-react";
-import { mockGuilds, mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data";
+import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX } from "lucide-react"; // Added ShieldX
+import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; // Mock data for now
 import type { Guild } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as ShadcnAlertTitle } from "@/components/ui/alert"; // Renamed to avoid conflict
+import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as ShadcnAlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc, updateDoc } from "firebase/firestore"; 
+import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit } from "firebase/firestore"; 
 import { db } from "@/lib/firebase"; 
 import { StatCard } from '@/components/shared/StatCard';
 
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter(); // For programmatic navigation
   
   const [currentGuild, setCurrentGuild] = useState<Guild | null>(null);
   const [loadingGuild, setLoadingGuild] = useState(true);
@@ -48,13 +51,14 @@ function DashboardPageContent() {
     const guildIdParam = searchParams.get('guildId');
     setLoadingGuild(true);
 
-    if (authLoading) { // Wait for auth to resolve
+    if (authLoading) {
         return;
     }
 
     if (!user) { 
         setLoadingGuild(false);
-        // Redirect to login or show message if not logged in handled by AuthProvider or page structure
+        // If not logged in, AuthProvider should handle redirect, or we can explicitly redirect
+        // router.push('/login'); // Consider if this is the best place
         return;
     }
 
@@ -62,46 +66,80 @@ function DashboardPageContent() {
       let guildToSet: Guild | null = null;
       let bannerToSet = "https://placehold.co/1200x300.png";
       let logoToSet = "https://placehold.co/150x150.png";
+      let guildIdToLoad = guildIdParam;
 
-      if (!guildIdParam) {
-        const fallbackGuild = mockGuilds.find(g => g.ownerId === user.uid || g.memberIds?.includes(user.uid));
-        if (fallbackGuild) {
-          guildToSet = fallbackGuild;
-          bannerToSet = fallbackGuild.bannerUrl || bannerToSet;
-          logoToSet = fallbackGuild.logoUrl || logoToSet;
-          toast({ title: "Guilda de Exemplo Carregada", description: "Nenhum ID de guilda foi fornecido. Carregando guilda de exemplo.", variant: "default"});
+      try {
+        // If no guildIdParam, try to load the first guild the user is part of
+        if (!guildIdToLoad) {
+          const qOwned = query(collection(db, "guilds"), where("ownerId", "==", user.uid), limit(1));
+          const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", user.uid), limit(1));
+          const [ownedSnapshot, memberSnapshot] = await Promise.all([getFirestoreDocs(qOwned), getFirestoreDocs(qMember)]);
+
+          if (!ownedSnapshot.empty) {
+            guildIdToLoad = ownedSnapshot.docs[0].id;
+          } else if (!memberSnapshot.empty) {
+            guildIdToLoad = memberSnapshot.docs[0].id;
+          } else {
+            // No guilds found for the user, redirect to guild selection
+            router.push('/guild-selection');
+            setLoadingGuild(false);
+            return;
+          }
+           if (guildIdToLoad) {
+             // Update URL to reflect the loaded guildId without a full page reload if not present
+             const currentPath = window.location.pathname;
+             const newUrl = `${currentPath}?guildId=${guildIdToLoad}`;
+             window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+           }
         }
-      } else {
-         try {
-            const guildDocRef = doc(db, "guilds", guildIdParam);
+        
+        if (guildIdToLoad) {
+            const guildDocRef = doc(db, "guilds", guildIdToLoad);
             const guildDocSnap = await getDoc(guildDocRef);
 
             if (guildDocSnap.exists()) {
-              const guildData = guildDocSnap.data() as Guild;
-              if (guildData.ownerId === user.uid || guildData.memberIds?.includes(user.uid)) {
-                guildToSet = { ...guildData, id: guildDocSnap.id };
+              const guildData = guildDocSnap.data() as Omit<Guild, 'id' | 'createdAt'> & { createdAt?: any }; // Handle Firestore Timestamp
+              // Check if user is owner or member
+              const isUserOwner = guildData.ownerId === user.uid;
+              const isUserMember = guildData.memberIds?.includes(user.uid);
+
+              if (isUserOwner || isUserMember) {
+                 guildToSet = { 
+                    ...guildData, 
+                    id: guildDocSnap.id,
+                    // Convert Firestore Timestamp to Date for client-side use
+                    createdAt: guildData.createdAt?.toDate ? guildData.createdAt.toDate() : undefined 
+                 };
                 bannerToSet = guildData.bannerUrl || bannerToSet;
                 logoToSet = guildData.logoUrl || logoToSet;
               } else {
-                toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda com ID ${guildIdParam}.`, variant: "destructive"});
+                toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda com ID ${guildIdToLoad}.`, variant: "destructive"});
+                router.push('/guild-selection'); // Redirect if no access
               }
             } else {
-              toast({title: "Guilda Não Encontrada", description: `Guilda com ID ${guildIdParam} não encontrada.`, variant: "destructive"});
+              toast({title: "Guilda Não Encontrada", description: `Guilda com ID ${guildIdToLoad} não encontrada.`, variant: "destructive"});
+               router.push('/guild-selection'); // Redirect if guild not found
             }
-          } catch (error) {
-            console.error("Erro ao buscar dados da guilda:", error);
-            toast({ title: "Erro de Carregamento", description: "Não foi possível carregar os dados da guilda.", variant: "destructive" });
-          }
+        } else {
+             // This case should be rare if the above logic correctly finds a guild or redirects
+            toast({title: "Nenhuma Guilda", description: "Nenhuma guilda para exibir. Selecione ou crie uma.", variant: "default"});
+            router.push('/guild-selection');
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados da guilda:", error);
+        toast({ title: "Erro de Carregamento", description: "Não foi possível carregar os dados da guilda.", variant: "destructive" });
+        router.push('/guild-selection'); // Redirect on error
+      } finally {
+        setCurrentGuild(guildToSet);
+        setCurrentBannerUrl(bannerToSet);
+        setCurrentLogoUrl(logoToSet);
+        setLoadingGuild(false);
       }
-      setCurrentGuild(guildToSet);
-      setCurrentBannerUrl(bannerToSet);
-      setCurrentLogoUrl(logoToSet);
-      setLoadingGuild(false);
     };
     
     fetchGuildData();
 
-  }, [searchParams, user, toast, authLoading]);
+  }, [searchParams, user, toast, authLoading, router]);
 
   useEffect(() => {
     if (user && currentGuild) {
@@ -122,7 +160,7 @@ function DashboardPageContent() {
         return;
     }
 
-    setLoadingGuild(true); // Indicate loading state
+    // setLoadingGuild(true); // Indicate loading state - this might be too disruptive for just image save
     try {
         const guildDocRef = doc(db, "guilds", currentGuild.id);
         if (type === 'banner') {
@@ -146,7 +184,7 @@ function DashboardPageContent() {
         console.error(`Erro ao atualizar ${type}:`, error);
         toast({ title: `Erro ao Salvar ${type === 'banner' ? 'Banner' : 'Logo'}`, description: `Não foi possível salvar. Tente novamente.`, variant: "destructive" });
     } finally {
-        setLoadingGuild(false);
+        // setLoadingGuild(false);
     }
   };
 
@@ -242,30 +280,10 @@ function DashboardPageContent() {
   const pageLoading = authLoading || loadingGuild;
 
   if (pageLoading) {
-    return (
-      <div className="space-y-8">
-        <Skeleton className="h-48 md:h-60 w-full rounded-lg" /> 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-8 relative z-10 px-4">
-          <div className="md:col-span-2 flex justify-center md:justify-start">
-            <Skeleton className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-background shadow-lg" /> 
-          </div>
-          <div className="md:col-span-10 md:pt-4 space-y-2 text-center md:text-left">
-            <Skeleton className="h-10 w-3/4 mx-auto md:mx-0" />
-            <Skeleton className="h-6 w-1/2 mx-auto md:mx-0" />
-          </div>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
-        </div>
-         <div className="grid gap-6 lg:grid-cols-2 mt-8 px-4">
-          <Skeleton className="h-72 w-full rounded-lg" />
-          <Skeleton className="h-72 w-full rounded-lg" />
-        </div>
-      </div>
-    );
+    return <DashboardPageSkeleton />; // Use the separate skeleton component
   }
 
-  if (!user) {
+  if (!user) { // Should be caught by AuthProvider, but good as a fallback
     return (
       <div className="p-6 text-center text-lg">
         <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
@@ -278,17 +296,19 @@ function DashboardPageContent() {
     )
   }
 
-  if (!currentGuild) {
-    return <div className="p-6 text-center text-lg">
-        <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-2xl font-headline mb-2">Nenhuma Guilda Encontrada</h2>
-        <p className="text-muted-foreground mb-4">
-          Guilda não encontrada, você não tem permissão para acessá-la, ou nenhuma guilda foi selecionada.
-        </p>
-        <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
-            <Link href="/dashboard/settings?tab=guilds">Selecionar ou Criar Guilda</Link>
-        </Button>
-        </div>;
+  if (!currentGuild) { // This should ideally redirect to /guild-selection via useEffect logic
+    return (
+        <div className="p-6 text-center text-lg">
+            <ShieldX className="mx-auto h-12 w-12 text-destructive mb-4" />
+            <h2 className="text-2xl font-headline mb-2">Nenhuma Guilda Carregada</h2>
+            <p className="text-muted-foreground mb-4">
+            Não foi possível carregar uma guilda. Você pode não pertencer a nenhuma ou ocorreu um erro.
+            </p>
+            <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                <Link href="/guild-selection">Selecionar ou Criar Guilda</Link>
+            </Button>
+        </div>
+    );
   }
 
   const welcomeName = user?.displayName || user?.email || "Jogador";
@@ -553,17 +573,7 @@ function DashboardPageContent() {
   );
 }
 
-// Wrap with Suspense for useSearchParams
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={<DashboardPageSkeleton />}>
-      <DashboardPageContent />
-    </Suspense>
-  );
-}
-
-
-function DashboardPageSkeleton() {
+function DashboardPageSkeleton() { // Extracted Skeleton for reusability
  return (
       <div className="space-y-8">
         <Skeleton className="h-48 md:h-60 w-full rounded-lg" /> 
@@ -585,4 +595,12 @@ function DashboardPageSkeleton() {
         </div>
       </div>
     );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardPageSkeleton />}>
+      <DashboardPageContent />
+    </Suspense>
+  );
 }
