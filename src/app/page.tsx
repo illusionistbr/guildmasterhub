@@ -99,7 +99,7 @@ export default function LandingPage() {
               <h3 className="text-xl font-semibold text-foreground mb-2">Membros perdem o interesse</h3>
             </div>
             <div className="flex flex-col items-center">
-              <HeartCrack className="h-12 w-12 text-accent mb-4" />
+              <HeartCrack className="h-12 w-12 text-destructive mb-4" />
               <h3 className="text-xl font-semibold text-foreground mb-2">Guilda se desfaz lentamente</h3>
             </div>
           </div>
