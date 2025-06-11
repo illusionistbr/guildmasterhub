@@ -60,7 +60,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <header className="py-6 px-8 md:px-16 flex justify-between items-center relative">
+      <header className="py-6 px-8 md:px-16 flex justify-between items-center sticky top-0 z-50 header-bg">
         <Link href="/" className="flex items-center gap-2 text-2xl font-headline font-bold text-primary">
           <ShieldEllipsis className="h-8 w-8" />
           <span>GuildMasterHub</span>
@@ -236,3 +236,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
