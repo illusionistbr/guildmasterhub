@@ -91,7 +91,12 @@ export default function LandingPage() {
           </p>
           <div className="grid md:grid-cols-3 gap-8 md:gap-12">
             <div className="flex flex-col items-center">
-              <span className="text-5xl mb-4" role="img" aria-label="Rosto angustiado">😫</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="8" y1="15" x2="16" y2="15"></line>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
               <h3 className="text-xl font-semibold text-foreground mb-2">Caos no planejamento de eventos</h3>
             </div>
             <div className="flex flex-col items-center">
