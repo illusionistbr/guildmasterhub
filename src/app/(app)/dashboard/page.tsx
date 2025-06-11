@@ -195,11 +195,11 @@ function DashboardPageContent() {
         toast({ title: "Erro", description: "Por favor, insira uma URL.", variant: "destructive" });
         return;
       }
-      const allowedHosts = ["imgur.com", "i.imgur.com", "ibb.co", "i.ibb.co", "postimg.cc", "i.postimg.cc", "placehold.co", "images.unsplash.com"];
+      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc"];
       try {
         const url = new URL(bannerUrlInput);
         if (!allowedHosts.some(host => url.hostname.endsWith(host))) {
-          toast({ title: "URL Inválida", description: "Por favor, use apenas URLs de Imgur, ImgBB, Postimages.org, Placehold.co ou Unsplash.", variant: "destructive" });
+          toast({ title: "URL Inválida", description: "Por favor, use apenas URLs de Imgur.com, ImgBB.com ou postimages.org.", variant: "destructive" });
           return;
         }
         handleSaveImage('banner', bannerUrlInput);
@@ -237,11 +237,11 @@ function DashboardPageContent() {
         toast({ title: "Erro", description: "Por favor, insira uma URL.", variant: "destructive" });
         return;
       }
-      const allowedHosts = ["imgur.com", "i.imgur.com", "ibb.co", "i.ibb.co", "postimg.cc", "i.postimg.cc", "placehold.co", "images.unsplash.com"];
+      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc"];
       try {
         const url = new URL(logoUrlInput);
         if (!allowedHosts.some(host => url.hostname.endsWith(host))) {
-          toast({ title: "URL Inválida", description: "Por favor, use apenas URLs de Imgur, ImgBB, Postimages.org, Placehold.co ou Unsplash.", variant: "destructive" });
+          toast({ title: "URL Inválida", description: "Por favor, use apenas URLs de Imgur.com, ImgBB.com ou postimages.org.", variant: "destructive" });
           return;
         }
          handleSaveImage('logo', logoUrlInput);
@@ -367,7 +367,7 @@ function DashboardPageContent() {
                     <AlertTriangle className="h-4 w-4 text-primary" />
                     <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                     <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                      Por favor, use URLs de imagens hospedadas em Imgur, ImgBB, Postimages.org, Placehold.co ou Unsplash.
+                      Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com, postimages.org.
                     </ShadcnAlertDescription>
                   </Alert>
                 </TabsContent>
@@ -452,7 +452,7 @@ function DashboardPageContent() {
                         <AlertTriangle className="h-4 w-4 text-primary" />
                         <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                         <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                        Por favor, use URLs de imagens hospedadas em Imgur, ImgBB, Postimages.org, Placehold.co ou Unsplash.
+                        Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com, postimages.org.
                         </ShadcnAlertDescription>
                     </Alert>
                     </TabsContent>
