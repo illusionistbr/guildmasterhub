@@ -22,19 +22,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function getUserGuildRedirectPath(userId: string): Promise<string> {
-  const qOwned = query(collection(db, "guilds"), where("ownerId", "==", userId), limit(1));
-  const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", userId), limit(1));
+// This function might still be useful elsewhere, but not for immediate login/signup redirection.
+// async function getUserGuildRedirectPath(userId: string): Promise<string> {
+//   const qOwned = query(collection(db, "guilds"), where("ownerId", "==", userId), limit(1));
+//   const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", userId), limit(1));
 
-  const [ownedSnapshot, memberSnapshot] = await Promise.all([getDocs(qOwned), getDocs(qMember)]);
+//   const [ownedSnapshot, memberSnapshot] = await Promise.all([getDocs(qOwned), getDocs(qMember)]);
 
-  if (ownedSnapshot.empty && memberSnapshot.empty) {
-    return '/guild-selection';
-  }
-  if (!ownedSnapshot.empty) return `/dashboard?guildId=${ownedSnapshot.docs[0].id}`;
-  if (!memberSnapshot.empty) return `/dashboard?guildId=${memberSnapshot.docs[0].id}`;
-  return '/dashboard'; // Fallback, should ideally have a guildId
-}
+//   if (ownedSnapshot.empty && memberSnapshot.empty) {
+//     return '/guild-selection';
+//   }
+//   if (!ownedSnapshot.empty) return `/dashboard?guildId=${ownedSnapshot.docs[0].id}`;
+//   if (!memberSnapshot.empty) return `/dashboard?guildId=${memberSnapshot.docs[0].id}`;
+//   return '/dashboard'; // Fallback, should ideally have a guildId
+// }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -67,10 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
       if (userCredential.user) {
         // User state will be set by onAuthStateChanged
-        // Determine redirect path after user state is confirmed
-        const redirectPath = await getUserGuildRedirectPath(userCredential.user.uid);
         setLoading(false);
-        return redirectPath;
+        return '/guild-selection'; // Always redirect to guild selection
       }
       throw new Error("Login failed, user not found in credential.");
     } catch (error) {
@@ -112,9 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           displayName: nickname,
           photoURL: userCredential.user.photoURL, 
         });
-        // Since it's a new user, they won't have guilds yet.
         setLoading(false);
-        return '/guild-selection';
+        return '/guild-selection'; // Always redirect to guild selection
       }
       throw new Error("Signup failed, user not created.");
     } catch (error) {
