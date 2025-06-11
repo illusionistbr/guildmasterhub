@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export default function LoginPage() {
       </CardContent>
       <CardFooter className="flex flex-col items-center space-y-2">
         <Button variant="link" asChild className="text-sm text-primary hover:underline">
-          <Link href="#">Esqueceu sua senha?</Link>
+          <Link href="/forgot-password">Esqueceu sua senha?</Link>
         </Button>
         <p className="text-sm text-muted-foreground">
           Não tem uma conta?{" "}
