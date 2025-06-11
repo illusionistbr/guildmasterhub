@@ -141,7 +141,7 @@ function ExploreGuildsContent() {
     const isLoadingThisGuild = isJoining === guild.id;
 
     return (
-      <Card key={guild.id} className="card-bg overflow-hidden">
+      <Card key={guild.id} className="static-card-container overflow-hidden">
         <CardContent className="p-3 sm:p-4 grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-3 sm:gap-x-4 relative z-10">
           <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-primary">
             <AvatarImage src={guild.logoUrl || `https://placehold.co/64x64.png?text=${guild.name.substring(0,1)}`} alt={`${guild.name} logo`} data-ai-hint="guild logo"/>
@@ -288,7 +288,7 @@ export default function GuildsPage() {
         description="Encontre e junte-se a novas guildas para suas aventuras."
         icon={<Users className="h-8 w-8 text-primary" />}
       />
-      <Card className="card-bg">
+      <Card className="static-card-container">
         <CardHeader className="relative z-10">
           <CardTitle>Lista de Guildas Disponíveis</CardTitle>
           <CardDescription>Navegue pelas guildas, use a busca para filtrar e encontre sua próxima comunidade.</CardDescription>

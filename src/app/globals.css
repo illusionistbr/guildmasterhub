@@ -173,6 +173,18 @@
                 0 0 20px hsla(var(--accent), 0.3);
   }
 
+  /* New static card class without hover effects */
+  .static-card-container {
+    background-color: hsl(var(--card));
+    @apply rounded-xl;
+    box-shadow: 0 0 20px hsla(var(--primary), 0.3); /* Static glow */
+    border-width: 1px;
+    border-style: solid;
+    border-color: hsl(var(--border));
+    position: relative; /* Keep for z-index context if content needs it */
+  }
+
+
   .auth-tab {
     @apply w-full py-3 px-4 rounded-lg text-center font-bold cursor-pointer transition-all duration-300;
   }
