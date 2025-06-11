@@ -143,7 +143,7 @@ export default function LandingPage() {
           </p>
           <div className="grid md:grid-cols-3 gap-8 md:gap-12">
             <div className="flex flex-col items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
+               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="8" y1="15" x2="16" y2="15"></line>
                 <line x1="9" y1="9" x2="9.01" y2="9"></line>
@@ -213,6 +213,23 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4 md:px-8 max-w-2xl text-center">
+          <h2 className="text-4xl sm:text-5xl font-headline font-bold text-foreground mb-6">
+            Pronto para elevar o nível da gestão da sua guilda?
+          </h2>
+          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
+            Junte-se a milhares de líderes de guildas que estão otimizando suas operações com rastreamento DKP automatizado, gerenciamento de eventos e integração com Discord.
+          </p>
+          <Button asChild size="lg" className="btn-gradient btn-style-primary px-10 py-4 text-lg">
+            <Link href="/signup">Comece a Gerenciar Sua Guilda</Link>
+          </Button>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Não é necessário cartão de crédito para começar
+          </p>
         </div>
       </section>
       {/* Footer removed as per new design */}
