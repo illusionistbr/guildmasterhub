@@ -16,7 +16,8 @@ import {
   getDocs,
   writeBatch,
   serverTimestamp,
-  increment
+  increment,
+  arrayUnion // Importar arrayUnion
 } from "firebase/firestore";
 import { getAuth, updateProfile as firebaseUpdateProfile } from "firebase/auth"; // Renamed to avoid conflict
 import { 
@@ -69,6 +70,7 @@ export {
   writeBatch,
   serverTimestamp,
   increment,
+  arrayUnion, // Adicionar arrayUnion à lista de exportações
   ref,
   uploadBytes,
   getDownloadURL,
