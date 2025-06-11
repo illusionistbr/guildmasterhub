@@ -56,7 +56,7 @@ export default function GuildSelectionPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <PageTitle title="Bem-vindo ao GuildMasterHub!" description="Escolha sua guilda ou crie uma nova para começar." icon={Home} />
+        <PageTitle title="Bem-vindo ao GuildMasterHub!" description="Escolha sua guilda ou crie uma nova para começar." icon={<Home className="h-8 w-8 text-primary" />} />
         <div className="grid md:grid-cols-2 gap-6">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
@@ -89,7 +89,7 @@ export default function GuildSelectionPage() {
       <PageTitle 
         title={`Olá, ${user.displayName || 'Aventureiro'}!`} 
         description="Pronto para sua próxima jornada? Escolha uma guilda existente ou crie uma nova."
-        icon={Home}
+        icon={<Home className="h-8 w-8 text-primary" />}
       />
 
       <div className="grid md:grid-cols-2 gap-8">
