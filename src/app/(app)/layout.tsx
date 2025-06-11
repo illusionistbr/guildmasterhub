@@ -48,7 +48,7 @@ export default function AppLayout({
       <SidebarProvider defaultOpen={true}>
         <AppSidebar />
         <div className="flex flex-col flex-1 min-h-screen">
-          <AppHeader />
+          <AppHeader showSidebarTrigger={true} />
           <SidebarRail />
           <SidebarInset> {/* SidebarInset já é um <main> e aplica bg-background */}
             {children}
@@ -60,7 +60,7 @@ export default function AppLayout({
     // Layout sem sidebar, mas com AppHeader
     return (
       <div className="flex flex-col flex-1 min-h-screen">
-        <AppHeader />
+        <AppHeader showSidebarTrigger={false} />
         <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
           {children}
         </main>
