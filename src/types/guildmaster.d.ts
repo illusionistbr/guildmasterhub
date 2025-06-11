@@ -13,6 +13,14 @@ export interface Guild {
   game?: string;
   tags?: string[];
   createdAt?: Date | Timestamp; // Can be Firestore Timestamp on read, Date after conversion, or FieldValue on write
+  password?: string;
+  isOpen?: boolean;
+  socialLinks?: {
+    facebook?: string;
+    x?: string;
+    youtube?: string;
+    discord?: string;
+  };
 }
 
 export interface Event {
