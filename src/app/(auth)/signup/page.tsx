@@ -1,0 +1,106 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserPlus } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+
+export default function SignupPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signup } = useAuth();
+  const router = useRouter();
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      if (signup) {
+        await signup(email, password);
+        router.push("/dashboard"); // Or a profile setup page
+      } else {
+        setError("Funcionalidade de cadastro não implementada no mock.");
+      }
+    } catch (err) {
+      setError("Falha ao criar conta. Tente novamente.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  return (
+    <>
+      <CardHeader className="text-center">
+        <CardTitle className="text-3xl font-headline text-primary">Crie Sua Conta</CardTitle>
+        <CardDescription>Junte-se ao GuildMasterHub e comece a gerenciar sua guilda hoje mesmo!</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSignup} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="seuemail@example.com" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required 
+              className="form-input"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Senha</Label>
+            <Input 
+              id="password" 
+              type="password" 
+              placeholder="********" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+              className="form-input"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+            <Input 
+              id="confirmPassword" 
+              type="password" 
+              placeholder="********" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required 
+              className="form-input"
+            />
+          </div>
+          {error && <p className="text-sm text-destructive text-center">{error}</p>}
+          <Button type="submit" className="w-full btn-gradient btn-style-primary" disabled={loading}>
+            {loading ? "Criando conta..." : <><UserPlus className="mr-2 h-5 w-5"/> Criar Conta </>}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter className="flex flex-col items-center">
+        <p className="text-sm text-muted-foreground">
+          Já tem uma conta?{" "}
+          <Button variant="link" asChild className="text-primary hover:underline p-0">
+            <Link href="/login">Faça login</Link>
+          </Button>
+        </p>
+      </CardFooter>
+    </>
+  );
+}
