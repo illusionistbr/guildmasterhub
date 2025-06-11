@@ -125,7 +125,7 @@ export default function LandingPage() {
               alt="Prévia do Gerenciamento de Guilda"
               width={600}
               height={412}
-              className="rounded-xl shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-300"
+              className="rounded-xl transform -rotate-3 hover:rotate-0 transition-transform duration-300 shadow-[0px_0px_35px_rgba(127,95,243,0.7)]"
               data-ai-hint="app screenshot interface"
               priority
             />
