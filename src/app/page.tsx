@@ -39,6 +39,25 @@ export default function LandingPage() {
     },
   ];
 
+  const testimonials = [
+    {
+      quote: "Organizar as raides era um caos. Com o GuildMasterHub, nossos eventos rodam com precisão militar. Derrotamos o Lich de Gelo na primeira semana de uso!",
+      name: "Lord Kael",
+      role: "Líder da [Ira dos Dragões]",
+      avatarUrl: "https://placehold.co/64x64.png?text=LK",
+      avatarFallback: "LK",
+      aiHint: "warrior avatar"
+    },
+    {
+      quote: "Nossa página de recrutamento ficou incrível! Recebemos o dobro de aplicações de jogadores de alta qualidade desde que começamos a usar a plataforma.",
+      name: "Zyra",
+      role: "Oficial de [Sentinelas de Aço]",
+      avatarUrl: "https://placehold.co/64x64.png?text=ZY",
+      avatarFallback: "ZY",
+      aiHint: "mage avatar"
+    },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="py-6 px-8 md:px-16 flex justify-between items-center relative">
@@ -124,7 +143,7 @@ export default function LandingPage() {
           </p>
           <div className="grid md:grid-cols-3 gap-8 md:gap-12">
             <div className="flex flex-col items-center">
-               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-yellow-400 mb-4">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="8" y1="15" x2="16" y2="15"></line>
                 <line x1="9" y1="9" x2="9.01" y2="9"></line>
@@ -166,8 +185,37 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <section id="testimonials" className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-foreground mb-4">
+            A Lenda Contada Pelos Heróis
+          </h2>
+          <p className="text-lg text-muted-foreground mb-12">
+            Veja o que os líderes de guildas estão dizendo.
+          </p>
+          <div className="grid md:grid-cols-2 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className="card-bg p-8 rounded-xl text-left flex flex-col">
+                <blockquote className="text-base italic text-foreground/90 mb-6 flex-grow">
+                  "{testimonial.quote}"
+                </blockquote>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16 border-2 border-primary">
+                    <AvatarImage src={testimonial.avatarUrl} alt={testimonial.name} data-ai-hint={testimonial.aiHint} />
+                    <AvatarFallback>{testimonial.avatarFallback}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       {/* Footer removed as per new design */}
     </div>
   );
 }
-
