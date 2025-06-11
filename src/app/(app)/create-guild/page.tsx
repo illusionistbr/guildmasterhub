@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageTitle } from '@/components/shared/PageTitle';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Added Alert
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle } from 'lucide-react'; // Added new icons
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -24,10 +24,10 @@ const guildSchema = z.object({
   description: z.string().max(500, "Descrição deve ter no máximo 500 caracteres.").optional(),
   game: z.string().max(50, "Nome do jogo deve ter no máximo 50 caracteres.").optional(),
   password: z.string().max(50, "Senha deve ter no máximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
-  socialFacebook: z.string().max(200, "Link do Facebook muito longo.").optional(),
-  socialX: z.string().max(200, "Link do X (Twitter) muito longo.").optional(),
-  socialYoutube: z.string().max(200, "Link do YouTube muito longo.").optional(),
-  socialDiscord: z.string().max(200, "Link do Discord muito longo.").optional(),
+  socialFacebook: z.string().url("URL do Facebook inválida.").max(200, "Link do Facebook muito longo.").optional().or(z.literal('')),
+  socialX: z.string().url("URL do X (Twitter) inválida.").max(200, "Link do X (Twitter) muito longo.").optional().or(z.literal('')),
+  socialYoutube: z.string().url("URL do YouTube inválida.").max(200, "Link do YouTube muito longo.").optional().or(z.literal('')),
+  socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
 });
 
 type GuildFormValues = z.infer<typeof guildSchema>;
@@ -41,6 +41,12 @@ export default function CreateGuildPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<GuildFormValues>({
     resolver: zodResolver(guildSchema),
   });
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
 
   const onSubmit: SubmitHandler<GuildFormValues> = async (data) => {
     if (!user) {
@@ -64,7 +70,6 @@ export default function CreateGuildPage() {
         memberCount: 1,
         createdAt: serverTimestamp(),
         isOpen: !data.password,
-        // Default banner and logo, user can change later
         bannerUrl: `https://placehold.co/1200x300.png?text=${encodeURIComponent(data.name + ' Banner')}`,
         logoUrl: `https://placehold.co/150x150.png?text=${encodeURIComponent(data.name.substring(0,2).toUpperCase())}`,
     };
@@ -75,7 +80,6 @@ export default function CreateGuildPage() {
     if (Object.keys(socialLinks).length > 0) {
         guildData.socialLinks = socialLinks;
     }
-
 
     try {
       const newGuildRef = await addDoc(collection(db, "guilds"), guildData);
@@ -100,13 +104,8 @@ export default function CreateGuildPage() {
     }
   };
   
-  if (authLoading) {
+  if (authLoading || !user) {
       return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
-  }
-
-  if (!user && !authLoading) {
-      router.push('/login'); 
-      return null; 
   }
 
   return (
@@ -240,3 +239,5 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+    
