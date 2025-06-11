@@ -1,37 +1,38 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Theme based on PRD and visual cues from dashboard screenshot */
-    --background: 260 35% 10%; /* #130D1A - Very Dark Purple for main content area */
-    --foreground: 0 0% 90%; /* #e6e6e6 - Light Gray/White for text */
+    /* Theme updated to match the new landing page design */
+    --background: 275 25% 8%; /* #110D15 - Very Dark Purple */
+    --foreground: 0 0% 95%; /* #f2f2f2 - Light Gray/Off-White for text */
 
-    --card: 250 30% 20%; /* #2C263B - Slightly lighter violet for card backgrounds */
+    --card: 270 30% 12%; /* #16111B - Darker violet for card backgrounds */
     --card-foreground: 0 0% 90%; /* #e6e6e6 */
 
-    --popover: 270 40% 10%; /* #130D1A - Very Dark Violet for popovers */
+    --popover: 270 35% 10%; /* #130D1A - Very Dark Violet for popovers */
     --popover-foreground: 0 0% 95%; /* #f2f2f2 */
 
-    --primary: 271 100% 65%; /* #A445F1 - Brighter Violet for titles and primary elements */
+    --primary: 265 90% 65%; /* #9F4BFF - Vibrant Purple for buttons, logo, accents */
     --primary-foreground: 0 0% 100%; /* #ffffff - White */
 
     --secondary: 0 0% 75%; /* #C0C0C0 - Silver */
     --secondary-foreground: 0 0% 10%; /* #1a1a1a - Dark text for silver elements */
 
-    --muted: 271 40% 28%; /* #3A2A4D - Muted Violet */
-    --muted-foreground: 0 0% 70%; /* #b3b3b3 - Lighter muted text */
+    --muted: 270 20% 20%; /* #292430 - Muted Violet for less emphasis areas */
+    --muted-foreground: 0 0% 75%; /* #bfbfbf - Lighter muted text for sub-headlines */
 
-    --accent: 270 100% 75%; /* New vibrant purple for accent #BF80FF */
+    --accent: 280 100% 70%; /* #B56AFF - A slightly different vibrant purple for accents */
     --accent-foreground: 0 0% 100%; /* White text for new accent */
 
     --destructive: 0 70% 50%; /* Standard destructive red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 250 30% 28%; /* #3F3751 - Violet border for cards, slightly lighter than card */
-    --input: 271 40% 25%; /* #312142 - Dark Violet for form inputs */
-    --ring: 0 0% 85%; /* Light Silver/Gray for rings */
+    --border: 270 25% 15%; /* #201A25 - Violet border */
+    --input: 270 30% 18%; /* #25202E - Dark Violet for form inputs */
+    --ring: 265 90% 70%; /* Lightened primary for rings #B26EFF */
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -40,7 +41,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Sidebar specific colors */
+    /* Sidebar specific colors - kept similar to maintain app consistency */
     --sidebar-background: 270 35% 10%;      /* #1A1120 - Very Dark Violet/Almost Black */
     --sidebar-foreground: 0 0% 85%;       /* #d9d9d9 - Light gray for text */
     --sidebar-primary: 271 100% 70%;      /* #B66AFF - Lighter violet for logo text in sidebar */
@@ -65,8 +66,8 @@
   }
 
   body {
-    background-color: hsl(var(--background));
-    background-image: radial-gradient(circle at top right, hsla(var(--primary), 0.25), hsl(var(--background)) 70%);
+    background-color: hsl(var(--background)); /* Solid background color */
+    /* background-image: radial-gradient(circle at top right, hsla(var(--primary), 0.15), hsl(var(--background)) 60%); */ /* Optional subtle gradient if desired, removed for solid look */
     color: hsl(var(--foreground));
     @apply font-body antialiased;
   }
@@ -86,18 +87,17 @@
 
 @layer components {
   .btn-gradient {
-    background-image: linear-gradient(to right, hsl(255, 85%, 60%), hsl(300, 85%, 55%));
+    background-image: linear-gradient(to right, hsl(var(--primary), 0.9), hsl(var(--accent), 0.95)); /* Adjusted gradient to use theme colors */
     color: hsl(var(--primary-foreground));
     @apply rounded-lg transition-all duration-300 ease-in-out text-center;
-    background-size: 200% auto;
+    background-size: 150% auto; /* Adjusted for a potentially smoother transition */
   }
   .btn-gradient:hover:not(:disabled) {
     background-position: right center;
     transform: translateY(-2px);
-    box-shadow: 0 0 5px hsla(var(--primary), 0.7), /* Light purple neon glow */
-                0 0 10px hsla(var(--primary), 0.5),
-                0 0 15px hsla(var(--primary), 0.3),
-                0 4px 20px hsla(var(--primary), 0.4);
+    box-shadow: 0 0 8px hsla(var(--primary), 0.7), 
+                0 0 15px hsla(var(--primary), 0.5),
+                0 4px 20px hsla(var(--primary), 0.3);
   }
   .btn-gradient:disabled {
     @apply opacity-50 cursor-not-allowed;
@@ -111,7 +111,7 @@
     @apply font-medium py-2 px-5;
   }
 
-  .header-bg {
+  .header-bg { /* This class is used in AppHeader, keep it for app consistency if needed elsewhere */
     background-color: hsla(var(--sidebar-background), 0.8);
     backdrop-filter: blur(10px);
   }
@@ -122,12 +122,12 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 2px;
-    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+    height: 2px; /* Increased height slightly for visibility */
+    background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(39, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 40%), hsl(240, 100%, 60%), hsl(270, 100%, 60%), hsl(300, 100%, 50%));
   }
 
-  .text-gradient {
-    background: linear-gradient(90deg, hsl(var(--primary-foreground)), hsl(var(--secondary)));
+  .text-gradient { /* Existing text gradient, can be used if needed */
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
@@ -136,9 +136,9 @@
     background-color: hsl(var(--card));
     @apply rounded-xl;
     box-shadow: none;
-    border-width: 2px;
+    border-width: 1px; /* Reduced border width for cards */
     border-style: solid;
-    border-color: transparent;
+    border-color: hsl(var(--border)); /* Use theme border color */
     transition: all 300ms ease-in-out;
     position: relative;
   }
@@ -151,11 +151,10 @@
     right: 0;
     bottom: 0;
     border-radius: inherit;
-    border: 2px solid transparent;
+    border: 1px solid transparent; /* Match border width */
     background: linear-gradient(45deg,
                 hsl(var(--primary)),
-                hsl(var(--primary)),
-                hsl(var(--primary))) border-box;
+                hsl(var(--accent))) border-box; /* Use primary and accent for gradient border */
     -webkit-mask: linear-gradient(#fff 0 0) padding-box,
                   linear-gradient(#fff 0 0);
     -webkit-mask-composite: destination-out;
@@ -165,21 +164,21 @@
   }
 
   .card-bg:hover::before {
-    opacity: 1;
+    opacity: 0.8; /* Slightly reduced opacity for a softer glow */
   }
 
   .card-bg:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2),
-                0 0 15px hsla(var(--primary), 0.7),
-                0 0 30px hsla(var(--primary), 0.4);
+    transform: translateY(-4px); /* Slightly less lift */
+    box-shadow: 0 8px 15px hsla(var(--background), 0.3), /* Softer shadow against dark bg */
+                0 0 10px hsla(var(--primary), 0.5),
+                0 0 20px hsla(var(--accent), 0.3);
   }
 
   .auth-tab {
     @apply w-full py-3 px-4 rounded-lg text-center font-bold cursor-pointer transition-all duration-300;
   }
   .auth-tab.active {
-    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
+    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
     color: hsl(var(--primary-foreground));
     box-shadow: 0 4px 15px hsla(var(--primary), 0.3);
   }
@@ -196,14 +195,14 @@
     @apply w-full py-3 px-4 rounded-lg bg-input border-border text-foreground outline-none transition-colors duration-300;
   }
   .form-input:focus {
-    @apply border-primary shadow-[0_0_5px_hsl(var(--primary))];
+    @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; /* Use theme ring color */
   }
 
   .form-select {
     @apply appearance-none w-full py-3 pl-4 pr-10 rounded-lg bg-input border-border text-foreground outline-none transition-colors duration-300;
   }
   .form-select:focus {
-     @apply border-primary shadow-[0_0_5px_hsl(var(--primary))];
+     @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; /* Use theme ring color */
   }
 
   .input-group-addon {
@@ -217,3 +216,4 @@
     @apply visible opacity-100 z-50;
   }
 }
+
