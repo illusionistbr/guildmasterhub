@@ -67,7 +67,6 @@
 
   body {
     background-color: hsl(var(--background)); /* Solid background color */
-    /* background-image: radial-gradient(circle at top right, hsla(var(--primary), 0.15), hsl(var(--background)) 60%); */ /* Optional subtle gradient if desired, removed for solid look */
     color: hsl(var(--foreground));
     @apply font-body antialiased;
   }
@@ -87,10 +86,10 @@
 
 @layer components {
   .btn-gradient {
-    background-image: linear-gradient(to right, hsl(var(--primary), 0.9), hsl(var(--accent), 0.95)); /* Adjusted gradient to use theme colors */
+    background-image: linear-gradient(to right, hsl(251, 100%, 68%), hsl(289, 100%, 68%));
     color: hsl(var(--primary-foreground));
     @apply rounded-lg transition-all duration-300 ease-in-out text-center;
-    background-size: 150% auto; /* Adjusted for a potentially smoother transition */
+    background-size: 150% auto;
   }
   .btn-gradient:hover:not(:disabled) {
     background-position: right center;
@@ -111,7 +110,7 @@
     @apply font-medium py-2 px-5;
   }
 
-  .header-bg { /* This class is used in AppHeader, keep it for app consistency if needed elsewhere */
+  .header-bg { 
     background-color: hsla(var(--sidebar-background), 0.8);
     backdrop-filter: blur(10px);
   }
@@ -122,11 +121,11 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 2px; /* Increased height slightly for visibility */
+    height: 2px; 
     background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(39, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 40%), hsl(240, 100%, 60%), hsl(270, 100%, 60%), hsl(300, 100%, 50%));
   }
 
-  .text-gradient { /* Existing text gradient, can be used if needed */
+  .text-gradient { 
     background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -136,9 +135,9 @@
     background-color: hsl(var(--card));
     @apply rounded-xl;
     box-shadow: none;
-    border-width: 1px; /* Reduced border width for cards */
+    border-width: 1px; 
     border-style: solid;
-    border-color: hsl(var(--border)); /* Use theme border color */
+    border-color: hsl(var(--border)); 
     transition: all 300ms ease-in-out;
     position: relative;
   }
@@ -151,10 +150,10 @@
     right: 0;
     bottom: 0;
     border-radius: inherit;
-    border: 1px solid transparent; /* Match border width */
+    border: 1px solid transparent; 
     background: linear-gradient(45deg,
                 hsl(var(--primary)),
-                hsl(var(--accent))) border-box; /* Use primary and accent for gradient border */
+                hsl(var(--accent))) border-box; 
     -webkit-mask: linear-gradient(#fff 0 0) padding-box,
                   linear-gradient(#fff 0 0);
     -webkit-mask-composite: destination-out;
@@ -164,12 +163,12 @@
   }
 
   .card-bg:hover::before {
-    opacity: 0.8; /* Slightly reduced opacity for a softer glow */
+    opacity: 0.8; 
   }
 
   .card-bg:hover {
-    transform: translateY(-4px); /* Slightly less lift */
-    box-shadow: 0 8px 15px hsla(var(--background), 0.3), /* Softer shadow against dark bg */
+    transform: translateY(-4px); 
+    box-shadow: 0 8px 15px hsla(var(--background), 0.3), 
                 0 0 10px hsla(var(--primary), 0.5),
                 0 0 20px hsla(var(--accent), 0.3);
   }
@@ -195,14 +194,14 @@
     @apply w-full py-3 px-4 rounded-lg bg-input border-border text-foreground outline-none transition-colors duration-300;
   }
   .form-input:focus {
-    @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; /* Use theme ring color */
+    @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; 
   }
 
   .form-select {
     @apply appearance-none w-full py-3 pl-4 pr-10 rounded-lg bg-input border-border text-foreground outline-none transition-colors duration-300;
   }
   .form-select:focus {
-     @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; /* Use theme ring color */
+     @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; 
   }
 
   .input-group-addon {
@@ -216,4 +215,3 @@
     @apply visible opacity-100 z-50;
   }
 }
-

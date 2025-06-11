@@ -20,7 +20,7 @@ export default function LandingPage() {
           <Link href="#testimonials" className="text-sm text-foreground hover:text-primary transition-colors">
             Depoimentos
           </Link>
-          <Button asChild variant="default" className="px-6 bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button asChild className="btn-gradient btn-style-secondary">
             <Link href="/login">Entrar</Link>
           </Button>
         </nav>
