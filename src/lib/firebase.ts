@@ -18,8 +18,9 @@ import {
   serverTimestamp,
   increment,
   arrayUnion,
-  arrayRemove, // Added arrayRemove here
-  deleteField
+  arrayRemove,
+  deleteField,
+  Timestamp // Import Timestamp here
 } from "firebase/firestore";
 import { getAuth, updateProfile as firebaseUpdateProfile } from "firebase/auth"; // Renamed to avoid conflict
 import { 
@@ -73,11 +74,13 @@ export {
   serverTimestamp,
   increment,
   arrayUnion,
-  arrayRemove, // Added arrayRemove to exports
+  arrayRemove,
   deleteField,
+  Timestamp, // Export Timestamp here
   ref,
   uploadBytes,
   getDownloadURL,
   deleteObject,
   firebaseUpdateProfile // Exporting the renamed updateProfile
 };
+
