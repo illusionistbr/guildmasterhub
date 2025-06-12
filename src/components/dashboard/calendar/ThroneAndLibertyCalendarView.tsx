@@ -440,324 +440,327 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           resetDialogStates();
         }
       }}>
-        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-4 shrink-0">
             <DialogTitle className="font-headline text-primary">Registrar Nova Atividade</DialogTitle>
             <DialogDescription>
               Preencha os detalhes da atividade para adicioná-la ao calendário.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-grow pr-6 -mr-6"> 
-          <TooltipProvider>
-            <div className="grid gap-6 py-4">
-              {/* Category, Subcategory, Activity */}
-              <div className="grid grid-cols-1 gap-y-4">
-                <div>
-                  <Label htmlFor="category" className="text-foreground font-semibold mb-1 block">Categoria</Label>
-                  <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
-                    <SelectTrigger id="category"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
-                    <SelectContent>
-                      {TL_EVENT_CATEGORIES.map(cat => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="subcategory" className="text-foreground font-semibold mb-1 block">Subcategoria</Label>
-                  <Select 
-                    onValueChange={setSelectedSubcategory} 
-                    value={selectedSubcategory || ""}
-                    disabled={!selectedCategory || currentSubcategories.length === 0}
-                  >
-                    <SelectTrigger id="subcategory"><SelectValue placeholder="Selecione (se aplicável)" /></SelectTrigger>
-                    <SelectContent>
-                      {currentSubcategories.map(subcat => (
-                        <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {selectedCategory === 'other' ? (
-                  <div>
-                    <Label htmlFor="customActivity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
-                    <Input
-                      id="customActivity"
-                      placeholder="Digite o nome da atividade"
-                      value={customActivityName}
-                      onChange={(e) => setCustomActivityName(e.target.value)}
-                      disabled={!selectedCategory} 
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <Label htmlFor="activity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
-                    <Select 
-                      onValueChange={setSelectedActivity} 
-                      value={selectedActivity || ""}
-                      disabled={
-                        !selectedCategory ||
-                        (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) || 
-                        currentActivities.length === 0
-                      }
-                    >
-                      <SelectTrigger id="activity"><SelectValue placeholder="Selecione uma atividade/evento" /></SelectTrigger>
-                      <SelectContent>
-                        {currentActivities.map(act => (
-                          <SelectItem key={act} value={act}>{act}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-              
-              {/* Date and Time Pickers */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Início (Local)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="start-datetime-trigger"
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal h-10 px-3 py-2 rounded-md border border-input bg-background",
-                          !selectedStartDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIconLucide className="mr-2 h-4 w-4" />
-                        {formatDateTimeForDisplay(selectedStartDate, selectedStartTime) || <span>Escolha data e hora</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedStartDate}
-                        onSelect={setSelectedStartDate}
-                        initialFocus
-                        locale={ptBR}
-                      />
-                      <div className="p-4 border-t border-border">
-                        <p className="text-sm font-medium mb-2 text-foreground">Horário Início</p>
-                        <div className="flex gap-2">
-                          <Select
-                            value={selectedStartTime.split(':')[0]}
-                            onValueChange={(h) => setSelectedStartTime(`${h.padStart(2, '0')}:${selectedStartTime.split(':')[1]}`)}
-                          >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                            <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <Select
-                            value={selectedStartTime.split(':')[1]}
-                            onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m.padStart(2, '0')}`)}
-                          >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                            <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <p className="text-xs text-muted-foreground">Selecione data e hora de início no seu fuso horário local.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="end-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Fim (Opcional)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="end-datetime-trigger"
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal h-10 px-3 py-2 rounded-md border border-input bg-background",
-                          !selectedEndDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIconLucide className="mr-2 h-4 w-4" />
-                        {formatDateTimeForDisplay(selectedEndDate, selectedEndTime) || <span>Escolha data e hora (opcional)</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedEndDate}
-                        onSelect={setSelectedEndDate}
-                        disabled={(date) => selectedStartDate ? date < selectedStartDate : false}
-                        initialFocus
-                        locale={ptBR}
-                      />
-                      <div className="p-4 border-t border-border">
-                        <p className="text-sm font-medium mb-2 text-foreground">Horário Fim</p>
-                        <div className="flex gap-2">
-                           <Select
-                            value={selectedEndTime.split(':')[0]}
-                            onValueChange={(h) => setSelectedEndTime(`${h.padStart(2, '0')}:${selectedEndTime.split(':')[1]}`)}
-                          >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                            <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <Select
-                            value={selectedEndTime.split(':')[1]}
-                            onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m.padStart(2, '0')}`)}
-                          >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                            <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
-                </div>
-              </div>
-
-              {/* Mandatory and Attendance Value */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                  <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
-                    <Switch
-                      id="mandatory-switch"
-                      checked={isMandatory}
-                      onCheckedChange={setIsMandatory}
-                    />
-                    <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1">
-                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença</Label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
-                        <p>A quantidade de pontos de atividade e DKP que serão concedidos aos membros que participarem desta atividade.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <Input
-                    id="attendance-value"
-                    type="number"
-                    value={attendanceValue}
-                    onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                    min="0"
-                    className="h-10"
-                  />
-                </div>
-              </div>
-              
-              {/* New Fields from Image */}
-              <div className="space-y-4 pt-4">
-                <div>
-                  <Label htmlFor="activity-description" className="text-foreground font-semibold mb-1 block">Descrição (Opcional)</Label>
-                  <Textarea
-                    id="activity-description"
-                    placeholder="Descrição da atividade..."
-                    value={activityDescription}
-                    onChange={(e) => setActivityDescription(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <Label htmlFor="announcement-channel" className="text-foreground font-semibold">Canal de Anúncio</Label>
-                    <Tooltip>
-                      <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
-                      <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Canal do Discord onde o anúncio do evento será enviado.</p></TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <Select value={announcementChannel} onValueChange={setAnnouncementChannel}>
-                    <SelectTrigger id="announcement-channel"><SelectValue placeholder="Selecione um canal" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Canal Padrão">Canal Padrão</SelectItem>
-                      {/* TODO: Populate with actual Discord channels if integration exists */}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                    <div className="flex items-center gap-1 mb-1">
-                        <Label className="text-foreground font-semibold">Horário do Anúncio</Label>
-                        <Tooltip>
-                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
-                            <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Quando o anúncio deve ser enviado no canal do Discord.</p></TooltipContent>
-                        </Tooltip>
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="px-6"> {/* Inner div for padding */}
+              <TooltipProvider>
+                <div className="grid gap-6 py-4">
+                  {/* Category, Subcategory, Activity */}
+                  <div className="grid grid-cols-1 gap-y-4">
+                    <div>
+                      <Label htmlFor="category" className="text-foreground font-semibold mb-1 block">Categoria</Label>
+                      <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
+                        <SelectTrigger id="category" disabled={!TL_EVENT_CATEGORIES || TL_EVENT_CATEGORIES.length === 0}><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                        <SelectContent>
+                          {TL_EVENT_CATEGORIES.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Button
-                            variant={announcementTimeOption === "instant" ? "default" : "outline"}
-                            onClick={() => setAnnouncementTimeOption("instant")}
-                            className={cn("h-10", announcementTimeOption === "instant" && "bg-primary text-primary-foreground")}
-                        >
-                            Enviar Instantaneamente
-                        </Button>
-                        <span className="text-muted-foreground">ou</span>
+
+                    <div>
+                      <Label htmlFor="subcategory" className="text-foreground font-semibold mb-1 block">Subcategoria</Label>
+                      <Select 
+                        onValueChange={setSelectedSubcategory} 
+                        value={selectedSubcategory || ""}
+                        disabled={!selectedCategory || currentSubcategories.length === 0}
+                      >
+                        <SelectTrigger id="subcategory"><SelectValue placeholder="Selecione (se aplicável)" /></SelectTrigger>
+                        <SelectContent>
+                          {currentSubcategories.map(subcat => (
+                            <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {selectedCategory === 'other' ? (
+                      <div>
+                        <Label htmlFor="customActivity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
                         <Input
-                            type="number"
-                            value={announcementTimeValue}
-                            onChange={(e) => setAnnouncementTimeValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                            onClick={() => setAnnouncementTimeOption("scheduled")}
-                            className={cn("w-20 h-10 text-center", announcementTimeOption === "scheduled" ? "border-primary ring-1 ring-primary" : "")}
-                            min="1"
+                          id="customActivity"
+                          placeholder="Digite o nome da atividade"
+                          value={customActivityName}
+                          onChange={(e) => setCustomActivityName(e.target.value)}
+                          disabled={selectedCategory !== 'other'} 
                         />
-                        <div className="flex rounded-md border border-input h-10">
-                            <Button
-                                variant={announcementTimeUnit === "Hrs" && announcementTimeOption === "scheduled" ? "default" : "ghost"}
-                                onClick={() => { setAnnouncementTimeUnit("Hrs"); setAnnouncementTimeOption("scheduled"); }}
-                                className={cn("rounded-r-none border-r", announcementTimeUnit === "Hrs" && announcementTimeOption === "scheduled" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-muted")}
-                            >
-                                Hrs
-                            </Button>
-                            <Button
-                                variant={announcementTimeUnit === "Mins" && announcementTimeOption === "scheduled" ? "default" : "ghost"}
-                                onClick={() => { setAnnouncementTimeUnit("Mins"); setAnnouncementTimeOption("scheduled"); }}
-                                className={cn("rounded-l-none", announcementTimeUnit === "Mins" && announcementTimeOption === "scheduled" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-muted")}
-                            >
-                                Mins
-                            </Button>
-                        </div>
-                        <span className="text-muted-foreground">antes do evento</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label htmlFor="activity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
+                        <Select 
+                          onValueChange={setSelectedActivity} 
+                          value={selectedActivity || ""}
+                          disabled={
+                            selectedCategory === 'other' || // Disable if "Other" is chosen (handled by Input)
+                            !selectedCategory || // Disable if no category
+                            (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) ||  // Disable if subcategories exist but none chosen
+                            currentActivities.length === 0 // Disable if no activities for current selection
+                          }
+                        >
+                          <SelectTrigger id="activity"><SelectValue placeholder="Selecione uma atividade/evento" /></SelectTrigger>
+                          <SelectContent>
+                            {currentActivities.map(act => (
+                              <SelectItem key={act} value={act}>{act}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Date and Time Pickers */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Início (Local)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="start-datetime-trigger"
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-10 px-3 py-2 rounded-md border border-input bg-background",
+                              !selectedStartDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                            {formatDateTimeForDisplay(selectedStartDate, selectedStartTime) || <span>Escolha data e hora</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={selectedStartDate}
+                            onSelect={setSelectedStartDate}
+                            initialFocus
+                            locale={ptBR}
+                          />
+                          <div className="p-4 border-t border-border">
+                            <p className="text-sm font-medium mb-2 text-foreground">Horário Início</p>
+                            <div className="flex gap-2">
+                              <Select
+                                value={selectedStartTime.split(':')[0]}
+                                onValueChange={(h) => setSelectedStartTime(`${h.padStart(2, '0')}:${selectedStartTime.split(':')[1]}`)}
+                              >
+                                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                              </Select>
+                              <Select
+                                value={selectedStartTime.split(':')[1]}
+                                onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m.padStart(2, '0')}`)}
+                              >
+                                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-muted-foreground">Selecione data e hora de início no seu fuso horário local.</p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Selecione quanto tempo antes do evento o anúncio deve ser enviado (mínimo 10 minutos se agendado).</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                    <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
-                        <Label htmlFor="announce-discord-switch" className="text-foreground text-sm">Anunciar criação no Discord</Label>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="end-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Fim (Opcional)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="end-datetime-trigger"
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-10 px-3 py-2 rounded-md border border-input bg-background",
+                              !selectedEndDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                            {formatDateTimeForDisplay(selectedEndDate, selectedEndTime) || <span>Escolha data e hora (opcional)</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={selectedEndDate}
+                            onSelect={setSelectedEndDate}
+                            disabled={(date) => selectedStartDate ? date < selectedStartDate : false}
+                            initialFocus
+                            locale={ptBR}
+                          />
+                          <div className="p-4 border-t border-border">
+                            <p className="text-sm font-medium mb-2 text-foreground">Horário Fim</p>
+                            <div className="flex gap-2">
+                               <Select
+                                value={selectedEndTime.split(':')[0]}
+                                onValueChange={(h) => setSelectedEndTime(`${h.padStart(2, '0')}:${selectedEndTime.split(':')[1]}`)}
+                              >
+                                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                              </Select>
+                              <Select
+                                value={selectedEndTime.split(':')[1]}
+                                onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m.padStart(2, '0')}`)}
+                              >
+                                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
+                    </div>
+                  </div>
+
+                  {/* Mandatory and Attendance Value */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
+                      <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                         <Switch
-                            id="announce-discord-switch"
-                            checked={announceOnDiscord}
-                            onCheckedChange={setAnnounceOnDiscord}
+                          id="mandatory-switch"
+                          checked={isMandatory}
+                          onCheckedChange={setIsMandatory}
                         />
+                        <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
-                         <div className="flex items-center gap-1">
-                            <Label htmlFor="generate-pin-switch" className="text-foreground text-sm">Gerar código PIN</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1">
+                        <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
+                            <p>A quantidade de pontos de atividade e DKP que serão concedidos aos membros que participarem desta atividade.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Input
+                        id="attendance-value"
+                        type="number"
+                        value={attendanceValue}
+                        onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        min="0"
+                        className="h-10" 
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* New Fields from Image */}
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <Label htmlFor="activity-description" className="text-foreground font-semibold mb-1 block">Descrição (Opcional)</Label>
+                      <Textarea
+                        id="activity-description"
+                        placeholder="Descrição da atividade..."
+                        value={activityDescription}
+                        onChange={(e) => setActivityDescription(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-1 mb-1">
+                        <Label htmlFor="announcement-channel" className="text-foreground font-semibold">Canal de Anúncio</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
+                          <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Canal do Discord onde o anúncio do evento será enviado.</p></TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <Select value={announcementChannel} onValueChange={setAnnouncementChannel}>
+                        <SelectTrigger id="announcement-channel"><SelectValue placeholder="Selecione um canal" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Canal Padrão">Canal Padrão</SelectItem>
+                          {/* TODO: Populate with actual Discord channels if integration exists */}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-1 mb-1">
+                            <Label className="text-foreground font-semibold">Horário do Anúncio</Label>
                             <Tooltip>
                                 <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
-                                <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Gera um código PIN único para os membros usarem para confirmar presença ou para acesso especial ao evento.</p></TooltipContent>
+                                <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Quando o anúncio deve ser enviado no canal do Discord.</p></TooltipContent>
                             </Tooltip>
                         </div>
-                        <Switch
-                            id="generate-pin-switch"
-                            checked={generatePinCode}
-                            onCheckedChange={setGeneratePinCode}
-                        />
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Button
+                                variant={announcementTimeOption === "instant" ? "default" : "outline"}
+                                onClick={() => setAnnouncementTimeOption("instant")}
+                                className={cn("h-10", announcementTimeOption === "instant" && "bg-primary text-primary-foreground")}
+                            >
+                                Enviar Instantaneamente
+                            </Button>
+                            <span className="text-muted-foreground">ou</span>
+                            <Input
+                                type="number"
+                                value={announcementTimeValue}
+                                onChange={(e) => setAnnouncementTimeValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                onClick={() => setAnnouncementTimeOption("scheduled")}
+                                className={cn("w-20 h-10 text-center", announcementTimeOption === "scheduled" ? "border-primary ring-1 ring-primary" : "")}
+                                min="1"
+                            />
+                            <div className="flex rounded-md border border-input h-10">
+                                <Button
+                                    variant={announcementTimeUnit === "Hrs" && announcementTimeOption === "scheduled" ? "default" : "ghost"}
+                                    onClick={() => { setAnnouncementTimeUnit("Hrs"); setAnnouncementTimeOption("scheduled"); }}
+                                    className={cn("rounded-r-none border-r", announcementTimeUnit === "Hrs" && announcementTimeOption === "scheduled" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-muted")}
+                                >
+                                    Hrs
+                                </Button>
+                                <Button
+                                    variant={announcementTimeUnit === "Mins" && announcementTimeOption === "scheduled" ? "default" : "ghost"}
+                                    onClick={() => { setAnnouncementTimeUnit("Mins"); setAnnouncementTimeOption("scheduled"); }}
+                                    className={cn("rounded-l-none", announcementTimeUnit === "Mins" && announcementTimeOption === "scheduled" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-muted")}
+                                >
+                                    Mins
+                                </Button>
+                            </div>
+                            <span className="text-muted-foreground">antes do evento</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Selecione quanto tempo antes do evento o anúncio deve ser enviado (mínimo 10 minutos se agendado).</p>
                     </div>
-                </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                        <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                            <Label htmlFor="announce-discord-switch" className="text-foreground text-sm">Anunciar criação no Discord</Label>
+                            <Switch
+                                id="announce-discord-switch"
+                                checked={announceOnDiscord}
+                                onCheckedChange={setAnnounceOnDiscord}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                             <div className="flex items-center gap-1">
+                                <Label htmlFor="generate-pin-switch" className="text-foreground text-sm">Gerar código PIN</Label>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
+                                    <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Gera um código PIN único para os membros usarem para confirmar presença ou para acesso especial ao evento.</p></TooltipContent>
+                                </Tooltip>
+                            </div>
+                            <Switch
+                                id="generate-pin-switch"
+                                checked={generatePinCode}
+                                onCheckedChange={setGeneratePinCode}
+                            />
+                        </div>
+                    </div>
 
-              </div>
+                  </div>
+                </div>
+              </TooltipProvider>
             </div>
-          </TooltipProvider>
           </ScrollArea>
-          <DialogFooter className="pt-4">
+          <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
             <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
             <Button 
               onClick={handleSaveActivity} 
