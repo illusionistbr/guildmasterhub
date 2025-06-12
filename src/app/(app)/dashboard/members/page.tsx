@@ -85,12 +85,18 @@ function MembersPageContent() {
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
 
-        if (guildData.memberIds && guildData.memberIds.length > 0) {
-          const userProfilesPromises = guildData.memberIds.map(uid => getDoc(doc(db, "users", uid)));
+        let memberIdsToFetch = guildData.memberIds || [];
+        // Ensure owner is always considered for fetching if not already in memberIds (for robustness)
+        if (guildData.ownerId && !memberIdsToFetch.includes(guildData.ownerId)) {
+            memberIdsToFetch = [...new Set([...memberIdsToFetch, guildData.ownerId])]; // Use Set to avoid duplicates if ownerId was somehow already there but different case
+        }
+        
+        if (memberIdsToFetch.length > 0) {
+          const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
           const userProfileSnaps = await Promise.all(userProfilesPromises);
           
           const fetchedMembers: GuildMember[] = userProfileSnaps
-            .map(snap => snap.exists() ? snap.data() as UserProfile : null)
+            .map(snap => snap.exists() ? { ...(snap.data() as UserProfile), uid: snap.id } : null) // Ensure uid is correctly passed from doc id
             .filter(profile => profile !== null)
             .map(profile => ({
               ...(profile as UserProfile),
@@ -255,7 +261,7 @@ function MembersPageContent() {
       case GuildRole.Leader: return <Crown className="h-5 w-5 text-yellow-400" />;
       case GuildRole.ViceLeader: return <Shield className="h-5 w-5 text-orange-400" />;
       case GuildRole.Counselor: return <BadgeCent className="h-5 w-5 text-sky-400" />;
-      case GuildRole.Officer: return <UserCog className="h-5 w-5 text-green-400" />; // Changed from ShieldCheck for variety
+      case GuildRole.Officer: return <UserCog className="h-5 w-5 text-green-400" />;
       default: return <User className="h-5 w-5 text-muted-foreground" />;
     }
   };
@@ -409,3 +415,6 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
+
+    
