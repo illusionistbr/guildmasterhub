@@ -79,3 +79,33 @@ export interface UserProfile {
 export interface GuildMember extends UserProfile {
   role: GuildRole;
 }
+
+// Audit Log Types
+export enum AuditActionType {
+  MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
+  MEMBER_KICKED = "MEMBER_KICKED",
+  MEMBER_JOINED = "MEMBER_JOINED", // Future use
+  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", // Future use for name, desc, etc.
+  GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED", // Future use
+  GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED", // Future use
+  // Add more actions as needed
+}
+
+export interface AuditLogDetails {
+  targetUserId?: string;
+  targetUserDisplayName?: string;
+  oldValue?: string | GuildRole;
+  newValue?: string | GuildRole;
+  fieldName?: string;
+  kickedUserRole?: GuildRole; // Specific for MEMBER_KICKED
+  // Extend with other specific details for different actions
+}
+
+export interface AuditLogEntry {
+  id?: string; // Firestore document ID
+  timestamp: Timestamp;
+  actorId: string;
+  actorDisplayName: string | null;
+  action: AuditActionType;
+  details?: AuditLogDetails;
+}

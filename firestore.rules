@@ -4,144 +4,158 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user ID is the owner of the guild
-    function isGuildOwner(guildId) {
-      return get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId == request.auth.uid;
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Helper function to get the role of the requesting user in a specific guild
-    function getUserRole(guildId) {
-      let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
-      return guildData.roles[request.auth.uid];
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Helper function to check if a value is one of the defined GuildRole strings
+    // Get data for a specific guild
+    function getGuildData(guildId) {
+      return get(/databases/$(database)/documents/guilds/$(guildId)).data;
+    }
+
+    // Get the role of a user in a specific guild
+    function getUserRoleInGuild(userId, guildId) {
+      let guildData = getGuildData(guildId);
+      return guildData.roles[userId];
+    }
+
     function isValidGuildRole(role) {
       return role == "Líder" || role == "Vice-Líder" || role == "Conselheiro" || role == "Oficial" || role == "Membro";
     }
-
-    // Helper function to count occurrences of a specific role in the roles map
-    function countRole(rolesMap, roleToCount) {
-      return rolesMap.keys().filter(uid => rolesMap[uid] == roleToCount).size();
-    }
     
-    // Helper function to check if a user is a member of the guild
-    function isMember(guildId) {
-      let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
-      return request.auth.uid in guildData.memberIds;
+    function countRole(rolesMap, roleName) {
+      return rolesMap.keys().filter(uid => rolesMap[uid] == roleName).size();
+    }
+
+    match /users/{userId} {
+      allow read: if true; // Publicly readable for avatars/displayNames
+      allow create: if isUser(userId) && 
+                      request.resource.data.uid == userId &&
+                      request.resource.data.email == request.auth.token.email &&
+                      request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'createdAt']) &&
+                      request.resource.data.createdAt == request.time;
+      allow update: if isUser(userId) &&
+                      request.resource.data.uid == userId && // Cannot change UID
+                      request.resource.data.email == resource.data.email && // Cannot change email via profile update
+                      (!request.resource.data.keys().hasAny(['createdAt']) || request.resource.data.createdAt == resource.data.createdAt); // createdAt immutable if present
+      allow delete: if false; // Users cannot delete their own profiles for now
     }
 
     match /guilds/{guildId} {
-      allow read: if true;
+      allow read: if true; // Guilds are publicly readable for listing/browsing
 
-      allow create: if request.auth != null &&
-                       request.resource.data.ownerId == request.auth.uid &&
-                       request.resource.data.name is string &&
-                       request.resource.data.name.size() >= 3 &&
-                       request.resource.data.name.size() <= 50 &&
-                       request.resource.data.memberCount == 1 &&
-                       request.resource.data.memberIds[0] == request.auth.uid &&
-                       request.resource.data.roles[request.auth.uid] == "Líder" &&
-                       countRole(request.resource.data.roles, "Líder") == 1 &&
-                       (!('password' in request.resource.data) || request.resource.data.password is string) &&
-                       (!('description' in request.resource.data) || request.resource.data.description is string) &&
-                       (!('game' in request.resource.data) || request.resource.data.game is string) &&
-                       (request.resource.data.isOpen == true || request.resource.data.isOpen == false);
-                       // All other fields are optional or have defaults handled by client
-
-      allow update: if request.auth != null && exists(/databases/$(database)/documents/guilds/$(guildId)) {
-        let existingGuildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
-        let requestingUserRole = existingGuildData.roles[request.auth.uid];
-        
-        // Basic field updates (name, description, game, socialLinks, isOpen, password)
-        // Only owner can change fundamental guild details for now or transfer ownership indirectly.
-        // More granular permissions for other roles to update these can be added.
-        let allowsBasicFieldUpdates = requestingUserRole == "Líder" || requestingUserRole == "Vice-Líder";
-        let basicFieldsChanged = request.resource.data.diff(existingGuildData).affectedKeys().hasOnly(['name', 'description', 'game', 'socialLinks', 'isOpen', 'password']);
-        
-        // Banner and Logo updates
-        let allowsVisualUpdates = requestingUserRole == "Líder" || requestingUserRole == "Vice-Líder";
-        let visualFieldsChanged = request.resource.data.diff(existingGuildData).affectedKeys().hasOnly(['bannerUrl', 'logoUrl']);
-
-        // Member joining (public or password-protected guild)
-        // This is when a user clicks "join" or "apply with password"
-        let isJoiningOrLeaving = request.resource.data.memberIds.toSet().diff(existingGuildData.memberIds.toSet()).size() == 1 &&
-                                 request.resource.data.memberCount == existingGuildData.memberCount + 1 &&
-                                 request.resource.data.memberIds.hasAll(existingGuildData.memberIds) && // new list contains all old members
-                                 request.auth.uid in request.resource.data.memberIds && // current user is the one being added
-                                 !(request.auth.uid in existingGuildData.memberIds) && // current user was not already a member
-                                 request.resource.data.roles[request.auth.uid] == "Membro"; // new member gets "Membro" role
-
-        // Role management and kicking
-        let rolesChanged = request.resource.data.roles != existingGuildData.roles;
-        let membersKicked = existingGuildData.memberIds.toSet().diff(request.resource.data.memberIds.toSet()).size() > 0 ||
-                            request.resource.data.memberCount < existingGuildData.memberCount;
-
-
-        // Validations for all updates:
-        let commonValidations = 
-            request.resource.data.name == existingGuildData.name || (requestingUserRole == "Líder" || requestingUserRole == "Vice-Líder") && // Name can only be changed by L/VL
-            request.resource.data.ownerId == existingGuildData.ownerId && // ownerId cannot be changed directly here; needs a transfer flow
-            request.resource.data.roles[request.resource.data.ownerId] == "Líder" && // Owner must always be Líder
-            countRole(request.resource.data.roles, "Líder") == 1 && // Only one Líder
-            request.resource.data.memberCount == request.resource.data.memberIds.size() &&
-            request.resource.data.memberIds.hasAll(request.resource.data.roles.keys()) && // All members in memberIds must have a role
-            request.resource.data.roles.keys().hasAll(request.resource.data.memberIds); // All users with roles must be in memberIds
-            
-            // Validate all assigned roles are valid enum values
-            let allRolesValid = request.resource.data.roles.values(). rozmiar() == 0 || request.resource.data.roles.values().all(role => isValidGuildRole(role));
-
-
-        // Permission logic for role changes or kicking
-        let canManageMembers = false;
-        if (rolesChanged || membersKicked) {
-          if (requestingUserRole == "Líder") {
-            canManageMembers = true; // Líder has broad permissions
-            // Additional check: Líder cannot remove themselves from roles or memberIds this way.
-            canManageMembers = canManageMembers && (request.auth.uid in request.resource.data.roles) && (request.auth.uid in request.resource.data.memberIds);
-
-          } else if (requestingUserRole == "Vice-Líder") {
-            // Vice-Líder can only affect roles/members that are Counselor, Officer, or Member
-            // And cannot affect the Líder or other Vice-Líderes.
-            let affectedUserUids = existingGuildData.roles.keys().filter(uid => existingGuildData.roles[uid] != request.resource.data.roles[uid] || !(uid in request.resource.data.roles));
-            affectedUserUids = affectedUserUids.concat(request.resource.data.roles.keys().filter(uid => !(uid in existingGuildData.roles))); // New roles added
-            
-            let canManageTargetedMembers = affectedUserUids.size() == 0 || affectedUserUids.all(uid => {
-              let targetOldRole = existingGuildData.roles[uid];
-              let targetNewRole = request.resource.data.roles[uid];
-              return (targetOldRole == "Conselheiro" || targetOldRole == "Oficial" || targetOldRole == "Membro" || targetOldRole == null) &&
-                     (targetNewRole == "Conselheiro" || targetNewRole == "Oficial" || targetNewRole == "Membro" || targetNewRole == null) &&
-                     targetOldRole != "Líder" && targetOldRole != "Vice-Líder" &&
-                     targetNewRole != "Líder" && targetNewRole != "Vice-Líder";
-            });
-            canManageMembers = canManageTargetedMembers;
-          }
-        } else {
-          // If no roles changed and no members kicked, this check is not needed for other updates.
-          canManageMembers = true; 
-        }
-        
-        // Combine all conditions
-        ( (allowsBasicFieldUpdates && basicFieldsChanged) ||
-          (allowsVisualUpdates && visualFieldsChanged) ||
-          isJoiningOrLeaving || // User joining guild
-          canManageMembers // Role changes or kicks by authorized roles
-        ) && commonValidations && allRolesValid;
+      function commonValidations(guildData, upcomingData) {
+        return upcomingData.name.size() >= 3 && upcomingData.name.size() <= 50 &&
+               (!upcomingData.keys().has('description') || upcomingData.description.size() <= 500) &&
+               (!upcomingData.keys().has('game') || upcomingData.game.size() <= 50) &&
+               (!upcomingData.keys().has('password') || upcomingData.password.size() <= 50) &&
+               upcomingData.ownerId == request.auth.uid && // For create, or new ownerId must be leader
+               upcomingData.memberIds.hasAny([upcomingData.ownerId]) &&
+               upcomingData.memberCount == upcomingData.memberIds.size() &&
+               upcomingData.roles[upcomingData.ownerId] == "Líder" &&
+               countRole(upcomingData.roles, "Líder") == 1 &&
+               upcomingData.roles.keys().hasAll(upcomingData.memberIds) && // All members must have a role
+               upcomingData.memberIds.hasAll(upcomingData.roles.keys()) && // All roles must correspond to a member
+               upcomingData.roles.values().filter(role => !isValidGuildRole(role)).size() == 0; // All roles must be valid
+      }
+      
+      function isOwnerOrLeader(guildData) {
+          return request.auth.uid == guildData.ownerId || getUserRoleInGuild(request.auth.uid, guildId) == "Líder";
+      }
+      
+      function isViceLeader(guildData) {
+          return getUserRoleInGuild(request.auth.uid, guildId) == "Vice-Líder";
       }
 
-      allow delete: if request.auth != null && isGuildOwner(guildId);
-    }
+      allow create: if isSignedIn() &&
+                      commonValidations(null, request.resource.data) &&
+                      request.resource.data.ownerId == request.auth.uid &&
+                      request.resource.data.memberIds.size() == 1 &&
+                      request.resource.data.memberIds[0] == request.auth.uid &&
+                      request.resource.data.memberCount == 1 &&
+                      request.resource.data.roles[request.auth.uid] == "Líder" &&
+                      request.resource.data.createdAt == request.time;
+      
+      allow update: if isSignedIn() &&
+                      commonValidations(resource.data, request.resource.data) &&
+                      (
+                        // Case 1: Guild owner/leader or vice-leader updating basic info, banner, logo, or managing roles/members
+                        (isOwnerOrLeader(resource.data) || isViceLeader(resource.data)) &&
+                        (
+                           // Only owner/leader can change ownerId (transfer leadership)
+                           (request.resource.data.ownerId == resource.data.ownerId || isOwnerOrLeader(resource.data)) &&
+                           // Name, description, game, password, isOpen, socialLinks can be changed by L/VL
+                           (request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                             'name', 'description', 'game', 'password', 'isOpen', 'socialLinks', 
+                             'bannerUrl', 'logoUrl', 
+                             'memberIds', 'memberCount', 'roles', 'ownerId' // ownerId only if leader transfer
+                           ])) &&
+                           // Specific check for roles management based on hierarchy
+                           (
+                            !request.resource.data.keys().has('roles') || // If roles are not being changed, allow
+                            (
+                              // Leader changing roles
+                              isOwnerOrLeader(resource.data) &&
+                              (
+                                // Leader cannot demote self or make another leader via simple roles update
+                                (request.resource.data.roles[request.auth.uid] == "Líder" || request.resource.data.roles[request.auth.uid] == resource.data.roles[request.auth.uid]) && 
+                                countRole(request.resource.data.roles, "Líder") == 1
+                              )
+                            ) ||
+                            (
+                              // Vice-Leader changing roles
+                              isViceLeader(resource.data) &&
+                              request.resource.data.roles.keys().filter(
+                                userIdToChange => 
+                                  // VL cannot change Leader or other VLs
+                                  (resource.data.roles[userIdToChange] == "Líder" || resource.data.roles[userIdToChange] == "Vice-Líder") &&
+                                  request.resource.data.roles[userIdToChange] != resource.data.roles[userIdToChange]
+                              ).size() == 0 &&
+                              // VL cannot promote to Leader or Vice-Leader
+                              request.resource.data.roles.values().filter(
+                                roleVal => roleVal == "Líder" || roleVal == "Vice-Líder"
+                              ).size() <= countRole(resource.data.roles, "Líder") + countRole(resource.data.roles, "Vice-Líder") 
+                            )
+                           )
+                        )
+                        ||
+                        // Case 2: User joining an open guild or a password-protected guild they have the password for
+                        // This part is simplified; password check ideally happens server-side before client attempts update.
+                        // Client would only update memberIds, memberCount, and add their own role as "Membro".
+                        (
+                          !resource.data.memberIds.hasAny([request.auth.uid]) && // User is not already a member
+                          request.resource.data.memberIds.hasAll([request.auth.uid]) && // Adding self to members
+                          request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1 &&
+                          request.resource.data.memberCount == resource.data.memberCount + 1 &&
+                          request.resource.data.roles[request.auth.uid] == "Membro" && // New member gets "Membro" role
+                          // Ensure only roles, memberIds, memberCount are changed
+                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberCount', 'roles']) &&
+                           // Ensure no other roles were changed
+                          request.resource.data.roles.keys().filter(k => k != request.auth.uid && request.resource.data.roles[k] != resource.data.roles[k]).size() == 0
+                        )
+                      );
 
-    // User profiles collection
-    match /users/{userId} {
-      allow read: if true; // Or if request.auth != null; for more privacy
-      allow create: if request.auth != null && request.auth.uid == userId &&
-                       request.resource.data.uid == userId &&
-                       request.resource.data.displayName is string &&
-                       request.resource.data.email is string;
-                       // photoURL and createdAt are optional or set by server
-      allow update: if request.auth != null && request.auth.uid == userId;
-      // No delete for users for now, to preserve data integrity. Can be added if needed.
+      allow delete: if isSignedIn() && isOwnerOrLeader(resource.data) && request.auth.uid == resource.data.ownerId;
+
+      // Audit Logs Subcollection
+      match /auditLogs/{logId} {
+        allow read: if isSignedIn() &&
+                      (getUserRoleInGuild(request.auth.uid, guildId) == "Líder" ||
+                       getUserRoleInGuild(request.auth.uid, guildId) == "Vice-Líder");
+        allow create: if isSignedIn() &&
+                        request.resource.data.actorId == request.auth.uid &&
+                        getUserRoleInGuild(request.auth.uid, guildId) != null && // Must be a member
+                        request.resource.data.timestamp == request.time &&
+                        isValidGuildRole(request.resource.data.details.oldValue) && // Validate if present
+                        isValidGuildRole(request.resource.data.details.newValue) && // Validate if present
+                        isValidGuildRole(request.resource.data.details.kickedUserRole); // Validate if present
+        allow update, delete: if false; // Audit logs are immutable
+      }
     }
   }
 }
