@@ -114,9 +114,12 @@ export default function GuildSelectionPage() {
             <CardDescription>Encontre guildas existentes, explore comunidades e solicite para entrar.</CardDescription>
           </CardHeader>
           <CardContent className="relative z-10">
-             <Button asChild variant="outline" className="w-full border-accent text-accent hover:bg-accent/10 hover:text-accent-foreground text-lg py-3">
-              <Link href="/guilds">Explorar Guildas</Link>
-            </Button>
+             <Link
+                href="/guilds"
+                className="block w-full text-center btn-gradient btn-style-primary text-lg py-3 rounded-md"
+              >
+                Explorar Guildas
+              </Link>
           </CardContent>
         </Card>
       </div>
