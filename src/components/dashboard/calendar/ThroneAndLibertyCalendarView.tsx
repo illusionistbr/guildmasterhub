@@ -46,7 +46,7 @@ interface ThroneAndLibertyCalendarViewProps {
 }
 
 const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
-const TIME_GUTTER_WIDTH_CLASS = "w-16"; // Tailwind class for width
+const TIME_GUTTER_WIDTH_CLASS = "w-16"; 
 
 const TL_EVENT_CATEGORIES = [
   { id: 'world_event', label: 'World Event' },
@@ -175,9 +175,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [currentActivities, setCurrentActivities] = useState<string[]>([]);
 
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(undefined);
-  const [selectedStartTime, setSelectedStartTime] = useState<string>("00:00"); // HH:mm format
+  const [selectedStartTime, setSelectedStartTime] = useState<string>("00:00"); 
   const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>(undefined);
-  const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00"); // HH:mm format
+  const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00"); 
 
   const weekStartsOn = 1; // Monday
 
@@ -239,13 +239,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
   const combineDateTime = (date: Date, time: string): Date => {
     const [h, m] = time.split(':').map(Number);
-    return setHours(setMinutes(date, m), h);
+    return setHours(setMinutes(setSeconds(setMilliseconds(date, 0), 0), m), h);
   };
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
     const combined = combineDateTime(dateVal, timeVal);
-    return format(combined, "MMMM d yyyy, HH:mm", { locale: ptBR });
+    return format(combined, "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR });
   };
   
   const handleSaveActivity = () => {
@@ -258,9 +258,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       category: selectedCategory,
       subcategory: selectedSubcategory,
       activity: activityToSave,
-      startDate: selectedStartDate,
+      startDate: selectedStartDate ? format(selectedStartDate, "yyyy-MM-dd") : null,
       startTime: selectedStartTime,
-      endDate: selectedEndDate,
+      endDate: selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : null,
       endTime: selectedEndTime,
     });
     
@@ -269,7 +269,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
+      <div className="flex flex-wrap justify-between items-center mb-4 gap-y-3 gap-x-2">
         <div className="w-full sm:w-auto order-2 sm:order-1">
           <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto">
             <CalendarPlus className="mr-2 h-4 w-4" />
@@ -277,7 +277,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </Button>
         </div>
 
-        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2">
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-1 sm:justify-center sm:text-center whitespace-nowrap">
           {dateRangeText}
         </h2>
         
@@ -298,10 +298,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
       <ScrollArea className="flex-1 h-full">
         <div className="grid grid-template-columns-calendar">
+          {/* Sticky Header Row */}
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
-              <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center">
+              <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center flex flex-col justify-center">
                 <div className={cn("text-xs font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
                   {format(day, 'EEE', { locale: ptBR }).toUpperCase()}
                 </div>
@@ -312,6 +313,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             ))}
           </div>
 
+          {/* Time Gutter Content (Scrollable with events) */}
           <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
             {hours.map(hour => (
               <div 
@@ -324,6 +326,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             ))}
           </div>
 
+          {/* Event Grid Content (Scrollable with time gutter) */}
           <div className="row-start-2 grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
               <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
@@ -384,7 +387,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               Preencha os detalhes da atividade para adicioná-la ao calendário.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-grow pr-6 -mr-6"> {/* Add padding for scrollbar */}
+          <ScrollArea className="flex-grow pr-6 -mr-6"> 
             <div className="grid gap-6 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
@@ -438,7 +441,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={selectedActivity || ""}
                     disabled={
                       !selectedCategory ||
-                      (currentSubcategories.length > 0 && !selectedSubcategory && TL_SUB_CATEGORIES[selectedCategory]) ||
+                      (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory]) || // Check if subcategories exist for the category
                       currentActivities.length === 0
                     }
                   >
@@ -454,15 +457,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </div>
               )}
 
-              {/* Date and Time Pickers Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                {/* Start Date and Time */}
                 <div className="space-y-2">
-                  <Label htmlFor="start-datetime" className="text-foreground font-semibold">Date and Time (Local)</Label>
+                  <Label htmlFor="start-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Início (Local)</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
-                        id="start-datetime"
+                        id="start-datetime-trigger"
                         variant={"outline"}
                         className={cn(
                           "w-full justify-start text-left font-normal",
@@ -486,14 +487,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         <div className="flex gap-2">
                           <Select
                             value={selectedStartTime.split(':')[0]}
-                            onValueChange={(h) => setSelectedStartTime(`${h}:${selectedStartTime.split(':')[1]}`)}
+                            onValueChange={(h) => setSelectedStartTime(`${h.padStart(2, '0')}:${selectedStartTime.split(':')[1]}`)}
                           >
                             <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                           </Select>
                           <Select
                             value={selectedStartTime.split(':')[1]}
-                            onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m}`)}
+                            onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m.padStart(2, '0')}`)}
                           >
                             <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
@@ -505,13 +506,12 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   <p className="text-xs text-muted-foreground">Selecione data e hora de início no seu fuso horário local.</p>
                 </div>
 
-                {/* End Date and Time */}
                 <div className="space-y-2">
-                  <Label htmlFor="end-datetime" className="text-foreground font-semibold">End Date & Time (Optional)</Label>
+                  <Label htmlFor="end-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Fim (Opcional)</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
-                        id="end-datetime"
+                        id="end-datetime-trigger"
                         variant={"outline"}
                         className={cn(
                           "w-full justify-start text-left font-normal",
@@ -536,14 +536,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         <div className="flex gap-2">
                            <Select
                             value={selectedEndTime.split(':')[0]}
-                            onValueChange={(h) => setSelectedEndTime(`${h}:${selectedEndTime.split(':')[1]}`)}
+                            onValueChange={(h) => setSelectedEndTime(`${h.padStart(2, '0')}:${selectedEndTime.split(':')[1]}`)}
                           >
                             <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                           </Select>
                           <Select
                             value={selectedEndTime.split(':')[1]}
-                            onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m}`)}
+                            onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m.padStart(2, '0')}`)}
                           >
                             <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
@@ -554,7 +554,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   </Popover>
                   <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
                 </div>
-              </div> {/* End Date and Time Pickers Section */}
+              </div> 
             </div>
           </ScrollArea>
           <DialogFooter className="pt-4">
@@ -564,7 +564,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               className="btn-gradient btn-style-primary"
               disabled={
                 !selectedCategory ||
-                (currentSubcategories.length > 0 && !selectedSubcategory && TL_SUB_CATEGORIES[selectedCategory]) ||
+                (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory]) ||
                 (selectedCategory === 'other' ? !customActivityName.trim() : !selectedActivity) ||
                 !selectedStartDate
               }
