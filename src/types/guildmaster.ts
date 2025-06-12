@@ -85,31 +85,35 @@ export enum AuditActionType {
   MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
   MEMBER_KICKED = "MEMBER_KICKED",
   MEMBER_JOINED = "MEMBER_JOINED",
-  MEMBER_LEFT = "MEMBER_LEFT", // User voluntarily left
-  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
+  MEMBER_LEFT = "MEMBER_LEFT",
+  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", // Generic, can be specified in details
+  GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
+  GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
+  GUILD_PASSWORD_UPDATED = "GUILD_PASSWORD_UPDATED", // Could mean password set, changed, or removed
+  GUILD_VISIBILITY_CHANGED = "GUILD_VISIBILITY_CHANGED", // e.g. isOpen true/false
   GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED",
   GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED",
+  GUILD_DELETED = "GUILD_DELETED",
   EVENT_CREATED = "EVENT_CREATED",
   EVENT_UPDATED = "EVENT_UPDATED",
   EVENT_DELETED = "EVENT_DELETED",
-  ACHIEVEMENT_CREATED = "ACHIEVEMENT_CREATED", // For future use
-  ACHIEVEMENT_UPDATED = "ACHIEVEMENT_UPDATED", // For future use
-  ACHIEVEMENT_DELETED = "ACHIEVEMENT_DELETED", // For future use
-  // Add more actions as needed
+  ACHIEVEMENT_CREATED = "ACHIEVEMENT_CREATED",
+  ACHIEVEMENT_UPDATED = "ACHIEVEMENT_UPDATED",
+  ACHIEVEMENT_DELETED = "ACHIEVEMENT_DELETED",
 }
 
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | GuildRole;
-  newValue?: string | GuildRole;
-  fieldName?: string; // For GUILD_SETTINGS_UPDATED
+  oldValue?: string | GuildRole | boolean;
+  newValue?: string | GuildRole | boolean;
+  fieldName?: string;
   kickedUserRole?: GuildRole;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  // Extend with other specific details for different actions
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks';
 }
 
 export interface AuditLogEntry {
