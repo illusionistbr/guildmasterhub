@@ -40,7 +40,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarEventCard } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase'; // Added Firebase imports
+import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
 
 interface ThroneAndLibertyCalendarViewProps {
   guildId: string;
@@ -164,7 +164,7 @@ const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(
 
 
 export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
-  const { user } = useAuth(); // Get current user for notification creation
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); 
@@ -261,7 +261,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       activityToSave = customActivityName.trim();
     }
 
-    // TODO: Implement actual saving to Firestore or state management for events
     console.log({
       category: selectedCategory,
       subcategory: selectedSubcategory,
@@ -272,7 +271,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       endTime: selectedEndTime,
       isMandatory,
       attendanceValue,
-      guildId: guildId, // For saving the event to the correct guild
+      guildId: guildId, 
     });
 
     if (isMandatory && activityToSave && selectedStartDate && guildId && user) {
@@ -281,24 +280,22 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       const notificationLink = `/dashboard/calendar?guildId=${guildId}`;
 
       try {
-        await addDoc(collection(db, `guilds/${guildId}/notifications`), {
+        const newNotificationRef = await addDoc(collection(db, `guilds/${guildId}/notifications`), {
           guildId: guildId,
           message: notificationMessage,
           link: notificationLink,
           type: "MANDATORY_ACTIVITY_CREATED",
-          timestamp: serverTimestamp(),
+          timestamp: serverTimestamp() as Timestamp,
           details: {
             activityTitle: activityToSave,
             activityDate: activityDateFormatted,
-            // eventId: ideally, this would be the ID of the event once saved
           },
           createdByUserId: user.uid,
           createdByUserDisplayname: user.displayName || user.email,
         });
-        console.log("Mandatory activity notification created.");
+        console.log("Mandatory activity notification created with ID: ", newNotificationRef.id);
       } catch (error) {
         console.error("Error creating mandatory activity notification:", error);
-        // Potentially show a toast to the user about the notification creation failure
       }
     }
     
@@ -336,7 +333,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
       <ScrollArea className="flex-1 h-full">
         <div className="grid grid-template-columns-calendar">
-          {/* Sticky Header Row */}
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
@@ -351,7 +347,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             ))}
           </div>
 
-          {/* Time Gutter Content (Scrollable with events) */}
           <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
             {hours.map(hour => (
               <div 
@@ -364,7 +359,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             ))}
           </div>
 
-          {/* Event Grid Content (Scrollable with time gutter) */}
           <div className="row-start-2 grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
               <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
@@ -599,8 +593,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Mandatory</Label>
-                  <div className="flex items-center space-x-2 bg-input p-2 rounded-md border border-border">
+                  <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
+                  <div className="flex items-center space-x-2 bg-input p-2 rounded-md border border-border h-10"> {/* Explicit height h-10 */}
                     <Switch
                       id="mandatory-switch"
                       checked={isMandatory}
@@ -612,7 +606,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-1">
-                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Attendance Value</Label>
+                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença</Label>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
@@ -630,7 +624,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={attendanceValue}
                     onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
                     min="0"
-                    className="form-input"
+                    className="form-input" // Default h-10
                   />
                 </div>
               </div>
@@ -658,3 +652,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
