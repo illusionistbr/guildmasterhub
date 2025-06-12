@@ -155,17 +155,17 @@ function GuildSettingsPageContent() {
     try {
       const guildRef = doc(db, "guilds", guild.id);
       await updateDoc(guildRef, { 
-        password: data.password || null, // Store null if empty, not undefined for Firestore
+        password: data.password || null, 
         isOpen: !data.password 
       });
       
-      let logMessage = "";
+      let logMessageToast = "";
       if (oldPasswordExists && newPasswordExists && guild.password !== data.password) {
-        logMessage = "Senha da guilda alterada.";
+        logMessageToast = "Senha da guilda alterada.";
       } else if (!oldPasswordExists && newPasswordExists) {
-        logMessage = "Senha definida para a guilda (agora é privada).";
+        logMessageToast = "Senha definida para a guilda (agora é privada).";
       } else if (oldPasswordExists && !newPasswordExists) {
-        logMessage = "Senha da guilda removida (agora é aberta).";
+        logMessageToast = "Senha da guilda removida (agora é aberta).";
       }
 
 
@@ -183,7 +183,7 @@ function GuildSettingsPageContent() {
 
       setGuild(prev => prev ? { ...prev, password: data.password, isOpen: !data.password } : null);
       passwordForm.reset({ password: data.password || "" });
-      toast({ title: "Senha da Guilda Atualizada!", description: logMessage || "Configuração de senha salva." });
+      toast({ title: "Senha da Guilda Atualizada!", description: logMessageToast || "Configuração de senha salva." });
     } catch (error) {
       console.error("Erro ao atualizar senha da guilda:", error);
       toast({ title: "Erro ao Atualizar Senha", variant: "destructive" });
@@ -193,31 +193,33 @@ function GuildSettingsPageContent() {
   };
 
   const handleDeleteGuild = async () => {
-    if (!guild || !currentUser || guild.ownerId !== currentUser.uid) return;
+    if (!guild || !currentUser || guild.ownerId !== currentUser.uid) {
+        toast({ title: "Ação não permitida", description: "Você não pode excluir esta guilda ou os dados da guilda não estão carregados.", variant: "destructive" });
+        return;
+    }
     setIsDeleting(true);
     try {
-      // It's good practice to delete subcollections first, if any significant ones.
-      // For auditLogs, we'll delete them.
+      // Delete auditLogs subcollection documents
       const auditLogsRef = collection(db, `guilds/${guild.id}/auditLogs`);
       const auditLogsSnap = await getFirestoreDocs(auditLogsRef);
-      const batch = writeBatch(db);
-      auditLogsSnap.docs.forEach(logDoc => batch.delete(logDoc.ref));
-      await batch.commit(); // Delete audit logs
+      if (!auditLogsSnap.empty) {
+          const batch = writeBatch(db);
+          auditLogsSnap.docs.forEach(logDoc => batch.delete(logDoc.ref));
+          await batch.commit();
+      }
 
       // Then delete the guild document itself
       const guildRef = doc(db, "guilds", guild.id);
       await deleteDoc(guildRef);
       
-      // No need to log GUILD_DELETED to its own subcollection that's being deleted.
-      // This action might be logged elsewhere if needed (e.g., a global audit log or user activity log).
-
       toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
-      router.push('/guild-selection');
+      router.push('/guild-selection'); 
+      // No need to setIsDeleting(false) here as the component will unmount due to navigation.
     } catch (error) {
       console.error("Erro ao excluir guilda:", error);
-      toast({ title: "Erro ao Excluir Guilda", variant: "destructive" });
-      setIsDeleting(false);
+      toast({ title: "Erro ao Excluir Guilda", description: "Não foi possível excluir a guilda. Verifique o console para mais detalhes.", variant: "destructive" });
+      setIsDeleting(false); // Reset on error
     }
   };
 
@@ -357,7 +359,7 @@ function GuildSettingsPageContent() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setIsDeleting(false)} disabled={isDeleting}>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteGuild}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -383,3 +385,5 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
+    
