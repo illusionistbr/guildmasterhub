@@ -116,10 +116,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7">
             {daysInWeek.map(day => (
               <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center">
-                <div className={cn("text-sm font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
+                <div className={cn("text-xs font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
                   {format(day, 'EEE', { locale: ptBR }).toUpperCase()}
                 </div>
-                <div className={cn("text-lg font-semibold", isToday(day) ? "text-primary" : "text-foreground")}>
+                <div className={cn("text-base font-semibold", isToday(day) ? "text-primary" : "text-foreground")}>
                   {format(day, 'd')}
                 </div>
               </div>
@@ -134,7 +134,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 className="flex-none text-xs text-muted-foreground text-right pr-2 border-b border-r border-border" 
                 style={{ height: `${HOVER_CELL_HEIGHT}px`, lineHeight: `${HOVER_CELL_HEIGHT}px` }}
               >
-                {format(setHours(new Date(), hour), 'HH:mm')}
+                {format(setHours(setMinutes(new Date(), 0), hour), 'HH:mm')}
               </div>
             ))}
           </div>
@@ -180,3 +180,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
