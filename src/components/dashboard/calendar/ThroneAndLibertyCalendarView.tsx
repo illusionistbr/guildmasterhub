@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import {
   startOfWeek,
@@ -154,13 +157,15 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   ],
 };
 
+const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
 
 export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); 
 
-  // Dialog state
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
@@ -169,6 +174,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [currentSubcategories, setCurrentSubcategories] = useState<string[]>([]);
   const [currentActivities, setCurrentActivities] = useState<string[]>([]);
 
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(undefined);
+  const [selectedStartTime, setSelectedStartTime] = useState<string>("00:00"); // HH:mm format
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>(undefined);
+  const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00"); // HH:mm format
 
   const weekStartsOn = 1; // Monday
 
@@ -176,14 +185,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const currentWeekEnd = endOfWeek(currentDate, { weekStartsOn });
   const daysInWeek = eachDayOfInterval({ start: currentWeekStart, end: currentWeekEnd });
 
-  const hours = Array.from({ length: 24 }, (_, i) => i); // 00:00 to 23:00
+  const hours = Array.from({ length: 24 }, (_, i) => i); 
 
   useEffect(() => {
     const updateCurrentTime = () => {
       const now = new Date();
       const totalMinutesInDay = 24 * 60;
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      setCurrentTimePercentage((currentMinutes / totalMinutesInDay) * 100);
+      const currentMinutesVal = now.getHours() * 60 + now.getMinutes();
+      setCurrentTimePercentage((currentMinutesVal / totalMinutesInDay) * 100);
     };
     updateCurrentTime();
     const intervalId = setInterval(updateCurrentTime, 60000); 
@@ -228,32 +237,38 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
   };
 
+  const combineDateTime = (date: Date, time: string): Date => {
+    const [h, m] = time.split(':').map(Number);
+    return setHours(setMinutes(date, m), h);
+  };
+
+  const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
+    if (!dateVal) return null;
+    const combined = combineDateTime(dateVal, timeVal);
+    return format(combined, "MMMM d yyyy, HH:mm", { locale: ptBR });
+  };
+  
   const handleSaveActivity = () => {
     let activityToSave = selectedActivity;
     if (selectedCategory === 'other') {
       activityToSave = customActivityName.trim();
-      if (!activityToSave) {
-        console.warn("Custom activity name cannot be empty for 'Other' category.");
-        // Ideally, show a toast or inline error message
-        return; 
-      }
     }
 
     console.log({
       category: selectedCategory,
       subcategory: selectedSubcategory,
       activity: activityToSave,
+      startDate: selectedStartDate,
+      startTime: selectedStartTime,
+      endDate: selectedEndDate,
+      endTime: selectedEndTime,
     });
     
-    // Reset dialog state
     setDialogIsOpen(false);
-    // Resetting fields will happen in onOpenChange of Dialog
   };
-
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
         <div className="w-full sm:w-auto order-2 sm:order-1">
           <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto">
@@ -281,11 +296,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-      {/* Calendar Grid Area */}
       <ScrollArea className="flex-1 h-full">
         <div className="grid grid-template-columns-calendar">
-          
-          {/* Sticky Header Row: Time Gutter Spacer & Day Headers */}
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
@@ -300,7 +312,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             ))}
           </div>
 
-          {/* Scrollable Content: Time Labels Column */}
           <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
             {hours.map(hour => (
               <div 
@@ -313,7 +324,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             ))}
           </div>
 
-          {/* Scrollable Content: Event Cells Grid */}
           <div className="row-start-2 grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
               <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
@@ -352,103 +362,211 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         <ScrollBar orientation="vertical" />
       </ScrollArea>
 
-      {/* Dialog for New Activity */}
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
-        if (!isOpen) { // Reset state when dialog closes
+        if (!isOpen) { 
           setSelectedCategory(null);
           setSelectedSubcategory(null);
           setSelectedActivity(null);
           setCustomActivityName("");
           setCurrentSubcategories([]);
           setCurrentActivities([]);
+          setSelectedStartDate(undefined);
+          setSelectedStartTime("00:00");
+          setSelectedEndDate(undefined);
+          setSelectedEndTime("00:00");
         }
       }}>
-        <DialogContent className="sm:max-w-[525px] bg-card border-border">
+        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-headline text-primary">Registrar Nova Atividade</DialogTitle>
             <DialogDescription>
               Preencha os detalhes da atividade para adicioná-la ao calendário.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-6 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
-              <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
-                <SelectTrigger id="category" className="col-span-3 form-input">
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TL_EVENT_CATEGORIES.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
-              <Select 
-                onValueChange={setSelectedSubcategory} 
-                value={selectedSubcategory || ""}
-                disabled={!selectedCategory || currentSubcategories.length === 0}
-              >
-                <SelectTrigger id="subcategory" className="col-span-3 form-input">
-                  <SelectValue placeholder="Selecione uma subcategoria (se aplicável)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentSubcategories.map(subcat => (
-                    <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {selectedCategory === 'other' ? (
+          <ScrollArea className="flex-grow pr-6 -mr-6"> {/* Add padding for scrollbar */}
+            <div className="grid gap-6 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
-                <Input
-                  id="customActivity"
-                  className="col-span-3 form-input"
-                  placeholder="Digite o nome da atividade personalizada"
-                  value={customActivityName}
-                  onChange={(e) => setCustomActivityName(e.target.value)}
-                  disabled={!selectedCategory} 
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity" className="text-right text-foreground">Atividade/Evento</Label>
-                <Select 
-                  onValueChange={setSelectedActivity} 
-                  value={selectedActivity || ""}
-                  disabled={
-                    !selectedCategory ||
-                    (currentSubcategories.length > 0 && !selectedSubcategory) ||
-                    currentActivities.length === 0
-                  }
-                >
-                  <SelectTrigger id="activity" className="col-span-3 form-input">
-                    <SelectValue placeholder="Selecione uma atividade/evento" />
+                <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
+                <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
+                  <SelectTrigger id="category" className="col-span-3">
+                    <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {currentActivities.map(act => (
-                      <SelectItem key={act} value={act}>{act}</SelectItem>
+                    {TL_EVENT_CATEGORIES.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
-          </div>
-          <DialogFooter>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
+                <Select 
+                  onValueChange={setSelectedSubcategory} 
+                  value={selectedSubcategory || ""}
+                  disabled={!selectedCategory || currentSubcategories.length === 0}
+                >
+                  <SelectTrigger id="subcategory" className="col-span-3">
+                    <SelectValue placeholder="Selecione (se aplicável)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentSubcategories.map(subcat => (
+                      <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedCategory === 'other' ? (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
+                  <Input
+                    id="customActivity"
+                    className="col-span-3"
+                    placeholder="Digite o nome da atividade"
+                    value={customActivityName}
+                    onChange={(e) => setCustomActivityName(e.target.value)}
+                    disabled={!selectedCategory} 
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="activity" className="text-right text-foreground">Atividade/Evento</Label>
+                  <Select 
+                    onValueChange={setSelectedActivity} 
+                    value={selectedActivity || ""}
+                    disabled={
+                      !selectedCategory ||
+                      (currentSubcategories.length > 0 && !selectedSubcategory && TL_SUB_CATEGORIES[selectedCategory]) ||
+                      currentActivities.length === 0
+                    }
+                  >
+                    <SelectTrigger id="activity" className="col-span-3">
+                      <SelectValue placeholder="Selecione uma atividade/evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currentActivities.map(act => (
+                        <SelectItem key={act} value={act}>{act}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Date and Time Pickers Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                {/* Start Date and Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="start-datetime" className="text-foreground font-semibold">Date and Time (Local)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="start-datetime"
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !selectedStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIconLucide className="mr-2 h-4 w-4" />
+                        {formatDateTimeForDisplay(selectedStartDate, selectedStartTime) || <span>Escolha data e hora</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-card border-border">
+                      <Calendar
+                        mode="single"
+                        selected={selectedStartDate}
+                        onSelect={setSelectedStartDate}
+                        initialFocus
+                        locale={ptBR}
+                      />
+                      <div className="p-4 border-t border-border">
+                        <p className="text-sm font-medium mb-2 text-foreground">Horário Início</p>
+                        <div className="flex gap-2">
+                          <Select
+                            value={selectedStartTime.split(':')[0]}
+                            onValueChange={(h) => setSelectedStartTime(`${h}:${selectedStartTime.split(':')[1]}`)}
+                          >
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <Select
+                            value={selectedStartTime.split(':')[1]}
+                            onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m}`)}
+                          >
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">Selecione data e hora de início no seu fuso horário local.</p>
+                </div>
+
+                {/* End Date and Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="end-datetime" className="text-foreground font-semibold">End Date & Time (Optional)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="end-datetime"
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !selectedEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIconLucide className="mr-2 h-4 w-4" />
+                        {formatDateTimeForDisplay(selectedEndDate, selectedEndTime) || <span>Escolha data e hora (opcional)</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-card border-border">
+                      <Calendar
+                        mode="single"
+                        selected={selectedEndDate}
+                        onSelect={setSelectedEndDate}
+                        disabled={(date) => selectedStartDate ? date < selectedStartDate : false}
+                        initialFocus
+                        locale={ptBR}
+                      />
+                      <div className="p-4 border-t border-border">
+                        <p className="text-sm font-medium mb-2 text-foreground">Horário Fim</p>
+                        <div className="flex gap-2">
+                           <Select
+                            value={selectedEndTime.split(':')[0]}
+                            onValueChange={(h) => setSelectedEndTime(`${h}:${selectedEndTime.split(':')[1]}`)}
+                          >
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <Select
+                            value={selectedEndTime.split(':')[1]}
+                            onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m}`)}
+                          >
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
+                </div>
+              </div> {/* End Date and Time Pickers Section */}
+            </div>
+          </ScrollArea>
+          <DialogFooter className="pt-4">
             <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
             <Button 
               onClick={handleSaveActivity} 
               className="btn-gradient btn-style-primary"
               disabled={
                 !selectedCategory ||
-                (currentSubcategories.length > 0 && !selectedSubcategory) ||
-                (selectedCategory === 'other' ? !customActivityName.trim() : !selectedActivity)
+                (currentSubcategories.length > 0 && !selectedSubcategory && TL_SUB_CATEGORIES[selectedCategory]) ||
+                (selectedCategory === 'other' ? !customActivityName.trim() : !selectedActivity) ||
+                !selectedStartDate
               }
             >
               Salvar Atividade
@@ -459,3 +577,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
