@@ -72,8 +72,11 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL?: string | null;
-  guilds?: string[];
+  guilds?: string[]; // IDs of guilds the user is a member of
   createdAt?: Timestamp;
+  lastNotificationsCheckedTimestamp?: {
+    [guildId: string]: Timestamp;
+  };
 }
 
 export interface GuildMember extends UserProfile {
@@ -86,11 +89,11 @@ export enum AuditActionType {
   MEMBER_KICKED = "MEMBER_KICKED",
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
-  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", // Generic, can be specified in details
+  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", 
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
-  GUILD_PASSWORD_UPDATED = "GUILD_PASSWORD_UPDATED", // Could mean password set, changed, or removed
-  GUILD_VISIBILITY_CHANGED = "GUILD_VISIBILITY_CHANGED", // e.g. isOpen true/false
+  GUILD_PASSWORD_UPDATED = "GUILD_PASSWORD_UPDATED", 
+  GUILD_VISIBILITY_CHANGED = "GUILD_VISIBILITY_CHANGED", 
   GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED",
   GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED",
   GUILD_DELETED = "GUILD_DELETED",
@@ -100,6 +103,7 @@ export enum AuditActionType {
   ACHIEVEMENT_CREATED = "ACHIEVEMENT_CREATED",
   ACHIEVEMENT_UPDATED = "ACHIEVEMENT_UPDATED",
   ACHIEVEMENT_DELETED = "ACHIEVEMENT_DELETED",
+  // Notification related actions could be added if needed for audit, but notifications themselves are separate
 }
 
 export interface AuditLogDetails {
@@ -123,4 +127,25 @@ export interface AuditLogEntry {
   actorDisplayName: string | null;
   action: AuditActionType;
   details?: AuditLogDetails;
+}
+
+// In-App Notification Types
+export type NotificationType = "MANDATORY_ACTIVITY_CREATED" | "GENERIC_INFO" | "GUILD_UPDATE";
+
+export interface AppNotification {
+  id: string; // Firestore document ID
+  guildId: string;
+  message: string;
+  type: NotificationType;
+  link: string; // URL to navigate to on click
+  timestamp: Timestamp;
+  details?: {
+    activityTitle?: string;
+    activityDate?: string; // Formatted date for display
+    eventId?: string;
+  };
+  createdByUserId?: string;
+  createdByUserDisplayname?: string | null;
+  // No 'read' field directly on the notification document for guild-wide notifications.
+  // 'Read' status is managed by 'lastNotificationsCheckedTimestamp' on UserProfile per guild.
 }

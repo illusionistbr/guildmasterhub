@@ -28,8 +28,6 @@ import {
   format,
   isToday,
   isSameDay,
-  getHours,
-  getMinutes,
   setHours,
   setMinutes,
   setSeconds,
@@ -41,6 +39,8 @@ import type { Event as GuildEvent } from '@/types/guildmaster';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarEventCard } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase'; // Added Firebase imports
 
 interface ThroneAndLibertyCalendarViewProps {
   guildId: string;
@@ -164,6 +164,7 @@ const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(
 
 
 export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
+  const { user } = useAuth(); // Get current user for notification creation
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); 
@@ -254,12 +255,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     return format(combined, "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR });
   };
   
-  const handleSaveActivity = () => {
+  const handleSaveActivity = async () => {
     let activityToSave = selectedActivity;
     if (selectedCategory === 'other') {
       activityToSave = customActivityName.trim();
     }
 
+    // TODO: Implement actual saving to Firestore or state management for events
     console.log({
       category: selectedCategory,
       subcategory: selectedSubcategory,
@@ -270,7 +272,35 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       endTime: selectedEndTime,
       isMandatory,
       attendanceValue,
+      guildId: guildId, // For saving the event to the correct guild
     });
+
+    if (isMandatory && activityToSave && selectedStartDate && guildId && user) {
+      const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
+      const notificationMessage = `Nova atividade obrigatória: "${activityToSave}" em ${activityDateFormatted}.`;
+      const notificationLink = `/dashboard/calendar?guildId=${guildId}`;
+
+      try {
+        await addDoc(collection(db, `guilds/${guildId}/notifications`), {
+          guildId: guildId,
+          message: notificationMessage,
+          link: notificationLink,
+          type: "MANDATORY_ACTIVITY_CREATED",
+          timestamp: serverTimestamp(),
+          details: {
+            activityTitle: activityToSave,
+            activityDate: activityDateFormatted,
+            // eventId: ideally, this would be the ID of the event once saved
+          },
+          createdByUserId: user.uid,
+          createdByUserDisplayname: user.displayName || user.email,
+        });
+        console.log("Mandatory activity notification created.");
+      } catch (error) {
+        console.error("Error creating mandatory activity notification:", error);
+        // Potentially show a toast to the user about the notification creation failure
+      }
+    }
     
     setDialogIsOpen(false);
   };
@@ -279,7 +309,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
         <div className="w-full sm:w-auto order-2 sm:order-1">
-          <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto">
+          <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto btn-gradient btn-style-secondary">
             <CalendarPlus className="mr-2 h-4 w-4" />
             Nova Atividade
           </Button>
@@ -291,16 +321,16 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         
         <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end order-3">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'week'|'day')} disabled>
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-[100px] bg-input border-border">
               <SelectValue placeholder="Visualizar" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Semana</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleToday}>Hoje</Button>
-          <Button variant="outline" size="icon" onClick={handlePrevWeek}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" size="icon" onClick={handleNextWeek}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="outline" onClick={handleToday} className="border-primary text-primary hover:bg-primary/10">Hoje</Button>
+          <Button variant="outline" size="icon" onClick={handlePrevWeek} className="border-border"><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" onClick={handleNextWeek} className="border-border"><ChevronRight className="h-4 w-4" /></Button>
         </div>
       </div>
 
@@ -403,7 +433,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
                 <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
-                  <SelectTrigger id="category" className="col-span-3">
+                  <SelectTrigger id="category" className="col-span-3 form-input">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
@@ -421,7 +451,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   value={selectedSubcategory || ""}
                   disabled={!selectedCategory || currentSubcategories.length === 0}
                 >
-                  <SelectTrigger id="subcategory" className="col-span-3">
+                  <SelectTrigger id="subcategory" className="col-span-3 form-input">
                     <SelectValue placeholder="Selecione (se aplicável)" />
                   </SelectTrigger>
                   <SelectContent>
@@ -437,7 +467,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
                   <Input
                     id="customActivity"
-                    className="col-span-3"
+                    className="col-span-3 form-input"
                     placeholder="Digite o nome da atividade"
                     value={customActivityName}
                     onChange={(e) => setCustomActivityName(e.target.value)}
@@ -452,11 +482,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={selectedActivity || ""}
                     disabled={
                       !selectedCategory ||
-                      (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory]) || 
+                      (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) || 
                       currentActivities.length === 0
                     }
                   >
-                    <SelectTrigger id="activity" className="col-span-3">
+                    <SelectTrigger id="activity" className="col-span-3 form-input">
                       <SelectValue placeholder="Selecione uma atividade/evento" />
                     </SelectTrigger>
                     <SelectContent>
@@ -477,7 +507,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         id="start-datetime-trigger"
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal form-input",
                           !selectedStartDate && "text-muted-foreground"
                         )}
                       >
@@ -500,14 +530,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             value={selectedStartTime.split(':')[0]}
                             onValueChange={(h) => setSelectedStartTime(`${h.padStart(2, '0')}:${selectedStartTime.split(':')[1]}`)}
                           >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
                             <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                           </Select>
                           <Select
                             value={selectedStartTime.split(':')[1]}
                             onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m.padStart(2, '0')}`)}
                           >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
                             <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
@@ -525,7 +555,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         id="end-datetime-trigger"
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal form-input",
                           !selectedEndDate && "text-muted-foreground"
                         )}
                       >
@@ -549,14 +579,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             value={selectedEndTime.split(':')[0]}
                             onValueChange={(h) => setSelectedEndTime(`${h.padStart(2, '0')}:${selectedEndTime.split(':')[1]}`)}
                           >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
                             <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                           </Select>
                           <Select
                             value={selectedEndTime.split(':')[1]}
                             onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m.padStart(2, '0')}`)}
                           >
-                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
                             <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
@@ -600,7 +630,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={attendanceValue}
                     onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
                     min="0"
-                    className="bg-input border-border"
+                    className="form-input"
                   />
                 </div>
               </div>
@@ -615,7 +645,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               className="btn-gradient btn-style-primary"
               disabled={
                 !selectedCategory ||
-                (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory]) ||
+                (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) ||
                 (selectedCategory === 'other' ? !customActivityName.trim() : !selectedActivity) ||
                 !selectedStartDate
               }
@@ -628,6 +658,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-
-
-

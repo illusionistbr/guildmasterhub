@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { UserNav } from "./UserNav";
+import { AppNotifications } from "./AppNotifications"; // Import AppNotifications
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ShieldEllipsis } from "lucide-react";
 import { useHeader } from '@/contexts/HeaderContext';
@@ -31,7 +32,8 @@ export function AppHeader({ showSidebarTrigger }: AppHeaderProps) {
           </Link>
         </div>
         
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
+          <AppNotifications /> 
           <UserNav />
         </div>
       </div>
