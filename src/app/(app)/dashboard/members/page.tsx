@@ -86,26 +86,55 @@ function MembersPageContent() {
         setGuild(guildData);
 
         let memberIdsToFetch = guildData.memberIds || [];
-        // Ensure owner is always considered for fetching if not already in memberIds (for robustness)
         if (guildData.ownerId && !memberIdsToFetch.includes(guildData.ownerId)) {
-            memberIdsToFetch = [...new Set([...memberIdsToFetch, guildData.ownerId])]; // Use Set to avoid duplicates if ownerId was somehow already there but different case
+            memberIdsToFetch = [...new Set([...memberIdsToFetch, guildData.ownerId])];
         }
         
         if (memberIdsToFetch.length > 0) {
           const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
           const userProfileSnaps = await Promise.all(userProfilesPromises);
           
-          const fetchedMembers: GuildMember[] = userProfileSnaps
-            .map(snap => snap.exists() ? { ...(snap.data() as UserProfile), uid: snap.id } : null) // Ensure uid is correctly passed from doc id
-            .filter(profile => profile !== null)
-            .map(profile => ({
-              ...(profile as UserProfile),
-              role: guildData.roles?.[profile!.uid] || GuildRole.Member, 
-            }))
-            .sort((a, b) => (a.displayName || a.uid).localeCompare(b.displayName || b.uid)); 
+          const processedMembers: GuildMember[] = [];
 
-          setMembers(fetchedMembers);
-        } else {
+          for (let i = 0; i < memberIdsToFetch.length; i++) {
+            const uid = memberIdsToFetch[i];
+            const snap = userProfileSnaps[i]; // Snapshots are in the same order as memberIdsToFetch
+
+            if (snap && snap.exists()) {
+              const profileData = snap.data() as UserProfile;
+              processedMembers.push({
+                ...profileData,
+                uid: snap.id, // Ensure uid is from snap.id
+                role: guildData.roles?.[snap.id] || GuildRole.Member,
+              });
+            } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) {
+              // Owner's profile doc not found in 'users', but it's the current authenticated user.
+              // Create a fallback entry using auth context data.
+              processedMembers.push({
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
+                photoURL: currentUser.photoURL,
+                role: guildData.roles?.[currentUser.uid] || GuildRole.Leader, // Default to Leader for owner
+              });
+            }
+            // If snap doesn't exist and it's not the owner fallback, the member is skipped.
+          }
+          
+          processedMembers.sort((a, b) => (a.displayName || a.uid).localeCompare(b.displayName || b.uid)); 
+          setMembers(processedMembers);
+
+        } else if (guildData.ownerId === currentUser.uid) {
+           // No memberIds, but current user is owner. Create fallback for owner.
+           setMembers([{
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
+                photoURL: currentUser.photoURL,
+                role: guildData.roles?.[currentUser.uid] || GuildRole.Leader,
+           }]);
+        }
+        else {
           setMembers([]);
         }
       } catch (error) {
@@ -415,6 +444,3 @@ export default function MembersPage() {
     </Suspense>
   );
 }
-
-
-    
