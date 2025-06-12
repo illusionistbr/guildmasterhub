@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, query, orderBy, getDocs as getFirestoreDocs, Timestamp } from '@/lib/firebase';
-import { type Guild, GuildRole, type AuditLogEntry, AuditActionType } from '@/types/guildmaster';
+import { db, doc, getDoc, collection, query, orderBy, getDocs as getFirestoreDocs, Timestamp, where } from '@/lib/firebase';
+import type { Guild, GuildRole, type AuditLogEntry, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import {
   Table,
@@ -20,11 +20,15 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ClipboardList, Loader2, ShieldAlert, VenetianMask, UserCog, UserX, UserPlus, 
   LogOut as LogOutIcon, ImagePlus, ImagePlay, CalendarDays, CalendarPlus, 
-  CalendarMinus, CalendarX, Trophy 
+  CalendarMinus, CalendarX, Trophy, CalendarIcon as CalendarIconLucide, Filter, XCircle
 } from 'lucide-react';
 import { formatDistanceToNowStrict, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 function AuditLogPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -37,7 +41,67 @@ function AuditLogPageContent() {
   const [loadingData, setLoadingData] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
 
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(undefined);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>(undefined);
+  const [submittedStartDate, setSubmittedStartDate] = useState<Date | undefined>(undefined);
+  const [submittedEndDate, setSubmittedEndDate] = useState<Date | undefined>(undefined);
+
   const guildId = searchParams.get('guildId');
+
+  const fetchData = useCallback(async () => {
+    if (authLoading || !currentUser || !guildId) return;
+
+    setLoadingData(true);
+    setAccessDenied(false);
+    try {
+      const guildDocRef = doc(db, "guilds", guildId);
+      const guildSnap = await getDoc(guildDocRef);
+
+      if (!guildSnap.exists()) {
+        toast({ title: "Guilda não encontrada", variant: "destructive" });
+        router.push('/guild-selection');
+        setLoadingData(false);
+        return;
+      }
+      const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
+      setGuild(guildData);
+
+      const userRole = guildData.roles?.[currentUser.uid];
+      if (userRole !== GuildRole.Leader && userRole !== GuildRole.ViceLeader) {
+        setAccessDenied(true);
+        setLoadingData(false);
+        return;
+      }
+
+      let logsCollectionRef = collection(db, `guilds/${guildId}/auditLogs`);
+      let logsQuery = query(logsCollectionRef, orderBy("timestamp", "desc"));
+
+      if (submittedStartDate) {
+        const startTimestamp = Timestamp.fromDate(new Date(submittedStartDate.setHours(0, 0, 0, 0)));
+        logsQuery = query(logsQuery, where("timestamp", ">=", startTimestamp));
+      }
+      if (submittedEndDate) {
+        const endOfDay = new Date(submittedEndDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        const endTimestamp = Timestamp.fromDate(endOfDay);
+        logsQuery = query(logsQuery, where("timestamp", "<=", endTimestamp));
+      }
+      
+      const logsSnapshot = await getFirestoreDocs(logsQuery);
+      const fetchedLogs = logsSnapshot.docs.map(logDoc => ({ id: logDoc.id, ...logDoc.data() } as AuditLogEntry));
+      setAuditLogs(fetchedLogs);
+
+    } catch (error) {
+      console.error("Erro ao buscar dados de auditoria:", error);
+      if (error instanceof Error && error.message.includes("indexes")) {
+          toast({title: "Erro de Índice", description: "Pode ser necessário criar um índice no Firestore para esta consulta. Verifique o console do Firebase.", variant: "destructive", duration: 10000});
+      } else {
+        toast({ title: "Erro ao carregar dados", description: "Não foi possível carregar os logs de auditoria.", variant: "destructive" });
+      }
+    } finally {
+      setLoadingData(false);
+    }
+  }, [guildId, currentUser, authLoading, router, toast, submittedStartDate, submittedEndDate]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -50,44 +114,26 @@ function AuditLogPageContent() {
       router.push('/guild-selection');
       return;
     }
-
-    const fetchData = async () => {
-      setLoadingData(true);
-      setAccessDenied(false);
-      try {
-        const guildDocRef = doc(db, "guilds", guildId);
-        const guildSnap = await getDoc(guildDocRef);
-
-        if (!guildSnap.exists()) {
-          toast({ title: "Guilda não encontrada", variant: "destructive" });
-          router.push('/guild-selection');
-          return;
-        }
-        const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
-        setGuild(guildData);
-
-        const userRole = guildData.roles?.[currentUser.uid];
-        if (userRole !== GuildRole.Leader && userRole !== GuildRole.ViceLeader) {
-          setAccessDenied(true);
-          setLoadingData(false);
-          return;
-        }
-
-        const logsQuery = query(collection(db, `guilds/${guildId}/auditLogs`), orderBy("timestamp", "desc"));
-        const logsSnapshot = await getFirestoreDocs(logsQuery);
-        const fetchedLogs = logsSnapshot.docs.map(logDoc => ({ id: logDoc.id, ...logDoc.data() } as AuditLogEntry));
-        setAuditLogs(fetchedLogs);
-
-      } catch (error) {
-        console.error("Erro ao buscar dados de auditoria:", error);
-        toast({ title: "Erro ao carregar dados", description: "Não foi possível carregar os logs de auditoria.", variant: "destructive" });
-      } finally {
-        setLoadingData(false);
-      }
-    };
-
     fetchData();
-  }, [guildId, currentUser, authLoading, router, toast]);
+  }, [guildId, currentUser, authLoading, router, fetchData]);
+
+  const handleApplyFilters = () => {
+    if (selectedStartDate && selectedEndDate && selectedStartDate > selectedEndDate) {
+        toast({ title: "Datas Inválidas", description: "A data de início não pode ser posterior à data de fim.", variant: "destructive"});
+        return;
+    }
+    setSubmittedStartDate(selectedStartDate);
+    setSubmittedEndDate(selectedEndDate);
+    // fetchData will be called by useEffect due to dependency change
+  };
+
+  const handleClearFilters = () => {
+    setSelectedStartDate(undefined);
+    setSelectedEndDate(undefined);
+    setSubmittedStartDate(undefined);
+    setSubmittedEndDate(undefined);
+    // fetchData will be called by useEffect
+  };
 
   const formatLogTimestamp = (timestamp: Timestamp | Date): string => {
     const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
@@ -136,6 +182,12 @@ function AuditLogPageContent() {
         return `${actor} atualizou o logo da guilda.`;
       case AuditActionType.GUILD_BANNER_UPDATED:
         return `${actor} atualizou o banner da guilda.`;
+      case AuditActionType.GUILD_NAME_UPDATED:
+        return `${actor} alterou o nome da guilda de "${log.details?.oldValue}" para "${log.details?.newValue}".`;
+      case AuditActionType.GUILD_PASSWORD_UPDATED:
+        return `${actor} alterou a senha da guilda. (Antes: ${log.details?.oldValue}, Agora: ${log.details?.newValue})`;
+      case AuditActionType.GUILD_VISIBILITY_CHANGED:
+        return `${actor} alterou a visibilidade da guilda para ${log.details?.newValue === true ? 'Aberta' : 'Privada'}. (Antes: ${log.details?.oldValue === true ? 'Aberta' : 'Privada'})`;
       case AuditActionType.EVENT_CREATED:
         return `${actor} criou o evento "${log.details?.eventName || 'Evento sem nome'}".`;
       case AuditActionType.EVENT_UPDATED:
@@ -149,7 +201,6 @@ function AuditLogPageContent() {
       case AuditActionType.ACHIEVEMENT_DELETED:
         return `${actor} removeu a conquista "${log.details?.achievementName || 'Conquista sem nome'}".`;
       default:
-        // Attempt to provide a generic description for unhandled known actions
         if (log.action && log.action.startsWith("GUILD_")) {
           return `${actor} atualizou as configurações da guilda (${log.action.replace("GUILD_", "").toLowerCase().replace("_", " ")}).`;
         }
@@ -157,12 +208,13 @@ function AuditLogPageContent() {
     }
   };
 
-  if (loadingData || authLoading) {
+  if (loadingData && !guild) { // Show full page skeleton only on initial load without guild data
     return (
       <div className="space-y-4 p-4 md:p-6">
         <PageTitle title="Auditoria da Guilda" icon={<ClipboardList className="h-8 w-8 text-primary" />} />
-        <Skeleton className="h-12 w-full" />
-        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+        <Skeleton className="h-24 w-full" /> {/* Filter section skeleton */}
+        <Skeleton className="h-12 w-full" /> {/* Table header skeleton */}
+        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} {/* Table rows skeleton */}
       </div>
     );
   }
@@ -181,29 +233,106 @@ function AuditLogPageContent() {
     );
   }
   
-  if (!guild) {
+  if (!guild && !loadingData) { // If loading finished but no guild
     return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <PageTitle 
-        title={`Logs de Auditoria de ${guild.name}`} 
+        title={`Logs de Auditoria de ${guild?.name || 'Guilda'}`} 
         description="Visualize as atividades importantes da guilda. Apenas Líderes e Vice-Líderes têm acesso."
         icon={<ClipboardList className="h-8 w-8 text-primary" />}
       />
       
-      {auditLogs.length === 0 && !loadingData && (
+      <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg shadow">
+        <div className="flex-1 space-y-1">
+          <Label htmlFor="start-date" className="text-sm font-medium">Data de Início</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="start-date"
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal form-input",
+                  !selectedStartDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIconLucide className="mr-2 h-4 w-4" />
+                {selectedStartDate ? format(selectedStartDate, "dd/MM/yyyy", { locale: ptBR }) : <span>Escolha uma data</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedStartDate}
+                onSelect={setSelectedStartDate}
+                initialFocus
+                locale={ptBR}
+                disabled={(date) => selectedEndDate ? date > selectedEndDate : false}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="flex-1 space-y-1">
+          <Label htmlFor="end-date" className="text-sm font-medium">Data de Fim</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="end-date"
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal form-input",
+                  !selectedEndDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIconLucide className="mr-2 h-4 w-4" />
+                {selectedEndDate ? format(selectedEndDate, "dd/MM/yyyy", { locale: ptBR }) : <span>Escolha uma data</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedEndDate}
+                onSelect={setSelectedEndDate}
+                disabled={(date) => selectedStartDate ? date < selectedStartDate : false}
+                initialFocus
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="flex items-end gap-2 pt-3 sm:pt-0">
+          <Button onClick={handleApplyFilters} className="btn-gradient btn-style-secondary w-full sm:w-auto">
+            <Filter className="mr-2 h-4 w-4" />Filtrar
+          </Button>
+          <Button onClick={handleClearFilters} variant="outline" className="w-full sm:w-auto">
+           <XCircle className="mr-2 h-4 w-4" /> Limpar
+          </Button>
+        </div>
+      </div>
+
+      {loadingData && (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+          </div>
+      )}
+
+      {!loadingData && auditLogs.length === 0 && (
         <div className="text-center py-10 bg-card rounded-lg shadow">
             <VenetianMask className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">Nenhuma Atividade Registrada</p>
             <p className="text-muted-foreground mt-2">
-                Ainda não há logs de auditoria para esta guilda.
+                {(submittedStartDate || submittedEndDate) 
+                  ? "Nenhum log encontrado para o período selecionado."
+                  : "Ainda não há logs de auditoria para esta guilda."
+                }
             </p>
         </div>
       )}
 
-      {auditLogs.length > 0 && (
+      {!loadingData && auditLogs.length > 0 && (
         <div className="overflow-x-auto bg-card p-4 sm:p-6 rounded-lg shadow">
           <Table>
             <TableHeader>
@@ -240,3 +369,4 @@ export default function AuditLogPage() {
     </Suspense>
   );
 }
+
