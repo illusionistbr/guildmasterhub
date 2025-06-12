@@ -19,12 +19,11 @@ import {
   LayoutDashboard, 
   Users, 
   CalendarDays, 
-  Trophy, 
   UserPlus, 
-  Bot, 
   Settings, 
   ShieldEllipsis,
-  LogOut
+  LogOut,
+  ClipboardList // Adicionado para Auditoria
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -32,17 +31,15 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/members", label: "Membros", icon: Users },
   { href: "/dashboard/calendar", label: "Calendário", icon: CalendarDays },
-  { href: "/dashboard/timeline", label: "Linha do Tempo", icon: Trophy },
   { 
     label: "Recrutamento", 
     icon: UserPlus,
     subItems: [
       { href: "/dashboard/recruitment", label: "Visão Geral", icon: UserPlus },
       { href: "/dashboard/recruitment/applications", label: "Candidaturas", icon: UserPlus },
-      // { href: "/dashboard/recruitment/forms", label: "Formulários", icon: FileText },
     ]
   },
-  { href: "/welcome-tool", label: "Boas-Vindas IA", icon: Bot },
+  { href: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList }, // Novo item Auditoria
   { href: "/dashboard/settings", label: "Configurações", icon: Settings, group: "Geral" },
 ];
 
@@ -76,12 +73,9 @@ export function AppSidebar() {
                   <item.icon />
                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                 </SidebarMenuButton>
-                {/* Sub-items could be rendered here if sidebar supports accordion or nested menus */}
-                {/* For now, linking to main recruitment page and applications page separately */}
                 {item.subItems.map(subItem => (
                    <SidebarMenuItem key={subItem.href} className="group-data-[collapsible=icon]:hidden ml-4">
                      <Link href={subItem.href} className={`flex items-center gap-2 p-2 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItem.href) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground'}`}>
-                       {/* <subItem.icon className="h-4 w-4" /> */}
                        <span>{subItem.label}</span>
                      </Link>
                    </SidebarMenuItem>

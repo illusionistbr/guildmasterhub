@@ -20,17 +20,23 @@ export default function AppLayout({
       "/create-guild",
       "/guild-selection",
       "/guilds",
-      "/dashboard/settings", 
     ];
+    // Exact paths that should NOT show the main app sidebar
     if (noSidebarExactPaths.includes(pathname)) {
       return false;
     }
 
-    if (pathname === "/dashboard" || 
-        (pathname.startsWith("/dashboard/") && !pathname.startsWith("/dashboard/settings")) || 
-        pathname === "/welcome-tool") {
+    // Paths that SHOULD show the main app sidebar
+    // Includes /dashboard and any sub-route of /dashboard/ (e.g., /dashboard/members, /dashboard/audit-log)
+    // Excludes /dashboard/settings as it has its own layout (no main sidebar)
+    if (pathname === "/dashboard" || (pathname.startsWith("/dashboard/") && !pathname.startsWith("/dashboard/settings"))) {
       return true;
     }
+    
+    // The welcome tool, if it were part of the app layout, would also show sidebar.
+    // if (pathname === "/welcome-tool") return true; // Example if it were kept
+
+    // Default to false for other top-level routes like /dashboard/settings
     return false; 
   };
 
@@ -49,7 +55,8 @@ export default function AppLayout({
         </SidebarProvider>
       ) : (
         <div className="flex flex-col flex-1 min-h-screen">
-          <AppHeader showSidebarTrigger={false} />
+          <AppHeader showSidebarTrigger={pathname.startsWith("/dashboard/settings")} /> 
+          {/* Show trigger on settings page if it was to have its own sub-sidebar, or keep false */}
           <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
             {children}
           </main>
