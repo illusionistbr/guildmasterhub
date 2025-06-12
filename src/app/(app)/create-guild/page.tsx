@@ -15,7 +15,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2 } from 'lucide-react';
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -98,12 +98,11 @@ export default function CreateGuildPage() {
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png?text=${encodeURIComponent(data.name + ' Banner')}`,
         logoUrl: `https://placehold.co/150x150.png?text=${encodeURIComponent(data.name.substring(0,2).toUpperCase())}`,
-        roles: guildRoles, // Usar a variável explicitamente tipada
+        roles: guildRoles,
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
     };
     
-    // Remove undefined fields before saving
     if (!guildData.socialLinks) delete guildData.socialLinks;
     if (!guildData.password) delete guildData.password;
     if (!guildData.description) guildData.description = "";
@@ -143,6 +142,12 @@ export default function CreateGuildPage() {
         title="Forjar Nova Guilda"
         description="Defina os alicerces da sua nova comunidade de heróis."
         icon={<ShieldPlus className="h-8 w-8 text-primary" />}
+        action={
+          <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+        }
       />
       <Card className="card-bg">
         <CardHeader className="relative z-10">
@@ -338,5 +343,3 @@ export default function CreateGuildPage() {
     </div>
   );
 }
-
-
