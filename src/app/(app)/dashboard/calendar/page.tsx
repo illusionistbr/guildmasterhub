@@ -28,7 +28,7 @@ function CalendarPageContent() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!currentUser) {
+    if (!user) { // Corrected: currentUser to user
       router.push('/login');
       return;
     }
@@ -70,7 +70,7 @@ function CalendarPageContent() {
     return () => {
       setHeaderTitle(null);
     }
-  }, [guildId, currentUser, authLoading, router, toast, setHeaderTitle]);
+  }, [guildId, user, authLoading, router, toast, setHeaderTitle]); // Corrected: currentUser to user in dependencies
 
   if (authLoading || loadingGuildData) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
