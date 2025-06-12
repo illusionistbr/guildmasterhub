@@ -194,6 +194,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [announceOnDiscord, setAnnounceOnDiscord] = useState<boolean>(true);
   const [generatePinCode, setGeneratePinCode] = useState<boolean>(false);
 
+  const [createdEvents, setCreatedEvents] = useState<GuildEvent[]>([]);
+
   const weekStartsOn = 1; // Monday
 
   const currentWeekStart = startOfWeek(currentDate, { weekStartsOn });
@@ -228,14 +230,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   }, [currentWeekStart, currentWeekEnd]);
   
   const eventsForWeek = useMemo(() => {
-    return mockEvents.filter(event => {
+    const allEvents = [...mockEvents, ...createdEvents];
+    return allEvents.filter(event => {
       const eventDate = new Date(event.date);
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
       return event.guildId === guildId && 
              eventDate >= currentWeekStart && 
              eventDate <= endOfDay_currentWeekEnd;
     });
-  }, [guildId, currentWeekStart, currentWeekEnd]);
+  }, [guildId, currentWeekStart, currentWeekEnd, createdEvents]);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -264,16 +267,36 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
   
   const handleSaveActivity = async () => {
-    let activityToSave = selectedActivity;
+    let activityTitleToSave = selectedActivity;
     if (selectedCategory === 'other') {
-      activityToSave = customActivityName.trim();
+      activityTitleToSave = customActivityName.trim();
     }
 
-    console.log({
+    if (!activityTitleToSave || !selectedStartDate || !user) {
+      // Add validation feedback to the user if necessary
+      console.error("Missing required fields to save activity.");
+      return;
+    }
+    
+    const newActivity: GuildEvent = {
+      id: `evt-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`, // Simple unique ID
+      guildId: guildId,
+      title: activityTitleToSave,
+      description: activityDescription,
+      date: selectedStartDate.toISOString(), // Store as ISO string
+      time: selectedStartTime, // HH:mm format
+      organizerId: user.uid,
+      // location: undefined, // Add if/when a location field is implemented
+      // attendeeIds: [], // Initialize if needed
+    };
+
+    setCreatedEvents(prevEvents => [...prevEvents, newActivity]);
+
+    console.log("New activity to be (conceptually) saved:", {
       category: selectedCategory,
       subcategory: selectedSubcategory,
-      activity: activityToSave,
-      startDate: selectedStartDate ? format(selectedStartDate, "yyyy-MM-dd") : null,
+      activity: activityTitleToSave,
+      startDate: format(selectedStartDate, "yyyy-MM-dd"),
       startTime: selectedStartTime,
       endDate: selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : null,
       endTime: selectedEndTime,
@@ -288,10 +311,19 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       generatePinCode,
       guildId: guildId, 
     });
+    
+    // TODO: Integrate with Firebase to save the event
+    // For example:
+    // try {
+    //   await addDoc(collection(db, `guilds/${guildId}/events`), { ...newActivity, createdAt: serverTimestamp() });
+    //   // Show success toast
+    // } catch (error) {
+    //   // Show error toast
+    // }
 
-    if (isMandatory && activityToSave && selectedStartDate && guildId && user) {
+    if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
       const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
-      const notificationMessage = `Nova atividade obrigatória: "${activityToSave}" em ${activityDateFormatted}.`;
+      const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
       const notificationLink = `/dashboard/calendar?guildId=${guildId}`;
 
       try {
@@ -302,7 +334,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           type: "MANDATORY_ACTIVITY_CREATED",
           timestamp: serverTimestamp() as Timestamp,
           details: {
-            activityTitle: activityToSave,
+            activityTitle: activityTitleToSave,
             activityDate: activityDateFormatted,
           },
           createdByUserId: user.uid,
@@ -315,6 +347,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
     
     setDialogIsOpen(false);
+    // Resetting states is now handled by onOpenChange of Dialog
   };
 
   const resetDialogStates = () => {
@@ -499,10 +532,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                           onValueChange={setSelectedActivity} 
                           value={selectedActivity || ""}
                           disabled={
-                            selectedCategory === 'other' || // Disable if "Other" is chosen (handled by Input)
-                            !selectedCategory || // Disable if no category
-                            (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) ||  // Disable if subcategories exist but none chosen
-                            currentActivities.length === 0 // Disable if no activities for current selection
+                            selectedCategory === 'other' || 
+                            !selectedCategory || 
+                            (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) ||  
+                            currentActivities.length === 0 
                           }
                         >
                           <SelectTrigger id="activity"><SelectValue placeholder="Selecione uma atividade/evento" /></SelectTrigger>
@@ -618,7 +651,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                   {/* Mandatory and Attendance Value */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                       <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                       <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                         <Switch
@@ -649,7 +682,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         value={attendanceValue}
                         onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
                         min="0"
-                        className="h-10" 
+                        className="h-10"
                       />
                     </div>
                   </div>
@@ -780,3 +813,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
