@@ -8,7 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch } from '@/lib/firebase';
-import type { Guild, AuditActionType } from '@/types/guildmaster';
+import type { Guild } from '@/types/guildmaster';
+import { AuditActionType } from '@/types/guildmaster'; // Importação adicionada aqui
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,7 +118,7 @@ function GuildSettingsPageContent() {
     fetchData();
     
     return () => {
-      setHeaderTitle(null); // Reset header title on component unmount
+      setHeaderTitle(null); 
     };
   }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, setHeaderTitle]);
 
@@ -136,8 +137,8 @@ function GuildSettingsPageContent() {
       });
 
       setGuild(prev => prev ? { ...prev, name: data.name } : null);
-      nameForm.reset({ name: data.name }); // Reset form with new value
-      setHeaderTitle(`Configurações: ${data.name}`); // Update header
+      nameForm.reset({ name: data.name }); 
+      setHeaderTitle(`Configurações: ${data.name}`); 
       toast({ title: "Nome da Guilda Atualizado!", description: `O nome da guilda foi alterado para ${data.name}.` });
     } catch (error) {
       console.error("Erro ao atualizar nome da guilda:", error);
@@ -364,7 +365,7 @@ function GuildSettingsPageContent() {
                 <AlertDialogCancel onClick={() => setIsDeleting(false)} disabled={isDeleting}>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteGuild}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className={cn(buttonVariants({ variant: "destructive" }))}
                   disabled={isDeleting}
                 >
                   {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
