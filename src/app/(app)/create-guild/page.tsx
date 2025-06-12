@@ -19,7 +19,7 @@ import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Lin
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
-import { GuildRole } from '@/types/guildmaster'; // Importar GuildRole
+import { GuildRole } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 
 const guildSchema = z.object({
@@ -82,16 +82,11 @@ export default function CreateGuildPage() {
     if (data.socialYoutube && data.socialYoutube.trim() !== "") socialLinks.youtube = data.socialYoutube.trim();
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
-    const guildData: Partial<Guild> & { 
-        ownerId: string; 
-        ownerDisplayName: string; 
-        memberIds: string[]; 
-        memberCount: number; 
-        createdAt: any; 
-        name: string; 
-        isOpen: boolean;
-        roles: { [key: string]: GuildRole; }; // Usar GuildRole
-     } = {
+    const guildRoles: { [key: string]: GuildRole } = {
+      [user.uid]: GuildRole.Leader
+    };
+
+    const guildData: Omit<Guild, 'id' | 'createdAt'> & { createdAt: any } = {
         name: data.name,
         description: data.description || "",
         game: data.game || "",
@@ -103,17 +98,17 @@ export default function CreateGuildPage() {
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png?text=${encodeURIComponent(data.name + ' Banner')}`,
         logoUrl: `https://placehold.co/150x150.png?text=${encodeURIComponent(data.name.substring(0,2).toUpperCase())}`,
-        roles: {
-            [user.uid]: GuildRole.Leader // Definir o criador como Líder
-        }
+        roles: guildRoles, // Usar a variável explicitamente tipada
+        socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
+        password: data.password || undefined,
     };
+    
+    // Remove undefined fields before saving
+    if (!guildData.socialLinks) delete guildData.socialLinks;
+    if (!guildData.password) delete guildData.password;
+    if (!guildData.description) guildData.description = "";
+    if (!guildData.game) guildData.game = "";
 
-    if (data.password) {
-        guildData.password = data.password;
-    }
-    if (Object.keys(socialLinks).length > 0) {
-        guildData.socialLinks = socialLinks;
-    }
 
     try {
       const newGuildRef = await addDoc(collection(db, "guilds"), guildData);
@@ -343,3 +338,5 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+
