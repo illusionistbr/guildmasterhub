@@ -9,7 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft } from 'lucide-react'; // Added ArrowLeft
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -281,12 +281,19 @@ function ExploreGuildsContent() {
 
 
 export default function GuildsPage() { 
+  const router = useNavigationRouter();
   return (
     <div className="space-y-8">
       <PageTitle 
         title="Explorar Guildas"
         description="Encontre e junte-se a novas guildas para suas aventuras."
         icon={<Users className="h-8 w-8 text-primary" />}
+        action={
+          <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+        }
       />
       <Card className="static-card-container">
         <CardHeader className="relative z-10">
@@ -300,3 +307,4 @@ export default function GuildsPage() {
     </div>
   );
 }
+
