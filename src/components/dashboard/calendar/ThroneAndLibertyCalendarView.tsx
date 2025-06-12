@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -312,7 +313,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </Button>
         </div>
 
-        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-grow sm:text-center whitespace-nowrap">
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-grow sm:text-center whitespace-nowrap px-2">
           {dateRangeText}
         </h2>
         
@@ -427,7 +428,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
                 <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
-                  <SelectTrigger id="category" className="col-span-3 form-input">
+                  <SelectTrigger id="category" className="col-span-3">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
@@ -445,7 +446,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   value={selectedSubcategory || ""}
                   disabled={!selectedCategory || currentSubcategories.length === 0}
                 >
-                  <SelectTrigger id="subcategory" className="col-span-3 form-input">
+                  <SelectTrigger id="subcategory" className="col-span-3">
                     <SelectValue placeholder="Selecione (se aplicável)" />
                   </SelectTrigger>
                   <SelectContent>
@@ -461,7 +462,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
                   <Input
                     id="customActivity"
-                    className="col-span-3 form-input"
+                    className="col-span-3"
                     placeholder="Digite o nome da atividade"
                     value={customActivityName}
                     onChange={(e) => setCustomActivityName(e.target.value)}
@@ -480,7 +481,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                       currentActivities.length === 0
                     }
                   >
-                    <SelectTrigger id="activity" className="col-span-3 form-input">
+                    <SelectTrigger id="activity" className="col-span-3">
                       <SelectValue placeholder="Selecione uma atividade/evento" />
                     </SelectTrigger>
                     <SelectContent>
@@ -501,7 +502,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         id="start-datetime-trigger"
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal form-input",
+                          "w-full justify-start text-left font-normal",
                           !selectedStartDate && "text-muted-foreground"
                         )}
                       >
@@ -524,14 +525,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             value={selectedStartTime.split(':')[0]}
                             onValueChange={(h) => setSelectedStartTime(`${h.padStart(2, '0')}:${selectedStartTime.split(':')[1]}`)}
                           >
-                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                           </Select>
                           <Select
                             value={selectedStartTime.split(':')[1]}
                             onValueChange={(m) => setSelectedStartTime(`${selectedStartTime.split(':')[0]}:${m.padStart(2, '0')}`)}
                           >
-                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
@@ -549,7 +550,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         id="end-datetime-trigger"
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal form-input",
+                          "w-full justify-start text-left font-normal",
                           !selectedEndDate && "text-muted-foreground"
                         )}
                       >
@@ -573,14 +574,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             value={selectedEndTime.split(':')[0]}
                             onValueChange={(h) => setSelectedEndTime(`${h.padStart(2, '0')}:${selectedEndTime.split(':')[1]}`)}
                           >
-                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                           </Select>
                           <Select
                             value={selectedEndTime.split(':')[1]}
                             onValueChange={(m) => setSelectedEndTime(`${selectedEndTime.split(':')[0]}:${m.padStart(2, '0')}`)}
                           >
-                            <SelectTrigger className="flex-1 form-input"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
@@ -594,7 +595,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                  <div className="flex items-center space-x-2 bg-input p-2 rounded-md border border-border h-10"> {/* Explicit height h-10 */}
+                  <div className="flex items-center space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                     <Switch
                       id="mandatory-switch"
                       checked={isMandatory}
@@ -624,7 +625,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={attendanceValue}
                     onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
                     min="0"
-                    className="form-input" // Default h-10
                   />
                 </div>
               </div>
@@ -652,4 +652,5 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
 
