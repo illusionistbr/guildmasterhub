@@ -3,13 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 const guildSchema = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
   description: z.string().max(500, "Descrição deve ter no máximo 500 caracteres.").optional(),
-  game: z.string().max(50, "Nome do jogo deve ter no máximo 50 caracteres.").optional(),
+  game: z.string().min(1, "Selecionar um jogo é obrigatório.").max(50, "Nome do jogo deve ter no máximo 50 caracteres."),
   password: z.string().max(50, "Senha deve ter no máximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
   socialFacebook: z.string().url("URL do Facebook inválida.").max(200, "Link do Facebook muito longo.").optional().or(z.literal('')),
   socialX: z.string().url("URL do X (Twitter) inválida.").max(200, "Link do X (Twitter) muito longo.").optional().or(z.literal('')),
@@ -34,11 +33,6 @@ const guildSchema = z.object({
 });
 
 type GuildFormValues = z.infer<typeof guildSchema>;
-
-const gameOptions = [
-  { value: "Throne and Liberty", label: "Throne and Liberty" },
-  // Adicione mais jogos aqui no futuro, se necessário
-];
 
 export default function CreateGuildPage() {
   const { user, loading: authLoading } = useAuth();
@@ -51,7 +45,7 @@ export default function CreateGuildPage() {
     defaultValues: {
       name: "",
       description: "",
-      game: undefined,
+      game: "",
       password: "",
       socialFacebook: "",
       socialX: "",
@@ -89,15 +83,15 @@ export default function CreateGuildPage() {
     const guildData: Omit<Guild, 'id' | 'createdAt'> & { createdAt: any } = {
         name: data.name,
         description: data.description || "",
-        game: data.game || "",
+        game: data.game,
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
         memberCount: 1,
         createdAt: serverTimestamp(),
         isOpen: !data.password,
-        bannerUrl: `https://placehold.co/1200x300.png?text=${encodeURIComponent(data.name + ' Banner')}`,
-        logoUrl: `https://placehold.co/150x150.png?text=${encodeURIComponent(data.name.substring(0,2).toUpperCase())}`,
+        bannerUrl: `https://placehold.co/1200x300.png`,
+        logoUrl: `https://placehold.co/150x150.png`,
         roles: guildRoles,
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
@@ -106,7 +100,6 @@ export default function CreateGuildPage() {
     if (!guildData.socialLinks) delete guildData.socialLinks;
     if (!guildData.password) delete guildData.password;
     if (!guildData.description) guildData.description = "";
-    if (!guildData.game) guildData.game = "";
 
 
     try {
@@ -128,6 +121,7 @@ export default function CreateGuildPage() {
     } catch (error) {
       console.error("Error creating guild:", error);
       toast({ title: "Erro ao Criar Guilda", description: "Não foi possível criar a guilda. Tente novamente.", variant: "destructive" });
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -225,13 +219,13 @@ export default function CreateGuildPage() {
                 name="game"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jogo</FormLabel>
+                    <FormLabel>Jogo <span className="text-destructive">*</span></FormLabel>
                     <div className="relative flex items-center mt-1">
                        <Gamepad2 className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ""}>
+                        <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                           <FormControl>
                             <SelectTrigger className={`form-input pl-10 ${errors.game ? 'border-destructive focus:border-destructive' : ''}`}>
-                              <SelectValue placeholder="Selecione um jogo (opcional)" />
+                              <SelectValue placeholder="Selecione um jogo" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
