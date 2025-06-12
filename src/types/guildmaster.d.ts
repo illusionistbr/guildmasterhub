@@ -73,4 +73,9 @@ export interface UserProfile {
   displayName: string | null;
   photoURL?: string | null;
   guilds?: string[]; 
+  createdAt?: Timestamp; // Added for user profile storage
+}
+
+export interface GuildMember extends UserProfile {
+  role: GuildRole;
 }

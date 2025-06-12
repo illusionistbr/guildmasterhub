@@ -3,7 +3,7 @@
 
 import type { UserProfile } from '@/types/guildmaster';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { auth as firebaseAuth, firebaseUpdateProfile, db, collection, query, where, limit, getDocs } from '@/lib/firebase'; 
+import { auth as firebaseAuth, firebaseUpdateProfile, db, collection, query, where, limit, getDocs, setDoc, serverTimestamp } from '@/lib/firebase'; 
 import { 
   User as FirebaseUser, 
   onAuthStateChanged, 
@@ -21,21 +21,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// This function might still be useful elsewhere, but not for immediate login/signup redirection.
-// async function getUserGuildRedirectPath(userId: string): Promise<string> {
-//   const qOwned = query(collection(db, "guilds"), where("ownerId", "==", userId), limit(1));
-//   const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", userId), limit(1));
-
-//   const [ownedSnapshot, memberSnapshot] = await Promise.all([getDocs(qOwned), getDocs(qMember)]);
-
-//   if (ownedSnapshot.empty && memberSnapshot.empty) {
-//     return '/guild-selection';
-//   }
-//   if (!ownedSnapshot.empty) return `/dashboard?guildId=${ownedSnapshot.docs[0].id}`;
-//   if (!memberSnapshot.empty) return `/dashboard?guildId=${memberSnapshot.docs[0].id}`;
-//   return '/dashboard'; // Fallback, should ideally have a guildId
-// }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -67,9 +52,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
       if (userCredential.user) {
-        // User state will be set by onAuthStateChanged
         setLoading(false);
-        return '/guild-selection'; // Always redirect to guild selection
+        return '/guild-selection'; 
       }
       throw new Error("Login failed, user not found in credential.");
     } catch (error) {
@@ -83,12 +67,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await firebaseSignOut(firebaseAuth);
-      // User state will be set by onAuthStateChanged
     } catch (error) {
       console.error("Erro no logout:", error);
       throw error;
-    } finally {
-      // setLoading(false); // onAuthStateChanged handles this
     }
   };
   
@@ -99,20 +80,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
-      if (userCredential.user) {
-        await firebaseUpdateProfile(userCredential.user, {
+      const fbUser = userCredential.user;
+      if (fbUser) {
+        await firebaseUpdateProfile(fbUser, {
           displayName: nickname,
         });
-        // Manually update user state here because onAuthStateChanged might not be fast enough
-        // or might not pick up profile update immediately for the redirect logic.
-        setUser({
-          uid: userCredential.user.uid,
-          email: userCredential.user.email,
+
+        // Store user profile in Firestore 'users' collection
+        const userDocRef = doc(db, "users", fbUser.uid);
+        await setDoc(userDocRef, {
+          uid: fbUser.uid,
+          email: fbUser.email,
           displayName: nickname,
-          photoURL: userCredential.user.photoURL, 
+          photoURL: fbUser.photoURL || null, // Ensure photoURL is explicitly set or null
+          createdAt: serverTimestamp(),
+        });
+
+        setUser({
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: nickname,
+          photoURL: fbUser.photoURL, 
         });
         setLoading(false);
-        return '/guild-selection'; // Always redirect to guild selection
+        return '/guild-selection';
       }
       throw new Error("Signup failed, user not created.");
     } catch (error) {
