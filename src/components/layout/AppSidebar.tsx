@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Sidebar,
   SidebarHeader,
@@ -23,32 +23,39 @@ import {
   Settings, 
   ShieldEllipsis,
   LogOut,
-  ClipboardList // Adicionado para Auditoria
+  ClipboardList
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/members", label: "Membros", icon: Users },
-  { href: "/dashboard/calendar", label: "Calendário", icon: CalendarDays },
+const navItemsBase = [
+  { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { baseHref: "/dashboard/members", label: "Membros", icon: Users },
+  { baseHref: "/dashboard/calendar", label: "Calendário", icon: CalendarDays },
   { 
     label: "Recrutamento", 
     icon: UserPlus,
     subItems: [
-      { href: "/dashboard/recruitment", label: "Visão Geral", icon: UserPlus },
-      { href: "/dashboard/recruitment/applications", label: "Candidaturas", icon: UserPlus },
+      { baseHref: "/dashboard/recruitment", label: "Visão Geral", icon: UserPlus },
+      { baseHref: "/dashboard/recruitment/applications", label: "Candidaturas", icon: UserPlus },
     ]
   },
-  { href: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList }, // Novo item Auditoria
-  { href: "/dashboard/settings", label: "Configurações", icon: Settings, group: "Geral" },
+  { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
+  { baseHref: "/dashboard/settings", label: "Configurações", icon: Settings, group: "Geral" },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { logout, user } = useAuth();
+
+  const guildId = searchParams.get('guildId');
 
   const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
   
+  const generateHref = (baseHref: string) => {
+    return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
+  };
+
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
@@ -62,59 +69,66 @@ export function AppSidebar() {
 
       <SidebarContent className="flex-grow p-2">
         <SidebarMenu>
-          {navItems.filter(item => !item.group).map((item) =>
-            item.subItems ? (
+          {navItemsBase.filter(item => !item.group).map((item) => {
+            const currentHref = generateHref(item.baseHref);
+            return item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
                 <SidebarMenuButton
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={item.subItems.some(sub => isActive(sub.href))}
+                  isActive={item.subItems.some(sub => isActive(generateHref(sub.baseHref)))}
                   className="w-full justify-start"
                 >
                   <item.icon />
                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                 </SidebarMenuButton>
-                {item.subItems.map(subItem => (
-                   <SidebarMenuItem key={subItem.href} className="group-data-[collapsible=icon]:hidden ml-4">
-                     <Link href={subItem.href} className={`flex items-center gap-2 p-2 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItem.href) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground'}`}>
+                {item.subItems.map(subItem => {
+                  const subItemHref = generateHref(subItem.baseHref);
+                  return (
+                   <SidebarMenuItem key={subItem.baseHref} className="group-data-[collapsible=icon]:hidden ml-4">
+                     <Link href={subItemHref} className={`flex items-center gap-2 p-2 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground'}`}>
                        <span>{subItem.label}</span>
                      </Link>
                    </SidebarMenuItem>
-                ))}
+                  )
+                })}
 
               </SidebarGroup>
             ) : (
-              <SidebarMenuItem key={item.href}>
+              <SidebarMenuItem key={item.baseHref}>
                 <SidebarMenuButton
                   asChild
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={isActive(item.href)}
+                  isActive={isActive(currentHref)}
                 >
-                  <Link href={item.href}>
+                  <Link href={currentHref}>
                     <item.icon />
                     <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )
-          )}
+          })}
         </SidebarMenu>
         
         <SidebarGroup className="mt-auto">
            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Geral</SidebarGroupLabel>
-           {navItems.filter(item => item.group === "Geral").map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                isActive={isActive(item.href)}
-              >
-                <Link href={item.href}>
-                  <item.icon />
-                  <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-           ))}
+           {navItemsBase.filter(item => item.group === "Geral").map((item) => {
+             const currentHref = generateHref(item.baseHref);
+             return (
+              <SidebarMenuItem key={item.baseHref}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                  isActive={isActive(currentHref)}
+                >
+                  <Link href={currentHref}>
+                    <item.icon />
+                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+             )
+           })}
         </SidebarGroup>
       </SidebarContent>
 
