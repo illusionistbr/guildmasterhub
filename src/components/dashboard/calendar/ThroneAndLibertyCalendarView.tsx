@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input"; // Added Input import
 import { ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
 import {
   Dialog,
@@ -91,6 +92,67 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   arch_boss: [
     'Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy',
   ],
+  boonstone: [
+    'Abandoned Stonemason', 'Akidu Valley', 'Blackhowl Plains', 'Carmine Forest',
+    'Daybreak Shore', 'Fonos Basin', 'Golden Rye Pastures', 'Grayclaw Forest',
+    'Manawastes', 'Moonlight Desert', 'Monolith Wastelands', 'Nesting Grounds',
+    'Purelight Hills', 'Raging Wilds', 'Ruins of Turayne', 'Sandworm Lair',
+    'Shattered Temple', 'Urstella Fields', 'Windhill Shores', "Quietis' Demesne",
+    'Forest of the Great Tree', 'Swamp of Silence', 'Black Anvil Forge',
+    'Bercant Manor', 'Crimson Manor',
+  ],
+  riftstone: [
+    'Adentus Riftstone', 'Azhreil Riftstone', 'Chernobog Riftstone',
+    'Excavator Riftstone', 'Grand Aelon Riftstone', 'Kowazan Riftstone',
+    'Malakar Riftstone', 'Morokai Riftstone', 'Talus Riftstone',
+    'Daigon Riftstone', 'Leviathan Riftstone', 'Pakilo Naru Riftstone',
+    'Manticus Brothers Riftstone',
+  ],
+  war: [
+    'Nebula Island', 'Riftstone War', 'Boonstone War',
+    'Riftstone/Boonstone War', 'Inter-Server Riftstone', 'Inter-Server Boonstone',
+  ],
+  siege: [
+    'Stonegard Castle',
+  ],
+  guild_contract: [
+    'A Blade for the Creator', 'Against the Principles of Nature', 'Another Day Survived',
+    'Ant Nest Sweep', 'Attack of the Returned Ones', 'Balance of Life',
+    'Before the Full Moon Rises', 'Between Life and Death', 'Blessings and Curses',
+    'Collect Golden Sand', 'Collect Lizard Tails', 'Created Life', 'Cycle of Life',
+    'Dangerous Monsters', 'Dark Collusion', 'Deep-Rooted Evil', 'Demonic Conspiracy',
+    'Demons and Creations', 'Demons and Descendants of God', "Demons' Rampage",
+    "Ecosystem's Balance", 'Eliminate Dangerous Spores', 'End of the Abyss',
+    'End the Mana Frenzy', 'Enraged Beings', 'Evil-Minded Beings',
+    'Gatekeepers of Diabolica', 'Gem-Fashioning Monument Stones', "God's Creations",
+    'Insect Overgrowth', 'Middle of the Abyss', 'Moon Lantern Flower Seed',
+    "Nature's Invasion", "Nature's Merciless Retort",
+    'Night of the Walking Corpses and Stones', 'Orc Talent', 'Protector of Solisium',
+    'Protector of the Plains', 'Public Enemy', 'Raid Sanctuary',
+    'Resolve Mana Depletion', 'Resurrected Beasts', 'Revenge of the Variants',
+    'Seal the Dark Rift', 'Sparkling and Shining', 'Start of the Abyss',
+    'Steel Your Nerves', 'Steel, Steel, and More Steel!', 'Stolen Peace',
+    'Stop the Abnormal Growth', 'Stop the Evil Faction', 'Supply and Demand',
+    'Sweep Sanctuary', "Sylaveth's Children", 'Temple Sweep Team',
+    'The Danger of Fire Orcs', 'The Malice that Never Sleeps',
+    'The Manastone is Charging', 'The Spinning Wheel Spins', 'Tomb Expedition',
+    'War in the Middle Realm', 'What Beasts Leave Behind', 'Wood Needed',
+    'Zombie and Bandit Eradication',
+  ],
+  raid: [
+    'Morokai', 'Excavator-9', 'Chernobog', 'Talus', 'Malakar', 'Cornelius',
+    'Ahzreil', 'Minezerok', 'Kowazan', 'Adentus', 'Junobote', 'Grand Aelon',
+    'Nirma', 'Aridus',
+  ],
+  tax_delivery: [
+    'Vienta village',
+  ],
+  war_games: [
+    'War Games',
+  ],
+  lawless_wilds: [
+    'Nebula Island',
+  ],
 };
 
 
@@ -104,6 +166,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
+  const [customActivityName, setCustomActivityName] = useState<string>(""); // For 'Other' category
   const [currentSubcategories, setCurrentSubcategories] = useState<string[]>([]);
   const [currentActivities, setCurrentActivities] = useState<string[]>([]);
 
@@ -153,26 +216,44 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setSelectedSubcategory(null); 
-    setSelectedActivity(null);   
-
+    setSelectedSubcategory(null);
+    
+    if (categoryId === 'other') {
+      setSelectedActivity(null); 
+      setCurrentActivities([]); 
+    } else {
+      setCustomActivityName(""); 
+      setCurrentActivities(TL_ACTIVITIES[categoryId] || []);
+    }
+    
     setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
-    setCurrentActivities(TL_ACTIVITIES[categoryId] || []);
+    if (!TL_SUB_CATEGORIES[categoryId] || TL_SUB_CATEGORIES[categoryId].length === 0) {
+        setSelectedActivity(null); 
+    }
   };
 
   const handleSaveActivity = () => {
-    // For now, just log the selected values.
-    // In a real app, you'd create an event object and save it.
+    let activityToSave = selectedActivity;
+    if (selectedCategory === 'other') {
+      activityToSave = customActivityName.trim();
+      if (!activityToSave) {
+        // TODO: Add a toast for validation if needed
+        console.warn("Custom activity name cannot be empty for 'Other' category.");
+        return; 
+      }
+    }
+
     console.log({
       category: selectedCategory,
       subcategory: selectedSubcategory,
-      activity: selectedActivity,
-      // TODO: Add date, time, etc.
+      activity: activityToSave,
+      // TODO: Add date, time, etc. to the actual event object for saving
     });
     // Reset form and close dialog
     setSelectedCategory(null);
     setSelectedSubcategory(null);
     setSelectedActivity(null);
+    setCustomActivityName("");
     setCurrentSubcategories([]);
     setCurrentActivities([]);
     setDialogIsOpen(false);
@@ -286,6 +367,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           setSelectedCategory(null);
           setSelectedSubcategory(null);
           setSelectedActivity(null);
+          setCustomActivityName("");
           setCurrentSubcategories([]);
           setCurrentActivities([]);
         }
@@ -330,8 +412,19 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               </div>
             )}
 
-            {/* Activity/Event Select (conditional) */}
-            {selectedCategory && currentActivities.length > 0 && (
+            {/* Activity/Event Select or Input (conditional) */}
+            {selectedCategory && selectedCategory === 'other' ? (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
+                <Input
+                  id="customActivity"
+                  className="col-span-3 form-input"
+                  placeholder="Digite o nome da atividade"
+                  value={customActivityName}
+                  onChange={(e) => setCustomActivityName(e.target.value)}
+                />
+              </div>
+            ) : selectedCategory && currentActivities.length > 0 && (
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity" className="text-right text-foreground">Atividade/Evento</Label>
                 <Select onValueChange={setSelectedActivity} value={selectedActivity || ""}>
