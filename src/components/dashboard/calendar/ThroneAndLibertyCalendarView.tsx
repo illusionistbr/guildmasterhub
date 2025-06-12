@@ -502,7 +502,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         id="start-datetime-trigger"
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal h-10 px-3 py-2 rounded-md border border-input bg-background",
                           !selectedStartDate && "text-muted-foreground"
                         )}
                       >
@@ -550,7 +550,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         id="end-datetime-trigger"
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal h-10 px-3 py-2 rounded-md border border-input bg-background",
                           !selectedEndDate && "text-muted-foreground"
                         )}
                       >
@@ -595,12 +595,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                  <div className="flex items-center space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                  <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                     <Switch
                       id="mandatory-switch"
                       checked={isMandatory}
                       onCheckedChange={setIsMandatory}
-                      className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
                     />
                     <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
                   </div>
@@ -652,5 +651,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
 
 
