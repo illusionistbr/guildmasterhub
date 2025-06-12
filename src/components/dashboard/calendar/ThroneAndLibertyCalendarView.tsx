@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input"; // Added Input import
+import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
 import {
   Dialog,
@@ -166,7 +166,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
-  const [customActivityName, setCustomActivityName] = useState<string>(""); // For 'Other' category
+  const [customActivityName, setCustomActivityName] = useState<string>("");
   const [currentSubcategories, setCurrentSubcategories] = useState<string[]>([]);
   const [currentActivities, setCurrentActivities] = useState<string[]>([]);
 
@@ -237,7 +237,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     if (selectedCategory === 'other') {
       activityToSave = customActivityName.trim();
       if (!activityToSave) {
-        // TODO: Add a toast for validation if needed
         console.warn("Custom activity name cannot be empty for 'Other' category.");
         return; 
       }
@@ -247,9 +246,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       category: selectedCategory,
       subcategory: selectedSubcategory,
       activity: activityToSave,
-      // TODO: Add date, time, etc. to the actual event object for saving
     });
-    // Reset form and close dialog
     setSelectedCategory(null);
     setSelectedSubcategory(null);
     setSelectedActivity(null);
@@ -263,16 +260,19 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
-        <div className="flex items-center gap-2">
-            <Button onClick={() => setDialogIsOpen(true)} className="form-input">
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Nova Atividade
-            </Button>
-            <h2 className="text-xl font-semibold text-foreground hidden md:block">{dateRangeText}</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
+        <div className="w-full sm:w-auto">
+          <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto">
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Nova Atividade
+          </Button>
         </div>
-        <h2 className="text-lg font-semibold text-foreground md:hidden text-center">{dateRangeText}</h2> {/* For mobile */}
-        <div className="flex items-center gap-2">
+
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-none">
+          {dateRangeText}
+        </h2>
+        
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'week'|'day')} disabled>
             <SelectTrigger className="w-[100px] form-input">
               <SelectValue placeholder="Visualizar" />
@@ -281,15 +281,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               <SelectItem value="week">Semana</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleToday} className="form-input">Hoje</Button>
-          <Button variant="outline" size="icon" onClick={handlePrevWeek} className="form-input"><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" size="icon" onClick={handleNextWeek} className="form-input"><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="outline" onClick={handleToday}>Hoje</Button>
+          <Button variant="outline" size="icon" onClick={handlePrevWeek}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" onClick={handleNextWeek}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       </div>
 
       {/* Calendar Grid Area */}
       <ScrollArea className="flex-1 h-full">
-        <div className="grid grid-template-columns-calendar"> {/* Custom grid columns */}
+        <div className="grid grid-template-columns-calendar">
           
           {/* Sticky Header Row: Time Gutter Spacer & Day Headers */}
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
@@ -322,7 +322,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           {/* Scrollable Content: Event Cells Grid */}
           <div className="row-start-2 grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
-              <div key={`event-col-${day.toString()}`} className="relative border-r border-border"> {/* Day Column for events */}
+              <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
                 {hours.map(hour => {
                   const eventsInCell = eventsForWeek.filter(event => {
                       const eventDate = new Date(event.date);
@@ -341,7 +341,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     </div>
                   );
                 })}
-                {/* Current Time Indicator for this day */}
                 {isToday(day) && (
                   <div
                     className="absolute w-full h-0.5 bg-destructive z-10"
@@ -363,7 +362,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
         if (!isOpen) {
-          // Reset form on close
           setSelectedCategory(null);
           setSelectedSubcategory(null);
           setSelectedActivity(null);
@@ -379,8 +377,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               Preencha os detalhes da atividade para adicioná-la ao calendário.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-6 py-4"> {/* Increased gap for better spacing */}
-            {/* Category Select */}
+          <div className="grid gap-6 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
               <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
@@ -395,7 +392,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               </Select>
             </div>
 
-            {/* Subcategory Select (conditional) */}
             {selectedCategory && currentSubcategories.length > 0 && (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
@@ -412,7 +408,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               </div>
             )}
 
-            {/* Activity/Event Select or Input (conditional) */}
             {selectedCategory && selectedCategory === 'other' ? (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
@@ -439,7 +434,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </Select>
               </div>
             )}
-            {/* Future fields like date/time pickers would go here */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
