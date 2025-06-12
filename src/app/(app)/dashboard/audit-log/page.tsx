@@ -5,7 +5,8 @@ import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'reac
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, query, orderBy, getDocs as getFirestoreDocs, Timestamp, where } from '@/lib/firebase';
-import type { Guild, GuildRole, type AuditLogEntry, AuditActionType } from '@/types/guildmaster';
+import type { Guild, AuditLogEntry, AuditActionType } from '@/types/guildmaster';
+import { GuildRole } from '@/types/guildmaster'; // Added import
 import { PageTitle } from '@/components/shared/PageTitle';
 import {
   Table,
