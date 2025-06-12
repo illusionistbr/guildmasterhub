@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   startOfWeek,
   endOfWeek,
@@ -97,7 +99,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   boonstone: [
     'Abandoned Stonemason', 'Akidu Valley', 'Blackhowl Plains', 'Carmine Forest',
     'Daybreak Shore', 'Fonos Basin', 'Golden Rye Pastures', 'Grayclaw Forest',
-    'Manawastes', 'Moonlight Desert', 'Monolith Wastelands', 'Nesting Grounds',
+    'Manawastes', 'Moonlight Desert', 'Monolith Wastelands', 'Nesting Grounds', 
     'Purelight Hills', 'Raging Wilds', 'Ruins of Turayne', 'Sandworm Lair',
     'Shattered Temple', 'Urstella Fields', 'Windhill Shores', "Quietis' Demesne",
     'Forest of the Great Tree', 'Swamp of Silence', 'Black Anvil Forge',
@@ -178,6 +180,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [selectedStartTime, setSelectedStartTime] = useState<string>("00:00"); 
   const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>(undefined);
   const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00"); 
+
+  const [isMandatory, setIsMandatory] = useState(false);
+  const [attendanceValue, setAttendanceValue] = useState<number>(1);
+
 
   const weekStartsOn = 1; // Monday
 
@@ -262,6 +268,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       startTime: selectedStartTime,
       endDate: selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : null,
       endTime: selectedEndTime,
+      isMandatory,
+      attendanceValue,
     });
     
     setDialogIsOpen(false);
@@ -269,7 +277,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
-      <div className="flex flex-wrap justify-between items-center mb-4 gap-y-3 gap-x-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
         <div className="w-full sm:w-auto order-2 sm:order-1">
           <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto">
             <CalendarPlus className="mr-2 h-4 w-4" />
@@ -277,7 +285,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </Button>
         </div>
 
-        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-1 sm:justify-center sm:text-center whitespace-nowrap">
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-grow sm:text-center whitespace-nowrap">
           {dateRangeText}
         </h2>
         
@@ -378,6 +386,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           setSelectedStartTime("00:00");
           setSelectedEndDate(undefined);
           setSelectedEndTime("00:00");
+          setIsMandatory(false);
+          setAttendanceValue(1);
         }
       }}>
         <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col">
@@ -388,6 +398,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-grow pr-6 -mr-6"> 
+          <TooltipProvider>
             <div className="grid gap-6 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
@@ -441,7 +452,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={selectedActivity || ""}
                     disabled={
                       !selectedCategory ||
-                      (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory]) || // Check if subcategories exist for the category
+                      (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory]) || 
                       currentActivities.length === 0
                     }
                   >
@@ -474,7 +485,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         {formatDateTimeForDisplay(selectedStartDate, selectedStartTime) || <span>Escolha data e hora</span>}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-card border-border">
+                    <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                       <Calendar
                         mode="single"
                         selected={selectedStartDate}
@@ -522,7 +533,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         {formatDateTimeForDisplay(selectedEndDate, selectedEndTime) || <span>Escolha data e hora (opcional)</span>}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-card border-border">
+                    <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                       <Calendar
                         mode="single"
                         selected={selectedEndDate}
@@ -554,8 +565,48 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   </Popover>
                   <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
                 </div>
-              </div> 
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Mandatory</Label>
+                  <div className="flex items-center space-x-2 bg-input p-2 rounded-md border border-border">
+                    <Switch
+                      id="mandatory-switch"
+                      checked={isMandatory}
+                      onCheckedChange={setIsMandatory}
+                      className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
+                    />
+                    <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1">
+                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Attendance Value</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="bg-popover text-popover-foreground">
+                        <p>Valor de presença para o evento (ex: DKP).</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Input
+                    id="attendance-value"
+                    type="number"
+                    value={attendanceValue}
+                    onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    min="0"
+                    className="bg-input border-border"
+                  />
+                </div>
+              </div>
+
             </div>
+          </TooltipProvider>
           </ScrollArea>
           <DialogFooter className="pt-4">
             <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
