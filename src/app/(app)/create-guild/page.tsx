@@ -225,13 +225,13 @@ export default function CreateGuildPage() {
                 name="game"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jogo Principal (Opcional)</FormLabel>
+                    <FormLabel>Jogo</FormLabel>
                     <div className="relative flex items-center mt-1">
                        <Gamepad2 className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger className={`form-input pl-10 ${errors.game ? 'border-destructive focus:border-destructive' : ''}`}>
-                              <SelectValue placeholder="Selecione um jogo" />
+                              <SelectValue placeholder="Selecione um jogo (opcional)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
