@@ -590,7 +590,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
-                        <p>The amount of activity points and DKP that will be awarded to members who attend this activity.</p>
+                        <p>A quantidade de pontos de atividade e DKP que serão concedidos aos membros que participarem desta atividade.</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -628,5 +628,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
 
 
