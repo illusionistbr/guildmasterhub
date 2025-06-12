@@ -55,8 +55,8 @@ export default function AppLayout({
         </SidebarProvider>
       ) : (
         <div className="flex flex-col flex-1 min-h-screen">
-          <AppHeader showSidebarTrigger={pathname.startsWith("/dashboard/settings")} /> 
-          {/* Show trigger on settings page if it was to have its own sub-sidebar, or keep false */}
+          <AppHeader showSidebarTrigger={false} /> 
+          {/* Show trigger on settings page if it was to have its own sub-sidebar, or keep false. Set to false to fix useSidebar error. */}
           <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
             {children}
           </main>
