@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch } from '@/lib/firebase';
 import type { Guild, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
+import { cn } from '@/lib/utils';
 
 const guildNameSchema = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
@@ -215,11 +216,10 @@ function GuildSettingsPageContent() {
       toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
       router.push('/guild-selection'); 
-      // No need to setIsDeleting(false) here as the component will unmount due to navigation.
     } catch (error) {
       console.error("Erro ao excluir guilda:", error);
       toast({ title: "Erro ao Excluir Guilda", description: "Não foi possível excluir a guilda. Verifique o console para mais detalhes.", variant: "destructive" });
-      setIsDeleting(false); // Reset on error
+      setIsDeleting(false); 
     }
   };
 
@@ -344,11 +344,12 @@ function GuildSettingsPageContent() {
             Todos os dados associados, incluindo membros (de suas listas na guilda, não contas de usuário), eventos e logs, serão perdidos.
           </CardDescription>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="w-full" disabled={isDeleting}>
-                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                Excluir Guilda Permanentemente
-              </Button>
+            <AlertDialogTrigger
+              className={cn(buttonVariants({ variant: "destructive" }), "w-full")}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Excluir Guilda Permanentemente
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -385,5 +386,3 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
-
-    
