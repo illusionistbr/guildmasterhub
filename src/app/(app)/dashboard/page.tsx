@@ -494,7 +494,7 @@ function DashboardPageContent() {
         </div>
         <div className="md:col-span-10 md:pt-4 text-center md:text-left"> 
           <h1 className="text-3xl md:text-4xl font-headline text-primary">Bem-vindo(a), {welcomeName}!</h1>
-          <p className="text-lg text-muted-foreground">Aqui está uma visão geral da sua guilda: <span className="font-semibold text-foreground">{currentGuild.name}</span>.</p>
+          
         </div>
       </div>
 
@@ -612,5 +612,6 @@ export default function DashboardPage() {
 }
 
     
+
 
 
