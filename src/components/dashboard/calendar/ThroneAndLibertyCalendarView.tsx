@@ -4,7 +4,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   startOfWeek,
   endOfWeek,
@@ -36,10 +45,68 @@ interface ThroneAndLibertyCalendarViewProps {
 const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
 const TIME_GUTTER_WIDTH_CLASS = "w-16"; // Tailwind class for width
 
+const TL_EVENT_CATEGORIES = [
+  { id: 'world_event', label: 'World Event' },
+  { id: 'world_dungeon', label: 'World Dungeon' },
+  { id: 'world_boss', label: 'World Boss' },
+  { id: 'arch_boss', label: 'Arch Boss' },
+  { id: 'boonstone', label: 'Boonstone' },
+  { id: 'riftstone', label: 'Riftstone' },
+  { id: 'war', label: 'War' },
+  { id: 'siege', label: 'Siege' },
+  { id: 'guild_contract', label: 'Guild Contract' },
+  { id: 'raid', label: 'Raid' },
+  { id: 'tax_delivery', label: 'Tax Delivery' },
+  { id: 'war_games', label: 'War Games' },
+  { id: 'other', label: 'Other' },
+  { id: 'lawless_wilds', label: 'Lawless Wilds' },
+];
+
+const TL_SUB_CATEGORIES: Record<string, string[]> = {
+  world_event: ['Peace', 'Conflict', 'Guild'],
+  world_boss: ['Peace', 'Conflict', 'Guild'],
+  arch_boss: ['Peace', 'Conflict', 'Guild'],
+};
+
+const TL_ACTIVITIES: Record<string, string[]> = {
+  world_event: [
+    'Blood Mushroom Gathering', 'Dark Destroyers', 'Desert Caravan', 'Festival of Fire',
+    'Hidden Brown Mica', 'Lantern Seed Festival', 'Lift the Moonlight Spell',
+    'Operation: Talisman Delivery', 'Requiem of Light', 'Starlight Stones Ritual',
+    'Stop the Mana Frenzy', 'Wolf Hunting Contest', "Quietis' Demesne",
+    'Forest of the Great Tree', 'Swamp of Silence', 'Black Anvil Forge',
+    'Bercant Manor', 'Crimson Manor',
+  ],
+  world_dungeon: [
+    'Ant Nest', 'Sanctum of Desire', 'Saurodoma Island', 'Shadowed Crypt',
+    "Syleus's Abyss", 'Temple of Sylaveth', 'Temple of Truth',
+    'Bercant Estate', 'Crimson Mansion',
+  ],
+  world_boss: [
+    'Adentus', 'Ahzreil', 'Aridus', 'Bellandir', 'Chernobog', 'Cornelius', 'Daigon',
+    'Excavator-9', 'Grand Aelon', 'Junobote', 'Kowazan', 'Malakar', 'Minezerok',
+    'Morokai', 'Nirma', 'Talus', 'Tevent', 'Leviathan', 'Pakilo Naru',
+    'Manticus Brothers',
+  ],
+  arch_boss: [
+    'Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy',
+  ],
+};
+
+
 export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); 
+
+  // Dialog state
+  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
+  const [currentSubcategories, setCurrentSubcategories] = useState<string[]>([]);
+  const [currentActivities, setCurrentActivities] = useState<string[]>([]);
+
 
   const weekStartsOn = 1; // Monday
 
@@ -77,7 +144,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const eventsForWeek = useMemo(() => {
     return mockEvents.filter(event => {
       const eventDate = new Date(event.date);
-      // Adjust currentWeekEnd to be end of the day for comparison
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
       return event.guildId === guildId && 
              eventDate >= currentWeekStart && 
@@ -85,11 +151,46 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     });
   }, [guildId, currentWeekStart, currentWeekEnd]);
 
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setSelectedSubcategory(null); 
+    setSelectedActivity(null);   
+
+    setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
+    setCurrentActivities(TL_ACTIVITIES[categoryId] || []);
+  };
+
+  const handleSaveActivity = () => {
+    // For now, just log the selected values.
+    // In a real app, you'd create an event object and save it.
+    console.log({
+      category: selectedCategory,
+      subcategory: selectedSubcategory,
+      activity: selectedActivity,
+      // TODO: Add date, time, etc.
+    });
+    // Reset form and close dialog
+    setSelectedCategory(null);
+    setSelectedSubcategory(null);
+    setSelectedActivity(null);
+    setCurrentSubcategories([]);
+    setCurrentActivities([]);
+    setDialogIsOpen(false);
+  };
+
+
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
-        <h2 className="text-xl font-semibold text-foreground">{dateRangeText}</h2>
+        <div className="flex items-center gap-2">
+            <Button onClick={() => setDialogIsOpen(true)} className="form-input">
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Nova Atividade
+            </Button>
+            <h2 className="text-xl font-semibold text-foreground hidden md:block">{dateRangeText}</h2>
+        </div>
+        <h2 className="text-lg font-semibold text-foreground md:hidden text-center">{dateRangeText}</h2> {/* For mobile */}
         <div className="flex items-center gap-2">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'week'|'day')} disabled>
             <SelectTrigger className="w-[100px] form-input">
@@ -109,11 +210,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       <ScrollArea className="flex-1 h-full">
         <div className="grid grid-template-columns-calendar"> {/* Custom grid columns */}
           
-          {/* Sticky Header Row: Time Gutter Spacer */}
+          {/* Sticky Header Row: Time Gutter Spacer & Day Headers */}
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
-          
-          {/* Sticky Header Row: Day Headers */}
-          <div className="sticky top-0 z-20 bg-card grid grid-cols-7">
+          <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
               <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center">
                 <div className={cn("text-xs font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
@@ -140,7 +239,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </div>
 
           {/* Scrollable Content: Event Cells Grid */}
-          <div className="row-start-2 grid grid-cols-7">
+          <div className="row-start-2 grid grid-cols-7 col-start-2">
             {daysInWeek.map(day => (
               <div key={`event-col-${day.toString()}`} className="relative border-r border-border"> {/* Day Column for events */}
                 {hours.map(hour => {
@@ -176,7 +275,85 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </div>
         </div>
         <ScrollBar orientation="horizontal" />
+        <ScrollBar orientation="vertical" />
       </ScrollArea>
+
+      {/* Dialog for New Activity */}
+      <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
+        setDialogIsOpen(isOpen);
+        if (!isOpen) {
+          // Reset form on close
+          setSelectedCategory(null);
+          setSelectedSubcategory(null);
+          setSelectedActivity(null);
+          setCurrentSubcategories([]);
+          setCurrentActivities([]);
+        }
+      }}>
+        <DialogContent className="sm:max-w-[525px] bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-primary">Registrar Nova Atividade</DialogTitle>
+            <DialogDescription>
+              Preencha os detalhes da atividade para adicioná-la ao calendário.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4"> {/* Increased gap for better spacing */}
+            {/* Category Select */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
+              <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
+                <SelectTrigger id="category" className="col-span-3 form-input">
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TL_EVENT_CATEGORIES.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subcategory Select (conditional) */}
+            {selectedCategory && currentSubcategories.length > 0 && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
+                <Select onValueChange={setSelectedSubcategory} value={selectedSubcategory || ""}>
+                  <SelectTrigger id="subcategory" className="col-span-3 form-input">
+                    <SelectValue placeholder="Selecione uma subcategoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentSubcategories.map(subcat => (
+                      <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Activity/Event Select (conditional) */}
+            {selectedCategory && currentActivities.length > 0 && (
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="activity" className="text-right text-foreground">Atividade/Evento</Label>
+                <Select onValueChange={setSelectedActivity} value={selectedActivity || ""}>
+                  <SelectTrigger id="activity" className="col-span-3 form-input">
+                    <SelectValue placeholder="Selecione uma atividade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentActivities.map(act => (
+                      <SelectItem key={act} value={act}>{act}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {/* Future fields like date/time pickers would go here */}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSaveActivity} className="btn-gradient btn-style-primary">Salvar Atividade</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
