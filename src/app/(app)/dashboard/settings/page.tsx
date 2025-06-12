@@ -200,7 +200,6 @@ function GuildSettingsPageContent() {
     }
     setIsDeleting(true);
     try {
-      // Delete auditLogs subcollection documents
       const auditLogsRef = collection(db, `guilds/${guild.id}/auditLogs`);
       const auditLogsSnap = await getFirestoreDocs(auditLogsRef);
       if (!auditLogsSnap.empty) {
@@ -209,7 +208,6 @@ function GuildSettingsPageContent() {
           await batch.commit();
       }
 
-      // Then delete the guild document itself
       const guildRef = doc(db, "guilds", guild.id);
       await deleteDoc(guildRef);
       
@@ -268,7 +266,7 @@ function GuildSettingsPageContent() {
         icon={<SettingsIcon className="h-8 w-8 text-primary" />}
       />
 
-      <Card className="card-bg">
+      <Card className="static-card-container">
         <CardHeader>
           <CardTitle>Alterar Nome da Guilda</CardTitle>
         </CardHeader>
@@ -299,7 +297,7 @@ function GuildSettingsPageContent() {
         </Form>
       </Card>
 
-      <Card className="card-bg">
+      <Card className="static-card-container">
         <CardHeader>
           <CardTitle>Alterar Senha da Guilda</CardTitle>
           <CardDescription>Deixe em branco para tornar a guilda aberta (sem senha para entrar).</CardDescription>
@@ -334,7 +332,7 @@ function GuildSettingsPageContent() {
         </Form>
       </Card>
       
-      <Card className="card-bg border-destructive/50">
+      <Card className="static-card-container border-destructive/50">
         <CardHeader>
           <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
         </CardHeader>
@@ -344,12 +342,15 @@ function GuildSettingsPageContent() {
             Todos os dados associados, incluindo membros (de suas listas na guilda, não contas de usuário), eventos e logs, serão perdidos.
           </CardDescription>
           <AlertDialog>
-            <AlertDialogTrigger
-              className={cn(buttonVariants({ variant: "destructive" }), "w-full")}
-              disabled={isDeleting}
-            >
-              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-              Excluir Guilda Permanentemente
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-full"
+                disabled={isDeleting}
+              >
+                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                Excluir Guilda Permanentemente
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
