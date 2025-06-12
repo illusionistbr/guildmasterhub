@@ -9,19 +9,19 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft } from 'lucide-react'; // Added ArrowLeft
+import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy } from '@/lib/firebase';
-import type { Guild } from '@/types/guildmaster';
+import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy, writeBatch, serverTimestamp } from '@/lib/firebase';
+import type { Guild, AuditActionType } from '@/types/guildmaster';
+import { GuildRole } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { logGuildActivity } from '@/lib/auditLogService';
 
 
 const GUILDS_PER_PAGE = 15;
 
-// Renamed to avoid conflict if this component were imported elsewhere
-// This is effectively the main content of the "Explore Guilds" page.
 function ExploreGuildsContent() { 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -82,7 +82,6 @@ function ExploreGuildsContent() {
     setPasswordError("");
 
     try {
-      // Se a guilda tem senha E é fechada (isOpen é false ou undefined) E a senha não bate
       if (guild.password && !guild.isOpen && guild.password !== guildPassword) {
         setPasswordError("Senha incorreta.");
         setIsJoining(null);
@@ -90,10 +89,26 @@ function ExploreGuildsContent() {
       }
 
       const guildRef = doc(db, "guilds", guild.id);
-      await updateDoc(guildRef, {
+      const batch = writeBatch(db);
+      
+      batch.update(guildRef, {
         memberIds: arrayUnion(user.uid),
-        memberCount: firebaseIncrement(1)
+        memberCount: firebaseIncrement(1),
+        [`roles.${user.uid}`]: GuildRole.Member // Assign default role on join
       });
+      
+      await batch.commit();
+
+      await logGuildActivity(
+        guild.id,
+        user.uid,
+        user.displayName,
+        AuditActionType.MEMBER_JOINED,
+        {
+          targetUserId: user.uid,
+          targetUserDisplayName: user.displayName || user.email || user.uid
+        }
+      );
 
       toast({ 
         title: "Bem-vindo(a) à Guilda!", 
@@ -105,7 +120,12 @@ function ExploreGuildsContent() {
       setAllPublicGuilds(prevGuilds => 
         prevGuilds.map(g => 
           g.id === guild.id 
-            ? { ...g, memberIds: [...(g.memberIds || []), user.uid], memberCount: (g.memberCount || 0) + 1 } 
+            ? { 
+                ...g, 
+                memberIds: [...(g.memberIds || []), user.uid], 
+                memberCount: (g.memberCount || 0) + 1,
+                roles: { ...(g.roles || {}), [user.uid]: GuildRole.Member } 
+              } 
             : g
         )
       );
@@ -122,10 +142,9 @@ function ExploreGuildsContent() {
   const handleApplyToGuild = (guild: Guild) => {
     if (!user || guild.memberIds?.includes(user.uid)) return; 
 
-    // Se a guilda tem senha E NÃO é aberta (ou seja, isOpen é false ou undefined)
     if (guild.password && !guild.isOpen) { 
       setSelectedGuildForPassword(guild);
-    } else { // Guilda aberta ou sem senha
+    } else { 
       handleJoinGuild(guild);
     }
   };
@@ -179,7 +198,6 @@ function ExploreGuildsContent() {
       </Card>
     );
   };
-
 
   if (loadingGuilds) {
     return (
@@ -279,7 +297,6 @@ function ExploreGuildsContent() {
   );
 }
 
-
 export default function GuildsPage() { 
   const router = useNavigationRouter();
   return (
@@ -307,4 +324,3 @@ export default function GuildsPage() {
     </div>
   );
 }
-

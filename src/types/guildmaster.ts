@@ -17,11 +17,11 @@ export interface Guild {
   bannerUrl?: string;
   logoUrl?: string;
   ownerId: string;
-  ownerDisplayName?: string; 
+  ownerDisplayName?: string;
   memberIds?: string[];
   game?: string;
   tags?: string[];
-  createdAt?: Date | Timestamp; 
+  createdAt?: Date | Timestamp;
   password?: string;
   isOpen?: boolean;
   socialLinks?: {
@@ -30,7 +30,7 @@ export interface Guild {
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildRole }; 
+  roles?: { [userId: string]: GuildRole };
 }
 
 export interface Event {
@@ -72,8 +72,8 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL?: string | null;
-  guilds?: string[]; 
-  createdAt?: Timestamp; // Added for user profile storage
+  guilds?: string[];
+  createdAt?: Timestamp;
 }
 
 export interface GuildMember extends UserProfile {
@@ -84,10 +84,17 @@ export interface GuildMember extends UserProfile {
 export enum AuditActionType {
   MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
   MEMBER_KICKED = "MEMBER_KICKED",
-  MEMBER_JOINED = "MEMBER_JOINED", // Future use
-  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", // Future use for name, desc, etc.
-  GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED", // Future use
-  GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED", // Future use
+  MEMBER_JOINED = "MEMBER_JOINED",
+  MEMBER_LEFT = "MEMBER_LEFT", // User voluntarily left
+  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
+  GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED",
+  GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED",
+  EVENT_CREATED = "EVENT_CREATED",
+  EVENT_UPDATED = "EVENT_UPDATED",
+  EVENT_DELETED = "EVENT_DELETED",
+  ACHIEVEMENT_CREATED = "ACHIEVEMENT_CREATED", // For future use
+  ACHIEVEMENT_UPDATED = "ACHIEVEMENT_UPDATED", // For future use
+  ACHIEVEMENT_DELETED = "ACHIEVEMENT_DELETED", // For future use
   // Add more actions as needed
 }
 
@@ -96,8 +103,12 @@ export interface AuditLogDetails {
   targetUserDisplayName?: string;
   oldValue?: string | GuildRole;
   newValue?: string | GuildRole;
-  fieldName?: string;
-  kickedUserRole?: GuildRole; // Specific for MEMBER_KICKED
+  fieldName?: string; // For GUILD_SETTINGS_UPDATED
+  kickedUserRole?: GuildRole;
+  eventName?: string;
+  eventId?: string;
+  achievementName?: string;
+  achievementId?: string;
   // Extend with other specific details for different actions
 }
 

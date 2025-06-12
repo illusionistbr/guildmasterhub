@@ -17,9 +17,14 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { ClipboardList, Loader2, ShieldAlert, VenetianMask, UserCog, UserX, BadgeCent } from 'lucide-react';
+import { 
+  ClipboardList, Loader2, ShieldAlert, VenetianMask, UserCog, UserX, UserPlus, 
+  LogOut as LogOutIcon, ImagePlus, ImagePlay, CalendarDays, CalendarPlus, 
+  CalendarMinus, CalendarX, Trophy 
+} from 'lucide-react';
 import { formatDistanceToNowStrict, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 
 function AuditLogPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -33,11 +38,6 @@ function AuditLogPageContent() {
   const [accessDenied, setAccessDenied] = useState(false);
 
   const guildId = searchParams.get('guildId');
-
-  const currentUserRoleInGuild = useMemo(() => {
-    if (!currentUser || !guild || !guild.roles) return null;
-    return guild.roles[currentUser.uid] || null;
-  }, [currentUser, guild]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -66,7 +66,6 @@ function AuditLogPageContent() {
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
 
-        // Permission Check
         const userRole = guildData.roles?.[currentUser.uid];
         if (userRole !== GuildRole.Leader && userRole !== GuildRole.ViceLeader) {
           setAccessDenied(true);
@@ -74,7 +73,6 @@ function AuditLogPageContent() {
           return;
         }
 
-        // Fetch Audit Logs
         const logsQuery = query(collection(db, `guilds/${guildId}/auditLogs`), orderBy("timestamp", "desc"));
         const logsSnapshot = await getFirestoreDocs(logsQuery);
         const fetchedLogs = logsSnapshot.docs.map(logDoc => ({ id: logDoc.id, ...logDoc.data() } as AuditLogEntry));
@@ -106,6 +104,17 @@ function AuditLogPageContent() {
     switch (action) {
       case AuditActionType.MEMBER_ROLE_CHANGED: return <UserCog className="h-5 w-5 text-blue-500" />;
       case AuditActionType.MEMBER_KICKED: return <UserX className="h-5 w-5 text-red-500" />;
+      case AuditActionType.MEMBER_JOINED: return <UserPlus className="h-5 w-5 text-green-500" />;
+      case AuditActionType.MEMBER_LEFT: return <LogOutIcon className="h-5 w-5 text-orange-500" />;
+      case AuditActionType.GUILD_LOGO_UPDATED: return <ImagePlus className="h-5 w-5 text-indigo-500" />;
+      case AuditActionType.GUILD_BANNER_UPDATED: return <ImagePlay className="h-5 w-5 text-purple-500" />;
+      case AuditActionType.EVENT_CREATED: return <CalendarPlus className="h-5 w-5 text-teal-500" />;
+      case AuditActionType.EVENT_UPDATED: return <CalendarDays className="h-5 w-5 text-cyan-500" />;
+      case AuditActionType.EVENT_DELETED: return <CalendarX className="h-5 w-5 text-pink-500" />;
+      case AuditActionType.ACHIEVEMENT_CREATED:
+      case AuditActionType.ACHIEVEMENT_UPDATED:
+      case AuditActionType.ACHIEVEMENT_DELETED:
+        return <Trophy className="h-5 w-5 text-yellow-500" />;
       default: return <ClipboardList className="h-5 w-5 text-muted-foreground" />;
     }
   }
@@ -119,12 +128,34 @@ function AuditLogPageContent() {
         return `${actor} alterou o cargo de ${target} de "${log.details?.oldValue}" para "${log.details?.newValue}".`;
       case AuditActionType.MEMBER_KICKED:
         return `${actor} removeu ${target} (cargo: "${log.details?.kickedUserRole || 'N/A'}") da guilda.`;
-      // Add more cases as new log types are implemented
+      case AuditActionType.MEMBER_JOINED:
+        return `${actor} entrou na guilda.`;
+      case AuditActionType.MEMBER_LEFT:
+        return `${actor} saiu da guilda.`;
+      case AuditActionType.GUILD_LOGO_UPDATED:
+        return `${actor} atualizou o logo da guilda.`;
+      case AuditActionType.GUILD_BANNER_UPDATED:
+        return `${actor} atualizou o banner da guilda.`;
+      case AuditActionType.EVENT_CREATED:
+        return `${actor} criou o evento "${log.details?.eventName || 'Evento sem nome'}".`;
+      case AuditActionType.EVENT_UPDATED:
+        return `${actor} atualizou o evento "${log.details?.eventName || 'Evento sem nome'}".`;
+      case AuditActionType.EVENT_DELETED:
+        return `${actor} excluiu o evento "${log.details?.eventName || 'Evento sem nome'}".`;
+      case AuditActionType.ACHIEVEMENT_CREATED:
+        return `${actor} registrou a conquista "${log.details?.achievementName || 'Conquista sem nome'}".`;
+      case AuditActionType.ACHIEVEMENT_UPDATED:
+        return `${actor} atualizou a conquista "${log.details?.achievementName || 'Conquista sem nome'}".`;
+      case AuditActionType.ACHIEVEMENT_DELETED:
+        return `${actor} removeu a conquista "${log.details?.achievementName || 'Conquista sem nome'}".`;
       default:
-        return `Ação desconhecida: ${log.action}`;
+        // Attempt to provide a generic description for unhandled known actions
+        if (log.action && log.action.startsWith("GUILD_")) {
+          return `${actor} atualizou as configurações da guilda (${log.action.replace("GUILD_", "").toLowerCase().replace("_", " ")}).`;
+        }
+        return `Ação desconhecida ou não detalhada: ${log.action}`;
     }
   };
-
 
   if (loadingData || authLoading) {
     return (
@@ -153,7 +184,6 @@ function AuditLogPageContent() {
   if (!guild) {
     return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
   }
-
 
   return (
     <div className="space-y-6 p-4 md:p-6">

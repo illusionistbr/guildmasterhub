@@ -10,7 +10,7 @@ import Link from "next/link";
 import Image from 'next/image';
 import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2 } from "lucide-react";
 import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; 
-import type { Guild } from '@/types/guildmaster';
+import type { Guild, AuditActionType } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFiresto
 import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from "@/lib/firebase"; 
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
+import { logGuildActivity } from '@/lib/auditLogService';
 
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
@@ -161,12 +162,12 @@ function DashboardPageContent() {
 
 
   const handleSaveImage = async (type: 'banner' | 'logo', imageUrl?: string | null, imageFile?: File | null) => {
-    if (!currentGuild || !currentGuild.id) {
-        toast({ title: "Erro", description: "Guilda atual não identificada.", variant: "destructive" });
+    if (!currentGuild || !currentGuild.id || !user) {
+        toast({ title: "Erro", description: "Guilda atual ou usuário não identificado.", variant: "destructive" });
         return;
     }
-    if (!isOwner) {
-        toast({ title: "Erro", description: "Você não tem permissão para editar esta guilda.", variant: "destructive" });
+    if (!isOwner) { // Simplified check, can be expanded based on roles (e.g., ViceLeader too)
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para editar esta guilda.", variant: "destructive" });
         return;
     }
 
@@ -204,6 +205,14 @@ function DashboardPageContent() {
         const fieldToUpdate = type === 'banner' ? 'bannerUrl' : 'logoUrl';
         await updateDoc(guildDocRef, { [fieldToUpdate]: finalUrlToSave });
 
+        // Log activity
+        await logGuildActivity(
+            currentGuild.id,
+            user.uid,
+            user.displayName,
+            type === 'banner' ? AuditActionType.GUILD_BANNER_UPDATED : AuditActionType.GUILD_LOGO_UPDATED
+        );
+
         if (type === 'banner') {
             setCurrentBannerUrl(finalUrlToSave);
             setCurrentGuild(prev => prev ? {...prev, bannerUrl: finalUrlToSave} : null);
@@ -225,7 +234,6 @@ function DashboardPageContent() {
         setIsSavingImage(false);
     }
   };
-
 
   const handleSaveBanner = () => {
     if (activeBannerTab === "url") {
@@ -557,7 +565,6 @@ function DashboardPageContent() {
         </div>
       </div>
 
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4">
         <StatCard
           title="Membros Ativos"
@@ -669,5 +676,3 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
-
-    
