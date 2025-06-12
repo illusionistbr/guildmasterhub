@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX } from "lucide-react";
+import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2 } from "lucide-react";
 import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; 
 import type { Guild } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit } from "firebase/firestore"; 
-import { db } from "@/lib/firebase"; 
+import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from "@/lib/firebase"; 
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
 
@@ -33,6 +33,7 @@ function DashboardPageContent() {
   
   const [currentGuild, setCurrentGuild] = useState<Guild | null>(null);
   const [loadingGuild, setLoadingGuild] = useState(true);
+  const [isSavingImage, setIsSavingImage] = useState(false);
   
   const { toast } = useToast();
 
@@ -52,7 +53,7 @@ function DashboardPageContent() {
   useEffect(() => {
     const guildIdParam = searchParams.get('guildId');
     setLoadingGuild(true);
-    setHeaderTitle(null); // Reset header title on new load or param change
+    setHeaderTitle(null); 
 
     if (authLoading) {
         return;
@@ -144,7 +145,6 @@ function DashboardPageContent() {
     
     fetchGuildData();
     
-    // Cleanup function to reset header title when navigating away or component unmounts
     return () => {
       setHeaderTitle(null);
     };
@@ -160,7 +160,7 @@ function DashboardPageContent() {
   }, [user, currentGuild]);
 
 
-  const handleSaveImage = async (type: 'banner' | 'logo', urlToSave: string) => {
+  const handleSaveImage = async (type: 'banner' | 'logo', imageUrl?: string | null, imageFile?: File | null) => {
     if (!currentGuild || !currentGuild.id) {
         toast({ title: "Erro", description: "Guilda atual não identificada.", variant: "destructive" });
         return;
@@ -170,28 +170,59 @@ function DashboardPageContent() {
         return;
     }
 
+    setIsSavingImage(true);
+    let finalUrlToSave = imageUrl;
+
+    if (imageFile) {
+        const toastId = `upload-${type}-${Date.now()}`;
+        toast({ toastId, title: `Fazendo upload do ${type}...`, description: "Por favor, aguarde." });
+        try {
+            const fileExtension = imageFile.name.split('.').pop();
+            const fileName = `${type}_${new Date().getTime()}.${fileExtension}`;
+            const filePath = `guilds/${currentGuild.id}/${type}/${fileName}`;
+            const imageStorageRef = storageFirebaseRef(storage, filePath);
+            
+            const uploadResult = await uploadBytes(imageStorageRef, imageFile);
+            finalUrlToSave = await getDownloadURL(uploadResult.ref);
+            toast({ toastId, title: `${type.charAt(0).toUpperCase() + type.slice(1)} Enviado!`, description: "Salvando na guilda..." });
+        } catch (uploadError: any) {
+            console.error(`Erro no upload do ${type}:`, uploadError);
+            toast({ toastId, title: `Erro no Upload do ${type}`, description: uploadError.message || "Não foi possível enviar o arquivo. Tente novamente.", variant: "destructive" });
+            setIsSavingImage(false);
+            return; 
+        }
+    }
+
+    if (!finalUrlToSave) {
+        toast({ title: "Erro", description: `Nenhuma imagem ou URL fornecida para o ${type}.`, variant: "destructive" });
+        setIsSavingImage(false);
+        return;
+    }
+
     try {
         const guildDocRef = doc(db, "guilds", currentGuild.id);
+        const fieldToUpdate = type === 'banner' ? 'bannerUrl' : 'logoUrl';
+        await updateDoc(guildDocRef, { [fieldToUpdate]: finalUrlToSave });
+
         if (type === 'banner') {
-            await updateDoc(guildDocRef, { bannerUrl: urlToSave });
-            setCurrentBannerUrl(urlToSave);
-            setCurrentGuild(prev => prev ? {...prev, bannerUrl: urlToSave} : null);
-            toast({ title: "Banner Atualizado!", description: "O novo banner da guilda foi salvo." });
+            setCurrentBannerUrl(finalUrlToSave);
+            setCurrentGuild(prev => prev ? {...prev, bannerUrl: finalUrlToSave} : null);
             setShowEditBannerDialog(false);
             setBannerUrlInput("");
             setBannerFile(null);
         } else if (type === 'logo') {
-            await updateDoc(guildDocRef, { logoUrl: urlToSave });
-            setCurrentLogoUrl(urlToSave);
-            setCurrentGuild(prev => prev ? {...prev, logoUrl: urlToSave} : null);
-            toast({ title: "Logo Atualizado!", description: "O novo logo da guilda foi salvo." });
+            setCurrentLogoUrl(finalUrlToSave);
+            setCurrentGuild(prev => prev ? {...prev, logoUrl: finalUrlToSave} : null);
             setShowEditLogoDialog(false);
             setLogoUrlInput("");
             setLogoFile(null);
         }
-    } catch (error) {
+        toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Atualizado!`, description: `O novo ${type} da guilda foi salvo.` });
+    } catch (error: any) {
         console.error(`Erro ao atualizar ${type}:`, error);
-        toast({ title: `Erro ao Salvar ${type === 'banner' ? 'Banner' : 'Logo'}`, description: `Não foi possível salvar. Tente novamente.`, variant: "destructive" });
+        toast({ title: `Erro ao Salvar ${type === 'banner' ? 'Banner' : 'Logo'}`, description: error.message || `Não foi possível salvar. Tente novamente.`, variant: "destructive" });
+    } finally {
+        setIsSavingImage(false);
     }
   };
 
@@ -199,72 +230,91 @@ function DashboardPageContent() {
   const handleSaveBanner = () => {
     if (activeBannerTab === "url") {
       if (!bannerUrlInput) {
-        toast({ title: "Erro", description: "Por favor, insira uma URL.", variant: "destructive" });
+        toast({ title: "URL Necessária", description: "Por favor, insira uma URL para o banner.", variant: "destructive" });
         return;
       }
-      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc"];
+      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc", "placehold.co"];
       try {
         const url = new URL(bannerUrlInput);
         if (!allowedHosts.some(host => url.hostname.endsWith(host))) {
-          toast({ title: "URL Inválida", description: "Por favor, use apenas URLs de Imgur.com, ImgBB.com ou postimages.org.", variant: "destructive" });
+          toast({ title: "URL Inválida", description: "Use URLs de Imgur, ImgBB, Postimages ou Placehold.co.", variant: "destructive" });
           return;
         }
-        handleSaveImage('banner', bannerUrlInput);
+        handleSaveImage('banner', bannerUrlInput, null);
       } catch (error) {
         toast({ title: "URL Inválida", description: "A URL fornecida não parece ser válida.", variant: "destructive" });
         return;
       }
     } else if (activeBannerTab === "upload") {
       if (!bannerFile) {
-        toast({ title: "Erro", description: "Por favor, selecione um arquivo.", variant: "destructive" });
+        toast({ title: "Arquivo Necessário", description: "Por favor, selecione um arquivo para o banner.", variant: "destructive" });
         return;
       }
-      if (bannerFile.size > 5 * 1024 * 1024) {
+      if (bannerFile.size > 5 * 1024 * 1024) { // 5MB
           toast({ title: "Arquivo Muito Grande", description: "O banner deve ter no máximo 5MB.", variant: "destructive"});
           return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleSaveImage('banner', reader.result as string);
-      };
-      reader.readAsDataURL(bannerFile);
+      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(bannerFile.type)) {
+          toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP para o banner.", variant: "destructive"});
+          return;
+      }
+      handleSaveImage('banner', null, bannerFile);
     }
   };
 
   const handleBannerFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setBannerFile(event.target.files[0]);
+      const file = event.target.files[0];
+       if (file.size > 5 * 1024 * 1024) { 
+          toast({ title: "Arquivo Muito Grande", description: "O banner deve ter no máximo 5MB.", variant: "destructive"});
+          event.target.value = ""; 
+          setBannerFile(null);
+          return;
+      }
+      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+          toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP para o banner.", variant: "destructive"});
+          event.target.value = "";
+          setBannerFile(null);
+          return;
+      }
+      setBannerFile(file);
+    } else {
+      setBannerFile(null);
     }
   };
 
   const handleSaveLogo = () => {
     if (activeLogoTab === "url") {
       if (!logoUrlInput) {
-        toast({ title: "Erro", description: "Por favor, insira uma URL.", variant: "destructive" });
+        toast({ title: "URL Necessária", description: "Por favor, insira uma URL para o logo.", variant: "destructive" });
         return;
       }
-      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc"];
+      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc", "placehold.co"];
       try {
         const url = new URL(logoUrlInput);
         if (!allowedHosts.some(host => url.hostname.endsWith(host))) {
-          toast({ title: "URL Inválida", description: "Por favor, use apenas URLs de Imgur.com, ImgBB.com ou postimages.org.", variant: "destructive" });
+          toast({ title: "URL Inválida", description: "Use URLs de Imgur, ImgBB, Postimages ou Placehold.co.", variant: "destructive" });
           return;
         }
-         handleSaveImage('logo', logoUrlInput);
+         handleSaveImage('logo', logoUrlInput, null);
       } catch (error) {
         toast({ title: "URL Inválida", description: "A URL fornecida não parece ser válida.", variant: "destructive" });
         return;
       }
     } else if (activeLogoTab === "upload") {
       if (!logoFile) {
-        toast({ title: "Erro", description: "Por favor, selecione um arquivo.", variant: "destructive" });
+        toast({ title: "Arquivo Necessário", description: "Por favor, selecione um arquivo para o logo.", variant: "destructive" });
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleSaveImage('logo', reader.result as string);
-      };
-      reader.readAsDataURL(logoFile);
+       if (logoFile.size > 2 * 1024 * 1024) { // 2MB
+          toast({ title: "Arquivo Muito Grande", description: "O logo deve ter no máximo 2MB.", variant: "destructive"});
+          return;
+      }
+      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(logoFile.type)) {
+          toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP para o logo.", variant: "destructive"});
+          return;
+      }
+      handleSaveImage('logo', null, logoFile);
     }
   };
 
@@ -273,13 +323,19 @@ function DashboardPageContent() {
       const file = event.target.files[0];
       if (file.size > 2 * 1024 * 1024) { 
           toast({ title: "Arquivo Muito Grande", description: "O logo deve ter no máximo 2MB.", variant: "destructive"});
+          event.target.value = "";
+          setLogoFile(null);
           return;
       }
       if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
           toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP para o logo.", variant: "destructive"});
+          event.target.value = "";
+          setLogoFile(null);
           return;
       }
       setLogoFile(file);
+    } else {
+        setLogoFile(null);
     }
   };
 
@@ -336,12 +392,11 @@ function DashboardPageContent() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-lg" />
 
         {isOwner && (
-          <Dialog open={showEditBannerDialog} onOpenChange={setShowEditBannerDialog}>
+          <Dialog open={showEditBannerDialog} onOpenChange={(isOpen) => { setShowEditBannerDialog(isOpen); if(!isOpen) { setBannerFile(null); setBannerUrlInput(""); }}}>
             <DialogTrigger asChild>
               <Button
                 variant="outline"
                 className="absolute top-4 right-4 bg-card/80 hover:bg-card text-foreground opacity-80 group-hover:opacity-100 transition-opacity"
-                onClick={() => setShowEditBannerDialog(true)}
               >
                 <Edit className="mr-2 h-4 w-4" /> Editar Banner
               </Button>
@@ -373,13 +428,13 @@ function DashboardPageContent() {
                     <AlertTriangle className="h-4 w-4 text-primary" />
                     <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                     <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                      Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com ou postimages.org.
+                      Use URLs de Imgur, ImgBB, Postimages ou Placehold.co.
                     </ShadcnAlertDescription>
                   </Alert>
                 </TabsContent>
                 <TabsContent value="upload" className="space-y-4 pt-4">
                   <div>
-                    <Label htmlFor="bannerFileInput" className="text-foreground">Arquivo do Banner</Label>
+                    <Label htmlFor="bannerFileInput" className="text-foreground">Arquivo do Banner (PNG, JPG, GIF, WEBP - Máx 5MB)</Label>
                     <Input
                       id="bannerFileInput"
                       type="file"
@@ -395,12 +450,15 @@ function DashboardPageContent() {
                   <AlertTriangle className="h-4 w-4 text-accent" />
                   <ShadcnAlertTitle className="font-semibold text-foreground">Tamanho Ideal</ShadcnAlertTitle>
                   <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                    Para melhores resultados, use um banner com dimensões de aproximadamente 1200x300 pixels (máx 5MB).
+                    Para melhores resultados, use um banner com dimensões de aproximadamente 1200x300 pixels.
                   </ShadcnAlertDescription>
               </Alert>
               <DialogFooter className="mt-6">
-                <Button variant="outline" onClick={() => setShowEditBannerDialog(false)}>Cancelar</Button>
-                <Button onClick={handleSaveBanner} className="btn-gradient btn-style-secondary">Salvar Banner</Button>
+                <Button variant="outline" onClick={() => {setShowEditBannerDialog(false); setBannerFile(null); setBannerUrlInput("");}} disabled={isSavingImage}>Cancelar</Button>
+                <Button onClick={handleSaveBanner} className="btn-gradient btn-style-secondary" disabled={isSavingImage}>
+                    {isSavingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Salvar Banner
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -417,13 +475,12 @@ function DashboardPageContent() {
               </AvatarFallback>
             </Avatar>
             {isOwner && (
-              <Dialog open={showEditLogoDialog} onOpenChange={setShowEditLogoDialog}>
+              <Dialog open={showEditLogoDialog} onOpenChange={(isOpen) => { setShowEditLogoDialog(isOpen); if(!isOpen) { setLogoFile(null); setLogoUrlInput(""); }}}>
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="icon"
                     className="absolute -bottom-1 -right-1 md:bottom-1 md:right-1 h-8 w-8 rounded-full bg-card/80 hover:bg-card text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => setShowEditLogoDialog(true)}
                     title="Editar Logo da Guilda"
                   >
                     <Edit3 className="h-4 w-4" />
@@ -458,13 +515,13 @@ function DashboardPageContent() {
                         <AlertTriangle className="h-4 w-4 text-primary" />
                         <ShadcnAlertTitle className="font-semibold text-foreground">Sites Permitidos</ShadcnAlertTitle>
                         <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                        Por favor, use URLs de imagens hospedadas em Imgur.com, ImgBB.com ou postimages.org.
+                         Use URLs de Imgur, ImgBB, Postimages ou Placehold.co.
                         </ShadcnAlertDescription>
                     </Alert>
                     </TabsContent>
                     <TabsContent value="upload" className="space-y-4 pt-4">
                     <div>
-                        <Label htmlFor="logoFileInput" className="text-foreground">Arquivo do Logo</Label>
+                        <Label htmlFor="logoFileInput" className="text-foreground">Arquivo do Logo (PNG, JPG, GIF, WEBP - Máx 2MB)</Label>
                         <Input
                         id="logoFileInput"
                         type="file"
@@ -480,12 +537,15 @@ function DashboardPageContent() {
                     <AlertTriangle className="h-4 w-4 text-accent" />
                     <ShadcnAlertTitle className="font-semibold text-foreground">Tamanho Ideal</ShadcnAlertTitle>
                     <ShadcnAlertDescription className="text-xs text-muted-foreground">
-                        Para melhores resultados, use um logo quadrado (ex: 150x150 pixels). Formatos aceitos: PNG, JPG, GIF, WEBP. Máx 2MB.
+                        Para melhores resultados, use um logo quadrado (ex: 150x150 pixels).
                     </ShadcnAlertDescription>
                   </Alert>
                   <DialogFooter className="mt-6">
-                    <Button variant="outline" onClick={() => { setShowEditLogoDialog(false); setLogoUrlInput(""); setLogoFile(null); }}>Cancelar</Button>
-                    <Button onClick={handleSaveLogo} className="btn-gradient btn-style-secondary">Salvar Logo</Button>
+                    <Button variant="outline" onClick={() => { setShowEditLogoDialog(false); setLogoFile(null); setLogoUrlInput(""); }} disabled={isSavingImage}>Cancelar</Button>
+                    <Button onClick={handleSaveLogo} className="btn-gradient btn-style-secondary" disabled={isSavingImage}>
+                        {isSavingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Salvar Logo
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -494,7 +554,6 @@ function DashboardPageContent() {
         </div>
         <div className="md:col-span-10 md:pt-4 text-center md:text-left"> 
           <h1 className="text-3xl md:text-4xl font-headline text-primary">Bem-vindo(a), {welcomeName}!</h1>
-          
         </div>
       </div>
 
@@ -612,6 +671,3 @@ export default function DashboardPage() {
 }
 
     
-
-
-
