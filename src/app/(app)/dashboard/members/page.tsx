@@ -5,8 +5,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField, collection, writeBatch } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile } from '@/types/guildmaster';
-import { GuildRole } from '@/types/guildmaster';
+import { type Guild, type GuildMember, type UserProfile, GuildRole } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -387,3 +386,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+

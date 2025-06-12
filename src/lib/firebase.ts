@@ -17,7 +17,9 @@ import {
   writeBatch,
   serverTimestamp,
   increment,
-  arrayUnion // Importar arrayUnion
+  arrayUnion,
+  arrayRemove, // Added arrayRemove here
+  deleteField
 } from "firebase/firestore";
 import { getAuth, updateProfile as firebaseUpdateProfile } from "firebase/auth"; // Renamed to avoid conflict
 import { 
@@ -70,7 +72,9 @@ export {
   writeBatch,
   serverTimestamp,
   increment,
-  arrayUnion, // Adicionar arrayUnion à lista de exportações
+  arrayUnion,
+  arrayRemove, // Added arrayRemove to exports
+  deleteField,
   ref,
   uploadBytes,
   getDownloadURL,
