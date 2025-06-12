@@ -1,126 +1,148 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Coleção de Guildas
-    match /guilds/{guildId} {
-
-      // --- QUEM PODE LER DADOS DA GUILDA? ---
-      allow read: if request.auth != null;
-
-      // --- QUEM PODE CRIAR UMA NOVA GUILDA? ---
-      allow create: if request.auth != null
-                    && request.resource.data.name is string
-                    && request.resource.data.name.size() >= 3
-                    && request.resource.data.name.size() <= 50
-                    && request.resource.data.ownerId == request.auth.uid
-                    && request.resource.data.ownerDisplayName is string
-                    && request.resource.data.createdAt == request.time
-                    && request.resource.data.memberCount == 1
-                    && request.resource.data.memberIds is list
-                    && request.resource.data.memberIds.size() == 1
-                    && request.auth.uid in request.resource.data.memberIds
-                    && request.resource.data.isOpen is bool
-                    // Validação do novo campo roles
-                    && request.resource.data.roles is map
-                    && request.resource.data.roles.size() == 1
-                    && request.auth.uid in request.resource.data.roles
-                    && request.resource.data.roles[request.auth.uid] == "Líder"
-                    // Campos opcionais e suas validações
-                    && (!('description' in request.resource.data) || (
-                        request.resource.data.description is string
-                        && request.resource.data.description.size() <= 500
-                       ))
-                    && (!('game' in request.resource.data) || (
-                        request.resource.data.game is string
-                        && request.resource.data.game.size() <= 50
-                       ))
-                    && (!('password' in request.resource.data) || (
-                        request.resource.data.password is string
-                        && request.resource.data.password.size() <= 50
-                       ))
-                    && (!('bannerUrl' in request.resource.data) || (
-                        request.resource.data.bannerUrl is string
-                        && request.resource.data.bannerUrl.size() <= 1048576 // ~1MB para data URIs
-                       ))
-                    && (!('logoUrl' in request.resource.data) || (
-                        request.resource.data.logoUrl is string
-                        && request.resource.data.logoUrl.size() <= 524288 // ~500KB para data URIs
-                       ))
-                    && (!('socialLinks' in request.resource.data) || (
-                        request.resource.data.socialLinks is map &&
-                        (!('facebook' in request.resource.data.socialLinks) || request.resource.data.socialLinks.facebook is string) &&
-                        (!('x' in request.resource.data.socialLinks) || request.resource.data.socialLinks.x is string) &&
-                        (!('youtube' in request.resource.data.socialLinks) || request.resource.data.socialLinks.youtube is string) &&
-                        (!('discord' in request.resource.data.socialLinks) || request.resource.data.socialLinks.discord is string)
-                       ));
-
-      // --- QUEM PODE ATUALIZAR UMA GUILDA EXISTENTE? ---
-      allow update: if request.auth != null && (
-                      // CENÁRIO 1: Dono da guilda atualizando informações (banner, logo, descrição, etc.)
-                      (
-                        resource.data.ownerId == request.auth.uid &&
-                        request.resource.data.ownerId == resource.data.ownerId &&
-                        request.resource.data.createdAt == resource.data.createdAt &&
-                        request.resource.data.name is string && request.resource.data.name.size() >= 3 && request.resource.data.name.size() <= 50 &&
-                        request.resource.data.ownerDisplayName is string &&
-                        request.resource.data.isOpen is bool &&
-                        // O dono pode gerenciar o campo 'roles'. A lógica específica de quem pode mudar qual role seria mais complexa.
-                        // Por agora, permitimos que o dono modifique o mapa de roles.
-                        // A validação de que o dono não pode remover a si mesmo de "Líder" sem transferir liderança
-                        // seria uma regra mais avançada ou lógica de backend.
-                        request.resource.data.roles is map &&
-                        (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 500)) &&
-                        (!('game' in request.resource.data) || (request.resource.data.game is string && request.resource.data.game.size() <= 50)) &&
-                        (!('password' in request.resource.data) || (request.resource.data.password is string && request.resource.data.password.size() <= 50)) &&
-                        (!('bannerUrl' in request.resource.data) || (request.resource.data.bannerUrl is string && request.resource.data.bannerUrl.size() <= 1048576)) &&
-                        (!('logoUrl' in request.resource.data) || (request.resource.data.logoUrl is string && request.resource.data.logoUrl.size() <= 524288)) &&
-                        (!('socialLinks' in request.resource.data) || (
-                            request.resource.data.socialLinks is map &&
-                            (!('facebook' in request.resource.data.socialLinks) || request.resource.data.socialLinks.facebook is string) &&
-                            (!('x' in request.resource.data.socialLinks) || request.resource.data.socialLinks.x is string) &&
-                            (!('youtube' in request.resource.data.socialLinks) || request.resource.data.socialLinks.youtube is string) &&
-                            (!('discord' in request.resource.data.socialLinks) || request.resource.data.socialLinks.discord is string)
-                        )) &&
-                        // Se o dono está gerenciando membros e roles, essas verificações precisam ser mais flexíveis
-                        // ou usar affectedKeys para ser mais preciso.
-                        // Para esta regra genérica de update pelo dono, vamos permitir que ele altere memberIds e memberCount também.
-                        // Operações específicas de "join/leave" têm suas próprias validações abaixo.
-                        request.resource.data.memberIds is list &&
-                        request.resource.data.memberCount is number
-                        // Exemplo com affectedKeys (mais seguro para updates gerais pelo owner):
-                        // && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                        //      'name', 'description', 'game', 'password', 'isOpen',
-                        //      'bannerUrl', 'logoUrl', 'socialLinks', 'ownerDisplayName', 'roles', 'tags',
-                        //      'memberIds', 'memberCount' // Se o dono puder gerenciar membros diretamente aqui
-                        //    ])
-                      ) ||
-                      // CENÁRIO 2: Usuário se juntando a uma guilda
-                      (
-                        request.auth.uid != resource.data.ownerId &&
-                        !(request.auth.uid in resource.data.memberIds) &&
-                        request.resource.data.memberIds == resource.data.memberIds.concat([request.auth.uid]) &&
-                        request.resource.data.memberCount == resource.data.memberCount + 1 &&
-                        // Garante que outros campos, incluindo 'roles', não sejam alterados nesta operação.
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberCount']) &&
-                        request.resource.data.name == resource.data.name &&
-                        request.resource.data.description == resource.data.description &&
-                        request.resource.data.ownerId == resource.data.ownerId &&
-                        request.resource.data.ownerDisplayName == resource.data.ownerDisplayName &&
-                        request.resource.data.game == resource.data.game &&
-                        request.resource.data.password == resource.data.password &&
-                        request.resource.data.isOpen == resource.data.isOpen &&
-                        request.resource.data.bannerUrl == resource.data.bannerUrl &&
-                        request.resource.data.logoUrl == resource.data.logoUrl &&
-                        request.resource.data.socialLinks == resource.data.socialLinks &&
-                        request.resource.data.createdAt == resource.data.createdAt &&
-                        request.resource.data.roles == resource.data.roles // Roles não muda ao entrar
-                      )
-                    );
-
-      // --- QUEM PODE EXCLUIR UMA GUILDA? ---
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    // Helper Functions
+    function isUserAuthenticated() {
+      return request.auth != null;
     }
+
+    function getGuildRolesMap() {
+      return {
+        Leader: "Líder",
+        ViceLeader: "Vice-Líder",
+        Counselor: "Conselheiro",
+        Officer: "Oficial",
+        Member: "Membro"
+      };
+    }
+
+    function isValidGuildRole(role) {
+      return role in getGuildRolesMap().values();
+    }
+
+    function getIncomingGuildData() {
+      return request.resource.data;
+    }
+
+    function getCurrentGuildData() {
+      return resource.data;
+    }
+
+    function userIsGuildOwner(guildData) {
+      return isUserAuthenticated() && request.auth.uid == guildData.ownerId;
+    }
+
+    function getUserRole(guildData) {
+      if (isUserAuthenticated() && request.auth.uid in guildData.roles) {
+        return guildData.roles[request.auth.uid];
+      }
+      return null;
+    }
+    
+    function isLeaderOrViceLeader(guildData) {
+      let userRole = getUserRole(guildData);
+      return userRole == getGuildRolesMap().Leader || userRole == getGuildRolesMap().ViceLeader;
+    }
+
+    match /guilds/{guildId} {
+      allow read: if true;
+
+      allow create: if isUserAuthenticated()
+                      && getIncomingGuildData().ownerId == request.auth.uid
+                      && getIncomingGuildData().memberIds[0] == request.auth.uid // Criador é o primeiro membro
+                      && getIncomingGuildData().memberIds.size() == 1
+                      && getIncomingGuildData().memberCount == 1
+                      && getIncomingGuildData().name is string 
+                      && getIncomingGuildData().name.size() >= 3 && getIncomingGuildData().name.size() <= 50
+                      && getIncomingGuildData().roles is map
+                      && getIncomingGuildData().roles.size() == 1
+                      && request.auth.uid in getIncomingGuildData().roles
+                      && getIncomingGuildData().roles[request.auth.uid] == getGuildRolesMap().Leader;
+
+      allow update: if isUserAuthenticated()
+                      // Regra 1: Validação geral e campos imutáveis
+                      && getIncomingGuildData().name == getCurrentGuildData().name // Nome da guilda não pode mudar por esta regra geral
+                      && getIncomingGuildData().createdAt == getCurrentGuildData().createdAt
+                      // Regra 2: Validação do campo 'roles' se estiver sendo alterado
+                      && (
+                        !('roles' in getIncomingGuildData().diff(getCurrentGuildData()).affectedKeys()) || // Se 'roles' não mudou, ou
+                        ( // Se 'roles' mudou:
+                          getIncomingGuildData().roles is map &&
+                          getIncomingGuildData().roles.keys().all(uid => uid is string) && // Todas as chaves são strings (UIDs)
+                          getIncomingGuildData().roles.values().all(role => isValidGuildRole(role)) && // Todos os valores são cargos válidos
+                          // Deve haver exatamente um líder
+                          getIncomingGuildData().roles.values().filter(r => r == getGuildRolesMap().Leader).size() == 1 &&
+                          // O ownerId deve ser o UID do líder
+                          getIncomingGuildData().roles.keys().filter(uid => getIncomingGuildData().roles[uid] == getGuildRolesMap().Leader)[0] == getIncomingGuildData().ownerId
+                        )
+                      )
+                      // Regra 3: Validação de ownerId (transferência de liderança)
+                      && (
+                        getIncomingGuildData().ownerId == getCurrentGuildData().ownerId || // Se ownerId não mudou, ou
+                        ( // Se ownerId mudou (transferência):
+                          getUserRole(getCurrentGuildData()) == getGuildRolesMap().Leader && // Somente o líder atual pode transferir
+                          getIncomingGuildData().ownerId != getCurrentGuildData().ownerId &&
+                          // O novo ownerId deve ser o novo Líder nos novos roles
+                          getIncomingGuildData().roles[getIncomingGuildData().ownerId] == getGuildRolesMap().Leader &&
+                          // O antigo ownerId (que é o request.auth.uid) deve ser Vice-Líder nos novos roles
+                          getIncomingGuildData().roles[request.auth.uid] == getGuildRolesMap().ViceLeader &&
+                           // Garantir que a mudança afetou apenas ownerId e roles (e talvez memberCount, memberIds se o antigo líder saiu)
+                           getIncomingGuildData().diff(getCurrentGuildData()).affectedKeys().hasOnly(['ownerId', 'roles'])
+                        )
+                      )
+                      // Regra 4: Validação de memberIds e memberCount
+                      && (getIncomingGuildData().memberCount == getIncomingGuildData().memberIds.size())
+                      // Regra 5: Permissão para editar campos específicos (banner, logo, description etc.)
+                      && (
+                        ( // Líder ou Vice-Líder podem editar estes campos
+                          isLeaderOrViceLeader(getCurrentGuildData()) &&
+                          getIncomingGuildData().diff(getCurrentGuildData()).affectedKeys().hasOnly(['description', 'game', 'password', 'isOpen', 'socialLinks', 'bannerUrl', 'logoUrl', 'tags', 'memberIds', 'memberCount', 'roles', 'ownerId', 'ownerDisplayName'])
+                        ) ||
+                        ( // Qualquer membro pode se adicionar ou remover (lógica de entrada/saída)
+                          // Entrada: usuário se adicionando
+                          (
+                            getIncomingGuildData().memberIds.size() == getCurrentGuildData().memberIds.size() + 1 &&
+                            getIncomingGuildData().memberIds.hasAll(getCurrentGuildData().memberIds) &&
+                            getIncomingGuildData().memberIds.hasAny([request.auth.uid]) &&
+                            !getCurrentGuildData().memberIds.hasAny([request.auth.uid]) && // Não era membro antes
+                            getIncomingGuildData().memberCount == getCurrentGuildData().memberCount + 1 &&
+                            // Roles não são alterados por esta operação, exceto para adicionar o novo membro com cargo "Membro"
+                            getIncomingGuildData().roles == getCurrentGuildData().roles.merge({[request.auth.uid]: getGuildRolesMap().Member }) &&
+                            // Somente memberIds, memberCount e roles (para adicionar o novo membro) podem mudar
+                            getIncomingGuildData().diff(getCurrentGuildData()).affectedKeys().hasOnly(['memberIds', 'memberCount', 'roles'])
+                          ) ||
+                          // Saída: usuário se removendo
+                          (
+                            getIncomingGuildData().memberIds.size() == getCurrentGuildData().memberIds.size() - 1 &&
+                            getCurrentGuildData().memberIds.hasAll(getIncomingGuildData().memberIds) &&
+                            !getIncomingGuildData().memberIds.hasAny([request.auth.uid]) &&
+                            getCurrentGuildData().memberIds.hasAny([request.auth.uid]) && // Era membro antes
+                            getIncomingGuildData().memberCount == getCurrentGuildData().memberCount - 1 &&
+                            getIncomingGuildData().roles == getCurrentGuildData().roles.removed([request.auth.uid]) && // Cargo removido
+                             // Somente memberIds, memberCount e roles (para remover o membro) podem mudar
+                            getIncomingGuildData().diff(getCurrentGuildData()).affectedKeys().hasOnly(['memberIds', 'memberCount', 'roles'])
+                          )
+                        )
+                      );
+                      
+
+      allow delete: if isUserAuthenticated()
+                      && userIsGuildOwner(getCurrentGuildData()); // Somente o Líder (ownerId) pode deletar
+    }
+
+    // TODO: Adicionar regras para 'events', 'achievements', 'applications'
+    // Exemplo para events:
+    // match /events/{eventId} {
+    //   allow read: if true; // ou if isUserAuthenticated()
+    //   allow create: if isUserAuthenticated() && 
+    //                   userHasPermission(getIncomingEventData().guildId, [getGuildRolesMap().Leader, getGuildRolesMap().ViceLeader, getGuildRolesMap().Counselor, getGuildRolesMap().Officer]);
+    //   allow update: if isUserAuthenticated() && 
+    //                   userHasPermission(getCurrentEventData().guildId, [getGuildRolesMap().Leader, getGuildRolesMap().ViceLeader, getGuildRolesMap().Counselor, getGuildRolesMap().Officer]);
+    //   allow delete: if isUserAuthenticated() && 
+    //                   userHasPermission(getCurrentEventData().guildId, [getGuildRolesMap().Leader, getGuildRolesMap().ViceLeader, getGuildRolesMap().Counselor, getGuildRolesMap().Officer]);
+    // }
   }
 }

@@ -19,6 +19,7 @@ import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Lin
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
+import { GuildRole } from '@/types/guildmaster'; // Importar GuildRole
 import { useToast } from '@/hooks/use-toast';
 
 const guildSchema = z.object({
@@ -89,7 +90,7 @@ export default function CreateGuildPage() {
         createdAt: any; 
         name: string; 
         isOpen: boolean;
-        roles: { [key: string]: string; };
+        roles: { [key: string]: GuildRole; }; // Usar GuildRole
      } = {
         name: data.name,
         description: data.description || "",
@@ -103,7 +104,7 @@ export default function CreateGuildPage() {
         bannerUrl: `https://placehold.co/1200x300.png?text=${encodeURIComponent(data.name + ' Banner')}`,
         logoUrl: `https://placehold.co/150x150.png?text=${encodeURIComponent(data.name.substring(0,2).toUpperCase())}`,
         roles: {
-            [user.uid]: "Líder"
+            [user.uid]: GuildRole.Leader // Definir o criador como Líder
         }
     };
 

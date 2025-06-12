@@ -1,6 +1,14 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+export enum GuildRole {
+  Leader = "Líder",
+  ViceLeader = "Vice-Líder",
+  Counselor = "Conselheiro",
+  Officer = "Oficial",
+  Member = "Membro",
+}
+
 export interface Guild {
   id: string;
   name: string;
@@ -9,11 +17,11 @@ export interface Guild {
   bannerUrl?: string;
   logoUrl?: string;
   ownerId: string;
-  ownerDisplayName?: string; // Adicionado para nome do dono
+  ownerDisplayName?: string; 
   memberIds?: string[];
   game?: string;
   tags?: string[];
-  createdAt?: Date | Timestamp; // Can be Firestore Timestamp on read, Date after conversion, or FieldValue on write
+  createdAt?: Date | Timestamp; 
   password?: string;
   isOpen?: boolean;
   socialLinks?: {
@@ -22,7 +30,7 @@ export interface Guild {
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: string }; // e.g., { "userId1": "Líder", "userId2": "Oficial" }
+  roles?: { [userId: string]: GuildRole }; 
 }
 
 export interface Event {
@@ -64,6 +72,5 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL?: string | null;
-  // Add any other user-specific fields you need
-  guilds?: string[]; // List of guild IDs the user is part of
+  guilds?: string[]; 
 }
