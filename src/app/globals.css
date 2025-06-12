@@ -229,6 +229,10 @@
   .has-tooltip:hover .tooltip {
     @apply visible opacity-100 z-50;
   }
+
+  .grid-template-columns-calendar {
+    grid-template-columns: auto 1fr; /* 'auto' for time gutter, '1fr' for the rest */
+  }
 }
 
 @layer utilities {

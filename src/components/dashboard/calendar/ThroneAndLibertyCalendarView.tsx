@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   startOfWeek,
   endOfWeek,
@@ -22,7 +22,7 @@ import {
   setMilliseconds,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { mockEvents } from '@/lib/mock-data'; // Using mock events for now
+import { mockEvents } from '@/lib/mock-data'; 
 import type { Event as GuildEvent } from '@/types/guildmaster';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarEventCard } from './CalendarEventCard';
@@ -34,11 +34,12 @@ interface ThroneAndLibertyCalendarViewProps {
 }
 
 const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
+const TIME_GUTTER_WIDTH_CLASS = "w-16"; // Tailwind class for width
 
 export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
-  const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); // Only week view implemented
+  const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); 
 
   const weekStartsOn = 1; // Monday
 
@@ -56,7 +57,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       setCurrentTimePercentage((currentMinutes / totalMinutesInDay) * 100);
     };
     updateCurrentTime();
-    const intervalId = setInterval(updateCurrentTime, 60000); // Update every minute
+    const intervalId = setInterval(updateCurrentTime, 60000); 
     return () => clearInterval(intervalId);
   }, []);
 
@@ -76,9 +77,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const eventsForWeek = useMemo(() => {
     return mockEvents.filter(event => {
       const eventDate = new Date(event.date);
+      // Adjust currentWeekEnd to be end of the day for comparison
+      const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
       return event.guildId === guildId && 
              eventDate >= currentWeekStart && 
-             eventDate <= setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd,0),0),59),23) ;
+             eventDate <= endOfDay_currentWeekEnd;
     });
   }, [guildId, currentWeekStart, currentWeekEnd]);
 
@@ -94,7 +97,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Semana</SelectItem>
-              {/* <SelectItem value="day">Dia</SelectItem> */}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleToday} className="form-input">Hoje</Button>
@@ -103,24 +105,17 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Time Gutter */}
-        <div className="w-16 pr-2 flex flex-col">
-           <div className="h-10">&nbsp;</div> {/* Spacer for day headers */}
-          {hours.map(hour => (
-            <div key={hour} className="flex-none text-xs text-muted-foreground text-right" style={{ height: `${HOVER_CELL_HEIGHT}px`, lineHeight: `${HOVER_CELL_HEIGHT}px` }}>
-              {format(setHours(new Date(), hour), 'HH:mm')}
-            </div>
-          ))}
-        </div>
-
-        {/* Days Grid */}
-        <ScrollArea className="flex-1 h-full">
-          <div className="grid grid-cols-7">
-            {/* Day Headers */}
+      {/* Calendar Grid Area */}
+      <ScrollArea className="flex-1 h-full">
+        <div className="grid grid-template-columns-calendar"> {/* Custom grid columns */}
+          
+          {/* Sticky Header Row: Time Gutter Spacer */}
+          <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
+          
+          {/* Sticky Header Row: Day Headers */}
+          <div className="sticky top-0 z-20 bg-card grid grid-cols-7">
             {daysInWeek.map(day => (
-              <div key={day.toString()} className="sticky top-0 z-10 bg-card border-b border-r border-border p-2 text-center">
+              <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center">
                 <div className={cn("text-sm font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
                   {format(day, 'EEE', { locale: ptBR }).toUpperCase()}
                 </div>
@@ -129,24 +124,34 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </div>
               </div>
             ))}
+          </div>
 
-            {/* Event Cells */}
+          {/* Scrollable Content: Time Labels Column */}
+          <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
+            {hours.map(hour => (
+              <div 
+                key={`time-${hour}`} 
+                className="flex-none text-xs text-muted-foreground text-right pr-2 border-b border-r border-border" 
+                style={{ height: `${HOVER_CELL_HEIGHT}px`, lineHeight: `${HOVER_CELL_HEIGHT}px` }}
+              >
+                {format(setHours(new Date(), hour), 'HH:mm')}
+              </div>
+            ))}
+          </div>
+
+          {/* Scrollable Content: Event Cells Grid */}
+          <div className="row-start-2 grid grid-cols-7">
             {daysInWeek.map(day => (
-              <div key={`events-${day.toString()}`} className="relative border-r border-border">
+              <div key={`event-col-${day.toString()}`} className="relative border-r border-border"> {/* Day Column for events */}
                 {hours.map(hour => {
-                  const cellStart = setHours(setMinutes(new Date(day),0), hour);
-                  const cellEnd = setHours(setMinutes(new Date(day),59), hour);
-                  
                   const eventsInCell = eventsForWeek.filter(event => {
-                    const eventDate = new Date(event.date);
-                    const [eventHour, eventMinute] = event.time.split(':').map(Number);
-                    const eventDateTime = setHours(setMinutes(eventDate, eventMinute), eventHour);
-                    return isSameDay(eventDateTime, day) && getHours(eventDateTime) === hour;
-                  });
-
+                      const eventDate = new Date(event.date);
+                      const [eventHourValue] = event.time.split(':').map(Number);
+                      return isSameDay(eventDate, day) && eventHourValue === hour;
+                    });
                   return (
                     <div
-                      key={hour}
+                      key={`cell-${day.toString()}-${hour}`}
                       className="border-b border-border relative"
                       style={{ height: `${HOVER_CELL_HEIGHT}px` }}
                     >
@@ -156,11 +161,12 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     </div>
                   );
                 })}
-                {/* Current Time Indicator */}
+                {/* Current Time Indicator for this day */}
                 {isToday(day) && (
                   <div
                     className="absolute w-full h-0.5 bg-destructive z-10"
                     style={{ top: `${currentTimePercentage}%` }}
+                    title={`Hora atual: ${format(new Date(), 'HH:mm')}`}
                   >
                     <div className="absolute -left-1.5 -top-1 h-3 w-3 rounded-full bg-destructive"></div>
                   </div>
@@ -168,9 +174,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               </div>
             ))}
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </div>
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   );
 }
