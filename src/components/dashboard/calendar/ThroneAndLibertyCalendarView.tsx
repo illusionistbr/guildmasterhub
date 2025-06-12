@@ -1,11 +1,11 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide, Info } from 'lucide-react';
 import {
   Dialog,
@@ -39,7 +39,7 @@ import { mockEvents } from '@/lib/mock-data';
 import type { Event as GuildEvent } from '@/types/guildmaster';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarEventCard } from './CalendarEventCard';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
 
@@ -186,6 +186,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [isMandatory, setIsMandatory] = useState(false);
   const [attendanceValue, setAttendanceValue] = useState<number>(1);
 
+  const [activityDescription, setActivityDescription] = useState<string>("");
+  const [announcementChannel, setAnnouncementChannel] = useState<string>("Canal Padrão");
+  const [announcementTimeOption, setAnnouncementTimeOption] = useState<"instant" | "scheduled">("instant");
+  const [announcementTimeValue, setAnnouncementTimeValue] = useState<number>(1);
+  const [announcementTimeUnit, setAnnouncementTimeUnit] = useState<"Hrs" | "Mins">("Hrs");
+  const [announceOnDiscord, setAnnounceOnDiscord] = useState<boolean>(true);
+  const [generatePinCode, setGeneratePinCode] = useState<boolean>(false);
 
   const weekStartsOn = 1; // Monday
 
@@ -272,6 +279,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       endTime: selectedEndTime,
       isMandatory,
       attendanceValue,
+      activityDescription,
+      announcementChannel,
+      announcementTimeOption,
+      announcementTimeValue,
+      announcementTimeUnit,
+      announceOnDiscord,
+      generatePinCode,
       guildId: guildId, 
     });
 
@@ -301,6 +315,28 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
     
     setDialogIsOpen(false);
+  };
+
+  const resetDialogStates = () => {
+    setSelectedCategory(null);
+    setSelectedSubcategory(null);
+    setSelectedActivity(null);
+    setCustomActivityName("");
+    setCurrentSubcategories([]);
+    setCurrentActivities([]);
+    setSelectedStartDate(undefined);
+    setSelectedStartTime("00:00");
+    setSelectedEndDate(undefined);
+    setSelectedEndTime("00:00");
+    setIsMandatory(false);
+    setAttendanceValue(1);
+    setActivityDescription("");
+    setAnnouncementChannel("Canal Padrão");
+    setAnnouncementTimeOption("instant");
+    setAnnouncementTimeValue(1);
+    setAnnouncementTimeUnit("Hrs");
+    setAnnounceOnDiscord(true);
+    setGeneratePinCode(false);
   };
 
   return (
@@ -401,18 +437,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
         if (!isOpen) { 
-          setSelectedCategory(null);
-          setSelectedSubcategory(null);
-          setSelectedActivity(null);
-          setCustomActivityName("");
-          setCurrentSubcategories([]);
-          setCurrentActivities([]);
-          setSelectedStartDate(undefined);
-          setSelectedStartTime("00:00");
-          setSelectedEndDate(undefined);
-          setSelectedEndTime("00:00");
-          setIsMandatory(false);
-          setAttendanceValue(1);
+          resetDialogStates();
         }
       }}>
         <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col">
@@ -425,74 +450,71 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           <ScrollArea className="flex-grow pr-6 -mr-6"> 
           <TooltipProvider>
             <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right text-foreground">Categoria</Label>
-                <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
-                  <SelectTrigger id="category" className="col-span-3">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TL_EVENT_CATEGORIES.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
-                <Select 
-                  onValueChange={setSelectedSubcategory} 
-                  value={selectedSubcategory || ""}
-                  disabled={!selectedCategory || currentSubcategories.length === 0}
-                >
-                  <SelectTrigger id="subcategory" className="col-span-3">
-                    <SelectValue placeholder="Selecione (se aplicável)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currentSubcategories.map(subcat => (
-                      <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {selectedCategory === 'other' ? (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
-                  <Input
-                    id="customActivity"
-                    className="col-span-3"
-                    placeholder="Digite o nome da atividade"
-                    value={customActivityName}
-                    onChange={(e) => setCustomActivityName(e.target.value)}
-                    disabled={!selectedCategory} 
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="activity" className="text-right text-foreground">Atividade/Evento</Label>
-                  <Select 
-                    onValueChange={setSelectedActivity} 
-                    value={selectedActivity || ""}
-                    disabled={
-                      !selectedCategory ||
-                      (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) || 
-                      currentActivities.length === 0
-                    }
-                  >
-                    <SelectTrigger id="activity" className="col-span-3">
-                      <SelectValue placeholder="Selecione uma atividade/evento" />
-                    </SelectTrigger>
+              {/* Category, Subcategory, Activity */}
+              <div className="grid grid-cols-1 gap-y-4">
+                <div>
+                  <Label htmlFor="category" className="text-foreground font-semibold mb-1 block">Categoria</Label>
+                  <Select onValueChange={handleCategoryChange} value={selectedCategory || ""}>
+                    <SelectTrigger id="category"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
                     <SelectContent>
-                      {currentActivities.map(act => (
-                        <SelectItem key={act} value={act}>{act}</SelectItem>
+                      {TL_EVENT_CATEGORIES.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
+                <div>
+                  <Label htmlFor="subcategory" className="text-foreground font-semibold mb-1 block">Subcategoria</Label>
+                  <Select 
+                    onValueChange={setSelectedSubcategory} 
+                    value={selectedSubcategory || ""}
+                    disabled={!selectedCategory || currentSubcategories.length === 0}
+                  >
+                    <SelectTrigger id="subcategory"><SelectValue placeholder="Selecione (se aplicável)" /></SelectTrigger>
+                    <SelectContent>
+                      {currentSubcategories.map(subcat => (
+                        <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {selectedCategory === 'other' ? (
+                  <div>
+                    <Label htmlFor="customActivity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
+                    <Input
+                      id="customActivity"
+                      placeholder="Digite o nome da atividade"
+                      value={customActivityName}
+                      onChange={(e) => setCustomActivityName(e.target.value)}
+                      disabled={!selectedCategory} 
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="activity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
+                    <Select 
+                      onValueChange={setSelectedActivity} 
+                      value={selectedActivity || ""}
+                      disabled={
+                        !selectedCategory ||
+                        (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) || 
+                        currentActivities.length === 0
+                      }
+                    >
+                      <SelectTrigger id="activity"><SelectValue placeholder="Selecione uma atividade/evento" /></SelectTrigger>
+                      <SelectContent>
+                        {currentActivities.map(act => (
+                          <SelectItem key={act} value={act}>{act}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              
+              {/* Date and Time Pickers */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="start-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Início (Local)</Label>
@@ -592,6 +614,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </div>
               </div>
 
+              {/* Mandatory and Attendance Value */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
@@ -624,10 +647,113 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     value={attendanceValue}
                     onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
                     min="0"
+                    className="h-10"
                   />
                 </div>
               </div>
+              
+              {/* New Fields from Image */}
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label htmlFor="activity-description" className="text-foreground font-semibold mb-1 block">Descrição (Opcional)</Label>
+                  <Textarea
+                    id="activity-description"
+                    placeholder="Descrição da atividade..."
+                    value={activityDescription}
+                    onChange={(e) => setActivityDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
 
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <Label htmlFor="announcement-channel" className="text-foreground font-semibold">Canal de Anúncio</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
+                      <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Canal do Discord onde o anúncio do evento será enviado.</p></TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Select value={announcementChannel} onValueChange={setAnnouncementChannel}>
+                    <SelectTrigger id="announcement-channel"><SelectValue placeholder="Selecione um canal" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Canal Padrão">Canal Padrão</SelectItem>
+                      {/* TODO: Populate with actual Discord channels if integration exists */}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                    <div className="flex items-center gap-1 mb-1">
+                        <Label className="text-foreground font-semibold">Horário do Anúncio</Label>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
+                            <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Quando o anúncio deve ser enviado no canal do Discord.</p></TooltipContent>
+                        </Tooltip>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Button
+                            variant={announcementTimeOption === "instant" ? "default" : "outline"}
+                            onClick={() => setAnnouncementTimeOption("instant")}
+                            className={cn("h-10", announcementTimeOption === "instant" && "bg-primary text-primary-foreground")}
+                        >
+                            Enviar Instantaneamente
+                        </Button>
+                        <span className="text-muted-foreground">ou</span>
+                        <Input
+                            type="number"
+                            value={announcementTimeValue}
+                            onChange={(e) => setAnnouncementTimeValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                            onClick={() => setAnnouncementTimeOption("scheduled")}
+                            className={cn("w-20 h-10 text-center", announcementTimeOption === "scheduled" ? "border-primary ring-1 ring-primary" : "")}
+                            min="1"
+                        />
+                        <div className="flex rounded-md border border-input h-10">
+                            <Button
+                                variant={announcementTimeUnit === "Hrs" && announcementTimeOption === "scheduled" ? "default" : "ghost"}
+                                onClick={() => { setAnnouncementTimeUnit("Hrs"); setAnnouncementTimeOption("scheduled"); }}
+                                className={cn("rounded-r-none border-r", announcementTimeUnit === "Hrs" && announcementTimeOption === "scheduled" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-muted")}
+                            >
+                                Hrs
+                            </Button>
+                            <Button
+                                variant={announcementTimeUnit === "Mins" && announcementTimeOption === "scheduled" ? "default" : "ghost"}
+                                onClick={() => { setAnnouncementTimeUnit("Mins"); setAnnouncementTimeOption("scheduled"); }}
+                                className={cn("rounded-l-none", announcementTimeUnit === "Mins" && announcementTimeOption === "scheduled" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-muted")}
+                            >
+                                Mins
+                            </Button>
+                        </div>
+                        <span className="text-muted-foreground">antes do evento</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Selecione quanto tempo antes do evento o anúncio deve ser enviado (mínimo 10 minutos se agendado).</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                    <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                        <Label htmlFor="announce-discord-switch" className="text-foreground text-sm">Anunciar criação no Discord</Label>
+                        <Switch
+                            id="announce-discord-switch"
+                            checked={announceOnDiscord}
+                            onCheckedChange={setAnnounceOnDiscord}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                         <div className="flex items-center gap-1">
+                            <Label htmlFor="generate-pin-switch" className="text-foreground text-sm">Gerar código PIN</Label>
+                            <Tooltip>
+                                <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"><Info className="h-4 w-4" /></Button></TooltipTrigger>
+                                <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs"><p>Gera um código PIN único para os membros usarem para confirmar presença ou para acesso especial ao evento.</p></TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <Switch
+                            id="generate-pin-switch"
+                            checked={generatePinCode}
+                            onCheckedChange={setGeneratePinCode}
+                        />
+                    </div>
+                </div>
+
+              </div>
             </div>
           </TooltipProvider>
           </ScrollArea>
@@ -651,6 +777,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-
-
-
