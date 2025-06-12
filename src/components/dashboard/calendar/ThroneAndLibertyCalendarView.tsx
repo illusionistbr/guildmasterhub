@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -217,18 +216,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setSelectedSubcategory(null);
-    
-    if (categoryId === 'other') {
-      setSelectedActivity(null); 
-      setCurrentActivities([]); 
-    } else {
-      setCustomActivityName(""); 
-      setCurrentActivities(TL_ACTIVITIES[categoryId] || []);
-    }
+    setSelectedActivity(null); 
+    setCustomActivityName("");
     
     setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
-    if (!TL_SUB_CATEGORIES[categoryId] || TL_SUB_CATEGORIES[categoryId].length === 0) {
-        setSelectedActivity(null); 
+    
+    if (categoryId === 'other') {
+      setCurrentActivities([]);
+    } else {
+      setCurrentActivities(TL_ACTIVITIES[categoryId] || []);
     }
   };
 
@@ -238,6 +234,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       activityToSave = customActivityName.trim();
       if (!activityToSave) {
         console.warn("Custom activity name cannot be empty for 'Other' category.");
+        // Ideally, show a toast or inline error message
         return; 
       }
     }
@@ -247,13 +244,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       subcategory: selectedSubcategory,
       activity: activityToSave,
     });
-    setSelectedCategory(null);
-    setSelectedSubcategory(null);
-    setSelectedActivity(null);
-    setCustomActivityName("");
-    setCurrentSubcategories([]);
-    setCurrentActivities([]);
+    
+    // Reset dialog state
     setDialogIsOpen(false);
+    // Resetting fields will happen in onOpenChange of Dialog
   };
 
 
@@ -261,20 +255,20 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
-        <div className="w-full sm:w-auto">
+        <div className="w-full sm:w-auto order-2 sm:order-1">
           <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto">
             <CalendarPlus className="mr-2 h-4 w-4" />
             Nova Atividade
           </Button>
         </div>
 
-        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-none">
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2">
           {dateRangeText}
         </h2>
         
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end order-3">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'week'|'day')} disabled>
-            <SelectTrigger className="w-[100px] form-input">
+            <SelectTrigger className="w-[100px]">
               <SelectValue placeholder="Visualizar" />
             </SelectTrigger>
             <SelectContent>
@@ -361,7 +355,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       {/* Dialog for New Activity */}
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
-        if (!isOpen) {
+        if (!isOpen) { // Reset state when dialog closes
           setSelectedCategory(null);
           setSelectedSubcategory(null);
           setSelectedActivity(null);
@@ -392,39 +386,50 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               </Select>
             </div>
 
-            {selectedCategory && currentSubcategories.length > 0 && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
-                <Select onValueChange={setSelectedSubcategory} value={selectedSubcategory || ""}>
-                  <SelectTrigger id="subcategory" className="col-span-3 form-input">
-                    <SelectValue placeholder="Selecione uma subcategoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currentSubcategories.map(subcat => (
-                      <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {selectedCategory && selectedCategory === 'other' ? (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="subcategory" className="text-right text-foreground">Subcategoria</Label>
+              <Select 
+                onValueChange={setSelectedSubcategory} 
+                value={selectedSubcategory || ""}
+                disabled={!selectedCategory || currentSubcategories.length === 0}
+              >
+                <SelectTrigger id="subcategory" className="col-span-3 form-input">
+                  <SelectValue placeholder="Selecione uma subcategoria (se aplicável)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currentSubcategories.map(subcat => (
+                    <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {selectedCategory === 'other' ? (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="customActivity" className="text-right text-foreground">Atividade/Evento</Label>
                 <Input
                   id="customActivity"
                   className="col-span-3 form-input"
-                  placeholder="Digite o nome da atividade"
+                  placeholder="Digite o nome da atividade personalizada"
                   value={customActivityName}
                   onChange={(e) => setCustomActivityName(e.target.value)}
+                  disabled={!selectedCategory} 
                 />
               </div>
-            ) : selectedCategory && currentActivities.length > 0 && (
-               <div className="grid grid-cols-4 items-center gap-4">
+            ) : (
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity" className="text-right text-foreground">Atividade/Evento</Label>
-                <Select onValueChange={setSelectedActivity} value={selectedActivity || ""}>
+                <Select 
+                  onValueChange={setSelectedActivity} 
+                  value={selectedActivity || ""}
+                  disabled={
+                    !selectedCategory ||
+                    (currentSubcategories.length > 0 && !selectedSubcategory) ||
+                    currentActivities.length === 0
+                  }
+                >
                   <SelectTrigger id="activity" className="col-span-3 form-input">
-                    <SelectValue placeholder="Selecione uma atividade" />
+                    <SelectValue placeholder="Selecione uma atividade/evento" />
                   </SelectTrigger>
                   <SelectContent>
                     {currentActivities.map(act => (
@@ -437,11 +442,20 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveActivity} className="btn-gradient btn-style-primary">Salvar Atividade</Button>
+            <Button 
+              onClick={handleSaveActivity} 
+              className="btn-gradient btn-style-primary"
+              disabled={
+                !selectedCategory ||
+                (currentSubcategories.length > 0 && !selectedSubcategory) ||
+                (selectedCategory === 'other' ? !customActivityName.trim() : !selectedActivity)
+              }
+            >
+              Salvar Atividade
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
