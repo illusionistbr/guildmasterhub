@@ -81,7 +81,16 @@ export default function CreateGuildPage() {
     if (data.socialYoutube && data.socialYoutube.trim() !== "") socialLinks.youtube = data.socialYoutube.trim();
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
-    const guildData: Partial<Guild> & { ownerId: string; ownerDisplayName: string; memberIds: string[]; memberCount: number; createdAt: any; name: string; isOpen: boolean } = {
+    const guildData: Partial<Guild> & { 
+        ownerId: string; 
+        ownerDisplayName: string; 
+        memberIds: string[]; 
+        memberCount: number; 
+        createdAt: any; 
+        name: string; 
+        isOpen: boolean;
+        roles: { [key: string]: string; };
+     } = {
         name: data.name,
         description: data.description || "",
         game: data.game || "",
@@ -93,6 +102,9 @@ export default function CreateGuildPage() {
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png?text=${encodeURIComponent(data.name + ' Banner')}`,
         logoUrl: `https://placehold.co/150x150.png?text=${encodeURIComponent(data.name.substring(0,2).toUpperCase())}`,
+        roles: {
+            [user.uid]: "Líder"
+        }
     };
 
     if (data.password) {

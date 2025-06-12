@@ -22,6 +22,7 @@ export interface Guild {
     youtube?: string;
     discord?: string;
   };
+  roles?: { [userId: string]: string }; // e.g., { "userId1": "Líder", "userId2": "Oficial" }
 }
 
 export interface Event {
