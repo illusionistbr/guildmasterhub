@@ -55,6 +55,9 @@
     --button-outline-hover-bg: 270 100% 75%; /* Roxo vibrante claro */
     --button-outline-hover-fg: 0 0% 100%; /* Texto branco para contraste */
     --button-outline-hover-border: 270 100% 75%; /* Mesma cor do fundo para efeito sólido */
+
+    /* Height of the app header, can be adjusted if header height changes */
+    --header-height: 4rem; /* 64px */
   }
 
   * {
