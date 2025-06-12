@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -54,7 +55,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <ShieldEllipsis className="h-8 w-8 text-sidebar-primary transition-transform duration-300 group-hover:rotate-[15deg]" />
           <span className="font-headline text-2xl font-bold text-sidebar-primary group-data-[collapsible=icon]:hidden">
             GuildMasterHub
