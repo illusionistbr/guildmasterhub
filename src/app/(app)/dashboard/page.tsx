@@ -2,14 +2,14 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } // Added useRouter
+import { useSearchParams, useRouter } 
 from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX } from "lucide-react"; // Added ShieldX
-import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; // Mock data for now
+import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX } from "lucide-react";
+import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; 
 import type { Guild } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,11 +23,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit } from "firebase/firestore"; 
 import { db } from "@/lib/firebase"; 
 import { StatCard } from '@/components/shared/StatCard';
+import { useHeader } from '@/contexts/HeaderContext';
 
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
-  const router = useRouter(); // For programmatic navigation
+  const router = useRouter(); 
+  const { setHeaderTitle } = useHeader();
   
   const [currentGuild, setCurrentGuild] = useState<Guild | null>(null);
   const [loadingGuild, setLoadingGuild] = useState(true);
@@ -50,6 +52,7 @@ function DashboardPageContent() {
   useEffect(() => {
     const guildIdParam = searchParams.get('guildId');
     setLoadingGuild(true);
+    setHeaderTitle(null); // Reset header title on new load or param change
 
     if (authLoading) {
         return;
@@ -57,8 +60,6 @@ function DashboardPageContent() {
 
     if (!user) { 
         setLoadingGuild(false);
-        // If not logged in, AuthProvider should handle redirect, or we can explicitly redirect
-        // router.push('/login'); // Consider if this is the best place
         return;
     }
 
@@ -69,7 +70,6 @@ function DashboardPageContent() {
       let guildIdToLoad = guildIdParam;
 
       try {
-        // If no guildIdParam, try to load the first guild the user is part of
         if (!guildIdToLoad) {
           const qOwned = query(collection(db, "guilds"), where("ownerId", "==", user.uid), limit(1));
           const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", user.uid), limit(1));
@@ -80,13 +80,12 @@ function DashboardPageContent() {
           } else if (!memberSnapshot.empty) {
             guildIdToLoad = memberSnapshot.docs[0].id;
           } else {
-            // No guilds found for the user, redirect to guild selection
             router.push('/guild-selection');
             setLoadingGuild(false);
+            setHeaderTitle(null);
             return;
           }
            if (guildIdToLoad) {
-             // Update URL to reflect the loaded guildId without a full page reload if not present
              const currentPath = window.location.pathname;
              const newUrl = `${currentPath}?guildId=${guildIdToLoad}`;
              window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
@@ -98,8 +97,7 @@ function DashboardPageContent() {
             const guildDocSnap = await getDoc(guildDocRef);
 
             if (guildDocSnap.exists()) {
-              const guildData = guildDocSnap.data() as Omit<Guild, 'id' | 'createdAt'> & { createdAt?: any }; // Handle Firestore Timestamp
-              // Check if user is owner or member
+              const guildData = guildDocSnap.data() as Omit<Guild, 'id' | 'createdAt'> & { createdAt?: any };
               const isUserOwner = guildData.ownerId === user.uid;
               const isUserMember = guildData.memberIds?.includes(user.uid);
 
@@ -107,30 +105,37 @@ function DashboardPageContent() {
                  guildToSet = { 
                     ...guildData, 
                     id: guildDocSnap.id,
-                    // Convert Firestore Timestamp to Date for client-side use
                     createdAt: guildData.createdAt?.toDate ? guildData.createdAt.toDate() : undefined 
                  };
                 bannerToSet = guildData.bannerUrl || bannerToSet;
                 logoToSet = guildData.logoUrl || logoToSet;
               } else {
                 toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda com ID ${guildIdToLoad}.`, variant: "destructive"});
-                router.push('/guild-selection'); // Redirect if no access
+                router.push('/guild-selection'); 
+                setHeaderTitle(null);
               }
             } else {
               toast({title: "Guilda Não Encontrada", description: `Guilda com ID ${guildIdToLoad} não encontrada.`, variant: "destructive"});
-               router.push('/guild-selection'); // Redirect if guild not found
+               router.push('/guild-selection');
+               setHeaderTitle(null);
             }
         } else {
-             // This case should be rare if the above logic correctly finds a guild or redirects
             toast({title: "Nenhuma Guilda", description: "Nenhuma guilda para exibir. Selecione ou crie uma.", variant: "default"});
             router.push('/guild-selection');
+            setHeaderTitle(null);
         }
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro de Carregamento", description: "Não foi possível carregar os dados da guilda.", variant: "destructive" });
-        router.push('/guild-selection'); // Redirect on error
+        router.push('/guild-selection'); 
+        setHeaderTitle(null);
       } finally {
         setCurrentGuild(guildToSet);
+        if (guildToSet) {
+          setHeaderTitle(guildToSet.name);
+        } else {
+          setHeaderTitle(null);
+        }
         setCurrentBannerUrl(bannerToSet);
         setCurrentLogoUrl(logoToSet);
         setLoadingGuild(false);
@@ -138,8 +143,13 @@ function DashboardPageContent() {
     };
     
     fetchGuildData();
+    
+    // Cleanup function to reset header title when navigating away or component unmounts
+    return () => {
+      setHeaderTitle(null);
+    };
 
-  }, [searchParams, user, toast, authLoading, router]);
+  }, [searchParams, user, toast, authLoading, router, setHeaderTitle]);
 
   useEffect(() => {
     if (user && currentGuild) {
@@ -160,7 +170,6 @@ function DashboardPageContent() {
         return;
     }
 
-    // setLoadingGuild(true); // Indicate loading state - this might be too disruptive for just image save
     try {
         const guildDocRef = doc(db, "guilds", currentGuild.id);
         if (type === 'banner') {
@@ -183,8 +192,6 @@ function DashboardPageContent() {
     } catch (error) {
         console.error(`Erro ao atualizar ${type}:`, error);
         toast({ title: `Erro ao Salvar ${type === 'banner' ? 'Banner' : 'Logo'}`, description: `Não foi possível salvar. Tente novamente.`, variant: "destructive" });
-    } finally {
-        // setLoadingGuild(false);
     }
   };
 
@@ -212,7 +219,6 @@ function DashboardPageContent() {
         toast({ title: "Erro", description: "Por favor, selecione um arquivo.", variant: "destructive" });
         return;
       }
-      // Max 5MB for banner
       if (bannerFile.size > 5 * 1024 * 1024) {
           toast({ title: "Arquivo Muito Grande", description: "O banner deve ter no máximo 5MB.", variant: "destructive"});
           return;
@@ -265,7 +271,7 @@ function DashboardPageContent() {
   const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      if (file.size > 2 * 1024 * 1024) { // Max 2MB
+      if (file.size > 2 * 1024 * 1024) { 
           toast({ title: "Arquivo Muito Grande", description: "O logo deve ter no máximo 2MB.", variant: "destructive"});
           return;
       }
@@ -280,10 +286,10 @@ function DashboardPageContent() {
   const pageLoading = authLoading || loadingGuild;
 
   if (pageLoading) {
-    return <DashboardPageSkeleton />; // Use the separate skeleton component
+    return <DashboardPageSkeleton />; 
   }
 
-  if (!user) { // Should be caught by AuthProvider, but good as a fallback
+  if (!user) { 
     return (
       <div className="p-6 text-center text-lg">
         <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
@@ -296,7 +302,7 @@ function DashboardPageContent() {
     )
   }
 
-  if (!currentGuild) { // This should ideally redirect to /guild-selection via useEffect logic
+  if (!currentGuild) { 
     return (
         <div className="p-6 text-center text-lg">
             <ShieldX className="mx-auto h-12 w-12 text-destructive mb-4" />
@@ -573,7 +579,7 @@ function DashboardPageContent() {
   );
 }
 
-function DashboardPageSkeleton() { // Extracted Skeleton for reusability
+function DashboardPageSkeleton() { 
  return (
       <div className="space-y-8">
         <Skeleton className="h-48 md:h-60 w-full rounded-lg" /> 
@@ -606,4 +612,5 @@ export default function DashboardPage() {
 }
 
     
+
 
