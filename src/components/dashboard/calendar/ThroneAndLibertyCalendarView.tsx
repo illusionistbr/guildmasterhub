@@ -246,7 +246,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null); 
     setCustomActivityName("");
-    // Explicitly reset end date/time when category changes, allowing default duration to re-apply
     setSelectedEndDate(undefined); 
     setSelectedEndTime("00:00");
     
@@ -265,7 +264,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
 
   useEffect(() => {
-    if (selectedStartDate && selectedStartTime && !selectedEndDate) { // Only apply if endDate is not yet set by user
+    if (selectedStartDate && selectedStartTime && !selectedEndDate) {
       let defaultDurationMinutes: number | null = null;
 
       if (selectedCategory === 'world_event') defaultDurationMinutes = 20;
@@ -288,7 +287,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         setSelectedEndTime(format(endTimeObj, 'HH:mm'));
       }
     }
-  }, [selectedCategory, selectedActivity, selectedStartDate, selectedStartTime, selectedEndDate]); // Added selectedEndDate and selectedActivity
+  }, [selectedCategory, selectedActivity, selectedStartDate, selectedStartTime, selectedEndDate]);
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -480,7 +479,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            <div className="h-[400px] overflow-y-auto"> {/* TESTE: Altura Fixa */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
@@ -651,7 +650,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                             {/* Mandatory and Attendance Value */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                                <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input">
                                 <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                                 <Switch
                                     id="mandatory-switch"
