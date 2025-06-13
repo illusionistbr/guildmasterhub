@@ -33,6 +33,7 @@ import {
   setMinutes,
   setSeconds,
   setMilliseconds,
+  addMinutes, // Import addMinutes
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { mockEvents } from '@/lib/mock-data'; 
@@ -260,6 +261,21 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     return setHours(setMinutes(setSeconds(setMilliseconds(date, 0), 0), m), h);
   };
 
+  useEffect(() => {
+    if (
+      selectedCategory === 'world_event' &&
+      selectedStartDate &&
+      selectedStartTime &&
+      !selectedEndDate // Only set default if end date is not already set by the user
+    ) {
+      const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
+      const endTimeObj = addMinutes(startTimeObj, 20);
+
+      setSelectedEndDate(endTimeObj);
+      setSelectedEndTime(format(endTimeObj, 'HH:mm'));
+    }
+  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]); // Ensure selectedEndDate is in dependency array
+
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
     const combined = combineDateTime(dateVal, timeVal);
@@ -273,21 +289,20 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
 
     if (!activityTitleToSave || !selectedStartDate || !user) {
-      // Add validation feedback to the user if necessary
       console.error("Missing required fields to save activity.");
       return;
     }
     
     const newActivity: GuildEvent = {
-      id: `evt-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`, // Simple unique ID
+      id: `evt-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`,
       guildId: guildId,
       title: activityTitleToSave,
       description: activityDescription,
-      date: selectedStartDate.toISOString(), // Store as ISO string
-      time: selectedStartTime, // HH:mm format
+      date: selectedStartDate.toISOString(), 
+      time: selectedStartTime,
+      endDate: selectedEndDate ? selectedEndDate.toISOString() : undefined,
+      endTime: selectedEndDate ? selectedEndTime : undefined,
       organizerId: user.uid,
-      // location: undefined, // Add if/when a location field is implemented
-      // attendeeIds: [], // Initialize if needed
     };
 
     setCreatedEvents(prevEvents => [...prevEvents, newActivity]);
@@ -312,15 +327,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       guildId: guildId, 
     });
     
-    // TODO: Integrate with Firebase to save the event
-    // For example:
-    // try {
-    //   await addDoc(collection(db, `guilds/${guildId}/events`), { ...newActivity, createdAt: serverTimestamp() });
-    //   // Show success toast
-    // } catch (error) {
-    //   // Show error toast
-    // }
-
     if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
       const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
       const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
@@ -347,7 +353,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
     
     setDialogIsOpen(false);
-    // Resetting states is now handled by onOpenChange of Dialog
   };
 
   const resetDialogStates = () => {
@@ -480,6 +485,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
               Preencha os detalhes da atividade para adicioná-la ao calendário.
             </DialogDescription>
           </DialogHeader>
+
           <ScrollArea className="flex-1 min-h-0">
             <div className="px-6"> {/* Inner div for padding */}
               <TooltipProvider>
@@ -687,13 +693,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     </div>
                   </div>
                   
-                  {/* New Fields from Image */}
+                  {/* New Fields: Description, Announcement Channel, Announcement Time, etc. */}
                   <div className="space-y-4 pt-4">
                     <div>
                       <Label htmlFor="activity-description" className="text-foreground font-semibold mb-1 block">Descrição (Opcional)</Label>
                       <Textarea
                         id="activity-description"
-                        placeholder="Descrição da atividade..."
+                        placeholder="Detalhes adicionais sobre a atividade..."
                         value={activityDescription}
                         onChange={(e) => setActivityDescription(e.target.value)}
                         rows={3}
@@ -787,12 +793,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             />
                         </div>
                     </div>
-
                   </div>
+
                 </div>
               </TooltipProvider>
             </div>
           </ScrollArea>
+
           <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
             <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
             <Button 
@@ -813,4 +820,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-

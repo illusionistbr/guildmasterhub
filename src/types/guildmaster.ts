@@ -40,6 +40,8 @@ export interface Event {
   description: string;
   date: string; // ISO date string
   time: string; // e.g., "19:00"
+  endDate?: string; // ISO date string, optional
+  endTime?: string; // e.g., "19:20", optional
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
