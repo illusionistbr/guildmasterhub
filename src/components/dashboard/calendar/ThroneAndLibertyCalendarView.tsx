@@ -277,6 +277,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         defaultDurationMinutes = 20;
       } else if (selectedCategory === 'riftstone') {
         defaultDurationMinutes = 20;
+      } else if (selectedCategory === 'war') {
+        if (selectedActivity === 'Inter-Server Boonstone' || selectedActivity === 'Inter-Server Riftstone') {
+          defaultDurationMinutes = 20;
+        }
+      } else if (selectedCategory === 'siege') {
+        defaultDurationMinutes = 55;
+      } else if (selectedCategory === 'tax_delivery') {
+        defaultDurationMinutes = 20;
       }
 
 
@@ -287,7 +295,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         setSelectedEndTime(format(endTimeObj, 'HH:mm'));
       }
     }
-  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]);
+  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate, selectedActivity]);
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
