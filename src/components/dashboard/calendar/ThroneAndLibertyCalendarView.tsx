@@ -246,6 +246,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null); 
     setCustomActivityName("");
+    // Reset end date/time when category changes so default duration logic can apply
+    setSelectedEndDate(undefined); 
+    setSelectedEndTime("00:00");
     
     setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
     
@@ -269,7 +272,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         defaultDurationMinutes = 20;
       } else if (selectedCategory === 'world_boss') {
         defaultDurationMinutes = 50;
+      } else if (selectedCategory === 'arch_boss') {
+        defaultDurationMinutes = 50;
       }
+
 
       if (defaultDurationMinutes !== null) {
         const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
@@ -278,7 +284,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         setSelectedEndTime(format(endTimeObj, 'HH:mm'));
       }
     }
-  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]); // Added selectedEndDate to dependencies
+  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]);
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -640,16 +646,16 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   </div>
 
                   {/* Mandatory and Attendance Value */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                     <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                    <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                       <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                        <Switch
-                          id="mandatory-switch"
-                          checked={isMandatory}
-                          onCheckedChange={setIsMandatory}
-                        />
-                        <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
-                      </div>
+                      <Switch
+                        id="mandatory-switch"
+                        checked={isMandatory}
+                        onCheckedChange={setIsMandatory}
+                      />
+                      <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-1">
                         <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença</Label>
