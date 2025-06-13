@@ -246,6 +246,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null); 
     setCustomActivityName("");
+    // Explicitly reset end date/time when category changes, allowing default duration to re-apply
     setSelectedEndDate(undefined); 
     setSelectedEndTime("00:00");
     
@@ -264,7 +265,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
 
   useEffect(() => {
-    if (selectedStartDate && selectedStartTime && !selectedEndDate) {
+    if (selectedStartDate && selectedStartTime && !selectedEndDate) { // Only apply if endDate is not yet set by user
       let defaultDurationMinutes: number | null = null;
 
       if (selectedCategory === 'world_event') defaultDurationMinutes = 20;
@@ -287,7 +288,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         setSelectedEndTime(format(endTimeObj, 'HH:mm'));
       }
     }
-  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate, selectedActivity]);
+  }, [selectedCategory, selectedActivity, selectedStartDate, selectedStartTime, selectedEndDate]); // Added selectedEndDate and selectedActivity
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -478,10 +479,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     Preencha os detalhes da atividade para adicioná-la ao calendário.
                 </DialogDescription>
             </DialogHeader>
-
-            {/* --- MODIFICAÇÃO PARA TESTE --- */}
-            {/* Substituímos <ScrollArea> por uma <div> simples com overflow */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            
+            <div className="h-[400px] overflow-y-auto"> {/* TESTE: Altura Fixa */}
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
@@ -790,8 +789,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     </TooltipProvider>
                 </div>
             </div>
-            {/* --- FIM DA MODIFICAÇÃO --- */}
-
+            
             <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
                 <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
                 <Button 
@@ -813,3 +811,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   );
 }
 
+    
