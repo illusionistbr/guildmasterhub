@@ -33,7 +33,7 @@ import {
   setMinutes,
   setSeconds,
   setMilliseconds,
-  addMinutes, // Import addMinutes
+  addMinutes,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { mockEvents } from '@/lib/mock-data'; 
@@ -233,7 +233,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const eventsForWeek = useMemo(() => {
     const allEvents = [...mockEvents, ...createdEvents];
     return allEvents.filter(event => {
-      const eventDate = new Date(event.date);
+      const eventDate = new Date(event.date); // Assumes event.date is ISO string or Date object
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
       return event.guildId === guildId && 
              eventDate >= currentWeekStart && 
@@ -274,7 +274,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       setSelectedEndDate(endTimeObj);
       setSelectedEndTime(format(endTimeObj, 'HH:mm'));
     }
-  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]); // Ensure selectedEndDate is in dependency array
+  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]);
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -301,31 +301,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       date: selectedStartDate.toISOString(), 
       time: selectedStartTime,
       endDate: selectedEndDate ? selectedEndDate.toISOString() : undefined,
-      endTime: selectedEndDate ? selectedEndTime : undefined,
+      endTime: selectedEndDate ? selectedEndTime : undefined, // Only save endTime if endDate is also saved
       organizerId: user.uid,
     };
 
     setCreatedEvents(prevEvents => [...prevEvents, newActivity]);
-
-    console.log("New activity to be (conceptually) saved:", {
-      category: selectedCategory,
-      subcategory: selectedSubcategory,
-      activity: activityTitleToSave,
-      startDate: format(selectedStartDate, "yyyy-MM-dd"),
-      startTime: selectedStartTime,
-      endDate: selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : null,
-      endTime: selectedEndTime,
-      isMandatory,
-      attendanceValue,
-      activityDescription,
-      announcementChannel,
-      announcementTimeOption,
-      announcementTimeValue,
-      announcementTimeUnit,
-      announceOnDiscord,
-      generatePinCode,
-      guildId: guildId, 
-    });
     
     if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
       const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
@@ -353,6 +333,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
     
     setDialogIsOpen(false);
+    // Reset states after saving is handled by onOpenChange of Dialog
   };
 
   const resetDialogStates = () => {
@@ -657,9 +638,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                   {/* Mandatory and Attendance Value */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                     <div className="space-y-2">
+                     <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                       <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                      <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
                         <Switch
                           id="mandatory-switch"
                           checked={isMandatory}
@@ -667,7 +647,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         />
                         <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
                       </div>
-                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-1">
                         <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença</Label>
@@ -718,7 +697,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                         <SelectTrigger id="announcement-channel"><SelectValue placeholder="Selecione um canal" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Canal Padrão">Canal Padrão</SelectItem>
-                          {/* TODO: Populate with actual Discord channels if integration exists */}
                         </SelectContent>
                       </Select>
                     </div>
@@ -820,3 +798,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+

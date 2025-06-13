@@ -2,7 +2,21 @@
 "use client";
 
 import type { Event as GuildEvent } from '@/types/guildmaster';
-import { getMinutes } from 'date-fns';
+
+// Helper function to parse date and time into a Date object
+const parseDateTime = (dateStr: string, timeStr: string): Date => {
+  const date = new Date(dateStr);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  // Use UTC methods to set hours and minutes to avoid timezone shifts from local time
+  // This assumes dateStr is already in a format that new Date() parses as UTC or local but consistently
+  // If dateStr is just YYYY-MM-DD, new Date() parses it as UTC. If it includes time/timezone, it's different.
+  // For consistency, it's often better to parse components and use Date.UTC or a library.
+  // However, for this use case, if event.date is consistently YYYY-MM-DD (from toISOString().split('T')[0]),
+  // then new Date(dateStr) will be UTC midnight. Setting local hours/minutes might be fine if display is also local.
+  // Let's stick to local time interpretation as it's simpler for now.
+  date.setHours(hours, minutes, 0, 0); 
+  return date;
+};
 
 interface CalendarEventCardProps {
   event: GuildEvent;
@@ -10,14 +24,36 @@ interface CalendarEventCardProps {
 }
 
 export function CalendarEventCard({ event, cellHeight }: CalendarEventCardProps) {
-  const [eventHour, eventMinute] = event.time.split(':').map(Number);
+  const startDateObj = parseDateTime(event.date, event.time);
+  const eventStartMinute = startDateObj.getMinutes();
   
   // Calculate top position based on minutes within the hour
-  const topPosition = (eventMinute / 60) * cellHeight;
+  const topPosition = (eventStartMinute / 60) * cellHeight;
 
-  // For now, assume events are 1 hour long or fit within the cell.
-  // More complex duration spanning multiple cells would require more logic.
-  const eventHeight = cellHeight * 0.8; // Example: 80% of cell height
+  let durationInMinutes: number;
+
+  if (event.endDate && event.endTime) {
+    const endDateObj = parseDateTime(event.endDate, event.endTime);
+    // Ensure endDateObj is after startDateObj
+    if (endDateObj > startDateObj) {
+      durationInMinutes = (endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60);
+    } else {
+      // Invalid end date/time (e.g., end before start), default to 1 hour
+      durationInMinutes = 60;
+    }
+  } else {
+    // Default duration if no explicit end date/time is specified (e.g., 1 hour)
+    durationInMinutes = 60; 
+  }
+
+  // Ensure a minimum duration for visibility (e.g., 15 minutes)
+  const clampedDurationInMinutes = Math.max(15, durationInMinutes);
+  
+  // Calculate height based on duration
+  // If cellHeight is for 60 minutes, then height is (duration / 60) * cellHeight
+  const eventHeight = (clampedDurationInMinutes / 60) * cellHeight;
+
+  const displayEndTime = event.endDate && event.endTime ? event.endTime : null;
 
   return (
     <div
@@ -26,10 +62,11 @@ export function CalendarEventCard({ event, cellHeight }: CalendarEventCardProps)
         top: `${topPosition}px`,
         height: `${eventHeight}px`, 
       }}
-      title={`${event.title} - ${event.time}`}
+      title={`${event.title} - ${event.time}${displayEndTime ? ` às ${displayEndTime}` : ''}`}
     >
       <p className="text-xs font-semibold truncate">{event.title}</p>
-      <p className="text-xs truncate">{event.time}</p>
+      <p className="text-xs truncate">{event.time}{displayEndTime ? ` - ${displayEndTime}` : ''}</p>
     </div>
   );
 }
+
