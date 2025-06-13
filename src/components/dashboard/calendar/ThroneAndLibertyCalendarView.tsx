@@ -246,7 +246,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null); 
     setCustomActivityName("");
-    // Reset end date/time when category changes so default duration logic can apply
     setSelectedEndDate(undefined); 
     setSelectedEndTime("00:00");
     
@@ -265,7 +264,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
 
   useEffect(() => {
-    if (selectedStartDate && selectedStartTime && !selectedEndDate) {
+    if (selectedStartDate && selectedStartTime && !selectedEndDate) { 
       let defaultDurationMinutes: number | null = null;
 
       if (selectedCategory === 'world_event') {
@@ -274,6 +273,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         defaultDurationMinutes = 50;
       } else if (selectedCategory === 'arch_boss') {
         defaultDurationMinutes = 50;
+      } else if (selectedCategory === 'boonstone') {
+        defaultDurationMinutes = 20;
+      } else if (selectedCategory === 'riftstone') {
+        defaultDurationMinutes = 20;
       }
 
 
