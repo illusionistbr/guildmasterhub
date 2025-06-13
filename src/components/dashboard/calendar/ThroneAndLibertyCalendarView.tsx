@@ -246,8 +246,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null); 
     setCustomActivityName("");
-    // Clear end date/time only if it was auto-set. If user set it, keep it?
-    // For simplicity now, let's clear it so new defaults can apply.
     setSelectedEndDate(undefined); 
     setSelectedEndTime("00:00");
     
@@ -266,7 +264,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
 
   useEffect(() => {
-    if (selectedStartDate && selectedStartTime && !selectedEndDate) { // Only set default if endDate is not already set by user
+    if (selectedStartDate && selectedStartTime && !selectedEndDate) {
       let defaultDurationMinutes: number | null = null;
 
       if (selectedCategory === 'world_event') defaultDurationMinutes = 20;
@@ -281,7 +279,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           defaultDurationMinutes = 20;
         }
       }
-
+      
       if (defaultDurationMinutes !== null) {
         const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
         const endTimeObj = addMinutes(startTimeObj, defaultDurationMinutes);
@@ -289,7 +287,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         setSelectedEndTime(format(endTimeObj, 'HH:mm'));
       }
     }
-  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate, selectedActivity]); // Added selectedEndDate and selectedActivity
+  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate, selectedActivity]);
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -473,8 +471,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           resetDialogStates();
         }
       }}>
-        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-4 shrink-0">
+        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-4 shrink-0 border-b border-border">
             <DialogTitle className="font-headline text-primary">Registrar Nova Atividade</DialogTitle>
             <DialogDescription>
               Preencha os detalhes da atividade para adicioná-la ao calendário.
@@ -482,9 +480,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </DialogHeader>
 
           <ScrollArea className="flex-1 min-h-0">
-            <div className="px-6">
+            <div className="px-6 py-4"> {/* Added py-4 for vertical padding inside scroll area */}
               <TooltipProvider>
-                <div className="grid gap-6 py-4">
+                <div className="grid gap-6"> {/* Removed py-4 from here */}
                   {/* Category, Subcategory, Activity */}
                   <div className="grid grid-cols-1 gap-y-4">
                     <div>
