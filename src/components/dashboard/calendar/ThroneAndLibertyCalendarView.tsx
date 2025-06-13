@@ -233,7 +233,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const eventsForWeek = useMemo(() => {
     const allEvents = [...mockEvents, ...createdEvents];
     return allEvents.filter(event => {
-      const eventDate = new Date(event.date); // Assumes event.date is ISO string or Date object
+      const eventDate = new Date(event.date); 
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
       return event.guildId === guildId && 
              eventDate >= currentWeekStart && 
@@ -262,19 +262,23 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
 
   useEffect(() => {
-    if (
-      selectedCategory === 'world_event' &&
-      selectedStartDate &&
-      selectedStartTime &&
-      !selectedEndDate // Only set default if end date is not already set by the user
-    ) {
-      const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
-      const endTimeObj = addMinutes(startTimeObj, 20);
+    if (selectedStartDate && selectedStartTime && !selectedEndDate) {
+      let defaultDurationMinutes: number | null = null;
 
-      setSelectedEndDate(endTimeObj);
-      setSelectedEndTime(format(endTimeObj, 'HH:mm'));
+      if (selectedCategory === 'world_event') {
+        defaultDurationMinutes = 20;
+      } else if (selectedCategory === 'world_boss') {
+        defaultDurationMinutes = 50;
+      }
+
+      if (defaultDurationMinutes !== null) {
+        const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
+        const endTimeObj = addMinutes(startTimeObj, defaultDurationMinutes);
+        setSelectedEndDate(endTimeObj);
+        setSelectedEndTime(format(endTimeObj, 'HH:mm'));
+      }
     }
-  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]);
+  }, [selectedCategory, selectedStartDate, selectedStartTime, selectedEndDate]); // Added selectedEndDate to dependencies
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -301,7 +305,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       date: selectedStartDate.toISOString(), 
       time: selectedStartTime,
       endDate: selectedEndDate ? selectedEndDate.toISOString() : undefined,
-      endTime: selectedEndDate ? selectedEndTime : undefined, // Only save endTime if endDate is also saved
+      endTime: selectedEndDate ? selectedEndTime : undefined,
       organizerId: user.uid,
     };
 
@@ -333,7 +337,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
     
     setDialogIsOpen(false);
-    // Reset states after saving is handled by onOpenChange of Dialog
   };
 
   const resetDialogStates = () => {
@@ -468,7 +471,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </DialogHeader>
 
           <ScrollArea className="flex-1 min-h-0">
-            <div className="px-6"> {/* Inner div for padding */}
+            <div className="px-6">
               <TooltipProvider>
                 <div className="grid gap-6 py-4">
                   {/* Category, Subcategory, Activity */}
@@ -673,7 +676,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                   </div>
                   
                   {/* New Fields: Description, Announcement Channel, Announcement Time, etc. */}
-                  <div className="space-y-4 pt-4">
+                   <div className="space-y-4 pt-4">
                     <div>
                       <Label htmlFor="activity-description" className="text-foreground font-semibold mb-1 block">Descrição (Opcional)</Label>
                       <Textarea
