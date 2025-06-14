@@ -25,7 +25,7 @@ import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } f
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
 import { logGuildActivity } from '@/lib/auditLogService';
-import TwitterFeed from '@/components/dashboard/TwitterFeed'; // Importar o novo componente
+import TwitterFeed from '@/components/dashboard/TwitterFeed'; 
 
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
@@ -597,27 +597,26 @@ function DashboardPageContent() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 mt-8 px-4">
-        <Card className="card-bg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-headline flex items-center"><CalendarDays className="mr-3 h-7 w-7 text-primary" /> Próximos Eventos</CardTitle>
-            <CardDescription className="text-muted-foreground">Não perca estas atividades agendadas!</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {mockEvents.filter(event => event.guildId === currentGuild.id && new Date(event.date) >= new Date()).slice(0, 3).map(event => (
-              <div key={event.id} className="mb-4 pb-4 border-b border-border last:border-b-0 last:mb-0 last:pb-0">
-                <h4 className="font-semibold text-lg text-foreground">{event.title}</h4>
-                <p className="text-sm text-muted-foreground">{new Date(event.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - {event.time}</p>
-                <p className="text-sm mt-1 line-clamp-2 text-foreground/80">{event.description}</p>
-              </div>
-            ))}
-            {mockEvents.filter(event => event.guildId === currentGuild.id && new Date(event.date) >= new Date()).length === 0 && (
-              <p className="text-muted-foreground">Nenhum evento futuro agendado para esta guilda.</p>
-            )}
-            <Button variant="outline" className="mt-4 w-full border-primary text-primary hover:bg-primary/10" asChild>
-              <Link href={`/dashboard/calendar?guildId=${guildIdForLinks}`}>Ver Todos os Eventos</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {currentGuild.socialLinks?.x ? (
+            <TwitterFeed profileUrl={currentGuild.socialLinks.x} widgetHeight="485" />
+          ) : (
+            <Card className="card-bg h-full flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-2xl font-headline flex items-center">
+                  <TwitterIcon className="mr-3 h-7 w-7 text-primary" />
+                  Feed do X (Twitter)
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Configure o link do X (Twitter) da guilda nas configurações para ver o feed aqui.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow flex items-center justify-center">
+                <p className="text-muted-foreground text-center">
+                  Link do X (Twitter) não configurado.
+                </p>
+              </CardContent>
+            </Card>
+        )}
 
         <Card className="card-bg">
           <CardHeader>
@@ -641,12 +640,6 @@ function DashboardPageContent() {
           </CardContent>
         </Card>
         
-        {/* Card do Twitter Feed */}
-        {currentGuild.socialLinks?.x && (
-          <div className="lg:col-span-2 card-bg"> {/* Ocupa duas colunas em telas grandes se a grid for lg:grid-cols-2 ou lg:grid-cols-3 (onde 2 é ideal) */}
-            <TwitterFeed profileUrl={currentGuild.socialLinks.x} widgetHeight="485" />
-          </div>
-        )}
       </div>
     </div>
   );
