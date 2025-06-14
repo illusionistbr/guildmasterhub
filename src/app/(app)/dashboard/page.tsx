@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2 } from "lucide-react";
+import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Twitter as TwitterIcon } from "lucide-react";
 import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; 
 import type { Guild, AuditActionType } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -25,6 +25,7 @@ import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } f
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
 import { logGuildActivity } from '@/lib/auditLogService';
+import TwitterFeed from '@/components/dashboard/TwitterFeed'; // Importar o novo componente
 
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
@@ -166,7 +167,7 @@ function DashboardPageContent() {
         toast({ title: "Erro", description: "Guilda atual ou usuário não identificado.", variant: "destructive" });
         return;
     }
-    if (!isOwner) { // Simplified check, can be expanded based on roles (e.g., ViceLeader too)
+    if (!isOwner) { 
         toast({ title: "Permissão Negada", description: "Você não tem permissão para editar esta guilda.", variant: "destructive" });
         return;
     }
@@ -205,7 +206,6 @@ function DashboardPageContent() {
         const fieldToUpdate = type === 'banner' ? 'bannerUrl' : 'logoUrl';
         await updateDoc(guildDocRef, { [fieldToUpdate]: finalUrlToSave });
 
-        // Log activity
         await logGuildActivity(
             currentGuild.id,
             user.uid,
@@ -640,6 +640,13 @@ function DashboardPageContent() {
             </Button>
           </CardContent>
         </Card>
+        
+        {/* Card do Twitter Feed */}
+        {currentGuild.socialLinks?.x && (
+          <div className="lg:col-span-2 card-bg"> {/* Ocupa duas colunas em telas grandes se a grid for lg:grid-cols-2 ou lg:grid-cols-3 (onde 2 é ideal) */}
+            <TwitterFeed profileUrl={currentGuild.socialLinks.x} widgetHeight="485" />
+          </div>
+        )}
       </div>
     </div>
   );
