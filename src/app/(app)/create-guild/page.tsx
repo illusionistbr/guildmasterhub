@@ -230,6 +230,7 @@ export default function CreateGuildPage() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
+                            <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
                             {/* Adicione outras opções de jogo aqui no futuro */}
                           </SelectContent>
                         </Select>
