@@ -10,7 +10,7 @@ import Link from "next/link";
 import Image from 'next/image';
 import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Twitter as TwitterIcon } from "lucide-react";
 import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; 
-import type { Guild, AuditActionType } from '@/types/guildmaster';
+import type { Guild, AuditActionType } from '@/types/guildmaster'; // AuditActionType import might be specific to removed functionality
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -384,6 +384,13 @@ function DashboardPageContent() {
   const welcomeName = user?.displayName || user?.email || "Jogador";
   const guildIdForLinks = currentGuild.id;
 
+  let twitterProfileUrlForFeed: string | undefined = undefined;
+  if (currentGuild.game === "Chrono Odyssey") {
+    twitterProfileUrlForFeed = "https://x.com/ChronoOdyssey";
+  } else {
+    twitterProfileUrlForFeed = currentGuild.socialLinks?.x;
+  }
+
   return (
     <div className="space-y-8">
       <div className="relative w-full h-48 md:h-60 rounded-lg shadow-lg group z-0">
@@ -573,32 +580,9 @@ function DashboardPageContent() {
           actionHref={`/dashboard/members?guildId=${guildIdForLinks}`}
           actionLabel="Gerenciar Membros"
         />
-        <StatCard
-          title="Próximos Eventos"
-          value={mockEvents.filter(event => new Date(event.date) >= new Date() && event.guildId === currentGuild.id).length.toString()}
-          icon={<CalendarDays className="h-8 w-8 text-primary" />}
-          actionHref={`/dashboard/calendar?guildId=${guildIdForLinks}`}
-          actionLabel="Ver Calendário"
-        />
-        <StatCard
-          title="Conquistas Totais"
-          value={mockAchievements.filter(ach => ach.guildId === currentGuild.id).length.toString()}
-          icon={<Trophy className="h-8 w-8 text-primary" />}
-          actionHref={`/dashboard/timeline?guildId=${guildIdForLinks}`}
-          actionLabel="Ver Conquistas"
-        />
-        <StatCard
-          title="Candidaturas Pendentes"
-          value={mockApplications.filter(app => app.status === 'pending' && app.guildId === currentGuild.id).length.toString()}
-          icon={<UserPlus className="h-8 w-8 text-primary" />}
-          actionHref={`/dashboard/recruitment/applications?guildId=${guildIdForLinks}`}
-          actionLabel="Revisar Candidaturas"
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2 mt-8 px-4">
-        {currentGuild.socialLinks?.x ? (
-            <TwitterFeed profileUrl={currentGuild.socialLinks.x} widgetHeight="485" />
+        
+        {twitterProfileUrlForFeed ? (
+            <TwitterFeed profileUrl={twitterProfileUrlForFeed} widgetHeight="485" />
           ) : (
             <Card className="card-bg h-full flex flex-col">
               <CardHeader>
@@ -618,7 +602,24 @@ function DashboardPageContent() {
             </Card>
         )}
 
-        <Card className="card-bg">
+        <StatCard
+          title="Conquistas Totais"
+          value={mockAchievements.filter(ach => ach.guildId === currentGuild.id).length.toString()}
+          icon={<Trophy className="h-8 w-8 text-primary" />}
+          actionHref={`/dashboard/timeline?guildId=${guildIdForLinks}`}
+          actionLabel="Ver Conquistas"
+        />
+        <StatCard
+          title="Candidaturas Pendentes"
+          value={mockApplications.filter(app => app.status === 'pending' && app.guildId === currentGuild.id).length.toString()}
+          icon={<UserPlus className="h-8 w-8 text-primary" />}
+          actionHref={`/dashboard/recruitment/applications?guildId=${guildIdForLinks}`}
+          actionLabel="Revisar Candidaturas"
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2 mt-8 px-4">
+        <Card className="card-bg lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-2xl font-headline flex items-center"><Trophy className="mr-3 h-7 w-7 text-primary" /> Conquistas Recentes</CardTitle>
             <CardDescription className="text-muted-foreground">Celebre as últimas conquistas da sua guilda.</CardDescription>
@@ -639,7 +640,6 @@ function DashboardPageContent() {
             </Button>
           </CardContent>
         </Card>
-        
       </div>
     </div>
   );
