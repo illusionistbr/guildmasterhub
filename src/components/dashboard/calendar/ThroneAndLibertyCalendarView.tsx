@@ -246,8 +246,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null); 
     setCustomActivityName("");
-    //setSelectedEndDate(undefined); // Keep existing end date if user manually set it
-    //setSelectedEndTime("00:00");
     
     setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
     
@@ -263,8 +261,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     return setHours(setMinutes(setSeconds(setMilliseconds(date, 0), 0), m), h);
   };
 
-  useEffect(() => {
-    if (selectedStartDate && selectedStartTime && !selectedEndDate) { // Only set default if endDate is not already user-defined
+ useEffect(() => {
+    if (selectedStartDate && selectedStartTime && !selectedEndDate) {
       let defaultDurationMinutes: number | null = null;
 
       if (selectedCategory === 'world_event') defaultDurationMinutes = 20;
@@ -287,7 +285,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         setSelectedEndTime(format(endTimeObj, 'HH:mm'));
       }
     }
-  }, [selectedCategory, selectedActivity, selectedStartDate, selectedStartTime, selectedEndDate]); // Added selectedEndDate
+  }, [selectedCategory, selectedActivity, selectedStartDate, selectedStartTime, selectedEndDate]);
 
   const formatDateTimeForDisplay = (dateVal: Date | undefined, timeVal: string): string | null => {
     if (!dateVal) return null;
@@ -311,9 +309,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       guildId: guildId,
       title: activityTitleToSave,
       description: activityDescription,
-      date: selectedStartDate.toISOString().split('T')[0], // Store date as YYYY-MM-DD
+      date: selectedStartDate.toISOString().split('T')[0], 
       time: selectedStartTime,
-      endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined, // Store date as YYYY-MM-DD
+      endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined, 
       endTime: selectedEndDate ? selectedEndTime : undefined,
       organizerId: user.uid,
     };
@@ -479,7 +477,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            <div className="flex-1 min-h-0 overflow-y-auto"> {/* Modified line for testing scroll */}
+            <div className="h-[400px] overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
@@ -650,7 +648,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                             {/* Mandatory and Attendance Value */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                <div className="flex items-center justify-start space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                                <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                 <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                                 <Switch
                                     id="mandatory-switch"
