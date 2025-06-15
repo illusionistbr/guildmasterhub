@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image'; // Added Image import
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -477,6 +478,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
+            {/* O <ScrollArea> foi trocado por uma <div> para teste */}
             <div className="h-[400px] overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
@@ -540,7 +542,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                         {currentActivities.map(act => (
                                         <SelectItem key={act} value={act}>
                                            <div className="flex items-center">
-                                            {act === 'Wolf Hunting Contest' && <PawPrint className="mr-2 h-4 w-4 text-muted-foreground" />}
+                                            {act === 'Wolf Hunting Contest' ? (
+                                                <Image
+                                                    src="https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_WolfHuntingContest_On_Sprite.webp"
+                                                    alt="Wolf Hunting Contest Icon"
+                                                    width={16}
+                                                    height={16}
+                                                    className="mr-2"
+                                                />
+                                            ) : null}
                                             <span>{act}</span>
                                           </div>
                                         </SelectItem>
@@ -771,7 +781,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                             onCheckedChange={setAnnounceOnDiscord}
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input h-10">
+                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input">
                                         <div className="flex items-center gap-1">
                                             <Label htmlFor="generate-pin-switch" className="text-foreground text-sm">Gerar código PIN</Label>
                                             <Tooltip>
@@ -812,5 +822,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-
-    
