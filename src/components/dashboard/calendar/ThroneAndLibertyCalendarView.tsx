@@ -503,8 +503,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-      {/* TESTE DE ALTURA FIXA: A div abaixo foi modificada para h-[400px] */}
-      <div className="h-[400px] overflow-y-auto">
+      <ScrollArea className="h-[400px]">
         <div className="grid grid-template-columns-calendar">
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
@@ -567,8 +566,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           </div>
         </div>
         <ScrollBar orientation="horizontal" />
-        <ScrollBar orientation="vertical" />
-      </div> {/* Fim do TESTE DE ALTURA FIXA */}
+      </ScrollArea>
 
 
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
@@ -928,7 +926,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-
-    
-
-    
