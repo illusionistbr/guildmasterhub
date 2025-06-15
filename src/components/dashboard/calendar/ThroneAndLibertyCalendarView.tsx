@@ -191,6 +191,32 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
+  // Add Boonstone Icons
+  'Abandoned Stonemason': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Akidu Valley': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Blackhowl Plains': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Carmine Forest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Daybreak Shore': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Fonos Basin': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Golden Rye Pastures': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Grayclaw Forest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Manawastes': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Moonlight Desert': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Monolith Wastelands': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Nesting Grounds': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Purelight Hills': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Raging Wilds': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Ruins of Turayne': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Sandworm Lair': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Shattered Temple': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Urstella Fields': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Windhill Shores': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  "Quietis' Demesne": "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Forest of the Great Tree': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Swamp of Silence': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Black Anvil Forge': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Bercant Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Crimson Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
 };
 
 
@@ -430,7 +456,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-      <ScrollArea className="flex-1 h-full">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="grid grid-template-columns-calendar">
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
@@ -510,7 +536,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            <div className="h-[400px] overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
