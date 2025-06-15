@@ -106,9 +106,8 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   ],
   world_boss: [
     'Adentus', 'Ahzreil', 'Aridus', 'Bellandir', 'Chernobog', 'Cornelius', 'Daigon',
-    'Excavator-9', 'Grand Aelon', 'Junobote', 'Kowazan', 'Malakar', 'Minezerok',
-    'Morokai', 'Nirma', 'Talus', 'Tevent', 'Leviathan', 'Pakilo Naru',
-    'Manticus Brothers', 'Exodus', 'Grimturg',
+    'Excavator-9', 'Exodus', 'Grand Aelon', 'Grimturg', 'Junobote', 'Kowazan', 'Leviathan', 'Malakar',
+    'Manticus Brothers', 'Minezerok', 'Morokai', 'Nirma', 'Pakilo Naru', 'Talus', 'Tevent',
   ],
   arch_boss: [
     'Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy',
@@ -191,6 +190,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
+  // Boonstones
   'Abandoned Stonemason': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Akidu Valley': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Blackhowl Plains': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
@@ -216,6 +216,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Black Anvil Forge': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Bercant Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Crimson Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  // World Bosses
   'Adentus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
   'Talus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_GolemTalus_Target.webp",
   'Grand Aelon': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_SpiritTreeGuardian_On_Sprite.webp",
@@ -235,6 +236,24 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Pakilo Naru': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_PakiloNaru_On.webp",
   'Exodus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_EvilEyeSurveilant_On_Sprite.webp",
   'Grimturg': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
+  // Tax Delivery
+  'Vienta village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
+  // Siege
+  'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
+  // Riftstones
+  'Adentus Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Azhreil Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Chernobog Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Excavator Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Grand Aelon Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Kowazan Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Malakar Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Morokai Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Talus Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Daigon Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Leviathan Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Pakilo Naru Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Manticus Brothers Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
 };
 
 
@@ -556,9 +575,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            {/* MODIFICAÇÃO DE TESTE 1 (substituição do ScrollArea por div) - MANTIDA */}
-            {/* MODIFICAÇÃO DE TESTE 2 (altura fixa h-[400px]) - REMOVIDA desta div interna, foi para o ScrollArea de teste acima */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="h-[400px] overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
@@ -742,14 +759,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                             {/* Mandatory and Attendance Value */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
-                                <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                                <Switch
-                                    id="mandatory-switch"
-                                    checked={isMandatory}
-                                    onCheckedChange={setIsMandatory}
-                                />
-                                <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
+                                 <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
+                                    <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
+                                    <Switch
+                                        id="mandatory-switch"
+                                        checked={isMandatory}
+                                        onCheckedChange={setIsMandatory}
+                                    />
+                                    <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
                                 </div>
                                 <div className="space-y-2">
                                 <div className="flex items-center gap-1">
@@ -901,5 +918,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
+    
 
     
