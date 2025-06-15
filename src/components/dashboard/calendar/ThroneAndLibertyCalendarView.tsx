@@ -108,7 +108,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
     'Adentus', 'Ahzreil', 'Aridus', 'Bellandir', 'Chernobog', 'Cornelius', 'Daigon',
     'Excavator-9', 'Grand Aelon', 'Junobote', 'Kowazan', 'Malakar', 'Minezerok',
     'Morokai', 'Nirma', 'Talus', 'Tevent', 'Leviathan', 'Pakilo Naru',
-    'Manticus Brothers',
+    'Manticus Brothers', 'Exodus', 'Grimturg',
   ],
   arch_boss: [
     'Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy',
@@ -191,7 +191,6 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
-  // Add Boonstone Icons
   'Abandoned Stonemason': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Akidu Valley': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Blackhowl Plains': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
@@ -217,6 +216,25 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Black Anvil Forge': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Bercant Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Crimson Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  'Adentus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
+  'Talus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_GolemTalus_Target.webp",
+  'Grand Aelon': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_SpiritTreeGuardian_On_Sprite.webp",
+  'Chernobog': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BasiliskDarkness_Target.webp",
+  'Cornelius': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_LivingArmorCornelus_Target.webp",
+  'Junobote': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_LesserDemonJunoboat_Target.webp",
+  'Daigon': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_Dagon_On.webp",
+  'Morokai': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_ElderTurncoat_Target.webp",
+  'Malakar': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_EvilEyeSurveilant_Target.webp",
+  'Kowazan': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_LycanthropeNSmuggler_On_Sprite.webp",
+  'Minezerok': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_LichMaenZerok_Target.webp",
+  'Nirma': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_ElderSema_On_Sprite.webp",
+  'Aridus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_ElderBlathasar_On_Sprite.webp",
+  'Ahzreil': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_DeathAzrael_On.webp",
+  'Leviathan': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_Leviathan_On.webp",
+  'Manticus Brothers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_Manticus_On.webp",
+  'Pakilo Naru': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_PakiloNaru_On.webp",
+  'Exodus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_EvilEyeSurveilant_On_Sprite.webp",
+  'Grimturg': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
 };
 
 
@@ -456,7 +474,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0">
+      {/* TESTE DE ALTURA FIXA: A div abaixo foi modificada para h-[400px] */}
+      <div className="h-[400px] overflow-y-auto">
         <div className="grid grid-template-columns-calendar">
           <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
           <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
@@ -520,7 +539,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
         <ScrollBar orientation="horizontal" />
         <ScrollBar orientation="vertical" />
-      </ScrollArea>
+      </div> {/* Fim do TESTE DE ALTURA FIXA */}
+
 
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
@@ -536,6 +556,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
+            {/* MODIFICAÇÃO DE TESTE 1 (substituição do ScrollArea por div) - MANTIDA */}
+            {/* MODIFICAÇÃO DE TESTE 2 (altura fixa h-[400px]) - REMOVIDA desta div interna, foi para o ScrollArea de teste acima */}
             <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
