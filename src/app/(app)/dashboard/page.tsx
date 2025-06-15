@@ -241,7 +241,7 @@ function DashboardPageContent() {
         toast({ title: "URL Necessária", description: "Por favor, insira uma URL para o banner.", variant: "destructive" });
         return;
       }
-      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc", "placehold.co"];
+      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc", "placehold.co", "cdn.questlog.gg"];
       try {
         const url = new URL(bannerUrlInput);
         if (!allowedHosts.some(host => url.hostname.endsWith(host))) {
@@ -297,7 +297,7 @@ function DashboardPageContent() {
         toast({ title: "URL Necessária", description: "Por favor, insira uma URL para o logo.", variant: "destructive" });
         return;
       }
-      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc", "placehold.co"];
+      const allowedHosts = ["imgur.com", "i.imgur.com", "imgbb.com", "ibb.co", "i.ibb.co", "postimages.org", "postimg.cc", "i.postimg.cc", "placehold.co", "cdn.questlog.gg"];
       try {
         const url = new URL(logoUrlInput);
         if (!allowedHosts.some(host => url.hostname.endsWith(host))) {
