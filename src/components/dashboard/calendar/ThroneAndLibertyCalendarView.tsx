@@ -78,12 +78,26 @@ const TL_SUB_CATEGORIES: Record<string, string[]> = {
 
 const TL_ACTIVITIES: Record<string, string[]> = {
   world_event: [
-    'Blood Mushroom Gathering', 'Dark Destroyers', 'Desert Caravan', 'Festival of Fire',
-    'Hidden Brown Mica', 'Lantern Seed Festival', 'Lift the Moonlight Spell',
-    'Operation: Talisman Delivery', 'Requiem of Light', 'Starlight Stones Ritual',
-    'Stop the Mana Frenzy', 'Wolf Hunting Contest', "Quietis' Demesne",
-    'Forest of the Great Tree', 'Swamp of Silence', 'Black Anvil Forge',
-    'Bercant Manor', 'Crimson Manor',
+    'Best Way to Prevent the Worst',
+    'Blood Mushroom Gathering', 
+    'Dark Destroyers', 
+    'Desert Caravan', 
+    'Festival of Fire',
+    'Hidden Brown Mica', 
+    'Lantern Seed Festival', 
+    'Lift the Moonlight Spell',
+    'Operation: Talisman Delivery', 
+    'Requiem of Light', 
+    'Starlight Stones Ritual',
+    'Stop the Mana Frenzy', 
+    'To Heal a Divine Beast',
+    'Wolf Hunting Contest', 
+    "Quietis' Demesne",
+    'Forest of the Great Tree', 
+    'Swamp of Silence', 
+    'Black Anvil Forge',
+    'Bercant Manor', 
+    'Crimson Manor',
   ],
   world_dungeon: [
     'Ant Nest', 'Sanctum of Desire', 'Saurodoma Island', 'Shadowed Crypt',
@@ -175,7 +189,8 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Starlight Stones Ritual': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_StarlightStonesRitual_On_Sprite.webp",
   'Blood Mushroom Gathering': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_Mushroom_On_Sprite.webp",
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
-  // Add other mappings here as needed based on TL_ACTIVITIES.world_event
+  'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
+  'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
 };
 
 
@@ -495,7 +510,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="h-[400px] overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
@@ -797,7 +812,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                             onCheckedChange={setAnnounceOnDiscord}
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input">
+                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <div className="flex items-center gap-1">
                                             <Label htmlFor="generate-pin-switch" className="text-foreground text-sm">Gerar código PIN</Label>
                                             <Tooltip>
