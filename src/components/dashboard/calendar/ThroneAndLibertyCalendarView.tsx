@@ -2,12 +2,12 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Image from 'next/image'; // Added Image import
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide, Info, PawPrint } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -161,6 +161,23 @@ const TL_ACTIVITIES: Record<string, string[]> = {
     'Nebula Island',
   ],
 };
+
+const ACTIVITY_ICONS: Record<string, string> = {
+  'Wolf Hunting Contest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_WolfHuntingContest_On_Sprite.webp",
+  'Festival of Fire': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_FestivalofFire_On_Sprite.webp",
+  'Requiem of Light': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_RequiemofLight_On_Sprite.webp",
+  'Hidden Brown Mica': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_Phlogopite_On_Sprite.webp",
+  'Lantern Seed Festival': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BellFlowerSeed_001_On_Sprite.webp",
+  'Lift the Moonlight Spell': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_Moonlight_On_Sprite.webp",
+  'Desert Caravan': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_Caravan_On_Sprite.webp",
+  'Operation: Talisman Delivery': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_TalismanMission_001_On_Sprite.webp",
+  'Stop the Mana Frenzy': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_Manaflood_On_Sprite.webp",
+  'Starlight Stones Ritual': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_StarlightStonesRitual_On_Sprite.webp",
+  'Blood Mushroom Gathering': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_Mushroom_On_Sprite.webp",
+  'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
+  // Add other mappings here as needed based on TL_ACTIVITIES.world_event
+};
+
 
 const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
@@ -478,8 +495,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            {/* O <ScrollArea> foi trocado por uma <div> para teste */}
-            <div className="h-[400px] overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
@@ -542,10 +558,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                         {currentActivities.map(act => (
                                         <SelectItem key={act} value={act}>
                                            <div className="flex items-center">
-                                            {act === 'Wolf Hunting Contest' ? (
+                                            {ACTIVITY_ICONS[act] ? (
                                                 <Image
-                                                    src="https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_WolfHuntingContest_On_Sprite.webp"
-                                                    alt="Wolf Hunting Contest Icon"
+                                                    src={ACTIVITY_ICONS[act]!}
+                                                    alt={`${act} icon`}
                                                     width={16}
                                                     height={16}
                                                     className="mr-2"
@@ -822,3 +838,5 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
+    
