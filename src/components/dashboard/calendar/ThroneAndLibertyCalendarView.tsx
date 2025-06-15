@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, CalendarIcon as CalendarIconLucide, Info, PawPrint } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -538,7 +538,12 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     <SelectTrigger id="activity"><SelectValue placeholder="Selecione uma atividade/evento" /></SelectTrigger>
                                     <SelectContent>
                                         {currentActivities.map(act => (
-                                        <SelectItem key={act} value={act}>{act}</SelectItem>
+                                        <SelectItem key={act} value={act}>
+                                           <div className="flex items-center">
+                                            {act === 'Wolf Hunting Contest' && <PawPrint className="mr-2 h-4 w-4 text-muted-foreground" />}
+                                            <span>{act}</span>
+                                          </div>
+                                        </SelectItem>
                                         ))}
                                     </SelectContent>
                                     </Select>
@@ -758,7 +763,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <Label htmlFor="announce-discord-switch" className="text-foreground text-sm">Anunciar criação no Discord</Label>
                                         <Switch
                                             id="announce-discord-switch"
@@ -766,7 +771,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                             onCheckedChange={setAnnounceOnDiscord}
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 py-2 rounded-md border border-input h-10">
+                                    <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <div className="flex items-center gap-1">
                                             <Label htmlFor="generate-pin-switch" className="text-foreground text-sm">Gerar código PIN</Label>
                                             <Tooltip>
