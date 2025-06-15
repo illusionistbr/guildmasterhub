@@ -39,7 +39,6 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { mockEvents } from '@/lib/mock-data'; 
 import type { Event as GuildEvent } from '@/types/guildmaster';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarEventCard } from './CalendarEventCard';
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/contexts/AuthContext';
@@ -190,7 +189,8 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
-  // Boonstones
+  
+  // Boonstones (Common Icon)
   'Abandoned Stonemason': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Akidu Valley': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Blackhowl Plains': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
@@ -216,6 +216,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Black Anvil Forge': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Bercant Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Crimson Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  
   // World Bosses
   'Adentus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
   'Talus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_GolemTalus_Target.webp",
@@ -236,11 +237,14 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Pakilo Naru': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_PakiloNaru_On.webp",
   'Exodus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_EvilEyeSurveilant_On_Sprite.webp",
   'Grimturg': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
+
   // Tax Delivery
   'Vienta village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
+  
   // Siege
   'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
-  // Riftstones
+  
+  // Riftstones (Common Icon)
   'Adentus Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Azhreil Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Chernobog Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
@@ -254,7 +258,8 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Leviathan Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Pakilo Naru Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Manticus Brothers Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  // World Dungeons
+
+  // World Dungeons (Common Icon)
   'Ant Nest': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
   'Sanctum of Desire': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
   'Saurodoma Island': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
@@ -475,7 +480,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height,10rem))] bg-card p-4 rounded-lg shadow-lg">
+    <div className="flex flex-col min-h-[calc(100vh-var(--header-height))] bg-card p-4 rounded-lg shadow-lg">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
         <div className="w-full sm:w-auto order-2 sm:order-1">
           <Button onClick={() => setDialogIsOpen(true)} className="w-full sm:w-auto btn-gradient btn-style-secondary">
@@ -503,70 +508,67 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-      <ScrollArea className="h-[400px]">
-        <div className="grid grid-template-columns-calendar">
-          <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
-          <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
-            {daysInWeek.map(day => (
-              <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center flex flex-col justify-center">
-                <div className={cn("text-xs font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
-                  {format(day, 'EEE', { locale: ptBR }).toUpperCase()}
-                </div>
-                <div className={cn("text-base font-semibold", isToday(day) ? "text-primary" : "text-foreground")}>
-                  {format(day, 'd')}
-                </div>
+      <div className="grid grid-template-columns-calendar">
+        <div className={cn("sticky top-0 z-30 bg-card h-10 border-b border-r border-border", TIME_GUTTER_WIDTH_CLASS)}>&nbsp;</div>
+        <div className="sticky top-0 z-20 bg-card grid grid-cols-7 col-start-2">
+          {daysInWeek.map(day => (
+            <div key={`header-${day.toString()}`} className="h-10 border-b border-r border-border p-2 text-center flex flex-col justify-center">
+              <div className={cn("text-xs font-medium", isToday(day) ? "text-primary" : "text-foreground")}>
+                {format(day, 'EEE', { locale: ptBR }).toUpperCase()}
               </div>
-            ))}
-          </div>
-
-          <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
-            {hours.map(hour => (
-              <div 
-                key={`time-${hour}`} 
-                className="flex-none text-xs text-muted-foreground text-right pr-2 border-b border-r border-border" 
-                style={{ height: `${HOVER_CELL_HEIGHT}px`, lineHeight: `${HOVER_CELL_HEIGHT}px` }}
-              >
-                {format(setHours(setMinutes(new Date(), 0), hour), 'HH:mm')}
+              <div className={cn("text-base font-semibold", isToday(day) ? "text-primary" : "text-foreground")}>
+                {format(day, 'd')}
               </div>
-            ))}
-          </div>
-
-          <div className="row-start-2 grid grid-cols-7 col-start-2">
-            {daysInWeek.map(day => (
-              <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
-                {hours.map(hour => {
-                  const eventsInCell = eventsForWeek.filter(event => {
-                      const eventDate = new Date(event.date);
-                      const [eventHourValue] = event.time.split(':').map(Number);
-                      return isSameDay(eventDate, day) && eventHourValue === hour;
-                    });
-                  return (
-                    <div
-                      key={`cell-${day.toString()}-${hour}`}
-                      className="border-b border-border relative"
-                      style={{ height: `${HOVER_CELL_HEIGHT}px` }}
-                    >
-                      {eventsInCell.map(event => (
-                        <CalendarEventCard key={event.id} event={event} cellHeight={HOVER_CELL_HEIGHT} />
-                      ))}
-                    </div>
-                  );
-                })}
-                {isToday(day) && (
-                  <div
-                    className="absolute w-full h-0.5 bg-destructive z-10"
-                    style={{ top: `${currentTimePercentage}%` }}
-                    title={`Hora atual: ${format(new Date(), 'HH:mm')}`}
-                  >
-                    <div className="absolute -left-1.5 -top-1 h-3 w-3 rounded-full bg-destructive"></div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+
+        <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
+          {hours.map(hour => (
+            <div 
+              key={`time-${hour}`} 
+              className="flex-none text-xs text-muted-foreground text-right pr-2 border-b border-r border-border" 
+              style={{ height: `${HOVER_CELL_HEIGHT}px`, lineHeight: `${HOVER_CELL_HEIGHT}px` }}
+            >
+              {format(setHours(setMinutes(new Date(), 0), hour), 'HH:mm')}
+            </div>
+          ))}
+        </div>
+
+        <div className="row-start-2 grid grid-cols-7 col-start-2">
+          {daysInWeek.map(day => (
+            <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
+              {hours.map(hour => {
+                const eventsInCell = eventsForWeek.filter(event => {
+                    const eventDate = new Date(event.date);
+                    const [eventHourValue] = event.time.split(':').map(Number);
+                    return isSameDay(eventDate, day) && eventHourValue === hour;
+                  });
+                return (
+                  <div
+                    key={`cell-${day.toString()}-${hour}`}
+                    className="border-b border-border relative"
+                    style={{ height: `${HOVER_CELL_HEIGHT}px` }}
+                  >
+                    {eventsInCell.map(event => (
+                      <CalendarEventCard key={event.id} event={event} cellHeight={HOVER_CELL_HEIGHT} />
+                    ))}
+                  </div>
+                );
+              })}
+              {isToday(day) && (
+                <div
+                  className="absolute w-full h-0.5 bg-destructive z-10"
+                  style={{ top: `${currentTimePercentage}%` }}
+                  title={`Hora atual: ${format(new Date(), 'HH:mm')}`}
+                >
+                  <div className="absolute -left-1.5 -top-1 h-3 w-3 rounded-full bg-destructive"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
 
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
@@ -926,3 +928,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
