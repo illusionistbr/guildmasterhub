@@ -254,6 +254,16 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Leviathan Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Pakilo Naru Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   'Manticus Brothers Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  // World Dungeons
+  'Ant Nest': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Sanctum of Desire': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Saurodoma Island': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Shadowed Crypt': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  "Syleus's Abyss": 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Temple of Sylaveth': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Temple of Truth': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Bercant Estate': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  'Crimson Mansion': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
 };
 
 
@@ -758,8 +768,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             </div>
 
                             {/* Mandatory and Attendance Value */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                 <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                                <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                     <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                                     <Switch
                                         id="mandatory-switch"
