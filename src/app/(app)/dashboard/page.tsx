@@ -485,7 +485,7 @@ function DashboardPageContent() {
         )}
       </div>
         
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-8 relative z-10 px-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-16 relative z-10 px-4">
         <div className="md:col-span-2 flex justify-center md:block"> 
           <div className="relative w-24 h-24 md:w-32 md:h-32 group">
             <Avatar className="w-full h-full border-4 border-background shadow-lg">
@@ -605,7 +605,7 @@ function DashboardPageSkeleton() {
  return (
       <div className="space-y-8">
         <Skeleton className="h-48 md:h-60 w-full rounded-lg" /> 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-8 relative z-10 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-16 relative z-10 px-4">
           <div className="md:col-span-2 flex justify-center md:justify-start">
             <Skeleton className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-background shadow-lg" /> 
           </div>
@@ -628,3 +628,4 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+
