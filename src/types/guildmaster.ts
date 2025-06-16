@@ -2,8 +2,8 @@
 import type { Timestamp } from 'firebase/firestore';
 
 export enum GuildRole {
-  Leader = "Líder",
-  ViceLeader = "Vice-Líder",
+  Leader = "Lider",
+  ViceLeader = "ViceLider",
   Counselor = "Conselheiro",
   Officer = "Oficial",
   Member = "Membro",
