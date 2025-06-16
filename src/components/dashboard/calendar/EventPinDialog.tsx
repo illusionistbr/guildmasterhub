@@ -82,7 +82,7 @@ export function EventPinDialog({ event, isOpen, onClose, currentUserRole, guildI
           </DialogTitle>
           <DialogDescription>
             {event.requiresPin 
-              ? "Insira o código PIN de 6 dígitos para registrar presença ou visualizar detalhes."
+              ? "Insira o código PIN de 6 dígitos para registrar presença e resgatar seus pontos DKP"
               : "Este evento não requer um código PIN."}
           </DialogDescription>
         </DialogHeader>
