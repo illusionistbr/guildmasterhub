@@ -55,7 +55,7 @@ export interface Guild {
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole }; // Allow GuildRole for backward compatibility
+  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole };
 }
 
 export interface Event {
@@ -63,10 +63,10 @@ export interface Event {
   guildId: string;
   title: string;
   description:string;
-  date: string; // ISO date string
-  time: string; // e.g., "19:00"
-  endDate?: string; // ISO date string, optional
-  endTime?: string; // e.g., "19:20", optional
+  date: string; 
+  time: string; 
+  endDate?: string; 
+  endTime?: string; 
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
@@ -77,21 +77,29 @@ export interface Achievement {
   guildId: string;
   title: string;
   description: string;
-  dateAchieved: string; // ISO date string
-  category: string; // e.g., "PvP", "Raid", "Community"
-  achievedByIds?: string[]; // Members who contributed
+  dateAchieved: string; 
+  category: string; 
+  achievedByIds?: string[]; 
 }
 
 export interface Application {
-  id: string;
+  id: string; // Firestore document ID
   guildId: string;
-  applicantId: string; // User ID of the applicant
-  applicantName: string;
-  answers: Record<string, string>; // Answers to custom form questions
+  applicantId: string; // User ID of the applicant (must be a logged-in GuildMasterHub user)
+  applicantName: string; // Character Nickname provided in form
+  applicantDisplayName: string; // GuildMasterHub display name of the applicant
+  applicantPhotoURL?: string | null; // GuildMasterHub photo URL of the applicant
+  gearScore: number;
+  gearScoreScreenshotUrl: string;
+  tlRole?: TLRole;
+  tlPrimaryWeapon?: TLWeapon;
+  tlSecondaryWeapon?: TLWeapon;
+  discordNick: string;
   status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string; // ISO date string
-  reviewedBy?: string; // Admin User ID
-  reviewedAt?: string; // ISO date string
+  submittedAt: Timestamp;
+  reviewedBy?: string; 
+  reviewedAt?: Timestamp;
+  // Removed answers, direct fields are used now
 }
 
 export interface UserProfile {
@@ -99,35 +107,25 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL?: string | null;
-  guilds?: string[]; // IDs of guilds the user is a member of
+  guilds?: string[]; 
   createdAt?: Timestamp;
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
   };
-  // These fields are now part of GuildMember based on guild.roles, not global UserProfile
-  // weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
-  // gearScore?: number;
-  // activityPoints?: number;
-  // dkpBalance?: number;
-  // status?: 'Ativo' | 'Inativo' | 'Banido';
 }
 
-// This type is used on the client-side, composed from UserProfile and GuildMemberRoleInfo
 export interface GuildMember extends UserProfile {
-  role: GuildRole; // General guild role
+  role: GuildRole; 
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
-  // Mocked/derived fields for display, not directly in UserProfile or GuildMemberRoleInfo always
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   gearScore?: number;
-  activityPoints?: number;
   dkpBalance?: number;
-  status?: 'Ativo' | 'Inativo' | 'Banido';
+  status?: 'Ativo' | 'Inativo' | 'De Licença' | 'Banido';
 }
 
-// Audit Log Types
 export enum AuditActionType {
   MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
   MEMBER_KICKED = "MEMBER_KICKED",
@@ -148,6 +146,9 @@ export enum AuditActionType {
   ACHIEVEMENT_CREATED = "ACHIEVEMENT_CREATED",
   ACHIEVEMENT_UPDATED = "ACHIEVEMENT_UPDATED",
   ACHIEVEMENT_DELETED = "ACHIEVEMENT_DELETED",
+  APPLICATION_SUBMITTED = "APPLICATION_SUBMITTED",
+  APPLICATION_ACCEPTED = "APPLICATION_ACCEPTED",
+  APPLICATION_REJECTED = "APPLICATION_REJECTED",
 }
 
 export interface AuditLogDetails {
@@ -162,11 +163,12 @@ export interface AuditLogDetails {
   achievementName?: string;
   achievementId?: string;
   changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon';
-  noteSummary?: string; // e.g., "Note added" or "Note updated"
+  noteSummary?: string;
+  applicationId?: string; 
 }
 
 export interface AuditLogEntry {
-  id?: string; // Firestore document ID
+  id?: string; 
   timestamp: Timestamp;
   actorId: string;
   actorDisplayName: string | null;
@@ -174,21 +176,25 @@ export interface AuditLogEntry {
   details?: AuditLogDetails;
 }
 
-// In-App Notification Types
-export type NotificationType = "MANDATORY_ACTIVITY_CREATED" | "GENERIC_INFO" | "GUILD_UPDATE";
+export type NotificationType = "MANDATORY_ACTIVITY_CREATED" | "GENERIC_INFO" | "GUILD_UPDATE" | "APPLICATION_RECEIVED" | "APPLICATION_STATUS_CHANGED";
 
 export interface AppNotification {
-  id: string; // Firestore document ID
+  id: string; 
   guildId: string;
   message: string;
   type: NotificationType;
-  link: string; // URL to navigate to on click
+  link: string; 
   timestamp: Timestamp;
   details?: {
     activityTitle?: string;
-    activityDate?: string; // Formatted date for display
+    activityDate?: string; 
     eventId?: string;
+    applicationId?: string;
+    applicantName?: string;
+    newStatus?: 'approved' | 'rejected';
   };
   createdByUserId?: string;
   createdByUserDisplayname?: string | null;
+  targetUserId?: string; // For notifications specific to one user (e.g. applicant)
+  isRead?: boolean; // To track if a user-specific notification has been seen
 }

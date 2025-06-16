@@ -1,16 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } 
 from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, CalendarDays, Trophy, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Twitter as TwitterIcon } from "lucide-react";
-import { mockEvents, mockAchievements, mockApplications } from "@/lib/mock-data"; 
-import type { Guild, AuditActionType } from '@/types/guildmaster'; // AuditActionType import might be specific to removed functionality
+import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2 } from "lucide-react";
+import type { Guild, AuditActionType, Application } from '@/types/guildmaster'; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -20,12 +19,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit } from "firebase/firestore"; 
+import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit, onSnapshot } from "firebase/firestore"; 
 import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from "@/lib/firebase"; 
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
 import { logGuildActivity } from '@/lib/auditLogService';
-import TwitterFeed from '@/components/dashboard/TwitterFeed'; 
 
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +34,7 @@ function DashboardPageContent() {
   const [currentGuild, setCurrentGuild] = useState<Guild | null>(null);
   const [loadingGuild, setLoadingGuild] = useState(true);
   const [isSavingImage, setIsSavingImage] = useState(false);
+  const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
   
   const { toast } = useToast();
 
@@ -52,106 +51,98 @@ function DashboardPageContent() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [activeLogoTab, setActiveLogoTab] = useState("url");
 
-  useEffect(() => {
-    const guildIdParam = searchParams.get('guildId');
-    setLoadingGuild(true);
-    setHeaderTitle(null); 
-
-    if (authLoading) {
-        return;
-    }
-
-    if (!user) { 
+  const fetchGuildData = useCallback(async (guildIdToLoad: string | null) => {
+    if (!user || !guildIdToLoad) {
+        router.push('/guild-selection');
         setLoadingGuild(false);
+        setHeaderTitle(null);
         return;
     }
+    try {
+        const guildDocRef = doc(db, "guilds", guildIdToLoad);
+        const guildDocSnap = await getDoc(guildDocRef);
 
-    const fetchGuildData = async () => {
-      let guildToSet: Guild | null = null;
-      let bannerToSet = "https://placehold.co/1200x300.png";
-      let logoToSet = "https://placehold.co/150x150.png";
-      let guildIdToLoad = guildIdParam;
+        if (guildDocSnap.exists()) {
+            const guildData = guildDocSnap.data() as Omit<Guild, 'id' | 'createdAt'> & { createdAt?: any };
+            const isUserOwner = guildData.ownerId === user.uid;
+            const isUserMember = guildData.memberIds?.includes(user.uid);
 
-      try {
-        if (!guildIdToLoad) {
-          const qOwned = query(collection(db, "guilds"), where("ownerId", "==", user.uid), limit(1));
-          const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", user.uid), limit(1));
-          const [ownedSnapshot, memberSnapshot] = await Promise.all([getFirestoreDocs(qOwned), getFirestoreDocs(qMember)]);
-
-          if (!ownedSnapshot.empty) {
-            guildIdToLoad = ownedSnapshot.docs[0].id;
-          } else if (!memberSnapshot.empty) {
-            guildIdToLoad = memberSnapshot.docs[0].id;
-          } else {
-            router.push('/guild-selection');
-            setLoadingGuild(false);
-            setHeaderTitle(null);
-            return;
-          }
-           if (guildIdToLoad) {
-             const currentPath = window.location.pathname;
-             const newUrl = `${currentPath}?guildId=${guildIdToLoad}`;
-             window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
-           }
-        }
-        
-        if (guildIdToLoad) {
-            const guildDocRef = doc(db, "guilds", guildIdToLoad);
-            const guildDocSnap = await getDoc(guildDocRef);
-
-            if (guildDocSnap.exists()) {
-              const guildData = guildDocSnap.data() as Omit<Guild, 'id' | 'createdAt'> & { createdAt?: any };
-              const isUserOwner = guildData.ownerId === user.uid;
-              const isUserMember = guildData.memberIds?.includes(user.uid);
-
-              if (isUserOwner || isUserMember) {
-                 guildToSet = { 
+            if (isUserOwner || isUserMember) {
+                const guildToSet = { 
                     ...guildData, 
                     id: guildDocSnap.id,
                     createdAt: guildData.createdAt?.toDate ? guildData.createdAt.toDate() : undefined 
-                 };
-                bannerToSet = guildData.bannerUrl || bannerToSet;
-                logoToSet = guildData.logoUrl || logoToSet;
-              } else {
-                toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda com ID ${guildIdToLoad}.`, variant: "destructive"});
+                };
+                setCurrentGuild(guildToSet);
+                setHeaderTitle(guildToSet.name);
+                setCurrentBannerUrl(guildData.bannerUrl || "https://placehold.co/1200x300.png");
+                setCurrentLogoUrl(guildData.logoUrl || "https://placehold.co/150x150.png");
+            } else {
+                toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda.`, variant: "destructive"});
                 router.push('/guild-selection'); 
                 setHeaderTitle(null);
-              }
-            } else {
-              toast({title: "Guilda Não Encontrada", description: `Guilda com ID ${guildIdToLoad} não encontrada.`, variant: "destructive"});
-               router.push('/guild-selection');
-               setHeaderTitle(null);
             }
         } else {
-            toast({title: "Nenhuma Guilda", description: "Nenhuma guilda para exibir. Selecione ou crie uma.", variant: "default"});
+            toast({title: "Guilda Não Encontrada", description: `Guilda não encontrada.`, variant: "destructive"});
             router.push('/guild-selection');
             setHeaderTitle(null);
         }
-      } catch (error) {
+    } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro de Carregamento", description: "Não foi possível carregar os dados da guilda.", variant: "destructive" });
         router.push('/guild-selection'); 
         setHeaderTitle(null);
-      } finally {
-        setCurrentGuild(guildToSet);
-        if (guildToSet) {
-          setHeaderTitle(guildToSet.name);
-        } else {
-          setHeaderTitle(null);
-        }
-        setCurrentBannerUrl(bannerToSet);
-        setCurrentLogoUrl(logoToSet);
+    } finally {
         setLoadingGuild(false);
-      }
-    };
-    
-    fetchGuildData();
+    }
+  }, [user, router, toast, setHeaderTitle]);
+
+  useEffect(() => {
+    setLoadingGuild(true);
+    setHeaderTitle(null); 
+
+    if (authLoading) return;
+    if (!user) {
+        setLoadingGuild(false);
+        router.push('/login');
+        return;
+    }
+
+    const guildIdParam = searchParams.get('guildId');
+
+    if (guildIdParam) {
+        fetchGuildData(guildIdParam);
+    } else {
+        const findUserGuild = async () => {
+            const qOwned = query(collection(db, "guilds"), where("ownerId", "==", user.uid), limit(1));
+            const qMember = query(collection(db, "guilds"), where("memberIds", "array-contains", user.uid), limit(1));
+            const [ownedSnapshot, memberSnapshot] = await Promise.all([getFirestoreDocs(qOwned), getFirestoreDocs(qMember)]);
+
+            let foundGuildId: string | null = null;
+            if (!ownedSnapshot.empty) {
+                foundGuildId = ownedSnapshot.docs[0].id;
+            } else if (!memberSnapshot.empty) {
+                foundGuildId = memberSnapshot.docs[0].id;
+            }
+
+            if (foundGuildId) {
+                const currentPath = window.location.pathname;
+                const newUrl = `${currentPath}?guildId=${foundGuildId}`;
+                window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+                fetchGuildData(foundGuildId);
+            } else {
+                router.push('/guild-selection');
+                setLoadingGuild(false);
+            }
+        };
+        findUserGuild();
+    }
     
     return () => {
       setHeaderTitle(null);
     };
+  }, [searchParams, user, authLoading, router, fetchGuildData, setHeaderTitle]);
 
-  }, [searchParams, user, toast, authLoading, router, setHeaderTitle]);
 
   useEffect(() => {
     if (user && currentGuild) {
@@ -160,6 +151,27 @@ function DashboardPageContent() {
       setIsOwner(false);
     }
   }, [user, currentGuild]);
+
+  useEffect(() => {
+    if (!currentGuild || !currentGuild.id) {
+        setPendingApplicationsCount(0);
+        return;
+    }
+
+    const applicationsRef = collection(db, `guilds/${currentGuild.id}/applications`);
+    const q = query(applicationsRef, where("status", "==", "pending"));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        setPendingApplicationsCount(querySnapshot.size);
+    }, (error) => {
+        console.error("Error fetching pending applications count:", error);
+        setPendingApplicationsCount(0);
+        // Optionally, show a toast to the user
+        // toast({ title: "Erro ao buscar candidaturas", description: "Não foi possível carregar o número de candidaturas pendentes.", variant: "destructive" });
+    });
+
+    return () => unsubscribe();
+  }, [currentGuild, toast]);
 
 
   const handleSaveImage = async (type: 'banner' | 'logo', imageUrl?: string | null, imageFile?: File | null) => {
@@ -384,13 +396,6 @@ function DashboardPageContent() {
   const welcomeName = user?.displayName || user?.email || "Jogador";
   const guildIdForLinks = currentGuild.id;
 
-  let twitterProfileUrlForFeed: string | undefined = undefined;
-  if (currentGuild.game === "Chrono Odyssey") {
-    twitterProfileUrlForFeed = "https://x.com/ChronoOdyssey";
-  } else {
-    twitterProfileUrlForFeed = currentGuild.socialLinks?.x;
-  }
-
   return (
     <div className="space-y-8">
       <div className="relative w-full h-48 md:h-60 rounded-lg shadow-lg group z-0">
@@ -572,7 +577,7 @@ function DashboardPageContent() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 px-4">
         <StatCard
           title="Membros Ativos"
           value={currentGuild.memberCount.toString()}
@@ -581,66 +586,17 @@ function DashboardPageContent() {
           actionLabel="Gerenciar Membros"
         />
         
-        {twitterProfileUrlForFeed ? (
-            <TwitterFeed profileUrl={twitterProfileUrlForFeed} widgetHeight="485" />
-          ) : (
-            <Card className="card-bg h-full flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline flex items-center">
-                  <TwitterIcon className="mr-3 h-7 w-7 text-primary" />
-                  Feed do X (Twitter)
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Configure o link do X (Twitter) da guilda nas configurações para ver o feed aqui.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow flex items-center justify-center">
-                <p className="text-muted-foreground text-center">
-                  Link do X (Twitter) não configurado.
-                </p>
-              </CardContent>
-            </Card>
-        )}
-
-        <StatCard
-          title="Conquistas Totais"
-          value={mockAchievements.filter(ach => ach.guildId === currentGuild.id).length.toString()}
-          icon={<Trophy className="h-8 w-8 text-primary" />}
-          actionHref={`/dashboard/timeline?guildId=${guildIdForLinks}`}
-          actionLabel="Ver Conquistas"
-        />
         <StatCard
           title="Candidaturas Pendentes"
-          value={mockApplications.filter(app => app.status === 'pending' && app.guildId === currentGuild.id).length.toString()}
+          value={pendingApplicationsCount.toString()}
           icon={<UserPlus className="h-8 w-8 text-primary" />}
           actionHref={`/dashboard/recruitment/applications?guildId=${guildIdForLinks}`}
           actionLabel="Revisar Candidaturas"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 mt-8 px-4">
-        <Card className="card-bg lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-2xl font-headline flex items-center"><Trophy className="mr-3 h-7 w-7 text-primary" /> Conquistas Recentes</CardTitle>
-            <CardDescription className="text-muted-foreground">Celebre as últimas conquistas da sua guilda.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {mockAchievements.filter(ach => ach.guildId === currentGuild.id).sort((a,b) => new Date(b.dateAchieved).getTime() - new Date(a.dateAchieved).getTime()).slice(0, 3).map(ach => (
-              <div key={ach.id} className="mb-4 pb-4 border-b border-border last:border-b-0 last:mb-0 last:pb-0">
-                <h4 className="font-semibold text-lg text-foreground">{ach.title}</h4>
-                <p className="text-sm text-muted-foreground">{new Date(ach.dateAchieved).toLocaleDateString('pt-BR')} - {ach.category}</p>
-                <p className="text-sm mt-1 line-clamp-2 text-foreground/80">{ach.description}</p>
-              </div>
-            ))}
-            {mockAchievements.filter(ach => ach.guildId === currentGuild.id).length === 0 && (
-                <p className="text-muted-foreground">Nenhuma conquista registrada para esta guilda.</p>
-            )}
-             <Button variant="outline" className="mt-4 w-full border-primary text-primary hover:bg-primary/10" asChild>
-              <Link href={`/dashboard/timeline?guildId=${guildIdForLinks}`}>Ver Linha do Tempo Completa</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Additional sections or cards can be added here if needed in the future */}
+      
     </div>
   );
 }
@@ -658,12 +614,8 @@ function DashboardPageSkeleton() {
             <Skeleton className="h-6 w-1/2 mx-auto md:mx-0" />
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
-        </div>
-         <div className="grid gap-6 lg:grid-cols-2 mt-8 px-4">
-          <Skeleton className="h-72 w-full rounded-lg" />
-          <Skeleton className="h-72 w-full rounded-lg" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 px-4">
+          {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
         </div>
       </div>
     );

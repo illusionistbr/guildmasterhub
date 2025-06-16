@@ -20,6 +20,7 @@ export default function AppLayout({
       "/create-guild",
       "/guild-selection",
       "/guilds",
+      "/apply", // Added /apply route here
     ];
     // Exact paths that should NOT show the main app sidebar
     if (noSidebarExactPaths.includes(pathname)) {
