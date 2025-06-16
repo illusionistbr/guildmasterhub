@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from '@/lib/firebase';
-import type { Guild, GuildGroup, GuildMember, UserProfile, GuildMemberRoleInfo, GroupIconType } from '@/types/guildmaster';
+import { db, doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, orderBy } from '@/lib/firebase';
+import type { Guild, GuildGroup, GuildMember, UserProfile, GuildMemberRoleInfo, GroupIconType, GuildGroupMember } from '@/types/guildmaster';
 import { GuildRole, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { logGuildActivity } from '@/lib/auditLogService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 const groupMemberSchema = z.object({
   memberId: z.string().min(1, "Membro é obrigatório."),
@@ -70,9 +71,27 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
             <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/20" onClick={() => onEdit(group)}>
               <Edit2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/20" onClick={() => onDelete(group)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/20">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir o grupo "{group.name}"? Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDelete(group)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </CardHeader>
@@ -274,7 +293,7 @@ function GroupsPageContent() {
       if (editingGroup) {
         const groupRef = doc(db, `guilds/${guildId}/groups`, editingGroup.id);
         await updateDoc(groupRef, groupDataPayload);
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.GROUP_UPDATED, { groupId: editingGroup.id, groupName: data.name });
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.GROUP_UPDATED, { groupId: editingGroup.id, groupName: data.name });
         toast({ title: "Grupo Atualizado!", description: `O grupo "${data.name}" foi atualizado com sucesso.` });
       } else {
         const docRef = await addDoc(collection(db, `guilds/${guildId}/groups`), {
@@ -282,7 +301,7 @@ function GroupsPageContent() {
           createdAt: serverTimestamp(),
           createdBy: currentUser.uid,
         });
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.GROUP_CREATED, { groupId: docRef.id, groupName: data.name });
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.GROUP_CREATED, { groupId: docRef.id, groupName: data.name });
         toast({ title: "Grupo Criado!", description: `O grupo "${data.name}" foi criado com sucesso.` });
       }
       setShowDialog(false);
@@ -295,14 +314,13 @@ function GroupsPageContent() {
     }
   };
   
-  const handleDeleteGroup = async () => {
+  const handleDeleteGroup = async (groupToDelete: GuildGroup) => {
     if (!groupToDelete || !currentUser || !guildId || !canManageGroups) return;
     setIsSubmitting(true);
     try {
       await deleteDoc(doc(db, `guilds/${guildId}/groups`, groupToDelete.id));
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.GROUP_DELETED, { groupId: groupToDelete.id, groupName: groupToDelete.name });
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.GROUP_DELETED, { groupId: groupToDelete.id, groupName: groupToDelete.name });
       toast({ title: "Grupo Excluído!", description: `O grupo "${groupToDelete.name}" foi excluído.`});
-      setGroupToDelete(null);
     } catch (error) {
       console.error("Erro ao excluir grupo:", error);
       toast({ title: "Erro ao Excluir", variant: "destructive" });
@@ -350,7 +368,7 @@ function GroupsPageContent() {
               key={group.id} 
               group={group} 
               onEdit={handleOpenDialog} 
-              onDelete={(g) => setGroupToDelete(g)}
+              onDelete={handleDeleteGroup}
               canManage={canManageGroups}
             />
           ))}
@@ -495,25 +513,24 @@ function GroupsPageContent() {
         </DialogContent>
       </Dialog>
       
-      {groupToDelete && (
-         <AlertDialog open={!!groupToDelete} onOpenChange={() => setGroupToDelete(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Tem certeza que deseja excluir o grupo "{groupToDelete.name}"? Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setGroupToDelete(null)} disabled={isSubmitting}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />}
-                        Excluir
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-      )}
+      {/* Keep the existing AlertDialog for confirming deletion, adjusted to pass groupToDelete */}
+      <AlertDialog open={!!groupToDelete} onOpenChange={() => setGroupToDelete(null)}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Tem certeza que deseja excluir o grupo "{groupToDelete?.name}"? Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setGroupToDelete(null)} disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => groupToDelete && handleDeleteGroup(groupToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />}
+                      Excluir
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -526,3 +543,4 @@ export default function GroupsPage() {
   );
 }
 
+    
