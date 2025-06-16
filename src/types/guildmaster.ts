@@ -47,15 +47,15 @@ export interface Guild {
   game?: string;
   tags?: string[];
   createdAt?: Date | Timestamp;
-  password?: string;
-  isOpen?: boolean;
+  password?: string; // If present, guild is private and requires this password OR application
+  isOpen?: boolean; // If true, guild is public (no password needed). If false or undefined WITH a password, it's private.
   socialLinks?: {
     facebook?: string;
     x?: string;
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole };
+  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole }; // GuildRole is for backward compatibility
 }
 
 export interface Event {
@@ -83,23 +83,22 @@ export interface Achievement {
 }
 
 export interface Application {
-  id: string; // Firestore document ID
+  id: string; 
   guildId: string;
-  applicantId: string; // User ID of the applicant (must be a logged-in GuildMasterHub user)
-  applicantName: string; // Character Nickname provided in form
-  applicantDisplayName: string; // GuildMasterHub display name of the applicant
-  applicantPhotoURL?: string | null; // GuildMasterHub photo URL of the applicant
+  applicantId: string; 
+  applicantName: string; 
+  applicantDisplayName: string; 
+  applicantPhotoURL?: string | null; 
   gearScore: number;
   gearScoreScreenshotUrl: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   discordNick: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'auto_approved'; // Added 'auto_approved'
   submittedAt: Timestamp;
   reviewedBy?: string; 
   reviewedAt?: Timestamp;
-  // Removed answers, direct fields are used now
 }
 
 export interface UserProfile {
@@ -164,7 +163,10 @@ export interface AuditLogDetails {
   achievementId?: string;
   changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon';
   noteSummary?: string;
-  applicationId?: string; 
+  applicationId?: string;
+  details?: { // For MEMBER_JOINED to specify method
+    joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
+  };
 }
 
 export interface AuditLogEntry {
@@ -195,6 +197,6 @@ export interface AppNotification {
   };
   createdByUserId?: string;
   createdByUserDisplayname?: string | null;
-  targetUserId?: string; // For notifications specific to one user (e.g. applicant)
-  isRead?: boolean; // To track if a user-specific notification has been seen
+  targetUserId?: string; 
+  isRead?: boolean; 
 }

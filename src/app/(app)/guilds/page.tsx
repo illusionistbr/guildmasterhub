@@ -29,6 +29,8 @@ const GUILDS_PER_PAGE = 15;
 
 const tlWeaponsList = Object.values(TLWeapon);
 
+// This schema is only used if we decide to keep TL selection dialog on this page for non-TL public guilds,
+// but current logic redirects TL guilds to /apply page. Kept for potential future adjustments.
 const tlRoleWeaponSchema = z.object({
   tlRole: z.nativeEnum(TLRole, { required_error: "Função é obrigatória." }),
   tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
@@ -42,7 +44,7 @@ function ExploreGuildsContent() {
   const { toast } = useToast();
   const router = useNavigationRouter();
 
-  const [allPublicGuilds, setAllPublicGuilds] = useState<Guild[]>([]);
+  const [allGuilds, setAllGuilds] = useState<Guild[]>([]); // Renamed from allPublicGuilds
   const [loadingGuilds, setLoadingGuilds] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,17 +54,7 @@ function ExploreGuildsContent() {
   const [passwordError, setPasswordError] = useState("");
   const [isJoining, setIsJoining] = useState<string | null>(null);
 
-  const [showTLSelectionDialog, setShowTLSelectionDialog] = useState(false);
-  const [guildForTLSelection, setGuildForTLSelection] = useState<Guild | null>(null);
-
-  const tlForm = useForm<TLRoleWeaponFormValues>({
-    resolver: zodResolver(tlRoleWeaponSchema),
-    defaultValues: {
-      tlRole: undefined,
-      tlPrimaryWeapon: undefined,
-      tlSecondaryWeapon: undefined,
-    }
-  });
+  // TL Selection Dialog state is removed as TL guilds redirect to /apply
 
   useEffect(() => {
     const fetchGuilds = async () => {
@@ -71,9 +63,9 @@ function ExploreGuildsContent() {
         const guildsQuery = query(collection(db, "guilds"), orderBy("name"));
         const querySnapshot = await getFirestoreDocs(guildsQuery);
         const guildsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Guild));
-        setAllPublicGuilds(guildsData);
+        setAllGuilds(guildsData);
       } catch (error) {
-        console.error("Error fetching public guilds:", error);
+        console.error("Error fetching guilds:", error);
         toast({ title: "Erro ao Buscar Guildas", description: "Não foi possível carregar a lista de guildas.", variant: "destructive" });
       } finally {
         setLoadingGuilds(false);
@@ -83,10 +75,10 @@ function ExploreGuildsContent() {
   }, [toast]);
 
   const filteredGuilds = useMemo(() => {
-    return allPublicGuilds.filter(guild => 
+    return allGuilds.filter(guild => 
       guild.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [allPublicGuilds, searchTerm]);
+  }, [allGuilds, searchTerm]);
 
   const paginatedGuilds = useMemo(() => {
     const startIndex = (currentPage - 1) * GUILDS_PER_PAGE;
@@ -95,7 +87,8 @@ function ExploreGuildsContent() {
 
   const totalPages = Math.ceil(filteredGuilds.length / GUILDS_PER_PAGE);
 
-  const processGuildJoin = async (guildToJoin: Guild, tlRoleWeaponData?: TLRoleWeaponFormValues) => {
+  // This function is now only for public, non-TL guilds.
+  const processGuildJoin = async (guildToJoin: Guild) => {
     if (!user) return; 
     setIsJoining(guildToJoin.id);
 
@@ -105,14 +98,8 @@ function ExploreGuildsContent() {
       
       const memberRoleInfo: GuildMemberRoleInfo = {
         generalRole: GuildRole.Member,
-        notes: "", 
+        notes: "Entrou diretamente (guilda pública, não-TL).", 
       };
-
-      if (guildToJoin.game === "Throne and Liberty" && tlRoleWeaponData) {
-        memberRoleInfo.tlRole = tlRoleWeaponData.tlRole;
-        memberRoleInfo.tlPrimaryWeapon = tlRoleWeaponData.tlPrimaryWeapon;
-        memberRoleInfo.tlSecondaryWeapon = tlRoleWeaponData.tlSecondaryWeapon;
-      }
       
       batch.update(guildRef, {
         memberIds: arrayUnion(user.uid),
@@ -129,7 +116,8 @@ function ExploreGuildsContent() {
         AuditActionType.MEMBER_JOINED,
         {
           targetUserId: user.uid,
-          targetUserDisplayName: user.displayName || user.email || user.uid
+          targetUserDisplayName: user.displayName || user.email || user.uid,
+          details: { joinMethod: 'direct_public_non_tl' } as any,
         }
       );
 
@@ -139,13 +127,11 @@ function ExploreGuildsContent() {
         action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guildToJoin.id}`)}>Ver Dashboard</Button>
       });
 
-      setSelectedGuildForPassword(null);
+      setSelectedGuildForPassword(null); // Clear password dialog state
       setPasswordInput("");
-      setShowTLSelectionDialog(false);
-      setGuildForTLSelection(null);
-      tlForm.reset();
 
-      setAllPublicGuilds(prevGuilds => 
+      // Update local state for immediate UI feedback
+      setAllGuilds(prevGuilds => 
         prevGuilds.map(g => 
           g.id === guildToJoin.id 
             ? { 
@@ -167,30 +153,41 @@ function ExploreGuildsContent() {
     }
   };
   
-  const handleDirectJoinOrPasswordPrompt = async (guild: Guild, guildPassword?: string) => {
+  const handleJoinAction = async (guild: Guild, guildPassword?: string) => {
     if (!user) return; 
     setIsJoining(guild.id);
     setPasswordError("");
 
-    if (guild.password && !guild.isOpen && guild.password !== guildPassword) {
-      setPasswordError("Senha incorreta.");
-      setIsJoining(null);
-      return;
+    // This part is for private, non-TL guilds after password validation
+    if (guild.password && !guild.isOpen) {
+        if (guild.password !== guildPassword) {
+            setPasswordError("Senha incorreta.");
+            setIsJoining(null);
+            return;
+        }
+        // If password is correct for private, non-TL guild, redirect to apply page
+        router.push(`/apply?guildId=${guild.id}`);
+        setIsJoining(null);
+        setSelectedGuildForPassword(null); // Close password dialog
+        return;
     }
     
+    // Should not be reached if logic in handleApplyToGuild is correct for TL or private guilds
+    // This would only be for public, non-TL that somehow skipped the direct processGuildJoin
+    // For safety, if it's TL, redirect. Otherwise, process join.
     if (guild.game === "Throne and Liberty") {
-      setGuildForTLSelection(guild);
-      setShowTLSelectionDialog(true);
-      setSelectedGuildForPassword(null); 
-      setIsJoining(null); 
+      router.push(`/apply?guildId=${guild.id}`);
     } else {
       await processGuildJoin(guild);
     }
+    setIsJoining(null);
+    setSelectedGuildForPassword(null); 
   };
 
   const handleApplyToGuild = (guild: Guild) => {
     if (!user) {
-      toast({ title: "Não Autenticado", description: "Você precisa estar logado para entrar em uma guilda.", variant: "destructive" });
+      toast({ title: "Não Autenticado", description: "Você precisa estar logado para interagir com guildas.", variant: "destructive" });
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     if (guild.memberIds?.includes(user.uid)) {
@@ -198,54 +195,41 @@ function ExploreGuildsContent() {
         return;
     }
 
-    if (guild.password && !guild.isOpen) { 
-      setSelectedGuildForPassword(guild);
-    } else { 
-      handleDirectJoinOrPasswordPrompt(guild); 
+    // If TL guild (public or private), or if private non-TL guild, redirect to apply page
+    if (guild.game === "Throne and Liberty" || (guild.password && !guild.isOpen)) {
+      router.push(`/apply?guildId=${guild.id}`);
+    } 
+    // Else (Public, Non-TL guild) -> immediate join
+    else { 
+      processGuildJoin(guild); 
     }
   };
   
+  // This is called when password dialog is submitted
   const handlePasswordDialogSubmit = () => {
     if (selectedGuildForPassword) {
-      handleDirectJoinOrPasswordPrompt(selectedGuildForPassword, passwordInput);
+      // For private non-TL guilds, correct password now redirects to /apply
+      // For private TL guilds, /apply is already the destination
+      if (selectedGuildForPassword.password === passwordInput) {
+        router.push(`/apply?guildId=${selectedGuildForPassword.id}`);
+        setSelectedGuildForPassword(null);
+        setPasswordInput("");
+        setPasswordError("");
+      } else {
+        setPasswordError("Senha incorreta.");
+      }
     }
   };
 
-  const onTLRoleWeaponSubmit: SubmitHandler<TLRoleWeaponFormValues> = async (data) => {
-    if (guildForTLSelection) {
-      await processGuildJoin(guildForTLSelection, data);
-    }
-  };
-
-  const getTLRoleIcon = (role?: TLRole) => {
-    if (!role) return null;
-    switch (role) {
-      case TLRole.Tank: return <ShieldIconLucide className="mr-2 h-4 w-4 text-sky-500" />;
-      case TLRole.Healer: return <Heart className="mr-2 h-4 w-4 text-emerald-500" />; 
-      case TLRole.DPS: return <Swords className="mr-2 h-4 w-4 text-rose-500" />;
-      default: return null;
-    }
-  };
-  
-  const getTLWeaponIcon = (weapon?: TLWeapon) => {
-    let iconSrc = "https://placehold.co/16x16.png?text=W";
-    switch (weapon) {
-      case TLWeapon.SwordAndShield: iconSrc = "https://i.imgur.com/jPEqyNb.png"; break;
-      case TLWeapon.Greatsword: iconSrc = "https://i.imgur.com/Tf1LymG.png"; break;
-      case TLWeapon.Daggers: iconSrc = "https://i.imgur.com/CEM1Oij.png"; break;
-      case TLWeapon.Crossbow: iconSrc = "https://i.imgur.com/u7pqt5H.png"; break;
-      case TLWeapon.Bow: iconSrc = "https://i.imgur.com/73c5Rl4.png"; break;
-      case TLWeapon.Staff: iconSrc = "https://i.imgur.com/wgjWVvI.png"; break;
-      case TLWeapon.WandAndTome: iconSrc = "https://i.imgur.com/BdYPLee.png"; break; 
-      case TLWeapon.Spear: iconSrc = "https://i.imgur.com/l2oHYwY.png"; break;
-    }
-    return <Image src={iconSrc} alt={weapon || "Weapon"} width={16} height={16} className="mr-2" />;
-  };
-
+  const getTLRoleIcon = (role?: TLRole) => { /* Not used on this page anymore */ return null; };
+  const getTLWeaponIcon = (weapon?: TLWeapon) => { /* Not used on this page anymore */ return null; };
 
   const renderGuildCard = (guild: Guild) => {
     const isUserMember = guild.memberIds?.includes(user?.uid || "");
     const isLoadingThisGuild = isJoining === guild.id;
+    const isPrivate = guild.password && !guild.isOpen;
+    const buttonText = isUserMember ? "Membro" : (isPrivate || guild.game === "Throne and Liberty" ? "Aplicar" : "Entrar");
+    const ButtonIcon = isUserMember ? CheckCircle : (isPrivate ? KeyRound : UserPlus);
 
     return (
       <Card key={guild.id} className="static-card-container overflow-hidden">
@@ -269,18 +253,11 @@ function ExploreGuildsContent() {
             className={`btn-gradient ${isUserMember ? 'bg-green-600 hover:bg-green-700' : 'btn-style-secondary'} whitespace-nowrap justify-self-end`}
             size="sm"
           >
-            {isLoadingThisGuild ? <Loader2 className="h-4 w-4 animate-spin" /> :
-             isUserMember ? <CheckCircle className="h-4 w-4 sm:mr-1" /> :
-             (guild.password && !guild.isOpen ? <KeyRound className="h-4 w-4 sm:mr-1" /> : <UserPlus className="h-4 w-4 sm:mr-1" />)}
-            
-            <span className={` ${isUserMember || isLoadingThisGuild ? 'hidden sm:inline' : 'hidden sm:inline'}`}>
-              {isLoadingThisGuild ? 'Entrando...' : (isUserMember ? "Membro" : 'Aplicar')}
+            {isLoadingThisGuild ? <Loader2 className="h-4 w-4 animate-spin" /> : <ButtonIcon className="h-4 w-4 sm:mr-1" />}
+            <span className="hidden sm:inline">
+              {isLoadingThisGuild ? (isPrivate || guild.game === "Throne and Liberty" ? "Processando..." : "Entrando...") : buttonText}
             </span>
-            {!isLoadingThisGuild && (
-                 <span className="sm:hidden">
-                    {isUserMember ? <CheckCircle className="h-4 w-4" /> : (guild.password && !guild.isOpen ? <KeyRound className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />)}
-                 </span>
-            )}
+            {!isLoadingThisGuild && <span className="sm:hidden"><ButtonIcon className="h-4 w-4" /></span>}
           </Button>
         </CardContent>
       </Card>
@@ -352,7 +329,7 @@ function ExploreGuildsContent() {
                 <KeyRound className="mr-2 h-6 w-6"/> Guilda Protegida: {selectedGuildForPassword.name}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
-                Esta guilda requer uma senha para entrar. Por favor, insira a senha abaixo.
+                Esta guilda requer uma senha para entrar. Insira a senha ou clique em "Aplicar via Formulário" para prosseguir.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -371,126 +348,30 @@ function ExploreGuildsContent() {
               </div>
               {passwordError && <p className="col-span-4 text-sm text-destructive text-center">{passwordError}</p>}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setSelectedGuildForPassword(null)}>Cancelar</Button>
+               <Button 
+                  onClick={() => {
+                      if (selectedGuildForPassword) {
+                          router.push(`/apply?guildId=${selectedGuildForPassword.id}`);
+                          setSelectedGuildForPassword(null);
+                      }
+                  }} 
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary/10"
+              >
+                Aplicar via Formulário
+              </Button>
               <Button onClick={handlePasswordDialogSubmit} disabled={isJoining === selectedGuildForPassword.id} className="btn-gradient btn-style-secondary">
                  {isJoining === selectedGuildForPassword.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                Entrar
+                Confirmar Senha
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
-      {showTLSelectionDialog && guildForTLSelection && (
-        <Dialog open={showTLSelectionDialog} onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setShowTLSelectionDialog(false);
-            setGuildForTLSelection(null);
-            tlForm.reset();
-          }
-        }}>
-          <DialogContent className="sm:max-w-lg bg-card border-border">
-            <DialogHeader>
-              <DialogTitle className="font-headline text-2xl flex items-center text-primary">
-                <Bot className="mr-2 h-6 w-6"/> Detalhes para {guildForTLSelection.name}
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Por favor, selecione sua função e armas para a guilda de Throne and Liberty.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...tlForm}>
-              <form onSubmit={tlForm.handleSubmit(onTLRoleWeaponSubmit)} className="space-y-6 py-4">
-                <FormField
-                  control={tlForm.control}
-                  name="tlRole"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sua Função (Role)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione sua função..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.values(TLRole).map(role => (
-                            <SelectItem key={role} value={role}>
-                              <div className="flex items-center">
-                                {getTLRoleIcon(role)} {role}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={tlForm.control}
-                  name="tlPrimaryWeapon"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Arma Primária</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione sua arma primária..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {tlWeaponsList.map(weapon => (
-                            <SelectItem key={`primary-${weapon}`} value={weapon}>
-                               <div className="flex items-center">
-                                {getTLWeaponIcon(weapon)} {weapon}
-                               </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={tlForm.control}
-                  name="tlSecondaryWeapon"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Arma Secundária</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione sua arma secundária..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {tlWeaponsList.map(weapon => (
-                            <SelectItem key={`secondary-${weapon}`} value={weapon}>
-                              <div className="flex items-center">
-                                {getTLWeaponIcon(weapon)} {weapon}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter className="pt-4">
-                  <Button variant="outline" type="button" onClick={() => { setShowTLSelectionDialog(false); setGuildForTLSelection(null); tlForm.reset(); }}>Cancelar</Button>
-                  <Button type="submit" disabled={tlForm.formState.isSubmitting || isJoining === guildForTLSelection?.id} className="btn-gradient btn-style-primary">
-                    {tlForm.formState.isSubmitting || isJoining === guildForTLSelection?.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Confirmar e Entrar
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* TL Selection Dialog is removed from this page as TL guilds redirect to /apply */}
     </div>
   );
 }

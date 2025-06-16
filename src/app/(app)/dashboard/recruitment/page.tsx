@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link'; // Added import for Link
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc } from '@/lib/firebase';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, ShieldAlert, Loader2 } from 'lucide-react';
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2 } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 
 function RecruitmentPageContent() {
@@ -55,12 +55,9 @@ function RecruitmentPageContent() {
         setGuild(guildData);
         setHeaderTitle(`Recrutamento: ${guildData.name}`);
 
-        if (guildData.password && guildData.id) { // Only show link for private guilds
-          const origin = typeof window !== 'undefined' ? window.location.origin : '';
-          setRecruitmentLink(`${origin}/apply?guildId=${guildData.id}`);
-        } else {
-          setRecruitmentLink(null);
-        }
+        // Recruitment link is always available
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        setRecruitmentLink(`${origin}/apply?guildId=${guildData.id}`);
 
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
@@ -110,54 +107,35 @@ function RecruitmentPageContent() {
         icon={<UserPlus className="h-8 w-8 text-primary" />}
       />
 
-      {guild.password ? ( // Only show for private guilds
-        <Card className="card-bg">
-          <CardHeader>
-            <CardTitle className="flex items-center"><LinkIcon className="mr-2 h-5 w-5 text-primary" />Link de Recrutamento Único</CardTitle>
-            <CardDescription>Compartilhe este link com potenciais recrutas para que eles possam se candidatar à sua guilda.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Input
-                id="recruitmentLink"
-                type="text"
-                value={recruitmentLink || "Gerando link..."}
-                readOnly
-                className="form-input flex-1"
-              />
-              <Button 
-                onClick={copyLinkToClipboard} 
-                disabled={!recruitmentLink}
-                variant="outline"
-                className="btn-gradient btn-style-secondary"
-              >
-                <Copy className="mr-2 h-4 w-4" /> Copiar Link
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Este link direciona os candidatos para um formulário de aplicação específico da sua guilda.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="card-bg">
-          <CardHeader>
-            <CardTitle className="flex items-center"><ShieldAlert className="mr-2 h-5 w-5 text-accent" />Guilda Pública</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Sua guilda está configurada como pública (sem senha). Os jogadores podem entrar diretamente através da página "Explorar Guildas".
-              A funcionalidade de link de recrutamento e formulário de aplicação é destinada a guildas privadas (com senha).
-            </p>
-            <Button asChild variant="link" className="mt-2 p-0 text-primary">
-              <Link href={`/dashboard/settings?guildId=${guild.id}`}>
-                Gerenciar configurações de privacidade
-              </Link>
+      <Card className="card-bg">
+        <CardHeader>
+          <CardTitle className="flex items-center"><LinkIcon className="mr-2 h-5 w-5 text-primary" />Link de Recrutamento Único</CardTitle>
+          <CardDescription>Compartilhe este link com potenciais recrutas para que eles possam se candidatar à sua guilda. Guildas públicas permitirão entrada imediata após o preenchimento do formulário.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Input
+              id="recruitmentLink"
+              type="text"
+              value={recruitmentLink || "Gerando link..."}
+              readOnly
+              className="form-input flex-1"
+            />
+            <Button 
+              onClick={copyLinkToClipboard} 
+              disabled={!recruitmentLink}
+              variant="outline"
+              className="btn-gradient btn-style-secondary"
+            >
+              <Copy className="mr-2 h-4 w-4" /> Copiar Link
             </Button>
-          </CardContent>
-        </Card>
-      )}
-
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Este link direciona os candidatos para um formulário de aplicação específico da sua guilda.
+          </p>
+        </CardContent>
+      </Card>
+     
       <Card className="card-bg">
         <CardHeader>
             <CardTitle>Próximos Passos</CardTitle>
@@ -165,7 +143,7 @@ function RecruitmentPageContent() {
         <CardContent className="space-y-3">
             <Link href={`/dashboard/recruitment/applications?guildId=${guild.id}`} passHref>
                  <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
-                    Ver Candidaturas Pendentes
+                    Ver Candidaturas Recebidas
                 </Button>
             </Link>
             {/* Futuramente: <Button variant="outline" className="w-full">Configurar Formulário de Aplicação</Button> */}
@@ -182,4 +160,3 @@ export default function RecruitmentPage() {
     </Suspense>
   );
 }
-
