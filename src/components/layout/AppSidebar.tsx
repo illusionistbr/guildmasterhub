@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarGroup,
-  // SidebarGroupLabel, // No longer needed for "Geral"
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -28,7 +27,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Main navigation items (excluding settings which is now a bottom item)
+// Main navigation items
 const mainNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { baseHref: "/dashboard/members", label: "Membros", icon: Users },
@@ -42,11 +41,7 @@ const mainNavItems = [
     ]
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
-];
-
-// Bottom navigation items (like Settings)
-const bottomNavItems = [
-  { baseHref: "/dashboard/settings", label: "Configurações", icon: Settings },
+  { baseHref: "/dashboard/settings", label: "Config. da guilda", icon: Settings }, // Moved and renamed
 ];
 
 export function AppSidebar() {
@@ -127,29 +122,6 @@ export function AppSidebar() {
             )
           })}
         </SidebarMenu>
-        
-        <SidebarGroup className="mt-auto"> {/* This pushes the group to the bottom */}
-           {/* No SidebarGroupLabel here for "Geral" */}
-           <SidebarMenu>
-             {bottomNavItems.map((item) => {
-               const currentHref = generateHref(item.baseHref);
-               return (
-                <SidebarMenuItem key={item.baseHref}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                    isActive={isActive(currentHref)}
-                  >
-                    <Link href={currentHref}>
-                      <item.icon />
-                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-               )
-             })}
-           </SidebarMenu>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-sidebar-border">
