@@ -95,15 +95,15 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
               <div className="flex -space-x-3">
                 <Avatar className="h-10 w-10 border-2 border-background">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=U1" alt="Usuário 1" data-ai-hint="avatar gaming"/>
+                  <AvatarImage src="https://i.imgur.com/HwxaXjz.jpeg" alt="Usuário 1" data-ai-hint="avatar gaming"/>
                   <AvatarFallback>U1</AvatarFallback>
                 </Avatar>
                 <Avatar className="h-10 w-10 border-2 border-background">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=U2" alt="Usuário 2" data-ai-hint="avatar gaming"/>
+                  <AvatarImage src="https://i.imgur.com/J8FOZ6l.jpeg" alt="Usuário 2" data-ai-hint="avatar gaming"/>
                   <AvatarFallback>U2</AvatarFallback>
                 </Avatar>
                 <Avatar className="h-10 w-10 border-2 border-background">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=U3" alt="Usuário 3" data-ai-hint="avatar gaming"/>
+                  <AvatarImage src="https://i.imgur.com/jBJHlga.jpeg" alt="Usuário 3" data-ai-hint="avatar gaming"/>
                   <AvatarFallback>U3</AvatarFallback>
                 </Avatar>
               </div>
