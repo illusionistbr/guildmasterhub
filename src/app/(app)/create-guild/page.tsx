@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
-import type { Guild } from '@/types/guildmaster';
+import type { Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // Import GuildMemberRoleInfo
 import { GuildRole } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 
@@ -76,8 +76,8 @@ export default function CreateGuildPage() {
     if (data.socialYoutube && data.socialYoutube.trim() !== "") socialLinks.youtube = data.socialYoutube.trim();
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
-    const guildRoles: { [key: string]: GuildRole } = {
-      [user.uid]: GuildRole.Leader
+    const guildRoles: { [key: string]: GuildMemberRoleInfo } = { // Updated type
+      [user.uid]: { generalRole: GuildRole.Leader } // Updated structure
     };
 
     const guildData: Omit<Guild, 'id' | 'createdAt'> & { createdAt: any } = {
@@ -92,7 +92,7 @@ export default function CreateGuildPage() {
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png`,
         logoUrl: `https://placehold.co/150x150.png`,
-        roles: guildRoles,
+        roles: guildRoles, // This will now be { [userId]: { generalRole: "Líder" } }
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
     };
@@ -338,3 +338,5 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+    
