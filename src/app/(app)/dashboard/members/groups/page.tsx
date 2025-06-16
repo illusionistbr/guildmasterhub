@@ -350,7 +350,7 @@ function GroupsPageContent() {
       />
 
       {groups.length === 0 ? (
-        <Card className="card-bg text-center py-10">
+        <Card className="card-bg text-center py-10 max-w-lg mx-auto">
           <CardHeader>
             <UsersRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <CardTitle className="text-2xl">Nenhum Grupo Criado</CardTitle>
