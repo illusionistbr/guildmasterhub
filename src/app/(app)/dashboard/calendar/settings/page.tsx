@@ -40,15 +40,6 @@ function CalendarSettingsPageContent() {
 
   const guildId = searchParams.get('guildId');
 
-  const currentUserRoleInGuild = useMemo(() => {
-    if (!currentUser || !guild || !guild.roles) return null;
-    const roleInfo = guild.roles[currentUser.uid];
-    if (typeof roleInfo === 'object' && roleInfo !== null && 'generalRole' in roleInfo) {
-      return (roleInfo as GuildMemberRoleInfo).generalRole;
-    }
-    return roleInfo as GuildRole | null;
-  }, [currentUser, guild]);
-
   useEffect(() => {
     if (authLoading) return;
     if (!currentUser) {
@@ -92,7 +83,7 @@ function CalendarSettingsPageContent() {
           setLoadingData(false);
           return;
         }
-        // Access granted, proceed to fetch events
+        // Access granted, events will be fetched by the next useEffect
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro ao carregar dados da guilda", variant: "destructive" });
@@ -108,21 +99,17 @@ function CalendarSettingsPageContent() {
 
 
   useEffect(() => {
+    // Guard: only proceed if essential data is available and access is not denied.
     if (!guildId || !currentUser || authLoading || accessDenied || !guild) {
+      // If loading is done and still no access/guild, ensure loading spinner stops and clear events.
       if (!authLoading && (accessDenied || !guild)) {
           setLoadingData(false);
           setEvents([]);
       }
-      return;
-    }
-
-    if (currentUserRoleInGuild !== GuildRole.Leader && currentUserRoleInGuild !== GuildRole.ViceLeader) {
-        setAccessDenied(true);
-        setLoadingData(false);
-        setEvents([]);
-        return;
+      return; // Exit if conditions are not met for setting up listener
     }
     
+    // At this point, access is granted (accessDenied is false).
     setLoadingData(true);
     const eventsRef = collection(db, `guilds/${guildId}/events`);
     const q = query(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"));
@@ -138,9 +125,9 @@ function CalendarSettingsPageContent() {
       setLoadingData(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup listener
 
-  }, [guildId, currentUser, authLoading, accessDenied, guild, currentUserRoleInGuild, toast]);
+  }, [guildId, currentUser, authLoading, accessDenied, guild, toast]); // currentUserRoleInGuild removed from deps as its logic is handled by accessDenied state
 
   const formatEventDateTime = (dateStr: string, timeStr: string): string => {
     try {
@@ -257,3 +244,5 @@ export default function CalendarSettingsPage() {
     </Suspense>
   );
 }
+
+    
