@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.questlog.gg',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

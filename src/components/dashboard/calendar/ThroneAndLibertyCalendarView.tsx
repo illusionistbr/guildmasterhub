@@ -37,7 +37,7 @@ import {
   addMinutes,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { mockEvents } from '@/lib/mock-data'; 
+import { mockEvents } from '@/lib/mock-data';
 import type { Event as GuildEvent } from '@/types/guildmaster';
 import { CalendarEventCard } from './CalendarEventCard';
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ interface ThroneAndLibertyCalendarViewProps {
 }
 
 const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
-const TIME_GUTTER_WIDTH_CLASS = "w-16"; 
+const TIME_GUTTER_WIDTH_CLASS = "w-16";
 
 const TL_EVENT_CATEGORIES = [
   { id: 'world_event', label: 'World Event' },
@@ -78,19 +78,19 @@ const TL_SUB_CATEGORIES: Record<string, string[]> = {
 const TL_ACTIVITIES: Record<string, string[]> = {
   world_event: [
     'Best Way to Prevent the Worst',
-    'Blood Mushroom Gathering', 
-    'Dark Destroyers', 
-    'Desert Caravan', 
+    'Blood Mushroom Gathering',
+    'Dark Destroyers',
+    'Desert Caravan',
     'Festival of Fire',
-    'Hidden Brown Mica', 
-    'Lantern Seed Festival', 
+    'Hidden Brown Mica',
+    'Lantern Seed Festival',
     'Lift the Moonlight Spell',
-    'Operation: Talisman Delivery', 
-    'Requiem of Light', 
+    'Operation: Talisman Delivery',
+    'Requiem of Light',
     'Starlight Stones Ritual',
-    'Stop the Mana Frenzy', 
+    'Stop the Mana Frenzy',
     'To Heal a Divine Beast',
-    'Wolf Hunting Contest', 
+    'Wolf Hunting Contest',
   ],
   world_dungeon: [
     'Ant Nest', 'Sanctum of Desire', 'Saurodoma Island', 'Shadowed Crypt',
@@ -108,11 +108,11 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   boonstone: [
     'Abandoned Stonemason', 'Akidu Valley', 'Blackhowl Plains', 'Carmine Forest',
     'Daybreak Shore', 'Fonos Basin', 'Golden Rye Pastures', 'Grayclaw Forest',
-    'Manawastes', 'Moonlight Desert', 'Monolith Wastelands', 'Nesting Grounds', 
+    'Manawastes', 'Moonlight Desert', 'Monolith Wastelands', 'Nesting Grounds',
     'Purelight Hills', 'Raging Wilds', 'Ruins of Turayne', 'Sandworm Lair',
     'Shattered Temple', 'Urstella Fields', 'Windhill Shores', "Quietis' Demesne",
     'Forest of the Great Tree', 'Swamp of Silence', 'Black Anvil Forge',
-    'Bercant Estate', 'Crimson Mansion', // Note: These are also in world_dungeon, ensure icon logic handles potential overlaps if names are identical
+    'Bercant Estate', 'Crimson Mansion',
   ],
   riftstone: [
     'Adentus Riftstone', 'Azhreil Riftstone', 'Chernobog Riftstone',
@@ -184,7 +184,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
-  
+
   // World Bosses
   'Adentus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
   'Talus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_GolemTalus_Target.webp",
@@ -217,16 +217,16 @@ const ACTIVITY_ICONS: Record<string, string> = {
 
   // Tax Delivery
   'Vienta village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
-  
+
   // Siege
   'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
-  
-  // Boonstones (Category items - generic icon for those not containing "Boonstone" in name)
+
+  // Boonstones (Generic icon for those not containing "Boonstone" in name - will be overridden if name contains "Boonstone")
   ...Object.fromEntries(TL_ACTIVITIES.boonstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
-  
-  // Riftstones (Category items - generic icon for those not containing "Riftstone" in name, though most will be overridden by name rule)
+
+  // Riftstones (Generic icon for those not containing "Riftstone" in name - will be overridden if name contains "Riftstone")
   ...Object.fromEntries(TL_ACTIVITIES.riftstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
-  
+
   // World Dungeons (Common Icon for all in this category)
   ...Object.fromEntries(TL_ACTIVITIES.world_dungeon.map(act => [act, 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp'])),
 
@@ -240,6 +240,12 @@ const ACTIVITY_ICONS: Record<string, string> = {
   ),
 };
 
+const SUBCATEGORY_ICONS: Record<string, string> = {
+  'Peace': 'https://i.imgur.com/1Q5gZK0.png',
+  'Guild': 'https://i.imgur.com/I34gDeO.png',
+  // 'Conflict' icon can be added here if provided
+};
+
 
 const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
@@ -249,7 +255,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
-  const [viewMode, setViewMode] = useState<'week' | 'day'>('week'); 
+  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
 
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -260,9 +266,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [currentActivities, setCurrentActivities] = useState<string[]>([]);
 
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(undefined);
-  const [selectedStartTime, setSelectedStartTime] = useState<string>("00:00"); 
+  const [selectedStartTime, setSelectedStartTime] = useState<string>("00:00");
   const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>(undefined);
-  const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00"); 
+  const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00");
 
   const [isMandatory, setIsMandatory] = useState(false);
   const [attendanceValue, setAttendanceValue] = useState<number>(1);
@@ -283,7 +289,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const currentWeekEnd = endOfWeek(currentDate, { weekStartsOn });
   const daysInWeek = eachDayOfInterval({ start: currentWeekStart, end: currentWeekEnd });
 
-  const hours = Array.from({ length: 24 }, (_, i) => i); 
+  const hours = Array.from({ length: 24 }, (_, i) => i);
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -293,7 +299,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       setCurrentTimePercentage((currentMinutesVal / totalMinutesInDay) * 100);
     };
     updateCurrentTime();
-    const intervalId = setInterval(updateCurrentTime, 60000); 
+    const intervalId = setInterval(updateCurrentTime, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -309,14 +315,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
     return `${format(currentWeekStart, 'd \'de\' MMMM', { locale: ptBR })} - ${format(currentWeekEnd, 'd \'de\' MMMM \'de\' yyyy', { locale: ptBR })}`;
   }, [currentWeekStart, currentWeekEnd]);
-  
+
   const eventsForWeek = useMemo(() => {
     const allEvents = [...mockEvents, ...createdEvents];
     return allEvents.filter(event => {
-      const eventDate = new Date(event.date); 
+      const eventDate = new Date(event.date);
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
-      return event.guildId === guildId && 
-             eventDate >= currentWeekStart && 
+      return event.guildId === guildId &&
+             eventDate >= currentWeekStart &&
              eventDate <= endOfDay_currentWeekEnd;
     });
   }, [guildId, currentWeekStart, currentWeekEnd, createdEvents]);
@@ -324,11 +330,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setSelectedSubcategory(null);
-    setSelectedActivity(null); 
+    setSelectedActivity(null);
     setCustomActivityName("");
-    
+
     setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
-    
+
     if (categoryId === 'other') {
       setCurrentActivities([]);
     } else {
@@ -357,7 +363,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           defaultDurationMinutes = 20;
         }
       }
-      
+
       if (defaultDurationMinutes !== null) {
         const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
         const endTimeObj = addMinutes(startTimeObj, defaultDurationMinutes);
@@ -372,7 +378,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     const combined = combineDateTime(dateVal, timeVal);
     return format(combined, "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR });
   };
-  
+
   const handleSaveActivity = async () => {
     let activityTitleToSave = selectedActivity;
     if (selectedCategory === 'other') {
@@ -383,21 +389,21 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       console.error("Missing required fields to save activity.");
       return;
     }
-    
+
     const newActivity: GuildEvent = {
       id: `evt-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`,
       guildId: guildId,
       title: activityTitleToSave,
       description: activityDescription,
-      date: selectedStartDate.toISOString().split('T')[0], 
+      date: selectedStartDate.toISOString().split('T')[0],
       time: selectedStartTime,
-      endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined, 
+      endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined,
       endTime: selectedEndDate ? selectedEndTime : undefined,
       organizerId: user.uid,
     };
 
     setCreatedEvents(prevEvents => [...prevEvents, newActivity]);
-    
+
     if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
       const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
       const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
@@ -422,7 +428,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         console.error("Error creating mandatory activity notification:", error);
       }
     }
-    
+
     setDialogIsOpen(false);
   };
 
@@ -461,7 +467,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-grow sm:text-center whitespace-nowrap px-2">
           {dateRangeText}
         </h2>
-        
+
         <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end order-3">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'week'|'day')} disabled>
             <SelectTrigger className="w-[100px] bg-input border-border">
@@ -494,9 +500,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
         <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
           {hours.map(hour => (
-            <div 
-              key={`time-${hour}`} 
-              className="flex-none text-xs text-muted-foreground text-right pr-2 border-b border-r border-border" 
+            <div
+              key={`time-${hour}`}
+              className="flex-none text-xs text-muted-foreground text-right pr-2 border-b border-r border-border"
               style={{ height: `${HOVER_CELL_HEIGHT}px`, lineHeight: `${HOVER_CELL_HEIGHT}px` }}
             >
               {format(setHours(setMinutes(new Date(), 0), hour), 'HH:mm')}
@@ -542,7 +548,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
-        if (!isOpen) { 
+        if (!isOpen) {
           resetDialogStates();
         }
       }}>
@@ -553,7 +559,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     Preencha os detalhes da atividade para adicioná-la ao calendário.
                 </DialogDescription>
             </DialogHeader>
-            
+
             <div className="flex-grow overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
@@ -574,20 +580,33 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                                 <div>
                                 <Label htmlFor="subcategory" className="text-foreground font-semibold mb-1 block">Subcategoria</Label>
-                                <Select 
-                                    onValueChange={setSelectedSubcategory} 
+                                <Select
+                                    onValueChange={setSelectedSubcategory}
                                     value={selectedSubcategory || ""}
                                     disabled={!selectedCategory || currentSubcategories.length === 0}
                                 >
                                     <SelectTrigger id="subcategory"><SelectValue placeholder="Selecione (se aplicável)" /></SelectTrigger>
                                     <SelectContent>
                                     {currentSubcategories.map(subcat => (
-                                        <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                                        <SelectItem key={subcat} value={subcat}>
+                                          <div className="flex items-center">
+                                            {SUBCATEGORY_ICONS[subcat] ? (
+                                                <Image
+                                                    src={SUBCATEGORY_ICONS[subcat]!}
+                                                    alt={`${subcat} icon`}
+                                                    width={16}
+                                                    height={16}
+                                                    className="mr-2"
+                                                />
+                                            ) : null}
+                                            <span>{subcat}</span>
+                                          </div>
+                                        </SelectItem>
                                     ))}
                                     </SelectContent>
                                 </Select>
                                 </div>
-                                
+
                                 {selectedCategory === 'other' ? (
                                 <div>
                                     <Label htmlFor="customActivity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
@@ -596,20 +615,20 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     placeholder="Digite o nome da atividade"
                                     value={customActivityName}
                                     onChange={(e) => setCustomActivityName(e.target.value)}
-                                    disabled={selectedCategory !== 'other'} 
+                                    disabled={selectedCategory !== 'other'}
                                     />
                                 </div>
                                 ) : (
                                 <div>
                                     <Label htmlFor="activity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
-                                    <Select 
-                                    onValueChange={setSelectedActivity} 
+                                    <Select
+                                    onValueChange={setSelectedActivity}
                                     value={selectedActivity || ""}
                                     disabled={
-                                        selectedCategory === 'other' || 
-                                        !selectedCategory || 
-                                        (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) ||  
-                                        currentActivities.length === 0 
+                                        selectedCategory === 'other' ||
+                                        !selectedCategory ||
+                                        (currentSubcategories.length > 0 && !selectedSubcategory && !!TL_SUB_CATEGORIES[selectedCategory || ""]) ||
+                                        currentActivities.length === 0
                                     }
                                     >
                                     <SelectTrigger id="activity"><SelectValue placeholder="Selecione uma atividade/evento" /></SelectTrigger>
@@ -635,7 +654,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </div>
                                 )}
                             </div>
-                            
+
                             {/* Date and Time Pickers */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                                 <div className="space-y-2">
@@ -771,7 +790,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 />
                                 </div>
                             </div>
-                            
+
                             {/* New Fields: Description, Announcement Channel, Announcement Time, etc. */}
                             <div className="space-y-4 pt-4">
                                 <div>
@@ -846,7 +865,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">Selecione quanto tempo antes do evento o anúncio deve ser enviado (mínimo 10 minutos se agendado).</p>
                                 </div>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                                     <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <Label htmlFor="announce-discord-switch" className="text-foreground text-sm">Anunciar criação no Discord</Label>
@@ -876,11 +895,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     </TooltipProvider>
                 </div>
             </div>
-            
+
             <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
                 <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
-                <Button 
-                onClick={handleSaveActivity} 
+                <Button
+                onClick={handleSaveActivity}
                 className="btn-gradient btn-style-primary"
                 disabled={
                     !selectedCategory ||
@@ -897,4 +916,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-
