@@ -41,13 +41,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
-  DialogClose,
-  DialogContent as NotesDialogContent, // Renamed to avoid conflict
+  DialogContent as NotesDialogContent,
   DialogDescription as NotesDialogDescription,
   DialogFooter as NotesDialogFooter,
   DialogHeader as NotesDialogHeader,
   DialogTitle as NotesDialogTitle,
-  DialogTrigger as NotesDialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -58,10 +56,10 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Crosshair, Gamepad2
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from '@/lib/utils';
@@ -78,7 +76,7 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
     case TLWeapon.Crossbow: return "https://i.imgur.com/u7pqt5H.png";
     case TLWeapon.Bow: return "https://i.imgur.com/73c5Rl4.png";
     case TLWeapon.Staff: return "https://i.imgur.com/wgjWVvI.png";
-    case TLWeapon.WandAndTome: return "https://i.imgur.com/BdYPLee.png"; // Assuming "Wand" for "WandAndTome"
+    case TLWeapon.WandAndTome: return "https://i.imgur.com/BdYPLee.png";
     case TLWeapon.Spear: return "https://i.imgur.com/l2oHYwY.png";
     default: return "https://placehold.co/32x32.png?text=WPN";
   }
@@ -86,6 +84,7 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
 
 const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember => {
   const isTLGuild = guildGame === "Throne and Liberty";
+  const statuses = ['Ativo', 'Inativo', 'De Licença'];
   return {
     ...member,
     weapons: { 
@@ -95,7 +94,7 @@ const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember
     gearScore: member.gearScore ?? Math.floor(3800 + Math.random() * 500),
     activityPoints: member.activityPoints ?? Math.floor(Math.random() * 100),
     dkpBalance: member.dkpBalance ?? Math.floor(Math.random() * 500),
-    status: member.status ?? (Math.random() > 0.2 ? 'Ativo' : 'Inativo'),
+    status: member.status ?? statuses[Math.floor(Math.random() * statuses.length)],
     tlRole: isTLGuild ? member.tlRole : undefined,
     tlPrimaryWeapon: isTLGuild ? member.tlPrimaryWeapon : undefined,
     tlSecondaryWeapon: isTLGuild ? member.tlSecondaryWeapon : undefined,
@@ -423,7 +422,7 @@ function MembersPageContent() {
       
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_NOTE_UPDATED, {
         targetUserId: memberForNotes.uid,
-        targetUserDisplayName: memberForNotes.displayName,
+        targetUserDisplayName: memberForNotes.displayName || "N/A",
         noteSummary: currentNote ? "Nota atualizada" : "Nota removida",
       });
 
@@ -465,7 +464,25 @@ function MembersPageContent() {
       case TLRole.Tank: return <ShieldIconLucide className={cn("h-4 w-4", getTLRoleStyling(role))} />;
       case TLRole.Healer: return <Heart className={cn("h-4 w-4", getTLRoleStyling(role))} />;
       case TLRole.DPS: return <Swords className={cn("h-4 w-4", getTLRoleStyling(role))} />;
-      default: return null;
+      default: return <Gamepad2 className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case 'Ativo': return 'default'; // Will use primary color via CSS if not overridden
+      case 'Inativo': return 'destructive';
+      case 'De Licença': return 'secondary'; // Using secondary for orange-like. Can be customized.
+      default: return 'outline';
+    }
+  };
+
+  const getStatusBadgeClass = (status?: string): string => {
+    switch (status) {
+      case 'Ativo': return 'border-green-500 text-green-500 bg-green-500/10';
+      case 'Inativo': return 'border-red-500 text-red-500 bg-red-500/10';
+      case 'De Licença': return 'border-orange-500 text-orange-500 bg-orange-500/10';
+      default: return 'border-muted text-muted-foreground';
     }
   };
 
@@ -492,7 +509,11 @@ function MembersPageContent() {
     return filtered.slice(startIndex, startIndex + rowsPerPage);
   }, [members, currentPage, rowsPerPage, usernameFilter]);
 
-  const totalPages = Math.ceil(members.filter(member => (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())).length / rowsPerPage);
+  const totalFilteredMembers = useMemo(() => {
+     return members.filter(member => (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())).length;
+  }, [members, usernameFilter]);
+
+  const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
 
 
   if (loadingGuildData || authLoading) {
@@ -587,7 +608,7 @@ function MembersPageContent() {
             onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))}
             disabled={paginatedMembers.length === 0}
           />
-          {numSelectedRows > 0 && <span className="text-sm text-muted-foreground">{numSelectedRows} de {paginatedMembers.length} linha(s) visíveis selecionadas</span>}
+          {numSelectedRows > 0 && <span className="text-sm text-muted-foreground">{numSelectedRows} de {paginatedMembers.length} linha(s) visíveis selecionada(s)</span>}
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -618,13 +639,13 @@ function MembersPageContent() {
                     disabled={paginatedMembers.length === 0}
                 />
               </TableHead>
-              <TableHead>Nome de Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              <TableHead>Rank <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              {guild.game === "Throne and Liberty" && <TableHead>Função (TL) <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}
+              <TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
+              {guild.game === "Throne and Liberty" && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}
               <TableHead>Armas</TableHead>
-              <TableHead>Equip. <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
+              <TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
+              <TableHead>Rank <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               <TableHead>Pontos Ativ. <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              <TableHead>Saldo DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
+              <TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               {isGuildLeaderOrVice && <TableHead>Nota</TableHead>}
               <TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               <TableHead className="text-right w-[120px]">Ações</TableHead>
@@ -646,6 +667,7 @@ function MembersPageContent() {
               return (
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
                   <TableCell><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${member.displayName}`}/></TableCell>
+                  
                   <TableCell className="font-medium flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${member.displayName?.substring(0,1) || 'M'}`} alt={member.displayName || 'Avatar'} data-ai-hint="user avatar"/>
@@ -653,31 +675,38 @@ function MembersPageContent() {
                     </Avatar>
                     {member.displayName || member.email || member.uid}
                   </TableCell>
-                  <TableCell className="flex items-center gap-1">
-                    {getGeneralRoleIcon(member.role)}
-                    {member.role}
-                  </TableCell>
+
                   {guild.game === "Throne and Liberty" && (
                     <TableCell className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>
                       {getTLRoleIcon(member.tlRole)}
                       {member.tlRole || "N/A"}
                     </TableCell>
                   )}
+
                   <TableCell className="flex items-center gap-1">
                     {member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
                     {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}
                   </TableCell>
+
                   <TableCell className="flex items-center gap-1">
                     {member.gearScore} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
                   </TableCell>
+                  
+                  <TableCell className="flex items-center gap-1">
+                    {getGeneralRoleIcon(member.role)}
+                    {member.role}
+                  </TableCell>
+                  
                   <TableCell>
-                    <Badge variant={ (member.activityPoints ?? 0) > 50 ? "default" : ((member.activityPoints ?? 0) > 0 ? "secondary" : "destructive") } className="text-xs">
+                    <Badge variant={ (member.activityPoints ?? 0) > 50 ? "default" : ((member.activityPoints ?? 0) > 20 ? "secondary" : "destructive") } className="text-xs">
                       {member.activityPoints ?? 0} pts
                     </Badge>
                   </TableCell>
+
                   <TableCell className="flex items-center gap-1">
                     {member.dkpBalance ?? 0} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
                   </TableCell>
+
                   {isGuildLeaderOrVice && (
                     <TableCell>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenNotesDialog(member)}>
@@ -686,11 +715,13 @@ function MembersPageContent() {
                       </Button>
                     </TableCell>
                   )}
+
                   <TableCell>
-                    <Badge variant={member.status === 'Ativo' ? 'outline' : 'destructive'} className={cn("text-xs", member.status === 'Ativo' && "border-green-500 text-green-500")}>
+                    <Badge variant={getStatusBadgeVariant(member.status)} className={cn("text-xs", getStatusBadgeClass(member.status))}>
                       {member.status}
                     </Badge>
                   </TableCell>
+
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Search className="h-4 w-4" /></Button>
@@ -729,7 +760,7 @@ function MembersPageContent() {
 
       <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow mt-4">
         <div className="text-sm text-muted-foreground">
-            {numSelectedRows > 0 ? `${numSelectedRows} de ${paginatedMembers.length} linha(s) visíveis selecionada(s).` : `${members.filter(member => (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())).length} membros no total.`}
+            {numSelectedRows > 0 ? `${numSelectedRows} de ${paginatedMembers.length} linha(s) visíveis selecionada(s).` : `${totalFilteredMembers} membro(s) no total.`}
         </div>
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -743,7 +774,7 @@ function MembersPageContent() {
                     </SelectContent>
                 </Select>
             </div>
-            <span className="text-sm text-muted-foreground">Página {currentPage} de {totalPages}</span>
+            <span className="text-sm text-muted-foreground">Página {totalPages > 0 ? currentPage : 0} de {totalPages}</span>
             <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(1)} disabled={currentPage === 1 || totalPages === 0}><ChevronsLeft className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || totalPages === 0}><ChevronLeft className="h-4 w-4" /></Button>
@@ -847,3 +878,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
