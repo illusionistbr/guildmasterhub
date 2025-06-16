@@ -35,7 +35,7 @@ export interface GuildMemberRoleInfo {
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
   status?: MemberStatus;
-  dkpBalance?: number; // Added DKP Balance
+  dkpBalance?: number;
 }
 
 export interface Guild {
@@ -67,10 +67,10 @@ export interface Event {
   guildId: string;
   title: string;
   description?: string;
-  date: string; // YYYY-MM-DD format
-  time: string; // HH:mm format
-  endDate?: string; // YYYY-MM-DD format
-  endTime?: string; // HH:mm format
+  date: string; 
+  time: string; 
+  endDate?: string; 
+  endTime?: string; 
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
@@ -78,8 +78,8 @@ export interface Event {
   requiresPin?: boolean;
   pinCode?: string;
   attendeesWithPin?: string[];
-  category?: string; // Added for color coding
-  subCategory?: string; // Added for color coding
+  category?: string;
+  subCategory?: string;
 }
 
 export interface Achievement {
@@ -131,9 +131,30 @@ export interface GuildMember extends UserProfile {
   notes?: string;
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   gearScore?: number;
-  dkpBalance?: number; // DKP Balance here is for the combined type
+  dkpBalance?: number; 
   status?: MemberStatus;
 }
+
+export type GroupIconType = 'shield' | 'sword' | 'heart';
+
+export interface GuildGroupMember {
+  memberId: string;
+  displayName: string;
+  photoURL?: string | null;
+  note?: string;
+}
+
+export interface GuildGroup {
+  id: string;
+  name: string;
+  icon: GroupIconType;
+  headerColor: string; // e.g., 'bg-purple-600'
+  members: GuildGroupMember[];
+  createdAt: Timestamp;
+  createdBy: string; // UID of the creator
+  guildId: string; // Added guildId for easier querying
+}
+
 
 export enum AuditActionType {
   MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
@@ -142,7 +163,7 @@ export enum AuditActionType {
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
-  DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN", // New Action Type
+  DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN", 
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -160,6 +181,9 @@ export enum AuditActionType {
   APPLICATION_SUBMITTED = "APPLICATION_SUBMITTED",
   APPLICATION_ACCEPTED = "APPLICATION_ACCEPTED",
   APPLICATION_REJECTED = "APPLICATION_REJECTED",
+  GROUP_CREATED = "GROUP_CREATED",
+  GROUP_UPDATED = "GROUP_UPDATED",
+  GROUP_DELETED = "GROUP_DELETED",
 }
 
 export interface AuditLogDetails {
@@ -176,7 +200,9 @@ export interface AuditLogDetails {
   changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status';
   noteSummary?: string;
   applicationId?: string;
-  dkpValueAwarded?: number; // New detail for DKP
+  dkpValueAwarded?: number; 
+  groupId?: string;
+  groupName?: string;
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
   };

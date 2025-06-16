@@ -24,14 +24,22 @@ import {
   LogOut,
   ClipboardList,
   FileText,
-  ListFilter // Using ListFilter for Config. Calendário as an example
+  ListFilter,
+  UsersRound // Icon for Groups
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Main navigation items
 const mainNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { baseHref: "/dashboard/members", label: "Membros", icon: Users },
+  { 
+    label: "Membros", 
+    icon: Users,
+    baseHref: "/dashboard/members", // Main link for members page
+    subItems: [
+      { baseHref: "/dashboard/members/groups", label: "Grupos", icon: UsersRound }, // New sub-item
+    ]
+  },
   { 
     label: "Calendário", 
     icon: CalendarDays,
@@ -81,7 +89,10 @@ export function AppSidebar() {
           {mainNavItems.map((item) => {
             const currentHref = generateHref(item.baseHref);
             const itemIsActive = isActive(currentHref);
+            // Check if any subItem is active OR if the main item.baseHref itself is active (for parent items that are also pages)
             const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
+            const showSubItems = itemIsActive || !!subItemsActive;
+
 
             return item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
@@ -104,7 +115,8 @@ export function AppSidebar() {
                     </>
                   )}
                 </SidebarMenuButton>
-                {(itemIsActive || !!subItemsActive || !user) && ( // Show subitems if parent is active or any subitem is active, or if not logged in (for layout consistency)
+                {/* Show subitems if the main item (parent) is active OR any subitem is active */}
+                {(showSubItems || !user) && ( 
                    <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
                     {item.subItems.map(subItem => {
                       const subItemHref = generateHref(subItem.baseHref);
