@@ -237,6 +237,20 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
 const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
+// Helper function to parse "YYYY-MM-DD" string to a local Date object at midnight
+const parseLocalDateFromString = (dateString: string): Date => {
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JS Date
+    const day = parseInt(parts[2], 10);
+    return new Date(year, month, day); // Creates a Date at local midnight
+  }
+  // Fallback for invalid format, though ideally this shouldn't happen
+  console.error("Invalid date string format for parseLocalDateFromString:", dateString);
+  return new Date(dateString); // Attempt standard parsing, likely UTC midnight
+};
+
 export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: ThroneAndLibertyCalendarViewProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -342,11 +356,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
 
   const eventsForWeek = useMemo(() => {
     return createdEvents.filter(event => {
-      const eventDate = new Date(event.date);
-      const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
+      if (!event.date || !event.guildId) return false;
+      const eventDateLocal = parseLocalDateFromString(event.date);
+
+      const localWeekStartNormalized = new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth(), currentWeekStart.getDate());
+      const localWeekEndNormalized = new Date(currentWeekEnd.getFullYear(), currentWeekEnd.getMonth(), currentWeekEnd.getDate());
+      
       return event.guildId === guildId &&
-             eventDate >= currentWeekStart &&
-             eventDate <= endOfDay_currentWeekEnd;
+             eventDateLocal >= localWeekStartNormalized &&
+             eventDateLocal <= localWeekEndNormalized;
     });
   }, [guildId, currentWeekStart, currentWeekEnd, createdEvents]);
 
@@ -415,9 +433,8 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
       toast({ title: "Erro", description: "Campos obrigatórios não preenchidos para salvar a atividade.", variant: "destructive" });
       return;
     }
-    const eventPinCode = generatePinCode ? generateNumericPin(6) : undefined;
     
-    const activityDataToSave: Record<string, any> = {
+    const activityDataToSave: Partial<GuildEvent> & { guildId: string; organizerId: string; createdAt: Timestamp } = {
         guildId: guildId,
         title: activityTitleToSave,
         date: selectedStartDate.toISOString().split('T')[0],
@@ -437,16 +454,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
     if (dkpValueForEvent > 0) {
         activityDataToSave.dkpValue = dkpValueForEvent;
     }
-    if (eventPinCode) {
-        activityDataToSave.pinCode = eventPinCode;
+    if (generatePinCode) {
+        activityDataToSave.pinCode = generateNumericPin(6);
     }
+    
     // location is not currently handled, so it's omitted.
-
-    const newActivityData = activityDataToSave as Omit<GuildEvent, 'id'> & { createdAt: Timestamp };
 
     try {
       const eventsCollectionRef = collection(db, `guilds/${guildId}/events`);
-      const docRef = await addDoc(eventsCollectionRef, newActivityData);
+      const docRef = await addDoc(eventsCollectionRef, activityDataToSave);
       toast({ title: "Atividade Salva!", description: `"${activityTitleToSave}" foi adicionado ao calendário.` });
       
       if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
@@ -477,7 +493,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
       setDialogIsOpen(false);
       resetDialogStates();
     } catch (error) {
-        console.error("Error saving activity to Firestore:", error, "Data:", newActivityData);
+        console.error("Error saving activity to Firestore:", error, "Data:", activityDataToSave);
         toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a atividade no banco de dados.", variant: "destructive"});
     }
   };
@@ -566,9 +582,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
             <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
               {hours.map(hour => {
                 const eventsInCell = eventsForWeek.filter(event => {
-                    const eventDate = new Date(event.date);
+                    if (!event.date || !event.time) return false;
+                    const eventDateLocal = parseLocalDateFromString(event.date);
                     const [eventHourValue] = event.time.split(':').map(Number);
-                    return isSameDay(eventDate, day) && eventHourValue === hour;
+                    return isSameDay(eventDateLocal, day) && eventHourValue === hour;
                   });
                 return (
                   <div
