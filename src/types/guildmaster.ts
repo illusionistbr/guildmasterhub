@@ -9,6 +9,31 @@ export enum GuildRole {
   Member = "Membro",
 }
 
+export enum TLRole {
+  Tank = "Tank",
+  Healer = "Healer",
+  DPS = "DPS",
+}
+
+export enum TLWeapon {
+  SwordAndShield = "Sword and Shield",
+  Greatsword = "Greatsword",
+  Daggers = "Daggers",
+  Crossbow = "Crossbow",
+  Bow = "Bow",
+  Staff = "Staff",
+  WandAndTome = "Wand and Tome",
+  Spear = "Spear",
+}
+
+export interface GuildMemberRoleInfo {
+  generalRole: GuildRole;
+  tlRole?: TLRole;
+  tlPrimaryWeapon?: TLWeapon;
+  tlSecondaryWeapon?: TLWeapon;
+  notes?: string;
+}
+
 export interface Guild {
   id: string;
   name: string;
@@ -30,7 +55,7 @@ export interface Guild {
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildRole };
+  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole }; // Allow GuildRole for backward compatibility
 }
 
 export interface Event {
@@ -79,17 +104,27 @@ export interface UserProfile {
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
   };
-  // New fields for member details page
+  // These fields are now part of GuildMember based on guild.roles, not global UserProfile
+  // weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
+  // gearScore?: number;
+  // activityPoints?: number;
+  // dkpBalance?: number;
+  // status?: 'Ativo' | 'Inativo' | 'Banido';
+}
+
+// This type is used on the client-side, composed from UserProfile and GuildMemberRoleInfo
+export interface GuildMember extends UserProfile {
+  role: GuildRole; // General guild role
+  tlRole?: TLRole;
+  tlPrimaryWeapon?: TLWeapon;
+  tlSecondaryWeapon?: TLWeapon;
+  notes?: string;
+  // Mocked/derived fields for display, not directly in UserProfile or GuildMemberRoleInfo always
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   gearScore?: number;
   activityPoints?: number;
   dkpBalance?: number;
   status?: 'Ativo' | 'Inativo' | 'Banido';
-  // rank is derived from GuildRole for display
-}
-
-export interface GuildMember extends UserProfile {
-  role: GuildRole;
 }
 
 // Audit Log Types
@@ -98,6 +133,7 @@ export enum AuditActionType {
   MEMBER_KICKED = "MEMBER_KICKED",
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
+  MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", 
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -117,15 +153,16 @@ export enum AuditActionType {
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | GuildRole | boolean;
-  newValue?: string | GuildRole | boolean;
+  oldValue?: string | GuildRole | boolean | TLRole | TLWeapon;
+  newValue?: string | GuildRole | boolean | TLRole | TLWeapon;
   fieldName?: string;
   kickedUserRole?: GuildRole;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon';
+  noteSummary?: string; // e.g., "Note added" or "Note updated"
 }
 
 export interface AuditLogEntry {

@@ -7,20 +7,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft, Gamepad2, Wand2, Shield, Swords, Dices, Crosshair, Bot } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy, writeBatch, serverTimestamp } from '@/lib/firebase';
-import type { Guild, AuditActionType } from '@/types/guildmaster';
-import { GuildRole } from '@/types/guildmaster';
+import type { Guild, AuditActionType, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added GuildMemberRoleInfo
+import { GuildRole, TLRole, TLWeapon } from '@/types/guildmaster'; // Added TLRole, TLWeapon
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { logGuildActivity } from '@/lib/auditLogService';
-
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 const GUILDS_PER_PAGE = 15;
+
+const tlWeaponsList = Object.values(TLWeapon);
+
+const tlRoleWeaponSchema = z.object({
+  tlRole: z.nativeEnum(TLRole, { required_error: "Função é obrigatória." }),
+  tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
+  tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
+});
+type TLRoleWeaponFormValues = z.infer<typeof tlRoleWeaponSchema>;
+
 
 function ExploreGuildsContent() { 
   const { user } = useAuth();
@@ -36,6 +50,18 @@ function ExploreGuildsContent() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isJoining, setIsJoining] = useState<string | null>(null);
+
+  const [showTLSelectionDialog, setShowTLSelectionDialog] = useState(false);
+  const [guildForTLSelection, setGuildForTLSelection] = useState<Guild | null>(null);
+
+  const tlForm = useForm<TLRoleWeaponFormValues>({
+    resolver: zodResolver(tlRoleWeaponSchema),
+    defaultValues: {
+      tlRole: undefined,
+      tlPrimaryWeapon: undefined,
+      tlSecondaryWeapon: undefined,
+    }
+  });
 
   useEffect(() => {
     const fetchGuilds = async () => {
@@ -68,39 +94,35 @@ function ExploreGuildsContent() {
 
   const totalPages = Math.ceil(filteredGuilds.length / GUILDS_PER_PAGE);
 
-  const handleJoinGuild = async (guild: Guild, guildPassword?: string) => {
-    if (!user) {
-      toast({ title: "Não Autenticado", description: "Você precisa estar logado para entrar em uma guilda.", variant: "destructive" });
-      return;
-    }
-    if (guild.memberIds?.includes(user.uid)) {
-        toast({ title: "Já é Membro", description: `Você já faz parte da guilda ${guild.name}.`, variant: "default" });
-        return;
-    }
-
-    setIsJoining(guild.id);
-    setPasswordError("");
+  const processGuildJoin = async (guildToJoin: Guild, tlRoleWeaponData?: TLRoleWeaponFormValues) => {
+    if (!user) return; // Should already be checked by handleApplyToGuild
+    setIsJoining(guildToJoin.id);
 
     try {
-      if (guild.password && !guild.isOpen && guild.password !== guildPassword) {
-        setPasswordError("Senha incorreta.");
-        setIsJoining(null);
-        return;
-      }
-
-      const guildRef = doc(db, "guilds", guild.id);
+      const guildRef = doc(db, "guilds", guildToJoin.id);
       const batch = writeBatch(db);
+      
+      const memberRoleInfo: GuildMemberRoleInfo = {
+        generalRole: GuildRole.Member,
+        notes: "", // Initialize notes
+      };
+
+      if (guildToJoin.game === "Throne and Liberty" && tlRoleWeaponData) {
+        memberRoleInfo.tlRole = tlRoleWeaponData.tlRole;
+        memberRoleInfo.tlPrimaryWeapon = tlRoleWeaponData.tlPrimaryWeapon;
+        memberRoleInfo.tlSecondaryWeapon = tlRoleWeaponData.tlSecondaryWeapon;
+      }
       
       batch.update(guildRef, {
         memberIds: arrayUnion(user.uid),
         memberCount: firebaseIncrement(1),
-        [`roles.${user.uid}`]: GuildRole.Member // Assign default role on join
+        [`roles.${user.uid}`]: memberRoleInfo
       });
       
       await batch.commit();
 
       await logGuildActivity(
-        guild.id,
+        guildToJoin.id,
         user.uid,
         user.displayName,
         AuditActionType.MEMBER_JOINED,
@@ -112,19 +134,24 @@ function ExploreGuildsContent() {
 
       toast({ 
         title: "Bem-vindo(a) à Guilda!", 
-        description: `Você entrou na guilda ${guild.name}.`,
-        action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guild.id}`)}>Ver Dashboard</Button>
+        description: `Você entrou na guilda ${guildToJoin.name}.`,
+        action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guildToJoin.id}`)}>Ver Dashboard</Button>
       });
+
       setSelectedGuildForPassword(null);
       setPasswordInput("");
+      setShowTLSelectionDialog(false);
+      setGuildForTLSelection(null);
+      tlForm.reset();
+
       setAllPublicGuilds(prevGuilds => 
         prevGuilds.map(g => 
-          g.id === guild.id 
+          g.id === guildToJoin.id 
             ? { 
                 ...g, 
                 memberIds: [...(g.memberIds || []), user.uid], 
                 memberCount: (g.memberCount || 0) + 1,
-                roles: { ...(g.roles || {}), [user.uid]: GuildRole.Member } 
+                roles: { ...(g.roles || {}), [user.uid]: memberRoleInfo } 
               } 
             : g
         )
@@ -133,27 +160,88 @@ function ExploreGuildsContent() {
     } catch (error) {
       console.error("Error joining guild:", error);
       toast({ title: "Erro ao Entrar na Guilda", description: "Não foi possível processar sua entrada.", variant: "destructive" });
-      setPasswordError("Ocorreu um erro ao tentar entrar na guilda.");
+      if (selectedGuildForPassword) setPasswordError("Ocorreu um erro ao tentar entrar na guilda.");
     } finally {
       setIsJoining(null);
     }
   };
+  
+  const handleDirectJoinOrPasswordPrompt = async (guild: Guild, guildPassword?: string) => {
+    if (!user) return; // Should be checked earlier
+    setIsJoining(guild.id);
+    setPasswordError("");
+
+    if (guild.password && !guild.isOpen && guild.password !== guildPassword) {
+      setPasswordError("Senha incorreta.");
+      setIsJoining(null);
+      return;
+    }
+    
+    // Password is correct or not needed at this stage
+    if (guild.game === "Throne and Liberty") {
+      setGuildForTLSelection(guild);
+      setShowTLSelectionDialog(true);
+      setSelectedGuildForPassword(null); // Close password dialog if it was open
+      setIsJoining(null); // Stop loading for join button, TL dialog will handle its own loading
+    } else {
+      await processGuildJoin(guild);
+    }
+  };
 
   const handleApplyToGuild = (guild: Guild) => {
-    if (!user || guild.memberIds?.includes(user.uid)) return; 
+    if (!user) {
+      toast({ title: "Não Autenticado", description: "Você precisa estar logado para entrar em uma guilda.", variant: "destructive" });
+      return;
+    }
+    if (guild.memberIds?.includes(user.uid)) {
+        toast({ title: "Já é Membro", description: `Você já faz parte da guilda ${guild.name}.`, variant: "default" });
+        return;
+    }
 
     if (guild.password && !guild.isOpen) { 
       setSelectedGuildForPassword(guild);
     } else { 
-      handleJoinGuild(guild);
+      handleDirectJoinOrPasswordPrompt(guild); // Directly try to join or open TL dialog
     }
   };
   
   const handlePasswordDialogSubmit = () => {
     if (selectedGuildForPassword) {
-      handleJoinGuild(selectedGuildForPassword, passwordInput);
+      handleDirectJoinOrPasswordPrompt(selectedGuildForPassword, passwordInput);
     }
   };
+
+  const onTLRoleWeaponSubmit: SubmitHandler<TLRoleWeaponFormValues> = async (data) => {
+    if (guildForTLSelection) {
+      await processGuildJoin(guildForTLSelection, data);
+    }
+  };
+
+  const getTLRoleIcon = (role?: TLRole) => {
+    if (!role) return null;
+    switch (role) {
+      case TLRole.Tank: return <Shield className="mr-2 h-4 w-4 text-sky-500" />;
+      case TLRole.Healer: return <Heart className="mr-2 h-4 w-4 text-emerald-500" />; // Placeholder, replace with actual Healer icon if available in lucide
+      case TLRole.DPS: return <Swords className="mr-2 h-4 w-4 text-rose-500" />;
+      default: return null;
+    }
+  };
+  
+  const getTLWeaponIcon = (weapon?: TLWeapon) => {
+    if (!weapon) return null;
+    switch (weapon) {
+      case TLWeapon.SwordAndShield: return <Shield className="mr-2 h-4 w-4" />;
+      case TLWeapon.Greatsword: return <Swords className="mr-2 h-4 w-4" />; // Placeholder
+      case TLWeapon.Daggers: return <Swords className="mr-2 h-4 w-4" />; // Placeholder
+      case TLWeapon.Crossbow: return <Crosshair className="mr-2 h-4 w-4" />;
+      case TLWeapon.Bow: return <Crosshair className="mr-2 h-4 w-4" />; // Placeholder
+      case TLWeapon.Staff: return <Wand2 className="mr-2 h-4 w-4" />;
+      case TLWeapon.WandAndTome: return <Wand2 className="mr-2 h-4 w-4" />; // Placeholder
+      case TLWeapon.Spear: return <Swords className="mr-2 h-4 w-4" />; // Placeholder
+      default: return <Gamepad2 className="mr-2 h-4 w-4" />;
+    }
+  };
+
 
   const renderGuildCard = (guild: Guild) => {
     const isUserMember = guild.memberIds?.includes(user?.uid || "");
@@ -290,6 +378,116 @@ function ExploreGuildsContent() {
                 Entrar
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showTLSelectionDialog && guildForTLSelection && (
+        <Dialog open={showTLSelectionDialog} onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setShowTLSelectionDialog(false);
+            setGuildForTLSelection(null);
+            tlForm.reset();
+          }
+        }}>
+          <DialogContent className="sm:max-w-lg bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="font-headline text-2xl flex items-center text-primary">
+                <Bot className="mr-2 h-6 w-6"/> Detalhes para {guildForTLSelection.name}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Por favor, selecione sua função e armas para a guilda de Throne and Liberty.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...tlForm}>
+              <form onSubmit={tlForm.handleSubmit(onTLRoleWeaponSubmit)} className="space-y-6 py-4">
+                <FormField
+                  control={tlForm.control}
+                  name="tlRole"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sua Função (Role)</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione sua função..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(TLRole).map(role => (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex items-center">
+                                {getTLRoleIcon(role)} {role}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={tlForm.control}
+                  name="tlPrimaryWeapon"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arma Primária</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione sua arma primária..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tlWeaponsList.map(weapon => (
+                            <SelectItem key={`primary-${weapon}`} value={weapon}>
+                               <div className="flex items-center">
+                                {getTLWeaponIcon(weapon)} {weapon}
+                               </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={tlForm.control}
+                  name="tlSecondaryWeapon"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arma Secundária</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione sua arma secundária..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tlWeaponsList.map(weapon => (
+                            <SelectItem key={`secondary-${weapon}`} value={weapon}>
+                              <div className="flex items-center">
+                                {getTLWeaponIcon(weapon)} {weapon}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter className="pt-4">
+                  <Button variant="outline" type="button" onClick={() => { setShowTLSelectionDialog(false); setGuildForTLSelection(null); tlForm.reset(); }}>Cancelar</Button>
+                  <Button type="submit" disabled={tlForm.formState.isSubmitting || isJoining === guildForTLSelection?.id} className="btn-gradient btn-style-primary">
+                    {tlForm.formState.isSubmitting || isJoining === guildForTLSelection?.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Confirmar e Entrar
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       )}
