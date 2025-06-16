@@ -42,7 +42,8 @@ import type { Event as GuildEvent } from '@/types/guildmaster';
 import { CalendarEventCard } from './CalendarEventCard';
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
+import { db, collection, addDoc, serverTimestamp, Timestamp, doc } from '@/lib/firebase'; // Added doc
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 interface ThroneAndLibertyCalendarViewProps {
   guildId: string;
@@ -261,6 +262,7 @@ const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(
 
 export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
   const { user } = useAuth();
+  const { toast } = useToast(); // Initialize toast
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
@@ -279,7 +281,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00");
 
   const [isMandatory, setIsMandatory] = useState(false);
-  const [attendanceValue, setAttendanceValue] = useState<number>(1);
+  const [dkpValueForEvent, setDkpValueForEvent] = useState<number>(1); // Renamed from attendanceValue
 
   const [activityDescription, setActivityDescription] = useState<string>("");
   const [announcementChannel, setAnnouncementChannel] = useState<string>("Canal Padrão");
@@ -289,7 +291,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [announceOnDiscord, setAnnounceOnDiscord] = useState<boolean>(true);
   const [generatePinCode, setGeneratePinCode] = useState<boolean>(false);
 
-  const [createdEvents, setCreatedEvents] = useState<GuildEvent[]>([]);
+  const [createdEvents, setCreatedEvents] = useState<GuildEvent[]>([]); // Will also save to Firestore
 
   const weekStartsOn = 1; // Monday
 
@@ -325,7 +327,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   }, [currentWeekStart, currentWeekEnd]);
 
   const eventsForWeek = useMemo(() => {
-    const allEvents = [...mockEvents, ...createdEvents];
+    const allEvents = [...mockEvents, ...createdEvents]; // In future, fetch from Firestore
     return allEvents.filter(event => {
       const eventDate = new Date(event.date);
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
@@ -387,6 +389,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     return format(combined, "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR });
   };
 
+  const generateNumericPin = (length: number = 6): string => {
+    let pin = '';
+    for (let i = 0; i < length; i++) {
+      pin += Math.floor(Math.random() * 10).toString();
+    }
+    return pin;
+  };
+
   const handleSaveActivity = async () => {
     let activityTitleToSave = selectedActivity;
     if (selectedCategory === 'other') {
@@ -394,12 +404,13 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     }
 
     if (!activityTitleToSave || !selectedStartDate || !user) {
-      console.error("Missing required fields to save activity.");
+      toast({ title: "Erro", description: "Campos obrigatórios não preenchidos para salvar a atividade.", variant: "destructive" });
       return;
     }
 
-    const newActivity: GuildEvent = {
-      id: `evt-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`,
+    const eventPinCode = generatePinCode ? generateNumericPin(6) : undefined;
+
+    const newActivityData: Omit<GuildEvent, 'id'> & { createdAt: Timestamp } = {
       guildId: guildId,
       title: activityTitleToSave,
       description: activityDescription,
@@ -408,36 +419,53 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined,
       endTime: selectedEndDate ? selectedEndTime : undefined,
       organizerId: user.uid,
+      dkpValue: dkpValueForEvent > 0 ? dkpValueForEvent : undefined,
+      requiresPin: generatePinCode,
+      pinCode: eventPinCode,
+      createdAt: serverTimestamp() as Timestamp, // Add server timestamp for creation
     };
+    
+    try {
+      const eventsCollectionRef = collection(db, `guilds/${guildId}/events`);
+      const docRef = await addDoc(eventsCollectionRef, newActivityData);
+      
+      const newEventWithId: GuildEvent = { ...newActivityData, id: docRef.id, createdAt: undefined }; // Use undefined or handle Timestamp if needed for local state
+      setCreatedEvents(prevEvents => [...prevEvents, newEventWithId]);
+      toast({ title: "Atividade Salva!", description: `"${activityTitleToSave}" foi adicionado ao calendário.` });
 
-    setCreatedEvents(prevEvents => [...prevEvents, newActivity]);
+      if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
+        const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
+        const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
+        const notificationLink = `/dashboard/calendar?guildId=${guildId}`; // Consider linking directly to event details in future
 
-    if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
-      const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
-      const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
-      const notificationLink = `/dashboard/calendar?guildId=${guildId}`;
-
-      try {
-        const newNotificationRef = await addDoc(collection(db, `guilds/${guildId}/notifications`), {
-          guildId: guildId,
-          message: notificationMessage,
-          link: notificationLink,
-          type: "MANDATORY_ACTIVITY_CREATED",
-          timestamp: serverTimestamp() as Timestamp,
-          details: {
-            activityTitle: activityTitleToSave,
-            activityDate: activityDateFormatted,
-          },
-          createdByUserId: user.uid,
-          createdByUserDisplayname: user.displayName || user.email,
-        });
-        console.log("Mandatory activity notification created with ID: ", newNotificationRef.id);
-      } catch (error) {
-        console.error("Error creating mandatory activity notification:", error);
+        try {
+          const newNotificationRef = await addDoc(collection(db, `guilds/${guildId}/notifications`), {
+            guildId: guildId,
+            message: notificationMessage,
+            link: notificationLink,
+            type: "MANDATORY_ACTIVITY_CREATED",
+            timestamp: serverTimestamp() as Timestamp,
+            details: {
+              activityTitle: activityTitleToSave,
+              activityDate: activityDateFormatted,
+              eventId: docRef.id, // Store event ID in notification
+            },
+            createdByUserId: user.uid,
+            createdByUserDisplayname: user.displayName || user.email,
+          });
+          console.log("Mandatory activity notification created with ID: ", newNotificationRef.id);
+        } catch (error) {
+          console.error("Error creating mandatory activity notification:", error);
+          toast({ title: "Erro na Notificação", description: "Não foi possível criar a notificação de atividade obrigatória.", variant: "destructive" });
+        }
       }
-    }
+      setDialogIsOpen(false);
+      resetDialogStates();
 
-    setDialogIsOpen(false);
+    } catch (error) {
+        console.error("Error saving activity to Firestore:", error);
+        toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a atividade no banco de dados.", variant: "destructive"});
+    }
   };
 
   const resetDialogStates = () => {
@@ -452,7 +480,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedEndDate(undefined);
     setSelectedEndTime("00:00");
     setIsMandatory(false);
-    setAttendanceValue(1);
+    setDkpValueForEvent(1);
     setActivityDescription("");
     setAnnouncementChannel("Canal Padrão");
     setAnnouncementTimeOption("instant");
@@ -767,7 +795,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
 
                             {/* Mandatory and Attendance Value */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                <div className="space-y-2">
+                               <div className="space-y-2">
                                     <div className="flex items-center mb-1">
                                       <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                                     </div>
@@ -782,7 +810,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-1 mb-1">
-                                        <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
+                                        <Label htmlFor="dkpValueForEvent" className="text-foreground font-semibold">DKP da Atividade</Label>
                                         <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
@@ -790,15 +818,15 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
-                                            <p>A quantidade de pontos de atividade e DKP que serão concedidos aos membros que participarem desta atividade.</p>
+                                            <p>A quantidade de DKP que serão concedidos aos membros que participarem desta atividade.</p>
                                         </TooltipContent>
                                         </Tooltip>
                                     </div>
                                     <Input
-                                        id="attendance-value"
+                                        id="dkpValueForEvent"
                                         type="number"
-                                        value={attendanceValue}
-                                        onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                        value={dkpValueForEvent}
+                                        onChange={(e) => setDkpValueForEvent(Math.max(0, parseInt(e.target.value, 10) || 0))}
                                         min="0"
                                         className="h-10"
                                     />
