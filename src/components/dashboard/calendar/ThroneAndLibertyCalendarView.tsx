@@ -773,7 +773,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </div>
                                 <div className="space-y-2">
                                 <div className="flex items-center gap-1">
-                                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença</Label>
+                                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
                                     <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
@@ -921,5 +921,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
 
 
