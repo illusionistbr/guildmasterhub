@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField, collection, writeBatch } from '@/lib/firebase';
-import { type Guild, type GuildMember, type UserProfile, GuildRole, AuditActionType, TLRole, TLWeapon, type GuildMemberRoleInfo } from '@/types/guildmaster';
+import { type Guild, type GuildMember, type UserProfile, GuildRole, AuditActionType, TLRole, TLWeapon, type GuildMemberRoleInfo, type MemberStatus } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -56,7 +60,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format } from 'date-fns';
@@ -64,8 +68,12 @@ import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from '@/lib/utils';
 import { useHeader } from '@/contexts/HeaderContext';
+import { Label } from '@/components/ui/label';
 
-type MemberManagementAction = "changeRole" | "kick";
+
+type MemberManagementAction = "changeRole" | "kick" | "changeStatus";
+type GearSortOrder = "default" | "asc" | "desc";
+type DkpSortOrder = "default" | "asc" | "desc";
 
 const getWeaponIconPath = (weapon?: TLWeapon): string => {
   if (!weapon) return "https://placehold.co/32x32.png?text=N/A";
@@ -84,7 +92,7 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
 
 const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember => {
   const isTLGuild = guildGame === "Throne and Liberty";
-  const statuses = ['Ativo', 'Inativo', 'De Licença'];
+  const statuses: MemberStatus[] = ['Ativo', 'Inativo', 'Licença'];
   return {
     ...member,
     weapons: { 
@@ -116,9 +124,18 @@ function MembersPageContent() {
   const [actionType, setActionType] = useState<MemberManagementAction | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   const [selectedNewRole, setSelectedNewRole] = useState<GuildRole | ''>('');
+  const [selectedNewStatus, setSelectedNewStatus] = useState<MemberStatus | ''>('');
+
 
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [usernameFilter, setUsernameFilter] = useState("");
+  const [tlRoleFilter, setTlRoleFilter] = useState<TLRole | "all">("all");
+  const [gearSortOrder, setGearSortOrder] = useState<GearSortOrder>("default");
+  const [rankFilter, setRankFilter] = useState<GuildRole | "all">("all");
+  const [dkpSortOrder, setDkpSortOrder] = useState<DkpSortOrder>("default");
+  const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all");
+
+
   const [activityDateRange, setActivityDateRange] = useState<DateRange | undefined>({
     from: undefined, 
     to: undefined, 
@@ -189,7 +206,7 @@ function MembersPageContent() {
           }
           
           const roleInfoSource = guildData.roles?.[uid];
-          let memberSpecificData: Partial<GuildMember> = { role: GuildRole.Member }; 
+          let memberSpecificData: Partial<GuildMember> = { role: GuildRole.Member, status: 'Ativo' }; 
 
           if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
             const fullRoleInfo = roleInfoSource as GuildMemberRoleInfo;
@@ -199,9 +216,11 @@ function MembersPageContent() {
               tlPrimaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlPrimaryWeapon : undefined,
               tlSecondaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlSecondaryWeapon : undefined,
               notes: fullRoleInfo.notes || "",
+              status: fullRoleInfo.status || 'Ativo',
             };
           } else if (typeof roleInfoSource === 'string') { 
             memberSpecificData.role = roleInfoSource as GuildRole;
+            memberSpecificData.status = 'Ativo'; // Default if only role string exists
           }
           
           processedMembers.push(enhanceMemberData({
@@ -217,7 +236,7 @@ function MembersPageContent() {
       } else { 
          if (guildData.ownerId === currentUser.uid) {
             const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
-            let ownerSpecificData: Partial<GuildMember> = { role: GuildRole.Leader };
+            let ownerSpecificData: Partial<GuildMember> = { role: GuildRole.Leader, status: 'Ativo' };
              if (typeof ownerRoleInfoSource === 'object' && ownerRoleInfoSource !== null && 'generalRole' in ownerRoleInfoSource) {
                 const fullRoleInfo = ownerRoleInfoSource as GuildMemberRoleInfo;
                 ownerSpecificData = {
@@ -226,9 +245,11 @@ function MembersPageContent() {
                     tlPrimaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlPrimaryWeapon : undefined,
                     tlSecondaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlSecondaryWeapon : undefined,
                     notes: fullRoleInfo.notes || "",
+                    status: fullRoleInfo.status || 'Ativo',
                 };
             } else if (typeof ownerRoleInfoSource === 'string') {
                 ownerSpecificData.role = ownerRoleInfoSource as GuildRole;
+                ownerSpecificData.status = 'Ativo';
             }
 
             setMembers([enhanceMemberData({
@@ -276,16 +297,25 @@ function MembersPageContent() {
   }, [currentUser, guild]);
 
 
-  const canManageMember = (targetMemberRole: GuildRole): { canChangeRole: boolean, canKick: boolean } => {
-    if (!currentUserRoleInGuild || !guild) return { canChangeRole: false, canKick: false };
+  const canManageMember = (targetMemberRole: GuildRole): { canChangeRole: boolean, canKick: boolean, canChangeStatus: boolean } => {
+    if (!currentUserRoleInGuild || !guild) return { canChangeRole: false, canKick: false, canChangeStatus: false };
     if (currentUserRoleInGuild === GuildRole.Leader) {
-      return { canChangeRole: targetMemberRole !== GuildRole.Leader, canKick: targetMemberRole !== GuildRole.Leader };
+      const isSelf = actionUser?.uid === currentUser.uid;
+      return { 
+        canChangeRole: targetMemberRole !== GuildRole.Leader && !isSelf, 
+        canKick: targetMemberRole !== GuildRole.Leader && !isSelf,
+        canChangeStatus: !isSelf // Leader cannot make self inactive directly via this UI
+      };
     }
     if (currentUserRoleInGuild === GuildRole.ViceLeader) {
       const isLowerRank = [GuildRole.Counselor, GuildRole.Officer, GuildRole.Member].includes(targetMemberRole);
-      return { canChangeRole: isLowerRank, canKick: isLowerRank && targetMemberRole !== GuildRole.Leader };
+      return { 
+        canChangeRole: isLowerRank, 
+        canKick: isLowerRank && targetMemberRole !== GuildRole.Leader,
+        canChangeStatus: isLowerRank || targetMemberRole === GuildRole.ViceLeader // Vice can change own status
+      };
     }
-    return { canChangeRole: false, canKick: false };
+    return { canChangeRole: false, canKick: false, canChangeStatus: false };
   };
   
   const availableRolesForChange = (targetMemberRole: GuildRole): GuildRole[] => {
@@ -305,6 +335,7 @@ function MembersPageContent() {
     setActionUser(member);
     setActionType(type);
     setSelectedNewRole(''); 
+    setSelectedNewStatus('');
   };
 
   const closeActionDialog = () => {
@@ -340,6 +371,7 @@ function MembersPageContent() {
           tlPrimaryWeapon: actionUser.tlPrimaryWeapon, 
           tlSecondaryWeapon: actionUser.tlSecondaryWeapon, 
           notes: actionUser.notes || "", 
+          status: actionUser.status || 'Ativo',
         };
       }
 
@@ -356,6 +388,47 @@ function MembersPageContent() {
       toast({ title: "Erro ao Mudar Cargo", variant: "destructive" });
     } finally {
       setIsProcessingAction(false);
+    }
+  };
+
+  const handleChangeStatus = async () => {
+    if (!actionUser || !guild || selectedNewStatus === '' || !guildId || !currentUser) return;
+    const oldStatus = actionUser.status;
+
+    setIsProcessingAction(true);
+    try {
+        const guildRef = doc(db, "guilds", guildId);
+        const existingRoleInfo = guild.roles?.[actionUser.uid];
+        let updatedRoleInfoPayload: GuildMemberRoleInfo;
+
+        if (typeof existingRoleInfo === 'object' && existingRoleInfo !== null && 'generalRole' in existingRoleInfo) {
+            updatedRoleInfoPayload = { ...(existingRoleInfo as GuildMemberRoleInfo), status: selectedNewStatus };
+        } else { 
+            // This case should ideally not happen if members always have a GuildMemberRoleInfo object
+            updatedRoleInfoPayload = {
+                generalRole: actionUser.role, 
+                status: selectedNewStatus,
+                notes: actionUser.notes || "",
+            };
+        }
+
+        await updateDoc(guildRef, { [`roles.${actionUser.uid}`]: updatedRoleInfoPayload });
+        
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_STATUS_CHANGED, {
+            targetUserId: actionUser.uid,
+            targetUserDisplayName: actionUser.displayName || actionUser.email || actionUser.uid,
+            oldValue: oldStatus,
+            newValue: selectedNewStatus,
+        });
+
+        toast({ title: "Status Atualizado!", description: `O status de ${actionUser.displayName} foi alterado para ${selectedNewStatus}.` });
+        fetchGuildAndMembers();
+        closeActionDialog();
+    } catch (error) {
+        console.error("Erro ao mudar status:", error);
+        toast({ title: "Erro ao Mudar Status", variant: "destructive" });
+    } finally {
+        setIsProcessingAction(false);
     }
   };
 
@@ -414,6 +487,7 @@ function MembersPageContent() {
           tlPrimaryWeapon: memberForNotes.tlPrimaryWeapon,
           tlSecondaryWeapon: memberForNotes.tlSecondaryWeapon,
           notes: currentNote,
+          status: memberForNotes.status || 'Ativo',
         };
       }
 
@@ -467,20 +541,20 @@ function MembersPageContent() {
     }
   };
 
-  const getStatusBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
+  const getStatusIcon = (status?: MemberStatus) => {
     switch (status) {
-      case 'Ativo': return 'default'; 
-      case 'Inativo': return 'destructive';
-      case 'De Licença': return 'secondary'; 
-      default: return 'outline';
+      case 'Ativo': return <UserCheck className="h-4 w-4 text-green-500" />;
+      case 'Inativo': return <UserMinus className="h-4 w-4 text-red-500" />;
+      case 'Licença': return <Hourglass className="h-4 w-4 text-orange-500" />;
+      default: return <User className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const getStatusBadgeClass = (status?: string): string => {
+  const getStatusBadgeClass = (status?: MemberStatus): string => {
     switch (status) {
       case 'Ativo': return 'border-green-500 text-green-500 bg-green-500/10';
       case 'Inativo': return 'border-red-500 text-red-500 bg-red-500/10';
-      case 'De Licença': return 'border-orange-500 text-orange-500 bg-orange-500/10';
+      case 'Licença': return 'border-orange-500 text-orange-500 bg-orange-500/10';
       default: return 'border-muted text-muted-foreground';
     }
   };
@@ -500,18 +574,52 @@ function MembersPageContent() {
     setSelectedRows(prev => ({ ...prev, [uid]: checked }));
   };
 
+  const filteredAndSortedMembers = useMemo(() => {
+    let tempMembers = [...members];
+
+    // Filtering
+    if (usernameFilter) {
+        tempMembers = tempMembers.filter(member => 
+            (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
+        );
+    }
+    if (guild?.game === "Throne and Liberty" && tlRoleFilter !== "all") {
+        tempMembers = tempMembers.filter(member => member.tlRole === tlRoleFilter);
+    }
+    if (rankFilter !== "all") {
+        tempMembers = tempMembers.filter(member => member.role === rankFilter);
+    }
+    if (statusFilter !== "all") {
+        tempMembers = tempMembers.filter(member => member.status === statusFilter);
+    }
+    // Add activity date range filtering here if needed
+
+    // Sorting
+    if (gearSortOrder !== "default") {
+        tempMembers.sort((a, b) => {
+            const gearA = a.gearScore || 0;
+            const gearB = b.gearScore || 0;
+            return gearSortOrder === "asc" ? gearA - gearB : gearB - gearA;
+        });
+    }
+    if (dkpSortOrder !== "default") {
+        tempMembers.sort((a, b) => {
+            const dkpA = a.dkpBalance || 0;
+            const dkpB = b.dkpBalance || 0;
+            return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - dkpA;
+        });
+    }
+    
+    return tempMembers;
+  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game /*, activityDateRange, timeFromFilter, timeToFilter */]);
+
+
   const paginatedMembers = useMemo(() => {
-    const filtered = members.filter(member => 
-        (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
-    );
     const startIndex = (currentPage - 1) * rowsPerPage;
-    return filtered.slice(startIndex, startIndex + rowsPerPage);
-  }, [members, currentPage, rowsPerPage, usernameFilter]);
+    return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
 
-  const totalFilteredMembers = useMemo(() => {
-     return members.filter(member => (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())).length;
-  }, [members, usernameFilter]);
-
+  const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
 
 
@@ -519,6 +627,7 @@ function MembersPageContent() {
     return (
       <div className="space-y-4 p-4 md:p-6">
         <Skeleton className="h-10 w-1/3 mb-6" /> 
+        <Skeleton className="h-28 w-full" /> {/* Filter section skeleton */}
         <Skeleton className="h-16 w-full" /> 
         <Skeleton className="h-12 w-full" /> 
         {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} 
@@ -531,72 +640,117 @@ function MembersPageContent() {
   }
   
   const isGuildLeaderOrVice = currentUserRoleInGuild === GuildRole.Leader || currentUserRoleInGuild === GuildRole.ViceLeader;
+  const isTLGuild = guild.game === "Throne and Liberty";
 
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <PageTitle title={`Membros de ${guild.name}`} icon={<Users className="h-8 w-8 text-primary" />} />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end p-4 bg-card rounded-lg shadow">
-        <div>
-          <label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</label>
+      {/* Filters Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-card rounded-lg shadow items-end">
+        {/* Username Filter */}
+        <div className="xl:col-span-2">
+          <Label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</Label>
           <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} />
         </div>
+
+        {/* TL Role Filter (Conditional) */}
+        {isTLGuild && (
+          <div>
+            <Label htmlFor="tlRoleFilter" className="block text-sm font-medium text-muted-foreground mb-1">Função (TL)</Label>
+            <Select value={tlRoleFilter} onValueChange={(value) => setTlRoleFilter(value as TLRole | "all")}>
+              <SelectTrigger id="tlRoleFilter"><SelectValue placeholder="Todas" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {Object.values(TLRole).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Gear Sort Order */}
         <div>
-          <label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de datas de atividade</label>
+          <Label htmlFor="gearSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Gear</Label>
+          <Select value={gearSortOrder} onValueChange={(value) => setGearSortOrder(value as GearSortOrder)}>
+            <SelectTrigger id="gearSortOrder"><SelectValue placeholder="Padrão" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Padrão</SelectItem>
+              <SelectItem value="asc">Menor para Maior</SelectItem>
+              <SelectItem value="desc">Maior para Menor</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Rank (GuildRole) Filter */}
+        <div>
+          <Label htmlFor="rankFilter" className="block text-sm font-medium text-muted-foreground mb-1">Rank</Label>
+          <Select value={rankFilter} onValueChange={(value) => setRankFilter(value as GuildRole | "all")}>
+            <SelectTrigger id="rankFilter"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {Object.values(GuildRole).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* DKP Sort Order */}
+        <div>
+          <Label htmlFor="dkpSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Balanço DKP</Label>
+          <Select value={dkpSortOrder} onValueChange={(value) => setDkpSortOrder(value as DkpSortOrder)}>
+            <SelectTrigger id="dkpSortOrder"><SelectValue placeholder="Padrão" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Padrão</SelectItem>
+              <SelectItem value="asc">Menor para Maior</SelectItem>
+              <SelectItem value="desc">Maior para Menor</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Status Filter */}
+        <div>
+          <Label htmlFor="statusFilter" className="block text-sm font-medium text-muted-foreground mb-1">Status</Label>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MemberStatus | "all")}>
+            <SelectTrigger id="statusFilter"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {(['Ativo', 'Inativo', 'Licença'] as MemberStatus[]).map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Activity Date Range - Kept for layout, functionality can be expanded later */}
+        <div className="xl:col-span-3">
+          <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                id="activityDateRange"
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !activityDateRange?.from && "text-muted-foreground"
-                )}
-              >
+              <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal",!activityDateRange?.from && "text-muted-foreground")}>
                 <CalendarDays className="mr-2 h-4 w-4" />
-                {activityDateRange?.from ? (
-                  activityDateRange.to ? (
-                    <>
-                      {format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })} -{" "}
-                      {format(activityDateRange.to, "dd/MM/yy", { locale: ptBR })}
-                    </>
-                  ) : (
-                    format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })
-                  )
-                ) : (
-                  <span>Escolha um intervalo</span>
-                )}
+                {activityDateRange?.from ? (activityDateRange.to ? (<>{format(activityDateRange.from, "dd/MM/yy", {locale:ptBR})} - {format(activityDateRange.to, "dd/MM/yy", {locale:ptBR})}</>) : format(activityDateRange.from, "dd/MM/yy", {locale:ptBR})) : (<span>Escolha um intervalo</span>)}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-card" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={activityDateRange?.from}
-                selected={activityDateRange}
-                onSelect={setActivityDateRange}
-                numberOfMonths={2}
-                locale={ptBR}
-              />
+              <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={setActivityDateRange} numberOfMonths={2} locale={ptBR}/>
             </PopoverContent>
           </Popover>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        {/* Time Range Filters - Kept for layout */}
+        <div className="grid grid-cols-2 gap-2 xl:col-span-2">
             <div>
-              <label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</label>
+              <Label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</Label>
               <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => setTimeFromFilter(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</label>
+              <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label>
               <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => setTimeToFilter(e.target.value)} />
             </div>
         </div>
-         <div className="lg:col-span-3 flex justify-end gap-2 items-center mt-2 lg:mt-0">
-            <Button variant="outline" disabled><ShieldIconLucide className="mr-2 h-4 w-4" /> Verificar Equip.</Button>
-            <Button disabled><UserPlus className="mr-2 h-4 w-4" /> Adicionar Membro</Button>
+
+         <div className="xl:col-span-1 flex justify-end items-end gap-2">
+            <Button variant="outline" disabled className="w-full"><Filter className="mr-2 h-4 w-4" /> Aplicar</Button>
         </div>
       </div>
+
 
       <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow">
         <div className="flex items-center gap-2">
@@ -617,11 +771,12 @@ function MembersPageContent() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled>Promover Selecionados</DropdownMenuItem>
               <DropdownMenuItem disabled>Rebaixar Selecionados</DropdownMenuItem>
+              <DropdownMenuItem disabled>Alterar Status Selecionados</DropdownMenuItem>
               <DropdownMenuSeparator/>
               <DropdownMenuItem className="text-destructive focus:text-destructive" disabled>Remover Selecionados</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" disabled><SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros</Button>
+          <Button variant="outline" disabled><SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros Avançados</Button>
           <Button variant="outline" disabled><Download className="mr-2 h-4 w-4" /> Exportar</Button>
         </div>
       </div>
@@ -639,7 +794,7 @@ function MembersPageContent() {
                 />
               </TableHead>
               <TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              {guild.game === "Throne and Liberty" && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}
+              {isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}
               <TableHead>Armas</TableHead>
               <TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               <TableHead>Rank <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
@@ -652,8 +807,8 @@ function MembersPageContent() {
           <TableBody>
             {paginatedMembers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={guild.game === "Throne and Liberty" ? (isGuildLeaderOrVice ? 9 : 8) : (isGuildLeaderOrVice ? 8 : 7)} className="text-center h-24">
-                  Nenhum membro encontrado {usernameFilter ? "com o filtro aplicado." : "nesta guilda."}
+                <TableCell colSpan={isTLGuild ? (isGuildLeaderOrVice ? 9 : 8) : (isGuildLeaderOrVice ? 8 : 7)} className="text-center h-24">
+                  Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
                 </TableCell>
               </TableRow>
             )}
@@ -666,8 +821,8 @@ function MembersPageContent() {
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
                   <TableCell><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${member.displayName}`}/></TableCell>
                   
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
+                  <TableCell>
+                    <div className="flex items-center gap-2 font-medium">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${member.displayName?.substring(0,1) || 'M'}`} alt={member.displayName || 'Avatar'} data-ai-hint="user avatar"/>
                         <AvatarFallback>{member.displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
@@ -676,7 +831,7 @@ function MembersPageContent() {
                     </div>
                   </TableCell>
 
-                  {guild.game === "Throne and Liberty" && (
+                  {isTLGuild && (
                     <TableCell>
                       <div className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>
                         {getTLRoleIcon(member.tlRole)}
@@ -721,15 +876,18 @@ function MembersPageContent() {
                   )}
 
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(member.status)} className={cn("text-xs", getStatusBadgeClass(member.status))}>
-                      {member.status}
+                     <Badge variant="outline" className={cn("text-xs", getStatusBadgeClass(member.status))}>
+                       <div className="flex items-center gap-1">
+                        {getStatusIcon(member.status)}
+                        {member.status}
+                       </div>
                     </Badge>
                   </TableCell>
 
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Search className="h-4 w-4" /></Button>
-                      {(!isCurrentUserTarget && (permissions.canChangeRole || permissions.canKick)) && (
+                      {(!isCurrentUserTarget && (permissions.canChangeRole || permissions.canKick || permissions.canChangeStatus)) && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -744,6 +902,22 @@ function MembersPageContent() {
                               <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")}>
                                   <UserCog className="mr-2 h-4 w-4" /> Alterar Cargo Geral
                               </DropdownMenuItem>
+                            )}
+                             {permissions.canChangeStatus && (
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                        <UserCog className="mr-2 h-4 w-4" />Alterar Status
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        {(['Ativo', 'Inativo', 'Licença'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => (
+                                            <DropdownMenuItem key={statusOption} onSelect={() => { setActionUser(member); setSelectedNewStatus(statusOption); handleChangeStatus(); }}>
+                                                {getStatusIcon(statusOption)} {statusOption}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
                             )}
                             {permissions.canKick && (
                               <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}>
@@ -882,6 +1056,3 @@ export default function MembersPage() {
     </Suspense>
   );
 }
-
-
-    

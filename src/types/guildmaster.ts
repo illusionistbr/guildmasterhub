@@ -26,12 +26,15 @@ export enum TLWeapon {
   Spear = "Spear",
 }
 
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licença' | 'Banido';
+
 export interface GuildMemberRoleInfo {
   generalRole: GuildRole;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
+  status?: MemberStatus; // Added status here
 }
 
 export interface Guild {
@@ -47,15 +50,15 @@ export interface Guild {
   game?: string;
   tags?: string[];
   createdAt?: Date | Timestamp;
-  password?: string; // If present, guild is private and requires this password OR application
-  isOpen?: boolean; // If true, guild is public (no password needed). If false or undefined WITH a password, it's private.
+  password?: string; 
+  isOpen?: boolean; 
   socialLinks?: {
     facebook?: string;
     x?: string;
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole }; // GuildRole is for backward compatibility
+  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole }; 
 }
 
 export interface Event {
@@ -95,7 +98,7 @@ export interface Application {
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   discordNick: string;
-  status: 'pending' | 'approved' | 'rejected' | 'auto_approved'; // Added 'auto_approved'
+  status: 'pending' | 'approved' | 'rejected' | 'auto_approved';
   submittedAt: Timestamp;
   reviewedBy?: string; 
   reviewedAt?: Timestamp;
@@ -122,11 +125,12 @@ export interface GuildMember extends UserProfile {
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   gearScore?: number;
   dkpBalance?: number;
-  status?: 'Ativo' | 'Inativo' | 'De Licença' | 'Banido';
+  status?: MemberStatus; // Updated to use MemberStatus type
 }
 
 export enum AuditActionType {
   MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
+  MEMBER_STATUS_CHANGED = "MEMBER_STATUS_CHANGED", // New action type
   MEMBER_KICKED = "MEMBER_KICKED",
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
@@ -153,18 +157,18 @@ export enum AuditActionType {
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | GuildRole | boolean | TLRole | TLWeapon;
-  newValue?: string | GuildRole | boolean | TLRole | TLWeapon;
+  oldValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus; // Added MemberStatus
+  newValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus; // Added MemberStatus
   fieldName?: string;
   kickedUserRole?: GuildRole;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status'; // Added status
   noteSummary?: string;
   applicationId?: string;
-  details?: { // For MEMBER_JOINED to specify method
+  details?: { 
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
   };
 }
