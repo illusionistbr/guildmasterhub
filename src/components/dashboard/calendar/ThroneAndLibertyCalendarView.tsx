@@ -112,7 +112,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
     'Purelight Hills', 'Raging Wilds', 'Ruins of Turayne', 'Sandworm Lair',
     'Shattered Temple', 'Urstella Fields', 'Windhill Shores', "Quietis' Demesne",
     'Forest of the Great Tree', 'Swamp of Silence', 'Black Anvil Forge',
-    'Bercant Manor', 'Crimson Manor',
+    'Bercant Estate', 'Crimson Mansion', // Note: These are also in world_dungeon, ensure icon logic handles potential overlaps if names are identical
   ],
   riftstone: [
     'Adentus Riftstone', 'Azhreil Riftstone', 'Chernobog Riftstone',
@@ -169,6 +169,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
 };
 
 const ACTIVITY_ICONS: Record<string, string> = {
+  // World Events
   'Wolf Hunting Contest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_WolfHuntingContest_On_Sprite.webp",
   'Festival of Fire': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_FestivalofFire_On_Sprite.webp",
   'Requiem of Light': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_RequiemofLight_On_Sprite.webp",
@@ -183,33 +184,6 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
-  
-  // Boonstones (Common Icon)
-  'Abandoned Stonemason': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Akidu Valley': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Blackhowl Plains': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Carmine Forest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Daybreak Shore': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Fonos Basin': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Golden Rye Pastures': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Grayclaw Forest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Manawastes': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Moonlight Desert': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Monolith Wastelands': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Nesting Grounds': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Purelight Hills': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Raging Wilds': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Ruins of Turayne': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Sandworm Lair': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Shattered Temple': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Urstella Fields': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Windhill Shores': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  "Quietis' Demesne": "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Forest of the Great Tree': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Swamp of Silence': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Black Anvil Forge': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Bercant Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Crimson Manor': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
   
   // World Bosses
   'Adentus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
@@ -231,6 +205,15 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Pakilo Naru': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_PakiloNaru_On.webp",
   'Exodus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_EvilEyeSurveilant_On_Sprite.webp",
   'Grimturg': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
+  'Bellandir': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_QueenBlendy_On_Sprite.webp",
+  'Tevent': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_Tevent_On_Sprite.webp",
+
+  // Arch Bosses
+  'Queen Bellandir': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_QueenBlendy_On_Sprite.webp",
+  "Courte's Wraith Tevent": "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_Tevent_On_Sprite.webp",
+
+  // Raid
+  'Excavator-9': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_KingmineBoom_Target.webp",
 
   // Tax Delivery
   'Vienta village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
@@ -238,31 +221,23 @@ const ACTIVITY_ICONS: Record<string, string> = {
   // Siege
   'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
   
-  // Riftstones (Common Icon)
-  'Adentus Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Azhreil Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Chernobog Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Excavator Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Grand Aelon Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Kowazan Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Malakar Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Morokai Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Talus Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Daigon Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Leviathan Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Pakilo Naru Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
-  'Manticus Brothers Riftstone': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp",
+  // Boonstones (Category items - generic icon for those not containing "Boonstone" in name)
+  ...Object.fromEntries(TL_ACTIVITIES.boonstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
+  
+  // Riftstones (Category items - generic icon for those not containing "Riftstone" in name, though most will be overridden by name rule)
+  ...Object.fromEntries(TL_ACTIVITIES.riftstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
+  
+  // World Dungeons (Common Icon for all in this category)
+  ...Object.fromEntries(TL_ACTIVITIES.world_dungeon.map(act => [act, 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp'])),
 
-  // World Dungeons (Common Icon)
-  'Ant Nest': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Sanctum of Desire': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Saurodoma Island': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Shadowed Crypt': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  "Syleus's Abyss": 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Temple of Sylaveth': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Temple of Truth': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Bercant Estate': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
-  'Crimson Mansion': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp',
+  // Icons for activities containing "Boonstone" in their name (Applied after generic boonstone category icons)
+  ...Object.fromEntries(
+    Object.values(TL_ACTIVITIES).flat().filter(act => act.toLowerCase().includes("boonstone")).map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Origin_Sprite1.webp"])
+  ),
+  // Icons for activities containing "Riftstone" in their name (Applied after generic riftstone category icons and boonstone name icons)
+  ...Object.fromEntries(
+    Object.values(TL_ACTIVITIES).flat().filter(act => act.toLowerCase().includes("riftstone")).map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])
+  ),
 };
 
 
@@ -579,7 +554,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                 </DialogDescription>
             </DialogHeader>
             
-            <div className="h-[400px] overflow-y-auto">
+            <div className="flex-grow overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
