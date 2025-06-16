@@ -187,7 +187,7 @@ function ApplyPageContent() {
         const guildRef = doc(db, "guilds", guildId);
         
         let memberRoleInfo: GuildMemberRoleInfo = {
-          generalRole: GuildRole.Membro,
+          generalRole: GuildRole.Member, // Correctly use the enum key "Member"
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0, 
         };
@@ -217,7 +217,7 @@ function ApplyPageContent() {
         
         await batch.commit();
 
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_JOINED, { 
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuário", AuditActionType.MEMBER_JOINED, { 
             targetUserId: currentUser.uid, 
             targetUserDisplayName: data.characterNickname,
             details: { joinMethod: 'public_form_join' } as any,
@@ -237,7 +237,7 @@ function ApplyPageContent() {
           status: 'pending', 
         });
 
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.APPLICATION_SUBMITTED, {
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuário", AuditActionType.APPLICATION_SUBMITTED, {
           applicationId: newApplicationRef.id,
           targetUserDisplayName: data.characterNickname,
         });
