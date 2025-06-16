@@ -37,7 +37,7 @@ export interface Event {
   id: string;
   guildId: string;
   title: string;
-  description: string;
+  description:string;
   date: string; // ISO date string
   time: string; // e.g., "19:00"
   endDate?: string; // ISO date string, optional
@@ -79,6 +79,13 @@ export interface UserProfile {
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
   };
+  // New fields for member details page
+  weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
+  gearScore?: number;
+  activityPoints?: number;
+  dkpBalance?: number;
+  status?: 'Ativo' | 'Inativo' | 'Banido';
+  // rank is derived from GuildRole for display
 }
 
 export interface GuildMember extends UserProfile {
@@ -105,7 +112,6 @@ export enum AuditActionType {
   ACHIEVEMENT_CREATED = "ACHIEVEMENT_CREATED",
   ACHIEVEMENT_UPDATED = "ACHIEVEMENT_UPDATED",
   ACHIEVEMENT_DELETED = "ACHIEVEMENT_DELETED",
-  // Notification related actions could be added if needed for audit, but notifications themselves are separate
 }
 
 export interface AuditLogDetails {
@@ -148,6 +154,4 @@ export interface AppNotification {
   };
   createdByUserId?: string;
   createdByUserDisplayname?: string | null;
-  // No 'read' field directly on the notification document for guild-wide notifications.
-  // 'Read' status is managed by 'lastNotificationsCheckedTimestamp' on UserProfile per guild.
 }
