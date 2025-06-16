@@ -310,9 +310,18 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
             fetchedEvents.push({ id: doc.id, ...doc.data() } as GuildEvent);
         });
         setCreatedEvents(fetchedEvents);
-    }, (error) => {
+    }, (error: any) => {
         console.error("Error fetching events: ", error);
-        toast({ title: "Erro ao buscar eventos", variant: "destructive" });
+        if (error.code === 'failed-precondition' || error.message.toLowerCase().includes('index')) {
+            toast({
+                title: "Erro ao buscar eventos",
+                description: "Um índice necessário para esta consulta não existe. Verifique o console do Firebase para criar o índice.",
+                variant: "destructive",
+                duration: 10000,
+            });
+        } else {
+            toast({ title: "Erro ao buscar eventos", variant: "destructive" });
+        }
     });
     return () => unsubscribe();
   }, [guildId, toast]);
@@ -780,10 +789,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
                                 <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                               <div className="space-y-2">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                                <div className="space-y-2">
                                     <div className="flex items-center mb-1">
-                                      <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
+                                        <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                                     </div>
                                     <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <Switch
@@ -795,7 +804,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-1 mb-1">
+                                   <div className="flex items-center gap-1 mb-1">
                                         <Label htmlFor="dkpValueForEvent" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
                                         <Tooltip>
                                         <TooltipTrigger asChild>
@@ -946,3 +955,4 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
     </div>
   );
 }
+
