@@ -90,22 +90,45 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
   }
 };
 
-const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember => {
+const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildMemberRoleInfo | GuildRole | undefined, guildGame?: string): GuildMember => {
   const isTLGuild = guildGame === "Throne and Liberty";
   const statuses: MemberStatus[] = ['Ativo', 'Inativo', 'Licença'];
+  
+  let specificRoleInfo: Partial<GuildMemberRoleInfo> = {
+    generalRole: GuildRole.Member, // default
+    status: statuses[Math.floor(Math.random() * statuses.length)], // mock default
+    dkpBalance: 0, // default
+    notes: "", //default
+  };
+
+  if (typeof guildRoleInfo === 'object' && guildRoleInfo !== null && 'generalRole' in guildRoleInfo) {
+    specificRoleInfo = {
+      generalRole: guildRoleInfo.generalRole,
+      tlRole: isTLGuild ? guildRoleInfo.tlRole : undefined,
+      tlPrimaryWeapon: isTLGuild ? guildRoleInfo.tlPrimaryWeapon : undefined,
+      tlSecondaryWeapon: isTLGuild ? guildRoleInfo.tlSecondaryWeapon : undefined,
+      notes: guildRoleInfo.notes || "",
+      status: guildRoleInfo.status || specificRoleInfo.status,
+      dkpBalance: guildRoleInfo.dkpBalance ?? 0,
+    };
+  } else if (typeof guildRoleInfo === 'string') {
+    specificRoleInfo.generalRole = guildRoleInfo as GuildRole;
+  }
+  
   return {
-    ...member,
+    ...memberBaseProfile,
+    role: specificRoleInfo.generalRole!, // It will always have a generalRole
+    tlRole: specificRoleInfo.tlRole,
+    tlPrimaryWeapon: specificRoleInfo.tlPrimaryWeapon,
+    tlSecondaryWeapon: specificRoleInfo.tlSecondaryWeapon,
+    notes: specificRoleInfo.notes,
+    status: specificRoleInfo.status,
+    dkpBalance: specificRoleInfo.dkpBalance,
     weapons: { 
-      mainHandIconUrl: member.tlPrimaryWeapon ? getWeaponIconPath(member.tlPrimaryWeapon) : undefined,
-      offHandIconUrl: member.tlSecondaryWeapon ? getWeaponIconPath(member.tlSecondaryWeapon) : undefined
+      mainHandIconUrl: specificRoleInfo.tlPrimaryWeapon ? getWeaponIconPath(specificRoleInfo.tlPrimaryWeapon) : undefined,
+      offHandIconUrl: specificRoleInfo.tlSecondaryWeapon ? getWeaponIconPath(specificRoleInfo.tlSecondaryWeapon) : undefined
     },
-    gearScore: member.gearScore ?? Math.floor(3800 + Math.random() * 500), // Mock
-    dkpBalance: member.dkpBalance ?? Math.floor(Math.random() * 500), // Mock
-    status: member.status ?? statuses[Math.floor(Math.random() * statuses.length)], // Mock
-    tlRole: isTLGuild ? member.tlRole : undefined,
-    tlPrimaryWeapon: isTLGuild ? member.tlPrimaryWeapon : undefined,
-    tlSecondaryWeapon: isTLGuild ? member.tlSecondaryWeapon : undefined,
-    notes: member.notes ?? "",
+    gearScore: memberBaseProfile.gearScore ?? Math.floor(3800 + Math.random() * 500), // Mock GS for now, if not in UserProfile
   };
 };
 
@@ -179,8 +202,6 @@ function MembersPageContent() {
     if (initialStatus && (['Ativo', 'Inativo', 'Licença'] as MemberStatus[]).concat("all" as any).includes(initialStatus)) {
       setStatusFilter(initialStatus);
     }
-    // If params change, we might want to reset to page 1
-    // setCurrentPage(1); // Consider if this is needed on every searchParams change
   }, [searchParams]);
 
 
@@ -228,28 +249,7 @@ function MembersPageContent() {
           }
           
           const roleInfoSource = guildData.roles?.[uid];
-          let memberSpecificData: Partial<GuildMember> = { role: GuildRole.Member, status: 'Ativo' }; 
-
-          if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
-            const fullRoleInfo = roleInfoSource as GuildMemberRoleInfo;
-            memberSpecificData = {
-              role: fullRoleInfo.generalRole,
-              tlRole: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlRole : undefined,
-              tlPrimaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlPrimaryWeapon : undefined,
-              tlSecondaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlSecondaryWeapon : undefined,
-              notes: fullRoleInfo.notes || "",
-              status: fullRoleInfo.status || 'Ativo',
-            };
-          } else if (typeof roleInfoSource === 'string') { 
-            memberSpecificData.role = roleInfoSource as GuildRole;
-            memberSpecificData.status = 'Ativo'; 
-          }
-          
-          processedMembers.push(enhanceMemberData({
-            ...baseProfile, 
-            uid: uid,
-            ...memberSpecificData, 
-          }, guildData.game));
+          processedMembers.push(enhanceMemberData(baseProfile, roleInfoSource, guildData.game));
         }
         
         processedMembers.sort((a, b) => (a.displayName || a.uid).localeCompare(b.displayName || b.uid)); 
@@ -258,29 +258,13 @@ function MembersPageContent() {
       } else { 
          if (guildData.ownerId === currentUser.uid) {
             const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
-            let ownerSpecificData: Partial<GuildMember> = { role: GuildRole.Leader, status: 'Ativo' };
-             if (typeof ownerRoleInfoSource === 'object' && ownerRoleInfoSource !== null && 'generalRole' in ownerRoleInfoSource) {
-                const fullRoleInfo = ownerRoleInfoSource as GuildMemberRoleInfo;
-                ownerSpecificData = {
-                    role: fullRoleInfo.generalRole, 
-                    tlRole: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlRole : undefined,
-                    tlPrimaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlPrimaryWeapon : undefined,
-                    tlSecondaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlSecondaryWeapon : undefined,
-                    notes: fullRoleInfo.notes || "",
-                    status: fullRoleInfo.status || 'Ativo',
-                };
-            } else if (typeof ownerRoleInfoSource === 'string') {
-                ownerSpecificData.role = ownerRoleInfoSource as GuildRole;
-                ownerSpecificData.status = 'Ativo';
-            }
-
-            setMembers([enhanceMemberData({
+            const ownerBaseProfile: UserProfile = {
                 uid: currentUser.uid,
                 email: currentUser.email,
                 displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
                 photoURL: currentUser.photoURL,
-                ...ownerSpecificData,
-            }, guildData.game)]);
+            };
+            setMembers([enhanceMemberData(ownerBaseProfile, ownerRoleInfoSource, guildData.game)]);
          } else {
             setMembers([]);
          }
@@ -395,6 +379,7 @@ function MembersPageContent() {
           tlSecondaryWeapon: actionUser.tlSecondaryWeapon, 
           notes: actionUser.notes || "", 
           status: actionUser.status || 'Ativo',
+          dkpBalance: actionUser.dkpBalance || 0,
         };
       }
 
@@ -441,6 +426,7 @@ function MembersPageContent() {
                 generalRole: targetMember.role, 
                 status: statusToSet,
                 notes: targetMember.notes || "",
+                dkpBalance: targetMember.dkpBalance || 0,
             };
         }
 
@@ -521,6 +507,7 @@ function MembersPageContent() {
           tlSecondaryWeapon: memberForNotes.tlSecondaryWeapon,
           notes: currentNote,
           status: memberForNotes.status || 'Ativo',
+          dkpBalance: memberForNotes.dkpBalance || 0,
         };
       }
 
@@ -1084,4 +1071,3 @@ export default function MembersPage() {
     </Suspense>
   );
 }
-

@@ -215,6 +215,7 @@ function ApplicationsPageContent() {
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
                 tlSecondaryWeapon: application.tlSecondaryWeapon,
+                dkpBalance: 0, // Initialize DKP
             };
             batch.update(guildRef, {
                 memberIds: arrayUnion(application.applicantId),
@@ -448,4 +449,3 @@ export default function ApplicationsPage() {
     </Suspense>
   );
 }
-

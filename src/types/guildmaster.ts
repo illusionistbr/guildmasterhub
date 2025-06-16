@@ -35,6 +35,7 @@ export interface GuildMemberRoleInfo {
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
   status?: MemberStatus;
+  dkpBalance?: number; // Added DKP Balance
 }
 
 export interface Guild {
@@ -73,6 +74,10 @@ export interface Event {
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
+  dkpValue?: number;
+  requiresPin?: boolean;
+  pinCode?: string;
+  attendeesWithPin?: string[]; // Added
 }
 
 export interface Achievement {
@@ -124,7 +129,7 @@ export interface GuildMember extends UserProfile {
   notes?: string;
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   gearScore?: number;
-  dkpBalance?: number;
+  dkpBalance?: number; // DKP Balance here is for the combined type
   status?: MemberStatus;
 }
 
@@ -135,6 +140,7 @@ export enum AuditActionType {
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
+  DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN", // New Action Type
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -168,6 +174,7 @@ export interface AuditLogDetails {
   changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status';
   noteSummary?: string;
   applicationId?: string;
+  dkpValueAwarded?: number; // New detail for DKP
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
   };
