@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
+  // SidebarGroupLabel, // No longer needed for "Geral"
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -24,25 +24,29 @@ import {
   ShieldEllipsis,
   LogOut,
   ClipboardList,
-  FileText // For applications sub-item
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navItemsBase = [
+// Main navigation items (excluding settings which is now a bottom item)
+const mainNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { baseHref: "/dashboard/members", label: "Membros", icon: Users },
   { baseHref: "/dashboard/calendar", label: "Calendário", icon: CalendarDays },
   { 
     label: "Recrutamento", 
-    icon: UserPlus, // Main icon for the group
-    baseHref: "/dashboard/recruitment", // Main link for the group header if clickable
+    icon: UserPlus,
+    baseHref: "/dashboard/recruitment",
     subItems: [
-      // No "Visão Geral" sub-item as per new request for main link
       { baseHref: "/dashboard/recruitment/applications", label: "Candidaturas", icon: FileText },
     ]
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
-  { baseHref: "/dashboard/settings", label: "Configurações", icon: Settings, group: "Geral" },
+];
+
+// Bottom navigation items (like Settings)
+const bottomNavItems = [
+  { baseHref: "/dashboard/settings", label: "Configurações", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -71,12 +75,12 @@ export function AppSidebar() {
 
       <SidebarContent className="flex-grow p-2">
         <SidebarMenu>
-          {navItemsBase.filter(item => !item.group).map((item) => {
+          {mainNavItems.map((item) => {
             const currentHref = generateHref(item.baseHref);
             return item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
                 <SidebarMenuButton
-                  asChild={!!item.baseHref} // Make it a link if baseHref exists
+                  asChild={!!item.baseHref}
                   href={item.baseHref ? generateHref(item.baseHref) : undefined}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                   isActive={isActive(currentHref) || item.subItems.some(sub => isActive(generateHref(sub.baseHref)))}
@@ -124,25 +128,27 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
         
-        <SidebarGroup className="mt-auto">
-           <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Geral</SidebarGroupLabel>
-           {navItemsBase.filter(item => item.group === "Geral").map((item) => {
-             const currentHref = generateHref(item.baseHref);
-             return (
-              <SidebarMenuItem key={item.baseHref}>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={isActive(currentHref)}
-                >
-                  <Link href={currentHref}>
-                    <item.icon />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-             )
-           })}
+        <SidebarGroup className="mt-auto"> {/* This pushes the group to the bottom */}
+           {/* No SidebarGroupLabel here for "Geral" */}
+           <SidebarMenu>
+             {bottomNavItems.map((item) => {
+               const currentHref = generateHref(item.baseHref);
+               return (
+                <SidebarMenuItem key={item.baseHref}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                    isActive={isActive(currentHref)}
+                  >
+                    <Link href={currentHref}>
+                      <item.icon />
+                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+               )
+             })}
+           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
 
