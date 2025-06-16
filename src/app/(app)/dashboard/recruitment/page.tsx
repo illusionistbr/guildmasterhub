@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link'; // Added import for Link
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc } from '@/lib/firebase';
@@ -181,3 +182,4 @@ export default function RecruitmentPage() {
     </Suspense>
   );
 }
+
