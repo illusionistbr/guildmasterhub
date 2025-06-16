@@ -26,7 +26,7 @@ export enum TLWeapon {
   Spear = "Spear",
 }
 
-export type MemberStatus = 'Ativo' | 'Inativo' | 'Licença' | 'Banido';
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licença';
 
 export interface GuildMemberRoleInfo {
   generalRole: GuildRole;
@@ -34,7 +34,7 @@ export interface GuildMemberRoleInfo {
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
-  status?: MemberStatus; // Added status here
+  status?: MemberStatus; 
 }
 
 export interface Guild {
@@ -125,12 +125,12 @@ export interface GuildMember extends UserProfile {
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   gearScore?: number;
   dkpBalance?: number;
-  status?: MemberStatus; // Updated to use MemberStatus type
+  status?: MemberStatus;
 }
 
 export enum AuditActionType {
   MEMBER_ROLE_CHANGED = "MEMBER_ROLE_CHANGED",
-  MEMBER_STATUS_CHANGED = "MEMBER_STATUS_CHANGED", // New action type
+  MEMBER_STATUS_CHANGED = "MEMBER_STATUS_CHANGED",
   MEMBER_KICKED = "MEMBER_KICKED",
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
@@ -157,15 +157,15 @@ export enum AuditActionType {
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus; // Added MemberStatus
-  newValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus; // Added MemberStatus
+  oldValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus;
+  newValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus;
   fieldName?: string;
   kickedUserRole?: GuildRole;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status'; // Added status
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status';
   noteSummary?: string;
   applicationId?: string;
   details?: { 

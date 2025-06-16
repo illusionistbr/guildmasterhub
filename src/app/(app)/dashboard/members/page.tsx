@@ -96,12 +96,12 @@ const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember
   return {
     ...member,
     weapons: { 
-      mainHandIconUrl: member.tlPrimaryWeapon ? getWeaponIconPath(member.tlPrimaryWeapon) : `https://placehold.co/32x32.png?text=MH`,
-      offHandIconUrl: member.tlSecondaryWeapon ? getWeaponIconPath(member.tlSecondaryWeapon) : `https://placehold.co/32x32.png?text=OH`
+      mainHandIconUrl: member.tlPrimaryWeapon ? getWeaponIconPath(member.tlPrimaryWeapon) : undefined,
+      offHandIconUrl: member.tlSecondaryWeapon ? getWeaponIconPath(member.tlSecondaryWeapon) : undefined
     },
-    gearScore: member.gearScore ?? Math.floor(3800 + Math.random() * 500),
-    dkpBalance: member.dkpBalance ?? Math.floor(Math.random() * 500),
-    status: member.status ?? statuses[Math.floor(Math.random() * statuses.length)],
+    gearScore: member.gearScore ?? Math.floor(3800 + Math.random() * 500), // Mock
+    dkpBalance: member.dkpBalance ?? Math.floor(Math.random() * 500), // Mock
+    status: member.status ?? statuses[Math.floor(Math.random() * statuses.length)], // Mock
     tlRole: isTLGuild ? member.tlRole : undefined,
     tlPrimaryWeapon: isTLGuild ? member.tlPrimaryWeapon : undefined,
     tlSecondaryWeapon: isTLGuild ? member.tlSecondaryWeapon : undefined,
@@ -304,15 +304,16 @@ function MembersPageContent() {
       return { 
         canChangeRole: targetMemberRole !== GuildRole.Leader && !isSelf, 
         canKick: targetMemberRole !== GuildRole.Leader && !isSelf,
-        canChangeStatus: !isSelf // Leader cannot make self inactive directly via this UI
+        canChangeStatus: !isSelf 
       };
     }
     if (currentUserRoleInGuild === GuildRole.ViceLeader) {
-      const isLowerRank = [GuildRole.Counselor, GuildRole.Officer, GuildRole.Member].includes(targetMemberRole);
+      const isLowerOrSameRankForStatus = [GuildRole.ViceLeader, GuildRole.Counselor, GuildRole.Officer, GuildRole.Member].includes(targetMemberRole);
+      const isLowerRankForRoleAndKick = [GuildRole.Counselor, GuildRole.Officer, GuildRole.Member].includes(targetMemberRole);
       return { 
-        canChangeRole: isLowerRank, 
-        canKick: isLowerRank && targetMemberRole !== GuildRole.Leader,
-        canChangeStatus: isLowerRank || targetMemberRole === GuildRole.ViceLeader // Vice can change own status
+        canChangeRole: isLowerRankForRoleAndKick, 
+        canKick: isLowerRankForRoleAndKick && targetMemberRole !== GuildRole.Leader,
+        canChangeStatus: isLowerOrSameRankForStatus 
       };
     }
     return { canChangeRole: false, canKick: false, canChangeStatus: false };
@@ -378,7 +379,7 @@ function MembersPageContent() {
       await updateDoc(guildRef, { [`roles.${actionUser.uid}`]: newRoleInfoPayload });
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_ROLE_CHANGED, { 
         targetUserId: actionUser.uid, targetUserDisplayName: actionUser.displayName || actionUser.email || actionUser.uid,
-        oldValue: oldRole, newValue: selectedNewRole 
+        oldValue: oldRole, newValue: selectedNewRole, changedField: 'generalRole'
       });
       toast({ title: "Cargo Atualizado!", description: `${actionUser.displayName} agora é ${selectedNewRole}.` });
       fetchGuildAndMembers(); 
@@ -391,38 +392,48 @@ function MembersPageContent() {
     }
   };
 
-  const handleChangeStatus = async () => {
-    if (!actionUser || !guild || selectedNewStatus === '' || !guildId || !currentUser) return;
-    const oldStatus = actionUser.status;
+  const handleChangeStatus = async (memberToUpdate?: GuildMember, newStatus?: MemberStatus) => {
+    const targetMember = memberToUpdate || actionUser;
+    const statusToSet = newStatus || selectedNewStatus;
+
+    if (!targetMember || !guild || statusToSet === '' || !guildId || !currentUser) return;
+    
+    const oldStatus = targetMember.status;
+
+    if(targetMember.uid === currentUser.uid && statusToSet === 'Inativo' && currentUserRoleInGuild === GuildRole.Leader) {
+        toast({ title: "Ação Inválida", description: "O Líder não pode definir seu próprio status como Inativo diretamente.", variant: "destructive" });
+        closeActionDialog();
+        return;
+    }
 
     setIsProcessingAction(true);
     try {
         const guildRef = doc(db, "guilds", guildId);
-        const existingRoleInfo = guild.roles?.[actionUser.uid];
+        const existingRoleInfo = guild.roles?.[targetMember.uid];
         let updatedRoleInfoPayload: GuildMemberRoleInfo;
 
         if (typeof existingRoleInfo === 'object' && existingRoleInfo !== null && 'generalRole' in existingRoleInfo) {
-            updatedRoleInfoPayload = { ...(existingRoleInfo as GuildMemberRoleInfo), status: selectedNewStatus };
+            updatedRoleInfoPayload = { ...(existingRoleInfo as GuildMemberRoleInfo), status: statusToSet };
         } else { 
-            // This case should ideally not happen if members always have a GuildMemberRoleInfo object
             updatedRoleInfoPayload = {
-                generalRole: actionUser.role, 
-                status: selectedNewStatus,
-                notes: actionUser.notes || "",
+                generalRole: targetMember.role, 
+                status: statusToSet,
+                notes: targetMember.notes || "",
             };
         }
 
-        await updateDoc(guildRef, { [`roles.${actionUser.uid}`]: updatedRoleInfoPayload });
+        await updateDoc(guildRef, { [`roles.${targetMember.uid}`]: updatedRoleInfoPayload });
         
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_STATUS_CHANGED, {
-            targetUserId: actionUser.uid,
-            targetUserDisplayName: actionUser.displayName || actionUser.email || actionUser.uid,
+            targetUserId: targetMember.uid,
+            targetUserDisplayName: targetMember.displayName || targetMember.email || targetMember.uid,
             oldValue: oldStatus,
-            newValue: selectedNewStatus,
+            newValue: statusToSet,
+            changedField: 'status'
         });
 
-        toast({ title: "Status Atualizado!", description: `O status de ${actionUser.displayName} foi alterado para ${selectedNewStatus}.` });
-        fetchGuildAndMembers();
+        toast({ title: "Status Atualizado!", description: `O status de ${targetMember.displayName} foi alterado para ${statusToSet}.` });
+        fetchGuildAndMembers(); // Refreshes all member data including the updated status
         closeActionDialog();
     } catch (error) {
         console.error("Erro ao mudar status:", error);
@@ -497,6 +508,7 @@ function MembersPageContent() {
         targetUserId: memberForNotes.uid,
         targetUserDisplayName: memberForNotes.displayName || "N/A",
         noteSummary: currentNote ? "Nota atualizada" : "Nota removida",
+        changedField: 'notes'
       });
 
       toast({ title: "Nota Salva!", description: `Nota para ${memberForNotes.displayName} foi salva.` });
@@ -652,7 +664,7 @@ function MembersPageContent() {
         {/* Username Filter */}
         <div className="xl:col-span-2">
           <Label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</Label>
-          <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} />
+          <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} className="form-input"/>
         </div>
 
         {/* TL Role Filter (Conditional) */}
@@ -660,7 +672,7 @@ function MembersPageContent() {
           <div>
             <Label htmlFor="tlRoleFilter" className="block text-sm font-medium text-muted-foreground mb-1">Função (TL)</Label>
             <Select value={tlRoleFilter} onValueChange={(value) => setTlRoleFilter(value as TLRole | "all")}>
-              <SelectTrigger id="tlRoleFilter"><SelectValue placeholder="Todas" /></SelectTrigger>
+              <SelectTrigger id="tlRoleFilter" className="form-input"><SelectValue placeholder="Todas" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 {Object.values(TLRole).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
@@ -673,7 +685,7 @@ function MembersPageContent() {
         <div>
           <Label htmlFor="gearSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Gear</Label>
           <Select value={gearSortOrder} onValueChange={(value) => setGearSortOrder(value as GearSortOrder)}>
-            <SelectTrigger id="gearSortOrder"><SelectValue placeholder="Padrão" /></SelectTrigger>
+            <SelectTrigger id="gearSortOrder" className="form-input"><SelectValue placeholder="Padrão" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Padrão</SelectItem>
               <SelectItem value="asc">Menor para Maior</SelectItem>
@@ -686,7 +698,7 @@ function MembersPageContent() {
         <div>
           <Label htmlFor="rankFilter" className="block text-sm font-medium text-muted-foreground mb-1">Rank</Label>
           <Select value={rankFilter} onValueChange={(value) => setRankFilter(value as GuildRole | "all")}>
-            <SelectTrigger id="rankFilter"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger id="rankFilter" className="form-input"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {Object.values(GuildRole).map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
@@ -698,7 +710,7 @@ function MembersPageContent() {
         <div>
           <Label htmlFor="dkpSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Balanço DKP</Label>
           <Select value={dkpSortOrder} onValueChange={(value) => setDkpSortOrder(value as DkpSortOrder)}>
-            <SelectTrigger id="dkpSortOrder"><SelectValue placeholder="Padrão" /></SelectTrigger>
+            <SelectTrigger id="dkpSortOrder" className="form-input"><SelectValue placeholder="Padrão" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Padrão</SelectItem>
               <SelectItem value="asc">Menor para Maior</SelectItem>
@@ -711,7 +723,7 @@ function MembersPageContent() {
         <div>
           <Label htmlFor="statusFilter" className="block text-sm font-medium text-muted-foreground mb-1">Status</Label>
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MemberStatus | "all")}>
-            <SelectTrigger id="statusFilter"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger id="statusFilter" className="form-input"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {(['Ativo', 'Inativo', 'Licença'] as MemberStatus[]).map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
@@ -724,7 +736,7 @@ function MembersPageContent() {
           <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal",!activityDateRange?.from && "text-muted-foreground")}>
+              <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input",!activityDateRange?.from && "text-muted-foreground")}>
                 <CalendarDays className="mr-2 h-4 w-4" />
                 {activityDateRange?.from ? (activityDateRange.to ? (<>{format(activityDateRange.from, "dd/MM/yy", {locale:ptBR})} - {format(activityDateRange.to, "dd/MM/yy", {locale:ptBR})}</>) : format(activityDateRange.from, "dd/MM/yy", {locale:ptBR})) : (<span>Escolha um intervalo</span>)}
               </Button>
@@ -738,11 +750,11 @@ function MembersPageContent() {
         <div className="grid grid-cols-2 gap-2 xl:col-span-2">
             <div>
               <Label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</Label>
-              <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => setTimeFromFilter(e.target.value)} />
+              <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => setTimeFromFilter(e.target.value)} className="form-input" />
             </div>
             <div>
               <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label>
-              <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => setTimeToFilter(e.target.value)} />
+              <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => setTimeToFilter(e.target.value)} className="form-input" />
             </div>
         </div>
 
@@ -887,7 +899,7 @@ function MembersPageContent() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Search className="h-4 w-4" /></Button>
-                      {(!isCurrentUserTarget && (permissions.canChangeRole || permissions.canKick || permissions.canChangeStatus)) && (
+                      {(isGuildLeaderOrVice && !isCurrentUserTarget && (permissions.canChangeRole || permissions.canKick || permissions.canChangeStatus)) && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -911,7 +923,7 @@ function MembersPageContent() {
                                     <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
                                         {(['Ativo', 'Inativo', 'Licença'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => (
-                                            <DropdownMenuItem key={statusOption} onSelect={() => { setActionUser(member); setSelectedNewStatus(statusOption); handleChangeStatus(); }}>
+                                            <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }}>
                                                 {getStatusIcon(statusOption)} {statusOption}
                                             </DropdownMenuItem>
                                         ))}
@@ -944,7 +956,7 @@ function MembersPageContent() {
             <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Linhas/pág:</span>
                 <Select value={rowsPerPage.toString()} onValueChange={(value) => { setRowsPerPage(Number(value)); setCurrentPage(1);}}>
-                    <SelectTrigger className="w-[70px] h-8 text-xs">
+                    <SelectTrigger className="w-[70px] h-8 text-xs form-input">
                         <SelectValue placeholder={rowsPerPage.toString()} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1004,7 +1016,7 @@ function MembersPageContent() {
           </AlertDialogHeader>
           <div className="py-4">
             <Select value={selectedNewRole} onValueChange={(value) => setSelectedNewRole(value as GuildRole)}>
-              <SelectTrigger>
+              <SelectTrigger className="form-input">
                 <SelectValue placeholder="Selecione um novo cargo" />
               </SelectTrigger>
               <SelectContent>
