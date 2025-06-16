@@ -416,24 +416,39 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
       return;
     }
     const eventPinCode = generatePinCode ? generateNumericPin(6) : undefined;
-    const newActivityData: Omit<GuildEvent, 'id'> & { createdAt: Timestamp } = {
-      guildId: guildId,
-      title: activityTitleToSave,
-      description: activityDescription.trim() || undefined,
-      date: selectedStartDate.toISOString().split('T')[0],
-      time: selectedStartTime,
-      endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined,
-      endTime: selectedEndDate ? selectedEndTime : undefined,
-      organizerId: user.uid,
-      dkpValue: dkpValueForEvent > 0 ? dkpValueForEvent : undefined,
-      requiresPin: generatePinCode,
-      pinCode: eventPinCode,
-      createdAt: serverTimestamp() as Timestamp,
+    
+    const activityDataToSave: Record<string, any> = {
+        guildId: guildId,
+        title: activityTitleToSave,
+        date: selectedStartDate.toISOString().split('T')[0],
+        time: selectedStartTime,
+        organizerId: user.uid,
+        requiresPin: generatePinCode,
+        createdAt: serverTimestamp() as Timestamp,
     };
+
+    if (activityDescription.trim()) {
+        activityDataToSave.description = activityDescription.trim();
+    }
+    if (selectedEndDate) {
+        activityDataToSave.endDate = selectedEndDate.toISOString().split('T')[0];
+        activityDataToSave.endTime = selectedEndTime;
+    }
+    if (dkpValueForEvent > 0) {
+        activityDataToSave.dkpValue = dkpValueForEvent;
+    }
+    if (eventPinCode) {
+        activityDataToSave.pinCode = eventPinCode;
+    }
+    // location is not currently handled, so it's omitted.
+
+    const newActivityData = activityDataToSave as Omit<GuildEvent, 'id'> & { createdAt: Timestamp };
+
     try {
       const eventsCollectionRef = collection(db, `guilds/${guildId}/events`);
       const docRef = await addDoc(eventsCollectionRef, newActivityData);
       toast({ title: "Atividade Salva!", description: `"${activityTitleToSave}" foi adicionado ao calendário.` });
+      
       if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
         const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
         const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
@@ -462,7 +477,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
       setDialogIsOpen(false);
       resetDialogStates();
     } catch (error) {
-        console.error("Error saving activity to Firestore:", error);
+        console.error("Error saving activity to Firestore:", error, "Data:", newActivityData);
         toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a atividade no banco de dados.", variant: "destructive"});
     }
   };
