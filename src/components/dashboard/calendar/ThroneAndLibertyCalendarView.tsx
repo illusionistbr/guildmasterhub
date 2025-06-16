@@ -761,40 +761,43 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             </div>
 
                             {/* Mandatory and Attendance Value */}
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                                <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
-                                    <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
-                                    <Switch
-                                        id="mandatory-switch"
-                                        checked={isMandatory}
-                                        onCheckedChange={setIsMandatory}
-                                    />
-                                    <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="mandatory-switch" className="text-foreground font-semibold block mb-1">Obrigatório</Label>
+                                    <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
+                                        <Switch
+                                            id="mandatory-switch"
+                                            checked={isMandatory}
+                                            onCheckedChange={setIsMandatory}
+                                        />
+                                        <span className="text-sm text-foreground">{isMandatory ? "Sim" : "Não"}</span>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
-                                <div className="flex items-center gap-1">
-                                    <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
-                                    <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
-                                        <Info className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
-                                        <p>A quantidade de pontos de atividade e DKP que serão concedidos aos membros que participarem desta atividade.</p>
-                                    </TooltipContent>
-                                    </Tooltip>
-                                </div>
-                                <Input
-                                    id="attendance-value"
-                                    type="number"
-                                    value={attendanceValue}
-                                    onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                                    min="0"
-                                    className="h-10"
-                                />
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <Label htmlFor="attendance-value" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
+                                        <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
+                                            <Info className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
+                                            <p>A quantidade de pontos de atividade e DKP que serão concedidos aos membros que participarem desta atividade.</p>
+                                        </TooltipContent>
+                                        </Tooltip>
+                                    </div>
+                                    <Input
+                                        id="attendance-value"
+                                        type="number"
+                                        value={attendanceValue}
+                                        onChange={(e) => setAttendanceValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                        min="0"
+                                        className="h-10"
+                                    />
                                 </div>
                             </div>
+
 
                             {/* New Fields: Description, Announcement Channel, Announcement Time, etc. */}
                             <div className="space-y-4 pt-4">
@@ -921,6 +924,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
-
-
-
