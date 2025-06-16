@@ -161,6 +161,28 @@ function MembersPageContent() {
     return () => setHeaderTitle(null);
   }, [guild?.name, setHeaderTitle]);
 
+  useEffect(() => {
+    const initialUsername = searchParams.get('usernameFilter');
+    if (initialUsername) setUsernameFilter(initialUsername);
+
+    const initialTlRole = searchParams.get('tlRoleFilter') as TLRole | "all" | null;
+    if (initialTlRole && (Object.values(TLRole).includes(initialTlRole as TLRole) || initialTlRole === "all")) {
+      setTlRoleFilter(initialTlRole);
+    }
+
+    const initialRank = searchParams.get('rankFilter') as GuildRole | "all" | null;
+     if (initialRank && (Object.values(GuildRole).includes(initialRank as GuildRole) || initialRank === "all")) {
+      setRankFilter(initialRank);
+    }
+
+    const initialStatus = searchParams.get('statusFilter') as MemberStatus | "all" | null;
+    if (initialStatus && (['Ativo', 'Inativo', 'Licença'] as MemberStatus[]).concat("all" as any).includes(initialStatus)) {
+      setStatusFilter(initialStatus);
+    }
+    // If params change, we might want to reset to page 1
+    // setCurrentPage(1); // Consider if this is needed on every searchParams change
+  }, [searchParams]);
+
 
   const fetchGuildAndMembers = useCallback(async () => {
     if (!guildId || !currentUser) return;
@@ -220,7 +242,7 @@ function MembersPageContent() {
             };
           } else if (typeof roleInfoSource === 'string') { 
             memberSpecificData.role = roleInfoSource as GuildRole;
-            memberSpecificData.status = 'Ativo'; // Default if only role string exists
+            memberSpecificData.status = 'Ativo'; 
           }
           
           processedMembers.push(enhanceMemberData({
@@ -433,7 +455,7 @@ function MembersPageContent() {
         });
 
         toast({ title: "Status Atualizado!", description: `O status de ${targetMember.displayName} foi alterado para ${statusToSet}.` });
-        fetchGuildAndMembers(); // Refreshes all member data including the updated status
+        fetchGuildAndMembers(); 
         closeActionDialog();
     } catch (error) {
         console.error("Erro ao mudar status:", error);
@@ -589,7 +611,6 @@ function MembersPageContent() {
   const filteredAndSortedMembers = useMemo(() => {
     let tempMembers = [...members];
 
-    // Filtering
     if (usernameFilter) {
         tempMembers = tempMembers.filter(member => 
             (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
@@ -604,9 +625,7 @@ function MembersPageContent() {
     if (statusFilter !== "all") {
         tempMembers = tempMembers.filter(member => member.status === statusFilter);
     }
-    // Add activity date range filtering here if needed
 
-    // Sorting
     if (gearSortOrder !== "default") {
         tempMembers.sort((a, b) => {
             const gearA = a.gearScore || 0;
@@ -623,7 +642,7 @@ function MembersPageContent() {
     }
     
     return tempMembers;
-  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game /*, activityDateRange, timeFromFilter, timeToFilter */]);
+  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game]);
 
 
   const paginatedMembers = useMemo(() => {
@@ -639,7 +658,7 @@ function MembersPageContent() {
     return (
       <div className="space-y-4 p-4 md:p-6">
         <Skeleton className="h-10 w-1/3 mb-6" /> 
-        <Skeleton className="h-28 w-full" /> {/* Filter section skeleton */}
+        <Skeleton className="h-28 w-full" /> 
         <Skeleton className="h-16 w-full" /> 
         <Skeleton className="h-12 w-full" /> 
         {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} 
@@ -659,19 +678,16 @@ function MembersPageContent() {
     <div className="space-y-6 p-4 md:p-6">
       <PageTitle title={`Membros de ${guild.name}`} icon={<Users className="h-8 w-8 text-primary" />} />
       
-      {/* Filters Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-card rounded-lg shadow items-end">
-        {/* Username Filter */}
         <div className="xl:col-span-2">
           <Label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</Label>
           <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} className="form-input"/>
         </div>
 
-        {/* TL Role Filter (Conditional) */}
         {isTLGuild && (
           <div>
             <Label htmlFor="tlRoleFilter" className="block text-sm font-medium text-muted-foreground mb-1">Função (TL)</Label>
-            <Select value={tlRoleFilter} onValueChange={(value) => setTlRoleFilter(value as TLRole | "all")}>
+            <Select value={tlRoleFilter} onValueChange={(value) => { setTlRoleFilter(value as TLRole | "all"); setCurrentPage(1); }}>
               <SelectTrigger id="tlRoleFilter" className="form-input"><SelectValue placeholder="Todas" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
@@ -681,10 +697,9 @@ function MembersPageContent() {
           </div>
         )}
 
-        {/* Gear Sort Order */}
         <div>
           <Label htmlFor="gearSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Gear</Label>
-          <Select value={gearSortOrder} onValueChange={(value) => setGearSortOrder(value as GearSortOrder)}>
+          <Select value={gearSortOrder} onValueChange={(value) => { setGearSortOrder(value as GearSortOrder); setCurrentPage(1); }}>
             <SelectTrigger id="gearSortOrder" className="form-input"><SelectValue placeholder="Padrão" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Padrão</SelectItem>
@@ -694,10 +709,9 @@ function MembersPageContent() {
           </Select>
         </div>
 
-        {/* Rank (GuildRole) Filter */}
         <div>
           <Label htmlFor="rankFilter" className="block text-sm font-medium text-muted-foreground mb-1">Rank</Label>
-          <Select value={rankFilter} onValueChange={(value) => setRankFilter(value as GuildRole | "all")}>
+          <Select value={rankFilter} onValueChange={(value) => { setRankFilter(value as GuildRole | "all"); setCurrentPage(1); }}>
             <SelectTrigger id="rankFilter" className="form-input"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -706,10 +720,9 @@ function MembersPageContent() {
           </Select>
         </div>
         
-        {/* DKP Sort Order */}
         <div>
           <Label htmlFor="dkpSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Balanço DKP</Label>
-          <Select value={dkpSortOrder} onValueChange={(value) => setDkpSortOrder(value as DkpSortOrder)}>
+          <Select value={dkpSortOrder} onValueChange={(value) => { setDkpSortOrder(value as DkpSortOrder); setCurrentPage(1); }}>
             <SelectTrigger id="dkpSortOrder" className="form-input"><SelectValue placeholder="Padrão" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Padrão</SelectItem>
@@ -719,10 +732,9 @@ function MembersPageContent() {
           </Select>
         </div>
 
-        {/* Status Filter */}
         <div>
           <Label htmlFor="statusFilter" className="block text-sm font-medium text-muted-foreground mb-1">Status</Label>
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MemberStatus | "all")}>
+          <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value as MemberStatus | "all"); setCurrentPage(1); }}>
             <SelectTrigger id="statusFilter" className="form-input"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -731,7 +743,6 @@ function MembersPageContent() {
           </Select>
         </div>
         
-        {/* Activity Date Range - Kept for layout, functionality can be expanded later */}
         <div className="xl:col-span-3">
           <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
           <Popover>
@@ -742,19 +753,18 @@ function MembersPageContent() {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-card" align="start">
-              <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={setActivityDateRange} numberOfMonths={2} locale={ptBR}/>
+              <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={(range) => { setActivityDateRange(range); setCurrentPage(1); }} numberOfMonths={2} locale={ptBR}/>
             </PopoverContent>
           </Popover>
         </div>
-        {/* Time Range Filters - Kept for layout */}
         <div className="grid grid-cols-2 gap-2 xl:col-span-2">
             <div>
               <Label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</Label>
-              <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => setTimeFromFilter(e.target.value)} className="form-input" />
+              <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => { setTimeFromFilter(e.target.value); setCurrentPage(1); }} className="form-input" />
             </div>
             <div>
               <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label>
-              <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => setTimeToFilter(e.target.value)} className="form-input" />
+              <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => { setTimeToFilter(e.target.value); setCurrentPage(1);}} className="form-input" />
             </div>
         </div>
 
@@ -831,7 +841,11 @@ function MembersPageContent() {
 
               return (
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
-                  <TableCell><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${member.displayName}`}/></TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${member.displayName}`}/>
+                    </div>
+                  </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-2 font-medium">
@@ -880,10 +894,12 @@ function MembersPageContent() {
 
                   {isGuildLeaderOrVice && (
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenNotesDialog(member)}>
-                        <FileText className="h-4 w-4" />
-                         <span className="sr-only">Ver/Editar Nota</span>
-                      </Button>
+                      <div className="flex items-center">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenNotesDialog(member)}>
+                          <FileText className="h-4 w-4" />
+                          <span className="sr-only">Ver/Editar Nota</span>
+                        </Button>
+                      </div>
                     </TableCell>
                   )}
 
@@ -1068,3 +1084,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+

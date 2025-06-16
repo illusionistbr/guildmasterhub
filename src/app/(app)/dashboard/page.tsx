@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2 } from "lucide-react";
-import type { Guild, AuditActionType, Application } from '@/types/guildmaster'; 
+import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart } from "lucide-react";
+import type { Guild, AuditActionType, Application, GuildMemberRoleInfo } from '@/types/guildmaster'; 
+import { TLRole } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ function DashboardPageContent() {
   const [loadingGuild, setLoadingGuild] = useState(true);
   const [isSavingImage, setIsSavingImage] = useState(false);
   const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
+  const [roleCounts, setRoleCounts] = useState({ tank: 0, dps: 0, healer: 0 });
   
   const { toast } = useToast();
 
@@ -77,6 +79,24 @@ function DashboardPageContent() {
                 setHeaderTitle(guildToSet.name);
                 setCurrentBannerUrl(guildData.bannerUrl || "https://placehold.co/1200x300.png");
                 setCurrentLogoUrl(guildData.logoUrl || "https://placehold.co/150x150.png");
+
+                if (guildToSet.game === "Throne and Liberty" && guildToSet.roles) {
+                  let tanks = 0;
+                  let dps = 0;
+                  let healers = 0;
+                  Object.values(guildToSet.roles).forEach(roleInfo => {
+                    if (typeof roleInfo === 'object' && roleInfo !== null && 'tlRole' in roleInfo) {
+                      const tlRole = (roleInfo as GuildMemberRoleInfo).tlRole;
+                      if (tlRole === TLRole.Tank) tanks++;
+                      else if (tlRole === TLRole.DPS) dps++;
+                      else if (tlRole === TLRole.Healer) healers++;
+                    }
+                  });
+                  setRoleCounts({ tank: tanks, dps: dps, healer: healers });
+                } else {
+                  setRoleCounts({ tank: 0, dps: 0, healer: 0 });
+                }
+
             } else {
                 toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda.`, variant: "destructive"});
                 router.push('/guild-selection'); 
@@ -166,8 +186,6 @@ function DashboardPageContent() {
     }, (error) => {
         console.error("Error fetching pending applications count:", error);
         setPendingApplicationsCount(0);
-        // Optionally, show a toast to the user
-        // toast({ title: "Erro ao buscar candidaturas", description: "Não foi possível carregar o número de candidaturas pendentes.", variant: "destructive" });
     });
 
     return () => unsubscribe();
@@ -395,6 +413,7 @@ function DashboardPageContent() {
 
   const welcomeName = user?.displayName || user?.email || "Jogador";
   const guildIdForLinks = currentGuild.id;
+  const isTLGuild = currentGuild.game === "Throne and Liberty";
 
   return (
     <div className="space-y-8">
@@ -576,6 +595,32 @@ function DashboardPageContent() {
           <h1 className="text-3xl md:text-4xl font-headline text-primary">Bem-vindo(a), {welcomeName}!</h1>
         </div>
       </div>
+      
+      {isTLGuild && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 px-4 mb-8">
+          <StatCard
+            title="Tanks"
+            value={roleCounts.tank.toString()}
+            icon={<Shield className="h-8 w-8 text-primary" />}
+            actionHref={`/dashboard/members?guildId=${guildIdForLinks}&tlRoleFilter=${TLRole.Tank}`}
+            actionLabel="Ver Tanks"
+          />
+          <StatCard
+            title="DPS"
+            value={roleCounts.dps.toString()}
+            icon={<Swords className="h-8 w-8 text-primary" />}
+            actionHref={`/dashboard/members?guildId=${guildIdForLinks}&tlRoleFilter=${TLRole.DPS}`}
+            actionLabel="Ver DPS"
+          />
+          <StatCard
+            title="Healers"
+            value={roleCounts.healer.toString()}
+            icon={<Heart className="h-8 w-8 text-primary" />}
+            actionHref={`/dashboard/members?guildId=${guildIdForLinks}&tlRoleFilter=${TLRole.Healer}`}
+            actionLabel="Ver Healers"
+          />
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 px-4">
         <StatCard
@@ -594,8 +639,6 @@ function DashboardPageContent() {
           actionLabel="Revisar Candidaturas"
         />
       </div>
-
-      {/* Additional sections or cards can be added here if needed in the future */}
       
     </div>
   );
@@ -614,8 +657,11 @@ function DashboardPageSkeleton() {
             <Skeleton className="h-6 w-1/2 mx-auto md:mx-0" />
           </div>
         </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 px-4 mb-8">
+          {[...Array(3)].map((_, i) => <Skeleton key={`role-skel-${i}`} className="h-40 w-full rounded-lg" />)}
+        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 px-4">
-          {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
+          {[...Array(2)].map((_, i) => <Skeleton key={`main-skel-${i}`} className="h-40 w-full rounded-lg" />)}
         </div>
       </div>
     );
