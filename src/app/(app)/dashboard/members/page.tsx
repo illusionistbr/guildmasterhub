@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale'; // Added import for ptBR
 import type { DateRange } from "react-day-picker";
 import { cn } from '@/lib/utils';
 import { useHeader } from '@/contexts/HeaderContext';
