@@ -89,10 +89,9 @@ export function AppSidebar() {
           {mainNavItems.map((item) => {
             const currentHref = generateHref(item.baseHref);
             const itemIsActive = isActive(currentHref);
-            // Check if any subItem is active OR if the main item.baseHref itself is active (for parent items that are also pages)
             const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
-            const showSubItems = itemIsActive || !!subItemsActive;
-
+            // showSubItems is used for styling the parent button, not for rendering the submenu div directly
+            const showSubItems = itemIsActive || !!subItemsActive; 
 
             return item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
@@ -100,7 +99,7 @@ export function AppSidebar() {
                   asChild={!!item.baseHref}
                   href={item.baseHref ? currentHref : undefined}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={itemIsActive || !!subItemsActive}
+                  isActive={itemIsActive || !!subItemsActive} // Parent is active if it or any subitem is active
                   className="w-full justify-start"
                 >
                   {item.baseHref ? (
@@ -115,23 +114,22 @@ export function AppSidebar() {
                     </>
                   )}
                 </SidebarMenuButton>
-                {/* Show subitems if the main item (parent) is active OR any subitem is active */}
-                {(showSubItems || !user) && ( 
-                   <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
-                    {item.subItems.map(subItem => {
-                      const subItemHref = generateHref(subItem.baseHref);
-                      const SubIcon = subItem.icon;
-                      return (
-                      <SidebarMenuItem key={subItem.baseHref} className="p-0">
-                        <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
-                          {SubIcon && <SubIcon className="h-4 w-4"/>}
-                          <span>{subItem.label}</span>
-                        </Link>
-                      </SidebarMenuItem>
-                      )
-                    })}
-                  </div>
-                )}
+                {/* Sub-items container: Always render if item.subItems exists. 
+                    Visibility when collapsed is handled by group-data-[collapsible=icon]:hidden */}
+                <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
+                  {item.subItems.map(subItem => {
+                    const subItemHref = generateHref(subItem.baseHref);
+                    const SubIcon = subItem.icon;
+                    return (
+                    <SidebarMenuItem key={subItem.baseHref} className="p-0">
+                      <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
+                        {SubIcon && <SubIcon className="h-4 w-4"/>}
+                        <span>{subItem.label}</span>
+                      </Link>
+                    </SidebarMenuItem>
+                    )
+                  })}
+                </div>
               </SidebarGroup>
             ) : (
               <SidebarMenuItem key={item.baseHref}>
