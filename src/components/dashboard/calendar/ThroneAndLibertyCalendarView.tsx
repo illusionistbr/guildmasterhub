@@ -91,12 +91,6 @@ const TL_ACTIVITIES: Record<string, string[]> = {
     'Stop the Mana Frenzy', 
     'To Heal a Divine Beast',
     'Wolf Hunting Contest', 
-    "Quietis' Demesne",
-    'Forest of the Great Tree', 
-    'Swamp of Silence', 
-    'Black Anvil Forge',
-    'Bercant Manor', 
-    'Crimson Manor',
   ],
   world_dungeon: [
     'Ant Nest', 'Sanctum of Desire', 'Saurodoma Island', 'Shadowed Crypt',
@@ -105,7 +99,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   ],
   world_boss: [
     'Adentus', 'Ahzreil', 'Aridus', 'Bellandir', 'Chernobog', 'Cornelius', 'Daigon',
-    'Excavator-9', 'Exodus', 'Grand Aelon', 'Grimturg', 'Junobote', 'Kowazan', 'Leviathan', 'Malakar',
+    'Exodus', 'Grand Aelon', 'Grimturg', 'Junobote', 'Kowazan', 'Leviathan', 'Malakar',
     'Manticus Brothers', 'Minezerok', 'Morokai', 'Nirma', 'Pakilo Naru', 'Talus', 'Tevent',
   ],
   arch_boss: [
