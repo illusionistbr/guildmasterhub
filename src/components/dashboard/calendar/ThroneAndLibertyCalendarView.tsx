@@ -243,12 +243,15 @@ const ACTIVITY_ICONS: Record<string, string> = {
   ...Object.fromEntries(
     Object.values(TL_ACTIVITIES).flat().filter(act => act.toLowerCase().includes("riftstone")).map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])
   ),
+  // Added Icons
+  'Nebula Island': 'https://i.imgur.com/UdzIUPx.png',
+  'War Games': 'https://i.imgur.com/UdzIUPx.png',
 };
 
 const SUBCATEGORY_ICONS: Record<string, string> = {
   'Peace': 'https://i.imgur.com/1Q5gZK0.png',
   'Guild': 'https://i.imgur.com/I34gDeO.png',
-  // 'Conflict' icon can be added here if provided
+  'Conflict': 'https://i.imgur.com/UdzIUPx.png',
 };
 
 
@@ -602,6 +605,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                                     width={16}
                                                     height={16}
                                                     className="mr-2"
+                                                    data-ai-hint="category icon"
                                                 />
                                             ) : null}
                                             <span>{subcat}</span>
@@ -648,6 +652,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                                     width={16}
                                                     height={16}
                                                     className="mr-2"
+                                                    data-ai-hint="activity event"
                                                 />
                                             ) : null}
                                             <span>{act}</span>
@@ -764,7 +769,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                                 <div className="space-y-2">
                                     <div className="flex items-center mb-1">
-                                        <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
+                                      <Label htmlFor="mandatory-switch" className="text-foreground font-semibold">Obrigatório</Label>
                                     </div>
                                     <div className="flex items-center justify-start space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <Switch
