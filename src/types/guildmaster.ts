@@ -34,7 +34,7 @@ export interface GuildMemberRoleInfo {
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
-  status?: MemberStatus; 
+  status?: MemberStatus;
 }
 
 export interface Guild {
@@ -50,26 +50,26 @@ export interface Guild {
   game?: string;
   tags?: string[];
   createdAt?: Date | Timestamp;
-  password?: string; 
-  isOpen?: boolean; 
+  password?: string;
+  isOpen?: boolean;
   socialLinks?: {
     facebook?: string;
     x?: string;
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole }; 
+  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole };
 }
 
 export interface Event {
   id: string;
   guildId: string;
   title: string;
-  description:string;
-  date: string; 
-  time: string; 
-  endDate?: string; 
-  endTime?: string; 
+  description?: string;
+  date: string;
+  time: string;
+  endDate?: string;
+  endTime?: string;
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
@@ -80,18 +80,18 @@ export interface Achievement {
   guildId: string;
   title: string;
   description: string;
-  dateAchieved: string; 
-  category: string; 
-  achievedByIds?: string[]; 
+  dateAchieved: string;
+  category: string;
+  achievedByIds?: string[];
 }
 
 export interface Application {
-  id: string; 
+  id: string;
   guildId: string;
-  applicantId: string; 
-  applicantName: string; 
-  applicantDisplayName: string; 
-  applicantPhotoURL?: string | null; 
+  applicantId: string;
+  applicantName: string;
+  applicantDisplayName: string;
+  applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string;
   tlRole?: TLRole;
@@ -100,7 +100,7 @@ export interface Application {
   discordNick: string;
   status: 'pending' | 'approved' | 'rejected' | 'auto_approved';
   submittedAt: Timestamp;
-  reviewedBy?: string; 
+  reviewedBy?: string;
   reviewedAt?: Timestamp;
 }
 
@@ -109,7 +109,7 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL?: string | null;
-  guilds?: string[]; 
+  guilds?: string[];
   createdAt?: Timestamp;
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
@@ -117,7 +117,7 @@ export interface UserProfile {
 }
 
 export interface GuildMember extends UserProfile {
-  role: GuildRole; 
+  role: GuildRole;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -135,11 +135,11 @@ export enum AuditActionType {
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
-  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED", 
+  GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
-  GUILD_PASSWORD_UPDATED = "GUILD_PASSWORD_UPDATED", 
-  GUILD_VISIBILITY_CHANGED = "GUILD_VISIBILITY_CHANGED", 
+  GUILD_PASSWORD_UPDATED = "GUILD_PASSWORD_UPDATED",
+  GUILD_VISIBILITY_CHANGED = "GUILD_VISIBILITY_CHANGED",
   GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED",
   GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED",
   GUILD_DELETED = "GUILD_DELETED",
@@ -168,13 +168,13 @@ export interface AuditLogDetails {
   changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status';
   noteSummary?: string;
   applicationId?: string;
-  details?: { 
+  details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
   };
 }
 
 export interface AuditLogEntry {
-  id?: string; 
+  id?: string;
   timestamp: Timestamp;
   actorId: string;
   actorDisplayName: string | null;
@@ -185,15 +185,15 @@ export interface AuditLogEntry {
 export type NotificationType = "MANDATORY_ACTIVITY_CREATED" | "GENERIC_INFO" | "GUILD_UPDATE" | "APPLICATION_RECEIVED" | "APPLICATION_STATUS_CHANGED";
 
 export interface AppNotification {
-  id: string; 
+  id: string;
   guildId: string;
   message: string;
   type: NotificationType;
-  link: string; 
+  link: string;
   timestamp: Timestamp;
   details?: {
     activityTitle?: string;
-    activityDate?: string; 
+    activityDate?: string;
     eventId?: string;
     applicationId?: string;
     applicantName?: string;
@@ -201,6 +201,6 @@ export interface AppNotification {
   };
   createdByUserId?: string;
   createdByUserDisplayname?: string | null;
-  targetUserId?: string; 
-  isRead?: boolean; 
+  targetUserId?: string;
+  isRead?: boolean;
 }

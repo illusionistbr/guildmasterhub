@@ -37,19 +37,19 @@ import {
   addMinutes,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added Guild, GuildMemberRoleInfo
-import { GuildRole } from '@/types/guildmaster'; // Added GuildRole
+import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster';
+import { GuildRole } from '@/types/guildmaster';
 import { CalendarEventCard } from './CalendarEventCard';
-import { EventPinDialog } from './EventPinDialog'; // Import the new dialog
+import { EventPinDialog } from './EventPinDialog';
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp, Timestamp, onSnapshot, query as firestoreQuery, orderBy } from '@/lib/firebase'; // Added onSnapshot, firestoreQuery, orderBy
+import { db, collection, addDoc, serverTimestamp, Timestamp, onSnapshot, query as firestoreQuery, orderBy } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 interface ThroneAndLibertyCalendarViewProps {
   guildId: string;
   guildName: string;
-  guild: Guild | null; // Pass the full guild object
+  guild: Guild | null;
 }
 
 const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
@@ -410,7 +410,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
     const newActivityData: Omit<GuildEvent, 'id'> & { createdAt: Timestamp } = {
       guildId: guildId,
       title: activityTitleToSave,
-      description: activityDescription,
+      description: activityDescription.trim() || undefined,
       date: selectedStartDate.toISOString().split('T')[0],
       time: selectedStartTime,
       endDate: selectedEndDate ? selectedEndDate.toISOString().split('T')[0] : undefined,
@@ -553,10 +553,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
                     style={{ height: `${HOVER_CELL_HEIGHT}px` }}
                   >
                     {eventsInCell.map(event => (
-                      <CalendarEventCard 
-                        key={event.id} 
-                        event={event} 
-                        cellHeight={HOVER_CELL_HEIGHT} 
+                      <CalendarEventCard
+                        key={event.id}
+                        event={event}
+                        cellHeight={HOVER_CELL_HEIGHT}
                         onClick={() => handleEventCardClick(event)}
                       />
                     ))}
@@ -936,7 +936,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
         </DialogContent>
       </Dialog>
 
-      <EventPinDialog 
+      <EventPinDialog
         event={selectedEventForPinDialog}
         isOpen={isPinDialogOpen}
         onClose={() => setIsPinDialogOpen(false)}
