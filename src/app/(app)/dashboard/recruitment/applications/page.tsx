@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp } from '@/lib/firebase';
+import { db, doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp } from '@/lib/firebase';
 import type { Guild, Application, GuildMemberRoleInfo, UserProfile } from '@/types/guildmaster';
 import { GuildRole, AuditActionType, TLRole, TLWeapon } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, CheckCircle, XCircle, UserPlus, Users, Loader2, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2 } from 'lucide-react';
-import { formatDistanceToNowStrict, parseISO } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
@@ -78,14 +78,15 @@ function ApplicationsPageContent() {
 
   const canManageApplications = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return false;
-    const userRoleInfo = guild.roles[currentUser.uid];
-    if (typeof userRoleInfo === 'object' && 'generalRole' in userRoleInfo) {
-      const generalRole = (userRoleInfo as GuildMemberRoleInfo).generalRole;
-      return generalRole === GuildRole.Leader || generalRole === GuildRole.ViceLeader;
-    } else if (typeof userRoleInfo === 'string') { // Backward compatibility
-      return userRoleInfo === GuildRole.Leader || userRoleInfo === GuildRole.ViceLeader;
+    const roleInfoSource = guild.roles[currentUser.uid];
+    let userGeneralRole: GuildRole | null = null;
+
+    if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
+      userGeneralRole = (roleInfoSource as GuildMemberRoleInfo).generalRole;
+    } else if (typeof roleInfoSource === 'string') {
+      userGeneralRole = roleInfoSource as GuildRole;
     }
-    return false;
+    return userGeneralRole === GuildRole.Leader || userGeneralRole === GuildRole.ViceLeader;
   }, [currentUser, guild]);
 
   useEffect(() => {
@@ -102,6 +103,7 @@ function ApplicationsPageContent() {
 
     const fetchGuildDetails = async () => {
       setLoadingData(true);
+      setAccessDenied(false); // Reset access denied state on new fetch
       try {
         const guildDocRef = doc(db, "guilds", guildId);
         const guildSnap = await getDoc(guildDocRef);
@@ -110,12 +112,13 @@ function ApplicationsPageContent() {
           setGuild(guildData);
           setHeaderTitle(`Candidaturas: ${guildData.name}`);
           
-          const userRoleInfo = guildData.roles?.[currentUser.uid];
+          const roleInfoSource = guildData.roles?.[currentUser.uid];
           let userGeneralRole: GuildRole | null = null;
-          if (typeof userRoleInfo === 'object' && userRoleInfo && 'generalRole' in userRoleInfo) {
-            userGeneralRole = (userRoleInfo as GuildMemberRoleInfo).generalRole;
-          } else if (typeof userRoleInfo === 'string') {
-            userGeneralRole = userRoleInfo as GuildRole;
+
+          if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
+            userGeneralRole = (roleInfoSource as GuildMemberRoleInfo).generalRole;
+          } else if (typeof roleInfoSource === 'string') {
+            userGeneralRole = roleInfoSource as GuildRole;
           }
 
           if (userGeneralRole !== GuildRole.Leader && userGeneralRole !== GuildRole.ViceLeader) {
@@ -123,18 +126,20 @@ function ApplicationsPageContent() {
             setLoadingData(false);
             return;
           }
-          setAccessDenied(false);
+          // Access granted, proceed to fetch applications if needed (handled in next useEffect)
 
         } else {
           toast({ title: "Guilda não encontrada", variant: "destructive" });
           router.push('/guild-selection');
-          setLoadingData(false);
+          setLoadingData(false); // Ensure loading is false if guild not found
           return;
         }
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro ao carregar dados da guilda", variant: "destructive" });
-        setLoadingData(false);
+      } finally {
+        // setLoadingData(false) will be handled by the applications useEffect if access is granted
+        // or already handled if access denied/guild not found
       }
     };
     fetchGuildDetails();
@@ -146,14 +151,23 @@ function ApplicationsPageContent() {
 
 
   useEffect(() => {
-    if (!guildId || accessDenied || !canManageApplications) {
-      if(canManageApplications === false && !loadingData && !authLoading && guild){ // only if data is loaded and decided not allowed
-         setApplications([]); // Clear applications if access is denied after initial check
+    // This effect runs after guild details (and access rights) are determined
+    if (!guildId || !currentUser || authLoading || accessDenied || !guild) {
+      if (!authLoading && (accessDenied || !guild)) { // If finished loading and access is denied or no guild
+          setLoadingData(false); // Ensure loading spinner stops
+          setApplications([]); // Clear applications
       }
       return;
     }
 
-    setLoadingData(true);
+    // Only fetch applications if user can manage them
+    if (!canManageApplications) {
+      setLoadingData(false); // Not allowed to see, so stop loading
+      setApplications([]);
+      return;
+    }
+    
+    setLoadingData(true); // Start loading applications
     const applicationsRef = collection(db, `guilds/${guildId}/applications`);
     const q = query(applicationsRef, orderBy("submittedAt", "desc"));
 
@@ -170,7 +184,7 @@ function ApplicationsPageContent() {
 
     return () => unsubscribe();
 
-  }, [guildId, accessDenied, canManageApplications, toast, loadingData, authLoading, guild]);
+  }, [guildId, currentUser, authLoading, accessDenied, guild, canManageApplications, toast]);
 
 
   const handleProcessApplication = async (application: Application, action: 'accept' | 'reject') => {
@@ -183,7 +197,6 @@ function ApplicationsPageContent() {
       const batch = writeBatch(db);
 
       if (action === 'accept') {
-        // Check if applicant is already a member
         const applicantProfileRef = doc(db, "users", application.applicantId);
         const applicantProfileSnap = await getDoc(applicantProfileRef);
         if (!applicantProfileSnap.exists()) {
@@ -191,10 +204,9 @@ function ApplicationsPageContent() {
             setProcessingApplicationId(null);
             return;
         }
-        const applicantProfileData = applicantProfileSnap.data() as UserProfile;
 
         if (guild.memberIds?.includes(application.applicantId)) {
-           toast({ title: "Já é Membro", description: `${application.applicantName} já faz parte da guilda.`, variant: "default" });
+           toast({ title: "Já é Membro", description: `${application.applicantName} já faz parte da guilda. Marcando como aprovada.`, variant: "default" });
            batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
@@ -210,13 +222,14 @@ function ApplicationsPageContent() {
                 [`roles.${application.applicantId}`]: memberRoleInfo
             });
             batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
+            
+            await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_JOINED, { 
+                targetUserId: application.applicantId, targetUserDisplayName: application.applicantName, details: {joinMethod: "application_approved"} as any
+            });
         }
         
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.APPLICATION_ACCEPTED, { 
             applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName 
-        });
-         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_JOINED, { 
-            targetUserId: application.applicantId, targetUserDisplayName: application.applicantName, details: {joinMethod: "application"} as any
         });
         toast({ title: "Candidatura Aceita!", description: `${application.applicantName} agora é membro da guilda.` });
 
@@ -243,19 +256,18 @@ function ApplicationsPageContent() {
     setConfirmationAction(action);
   };
 
-
-  if (authLoading || loadingData && !guild) {
+  if (authLoading || loadingData) { // Simplified loading check
     return (
         <div className="space-y-4 p-4 md:p-6">
             <PageTitle title="Candidaturas" icon={<FileText className="h-8 w-8 text-primary" />} />
             {[...Array(3)].map((_, i) => (
                 <Card key={i} className="card-bg">
-                    <CardHeader><div className="h-6 w-1/2 bg-muted rounded"></div></CardHeader>
+                    <CardHeader><div className="h-6 w-1/2 bg-muted rounded animate-pulse"></div></CardHeader>
                     <CardContent className="space-y-2">
-                        <div className="h-4 w-3/4 bg-muted rounded"></div>
-                        <div className="h-4 w-1/2 bg-muted rounded"></div>
+                        <div className="h-4 w-3/4 bg-muted rounded animate-pulse"></div>
+                        <div className="h-4 w-1/2 bg-muted rounded animate-pulse"></div>
                     </CardContent>
-                    <CardFooter><div className="h-10 w-24 bg-muted rounded ml-auto"></div></CardFooter>
+                    <CardFooter><div className="h-10 w-24 bg-muted rounded ml-auto animate-pulse"></div></CardFooter>
                 </Card>
             ))}
         </div>
@@ -276,7 +288,7 @@ function ApplicationsPageContent() {
     );
   }
   
-  if (!guild && !loadingData) {
+  if (!guild && !loadingData) { // This case should ideally be covered by the loading check or guildId check
      return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
   }
 
@@ -319,7 +331,7 @@ function ApplicationsPageContent() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">{app.applicantName}</CardTitle>
-                      <CardDescription>Enviado {formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR })}</CardDescription>
+                      <CardDescription>Enviado {app.submittedAt ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : "Data indisponível"}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -330,12 +342,12 @@ function ApplicationsPageContent() {
                   </p>
                   {guild?.game === "Throne and Liberty" && (
                     <>
-                        <p className="text-sm flex items-center"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
+                        <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
                         <div className="text-sm"><strong>Armas:</strong>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon" />}
                                 {app.tlSecondaryWeapon && <Image src={getWeaponIconPath(app.tlSecondaryWeapon)} alt={app.tlSecondaryWeapon} width={20} height={20} data-ai-hint="weapon" />}
-                                {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span>N/A</span>}
+                                {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span className="text-muted-foreground text-xs">N/A</span>}
                             </div>
                         </div>
                     </>
@@ -361,7 +373,7 @@ function ApplicationsPageContent() {
           <h2 className="text-2xl font-headline text-muted-foreground mt-10 mb-4">Candidaturas Revisadas ({reviewedApplications.length})</h2>
            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {reviewedApplications.map(app => (
-              <Card key={app.id} className={`card-bg flex flex-col opacity-70 ${app.status === 'approved' ? 'border-green-500/30' : 'border-red-500/30'}`}>
+              <Card key={app.id} className={`card-bg flex flex-col opacity-70 ${app.status === 'approved' || app.status === 'auto_approved' ? 'border-green-500/30' : 'border-red-500/30'}`}>
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
@@ -370,7 +382,7 @@ function ApplicationsPageContent() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">{app.applicantName}</CardTitle>
-                       <CardDescription>Revisado {app.reviewedAt ? formatDistanceToNowStrict(app.reviewedAt.toDate(), { addSuffix: true, locale: ptBR }) : 'N/A'}</CardDescription>
+                       <CardDescription>Revisado {app.reviewedAt ? formatDistanceToNowStrict(app.reviewedAt.toDate(), { addSuffix: true, locale: ptBR }) : (app.status === 'auto_approved' ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : 'N/A')}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -381,19 +393,19 @@ function ApplicationsPageContent() {
                   </p>
                   {guild?.game === "Throne and Liberty" && (
                      <>
-                        <p className="text-sm flex items-center"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
+                        <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
                         <div className="text-sm"><strong>Armas:</strong>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
                                 {app.tlSecondaryWeapon && <Image src={getWeaponIconPath(app.tlSecondaryWeapon)} alt={app.tlSecondaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
-                                 {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span>N/A</span>}
+                                 {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span className="text-muted-foreground text-xs">N/A</span>}
                             </div>
                         </div>
                     </>
                   )}
                   <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
-                   <Badge variant={app.status === 'approved' ? 'default' : 'destructive'} className={app.status === 'approved' ? 'bg-green-600/80' : 'bg-red-600/80'}>
-                    {app.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                   <Badge variant={app.status === 'approved' || app.status === 'auto_approved' ? 'default' : 'destructive'} className={app.status === 'approved' || app.status === 'auto_approved' ? 'bg-green-600/80' : 'bg-red-600/80'}>
+                    {app.status === 'approved' ? 'Aprovado' : (app.status === 'auto_approved' ? 'Entrada Automática' : 'Rejeitado')}
                   </Badge>
                 </CardContent>
               </Card>
@@ -409,7 +421,7 @@ function ApplicationsPageContent() {
               <AlertDialogTitle>Confirmar {confirmationAction === 'accept' ? 'Aceitação' : 'Rejeição'}</AlertDialogTitle>
               <AlertDialogDescription>
                 Você tem certeza que deseja {confirmationAction === 'accept' ? 'aceitar' : 'rejeitar'} a candidatura de {applicationToConfirm.applicantName}?
-                {confirmationAction === 'accept' && ` Isso o(a) adicionará à guilda.`}
+                {confirmationAction === 'accept' && ` Isso o(a) adicionará à guilda (se já não for membro).`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -436,3 +448,4 @@ export default function ApplicationsPage() {
     </Suspense>
   );
 }
+
