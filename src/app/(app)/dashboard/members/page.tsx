@@ -652,7 +652,7 @@ function MembersPageContent() {
           <TableBody>
             {paginatedMembers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={guild.game === "Throne and Liberty" ? (isGuildLeaderOrVice ? 10 : 9) : (isGuildLeaderOrVice ? 9 : 8)} className="text-center h-24">
+                <TableCell colSpan={guild.game === "Throne and Liberty" ? (isGuildLeaderOrVice ? 9 : 8) : (isGuildLeaderOrVice ? 8 : 7)} className="text-center h-24">
                   Nenhum membro encontrado {usernameFilter ? "com o filtro aplicado." : "nesta guilda."}
                 </TableCell>
               </TableRow>
@@ -666,37 +666,49 @@ function MembersPageContent() {
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
                   <TableCell><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${member.displayName}`}/></TableCell>
                   
-                  <TableCell className="font-medium flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${member.displayName?.substring(0,1) || 'M'}`} alt={member.displayName || 'Avatar'} data-ai-hint="user avatar"/>
-                      <AvatarFallback>{member.displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
-                    </Avatar>
-                    {member.displayName || member.email || member.uid}
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${member.displayName?.substring(0,1) || 'M'}`} alt={member.displayName || 'Avatar'} data-ai-hint="user avatar"/>
+                        <AvatarFallback>{member.displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
+                      </Avatar>
+                      {member.displayName || member.email || member.uid}
+                    </div>
                   </TableCell>
 
                   {guild.game === "Throne and Liberty" && (
-                    <TableCell className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>
-                      {getTLRoleIcon(member.tlRole)}
-                      {member.tlRole || "N/A"}
+                    <TableCell>
+                      <div className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>
+                        {getTLRoleIcon(member.tlRole)}
+                        {member.tlRole || "N/A"}
+                      </div>
                     </TableCell>
                   )}
 
-                  <TableCell className="flex items-center gap-1">
-                    {member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
-                    {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
+                      {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}
+                    </div>
                   </TableCell>
 
-                  <TableCell className="flex items-center gap-1">
-                    {member.gearScore} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {member.gearScore} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                    </div>
                   </TableCell>
                   
-                  <TableCell className="flex items-center gap-1">
-                    {getGeneralRoleIcon(member.role)}
-                    {member.role}
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {getGeneralRoleIcon(member.role)}
+                      {member.role}
+                    </div>
                   </TableCell>
                   
-                  <TableCell className="flex items-center gap-1">
-                    {member.dkpBalance ?? 0} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {member.dkpBalance ?? 0} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                    </div>
                   </TableCell>
 
                   {isGuildLeaderOrVice && (
@@ -871,3 +883,5 @@ export default function MembersPage() {
   );
 }
 
+
+    
