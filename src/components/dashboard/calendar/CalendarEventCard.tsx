@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils";
 
 // Helper function to parse date and time into a Date object
 const parseDateTime = (dateStr: string, timeStr: string): Date => {
-  const date = new Date(dateStr);
+  const date = new Date(dateStr); // This will be UTC midnight if dateStr is YYYY-MM-DD
   const [hours, minutes] = timeStr.split(':').map(Number);
+  // To ensure it's treated as local time for calculations if needed, but for display, it's often fine
   date.setHours(hours, minutes, 0, 0); 
   return date;
 };
@@ -16,7 +17,7 @@ interface CalendarEventCardProps {
   event: GuildEvent;
   cellHeight: number; // height of a 1-hour cell in px
   onClick?: () => void;
-  colorClass?: string; // Added colorClass prop
+  colorClass?: string;
 }
 
 export function CalendarEventCard({ event, cellHeight, onClick, colorClass }: CalendarEventCardProps) {
@@ -49,7 +50,7 @@ export function CalendarEventCard({ event, cellHeight, onClick, colorClass }: Ca
     <div
       className={cn(
         "absolute left-1 right-1 p-1 rounded shadow-md overflow-hidden z-10 cursor-pointer",
-        colorClass || defaultColorClass // Apply dynamic color or default
+        colorClass || defaultColorClass
       )}
       style={{
         top: `${topPosition}px`,
