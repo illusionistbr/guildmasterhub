@@ -67,17 +67,19 @@ export interface Event {
   guildId: string;
   title: string;
   description?: string;
-  date: string;
-  time: string;
-  endDate?: string;
-  endTime?: string;
+  date: string; // YYYY-MM-DD format
+  time: string; // HH:mm format
+  endDate?: string; // YYYY-MM-DD format
+  endTime?: string; // HH:mm format
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
   dkpValue?: number;
   requiresPin?: boolean;
   pinCode?: string;
-  attendeesWithPin?: string[]; // Added
+  attendeesWithPin?: string[];
+  category?: string; // Added for color coding
+  subCategory?: string; // Added for color coding
 }
 
 export interface Achievement {

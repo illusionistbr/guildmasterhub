@@ -166,7 +166,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
   war_games: [
     'War Games',
   ],
-  lawless_wilds: [
+  lawless_wilds: [ // Assuming 'Nebula Island' from war could also be here if meant generally for lawless
     'Nebula Island',
   ],
 };
@@ -237,19 +237,50 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
 const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
-// Helper function to parse "YYYY-MM-DD" string to a local Date object at midnight
 const parseLocalDateFromString = (dateString: string): Date => {
   const parts = dateString.split('-');
   if (parts.length === 3) {
     const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JS Date
+    const month = parseInt(parts[1], 10) - 1; 
     const day = parseInt(parts[2], 10);
-    return new Date(year, month, day); // Creates a Date at local midnight
+    return new Date(year, month, day); 
   }
-  // Fallback for invalid format, though ideally this shouldn't happen
   console.error("Invalid date string format for parseLocalDateFromString:", dateString);
-  return new Date(dateString); // Attempt standard parsing, likely UTC midnight
+  const fallbackDate = new Date(dateString); // Attempt standard parsing
+  return new Date(fallbackDate.getFullYear(), fallbackDate.getMonth(), fallbackDate.getDate()); // Normalize to local midnight
 };
+
+const getEventColorClass = (event: GuildEvent): string => {
+  const category = event.category;
+  const subCategory = event.subCategory;
+  const title = event.title;
+
+  // Default Tailwind classes
+  const baseClasses = "text-white"; // Example base text color
+
+  if (category === 'world_event') {
+    if (subCategory === 'Peace') return `bg-sky-500/70 hover:bg-sky-600 ${baseClasses}`;
+    if (subCategory === 'Conflict') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+    if (subCategory === 'Guild') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
+  }
+  if (category === 'world_dungeon') return `bg-yellow-600/70 hover:bg-yellow-700 ${baseClasses}`; // Using yellow for light brown
+  if (category === 'world_boss' || category === 'arch_boss') {
+    if (subCategory === 'Peace') return `bg-blue-500/70 hover:bg-blue-600 ${baseClasses}`;
+    if (subCategory === 'Conflict') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+    if (subCategory === 'Guild') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
+  }
+  if (category === 'boonstone' || category === 'riftstone') return `bg-gray-500/70 hover:bg-gray-600 ${baseClasses}`;
+  if (category === 'war') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+  if (category === 'siege' || category === 'tax_delivery') return `bg-orange-500/70 hover:bg-orange-600 ${baseClasses}`;
+  if (category === 'guild_contract') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
+  if (category === 'raid') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+  if (category === 'war_games') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+  if (category === 'other') return `bg-purple-500/70 hover:bg-purple-600 ${baseClasses}`;
+  if (title === 'Nebula Island' || category === 'lawless_wilds') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`; // Specific title or category check
+
+  return "bg-primary/70 hover:bg-primary text-primary-foreground"; // Default color
+};
+
 
 export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: ThroneAndLibertyCalendarViewProps) {
   const { user } = useAuth();
@@ -439,26 +470,30 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
         title: activityTitleToSave,
         date: selectedStartDate.toISOString().split('T')[0],
         time: selectedStartTime,
+        category: selectedCategory || undefined,
+        subCategory: selectedSubcategory || undefined,
         organizerId: user.uid,
         requiresPin: generatePinCode,
         createdAt: serverTimestamp() as Timestamp,
     };
 
-    if (activityDescription.trim()) {
-        activityDataToSave.description = activityDescription.trim();
-    }
+    if (activityDescription.trim()) activityDataToSave.description = activityDescription.trim();
+    else delete activityDataToSave.description;
+
     if (selectedEndDate) {
         activityDataToSave.endDate = selectedEndDate.toISOString().split('T')[0];
         activityDataToSave.endTime = selectedEndTime;
+    } else {
+        delete activityDataToSave.endDate;
+        delete activityDataToSave.endTime;
     }
-    if (dkpValueForEvent > 0) {
-        activityDataToSave.dkpValue = dkpValueForEvent;
-    }
-    if (generatePinCode) {
-        activityDataToSave.pinCode = generateNumericPin(6);
-    }
+
+    if (dkpValueForEvent > 0) activityDataToSave.dkpValue = dkpValueForEvent;
+    else delete activityDataToSave.dkpValue;
     
-    // location is not currently handled, so it's omitted.
+    if (generatePinCode) activityDataToSave.pinCode = generateNumericPin(6);
+    else delete activityDataToSave.pinCode;
+    
 
     try {
       const eventsCollectionRef = collection(db, `guilds/${guildId}/events`);
@@ -492,9 +527,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
       }
       setDialogIsOpen(false);
       resetDialogStates();
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error saving activity to Firestore:", error, "Data:", activityDataToSave);
-        toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a atividade no banco de dados.", variant: "destructive"});
+        const errorMessage = error.message || "Não foi possível salvar a atividade no banco de dados.";
+        toast({ title: "Erro ao Salvar", description: errorMessage, variant: "destructive"});
     }
   };
 
@@ -599,6 +635,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
                         event={event}
                         cellHeight={HOVER_CELL_HEIGHT}
                         onClick={() => handleEventCardClick(event)}
+                        colorClass={getEventColorClass(event)}
                       />
                     ))}
                   </div>
@@ -987,4 +1024,3 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
     </div>
   );
 }
-
