@@ -23,7 +23,8 @@ import {
   ShieldEllipsis,
   LogOut,
   ClipboardList,
-  FileText
+  FileText,
+  ListFilter // Using ListFilter for Config. Calendário as an example
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -31,7 +32,14 @@ import { useAuth } from "@/contexts/AuthContext";
 const mainNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { baseHref: "/dashboard/members", label: "Membros", icon: Users },
-  { baseHref: "/dashboard/calendar", label: "Calendário", icon: CalendarDays },
+  { 
+    label: "Calendário", 
+    icon: CalendarDays,
+    baseHref: "/dashboard/calendar",
+    subItems: [
+      { baseHref: "/dashboard/calendar/settings", label: "Config. Calendário", icon: ListFilter },
+    ]
+  },
   { 
     label: "Recrutamento", 
     icon: UserPlus,
@@ -41,7 +49,7 @@ const mainNavItems = [
     ]
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
-  { baseHref: "/dashboard/settings", label: "Config. da guilda", icon: Settings }, // Moved and renamed
+  { baseHref: "/dashboard/settings", label: "Config. da guilda", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -51,7 +59,7 @@ export function AppSidebar() {
 
   const guildId = searchParams.get('guildId');
 
-  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href) && href.length > "/dashboard".length);
   
   const generateHref = (baseHref: string) => {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
@@ -60,7 +68,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link href={generateHref("/dashboard")} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
           <ShieldEllipsis className="h-8 w-8 text-sidebar-primary transition-transform duration-300 group-hover:rotate-[15deg]" />
           <span className="font-headline text-2xl font-bold text-sidebar-primary group-data-[collapsible=icon]:hidden">
             GuildMasterHub
@@ -72,17 +80,20 @@ export function AppSidebar() {
         <SidebarMenu>
           {mainNavItems.map((item) => {
             const currentHref = generateHref(item.baseHref);
+            const itemIsActive = isActive(currentHref);
+            const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
+
             return item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
                 <SidebarMenuButton
                   asChild={!!item.baseHref}
-                  href={item.baseHref ? generateHref(item.baseHref) : undefined}
+                  href={item.baseHref ? currentHref : undefined}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={isActive(currentHref) || item.subItems.some(sub => isActive(generateHref(sub.baseHref)))}
+                  isActive={itemIsActive || !!subItemsActive}
                   className="w-full justify-start"
                 >
                   {item.baseHref ? (
-                     <Link href={generateHref(item.baseHref)}>
+                     <Link href={currentHref}>
                       <item.icon />
                       <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </Link>
@@ -93,18 +104,22 @@ export function AppSidebar() {
                     </>
                   )}
                 </SidebarMenuButton>
-                {item.subItems.map(subItem => {
-                  const subItemHref = generateHref(subItem.baseHref);
-                  const SubIcon = subItem.icon;
-                  return (
-                   <SidebarMenuItem key={subItem.baseHref} className="group-data-[collapsible=icon]:hidden ml-4">
-                     <Link href={subItemHref} className={`flex items-center gap-2 p-2 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground'}`}>
-                       {SubIcon && <SubIcon className="h-4 w-4"/>}
-                       <span>{subItem.label}</span>
-                     </Link>
-                   </SidebarMenuItem>
-                  )
-                })}
+                {(itemIsActive || !!subItemsActive || !user) && ( // Show subitems if parent is active or any subitem is active, or if not logged in (for layout consistency)
+                   <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
+                    {item.subItems.map(subItem => {
+                      const subItemHref = generateHref(subItem.baseHref);
+                      const SubIcon = subItem.icon;
+                      return (
+                      <SidebarMenuItem key={subItem.baseHref} className="p-0">
+                        <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
+                          {SubIcon && <SubIcon className="h-4 w-4"/>}
+                          <span>{subItem.label}</span>
+                        </Link>
+                      </SidebarMenuItem>
+                      )
+                    })}
+                  </div>
+                )}
               </SidebarGroup>
             ) : (
               <SidebarMenuItem key={item.baseHref}>

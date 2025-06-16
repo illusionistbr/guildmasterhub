@@ -28,7 +28,7 @@ function CalendarPageContent() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { // Corrected: currentUser to user
+    if (!user) { 
       router.push('/login');
       return;
     }
@@ -70,7 +70,7 @@ function CalendarPageContent() {
     return () => {
       setHeaderTitle(null);
     }
-  }, [guildId, user, authLoading, router, toast, setHeaderTitle]); // Corrected: currentUser to user in dependencies
+  }, [guildId, user, authLoading, router, toast, setHeaderTitle]); 
 
   if (authLoading || loadingGuildData) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -85,7 +85,7 @@ function CalendarPageContent() {
   }
 
   if (isThroneAndLibertyGuild && guildId) {
-    return <ThroneAndLibertyCalendarView guildId={guildId} guildName={guild.name} />;
+    return <ThroneAndLibertyCalendarView guildId={guildId} guildName={guild.name} guild={guild} />;
   }
 
   return <ComingSoon pageName={`Calendário de ${guild.name}`} icon={<CalendarDays className="h-8 w-8 text-primary"/>} />;
@@ -99,3 +99,4 @@ export default function CalendarPage() {
     </Suspense>
   );
 }
+

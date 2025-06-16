@@ -20,7 +20,7 @@ export default function AppLayout({
       "/create-guild",
       "/guild-selection",
       "/guilds",
-      "/apply", // Added /apply route here
+      "/apply",
     ];
     // Exact paths that should NOT show the main app sidebar
     if (noSidebarExactPaths.includes(pathname)) {
@@ -28,7 +28,7 @@ export default function AppLayout({
     }
 
     // Paths that SHOULD show the main app sidebar
-    // Includes /dashboard and any sub-route of /dashboard/ (e.g., /dashboard/members, /dashboard/audit-log, /dashboard/settings)
+    // Includes /dashboard and any sub-route of /dashboard/ (e.g., /dashboard/members, /dashboard/audit-log, /dashboard/settings, /dashboard/calendar/settings)
     if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
       return true;
     }
@@ -63,3 +63,4 @@ export default function AppLayout({
 
   return <HeaderProvider>{layoutContent}</HeaderProvider>;
 }
+

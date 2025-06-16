@@ -37,17 +37,19 @@ import {
   addMinutes,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { mockEvents } from '@/lib/mock-data';
-import type { Event as GuildEvent } from '@/types/guildmaster';
+import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added Guild, GuildMemberRoleInfo
+import { GuildRole } from '@/types/guildmaster'; // Added GuildRole
 import { CalendarEventCard } from './CalendarEventCard';
+import { EventPinDialog } from './EventPinDialog'; // Import the new dialog
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp, Timestamp, doc } from '@/lib/firebase'; // Added doc
-import { useToast } from '@/hooks/use-toast'; // Added useToast
+import { db, collection, addDoc, serverTimestamp, Timestamp, onSnapshot, query as firestoreQuery, orderBy } from '@/lib/firebase'; // Added onSnapshot, firestoreQuery, orderBy
+import { useToast } from '@/hooks/use-toast';
 
 interface ThroneAndLibertyCalendarViewProps {
   guildId: string;
   guildName: string;
+  guild: Guild | null; // Pass the full guild object
 }
 
 const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
@@ -170,7 +172,6 @@ const TL_ACTIVITIES: Record<string, string[]> = {
 };
 
 const ACTIVITY_ICONS: Record<string, string> = {
-  // World Events
   'Wolf Hunting Contest': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_WolfHuntingContest_On_Sprite.webp",
   'Festival of Fire': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_FestivalofFire_On_Sprite.webp",
   'Requiem of Light': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_RequiemofLight_On_Sprite.webp",
@@ -185,8 +186,6 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Dark Destroyers': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_DarkDestroyers_On_Sprite.webp",
   'To Heal a Divine Beast': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_HealingTouch_001_On_Sprite.webp",
   'Best Way to Prevent the Worst': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_DE_BestWorst_On_Sprite.webp",
-
-  // World Bosses
   'Adentus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
   'Talus': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_GolemTalus_Target.webp",
   'Grand Aelon': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_SpiritTreeGuardian_On_Sprite.webp",
@@ -208,43 +207,23 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Grimturg': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_BugbearWarder_On_Sprite.webp",
   'Bellandir': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_QueenBlendy_On_Sprite.webp",
   'Tevent': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_Tevent_On_Sprite.webp",
-
-  // Arch Bosses
   'Queen Bellandir': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_QueenBlendy_On_Sprite.webp",
   "Courte's Wraith Tevent": "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_Tevent_On_Sprite.webp",
   'Giant Cordy': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WB_WB_GiantBroork_On_Sprite.webp",
   'Deluzhnoa': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_DelugeNoah_On_Sprite.webp",
-
-  // Raid
   'Excavator-9': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_KingmineBoom_Target.webp",
-
-  // Tax Delivery
   'Vienta village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
-
-  // Siege
   'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
-
-  // Boonstones (Generic icon for those not containing "Boonstone" in name - will be overridden if name contains "Boonstone")
   ...Object.fromEntries(TL_ACTIVITIES.boonstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
-
-  // Riftstones (Generic icon for those not containing "Riftstone" in name - will be overridden if name contains "Riftstone")
   ...Object.fromEntries(TL_ACTIVITIES.riftstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
-
-  // World Dungeons (Common Icon for all in this category)
   ...Object.fromEntries(TL_ACTIVITIES.world_dungeon.map(act => [act, 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp'])),
-  
-  // Guild Contracts (Common Icon for all in this category)
   ...Object.fromEntries(TL_ACTIVITIES.guild_contract.map(act => [act, 'https://i.imgur.com/I34gDeO.png'])),
-
-  // Icons for activities containing "Boonstone" in their name (Applied after generic boonstone category icons)
   ...Object.fromEntries(
     Object.values(TL_ACTIVITIES).flat().filter(act => act.toLowerCase().includes("boonstone")).map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Origin_Sprite1.webp"])
   ),
-  // Icons for activities containing "Riftstone" in their name (Applied after generic riftstone category icons and boonstone name icons)
   ...Object.fromEntries(
     Object.values(TL_ACTIVITIES).flat().filter(act => act.toLowerCase().includes("riftstone")).map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])
   ),
-  // Added Icons
   'Nebula Island': 'https://i.imgur.com/UdzIUPx.png',
   'War Games': 'https://i.imgur.com/UdzIUPx.png',
 };
@@ -255,14 +234,12 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
   'Conflict': 'https://i.imgur.com/UdzIUPx.png',
 };
 
-
 const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
-
-export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLibertyCalendarViewProps) {
+export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: ThroneAndLibertyCalendarViewProps) {
   const { user } = useAuth();
-  const { toast } = useToast(); // Initialize toast
+  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTimePercentage, setCurrentTimePercentage] = useState(0);
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
@@ -281,7 +258,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [selectedEndTime, setSelectedEndTime] = useState<string>("00:00");
 
   const [isMandatory, setIsMandatory] = useState(false);
-  const [dkpValueForEvent, setDkpValueForEvent] = useState<number>(1); // Renamed from attendanceValue
+  const [dkpValueForEvent, setDkpValueForEvent] = useState<number>(1);
 
   const [activityDescription, setActivityDescription] = useState<string>("");
   const [announcementChannel, setAnnouncementChannel] = useState<string>("Canal Padrão");
@@ -291,15 +268,24 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   const [announceOnDiscord, setAnnounceOnDiscord] = useState<boolean>(true);
   const [generatePinCode, setGeneratePinCode] = useState<boolean>(false);
 
-  const [createdEvents, setCreatedEvents] = useState<GuildEvent[]>([]); // Will also save to Firestore
+  const [createdEvents, setCreatedEvents] = useState<GuildEvent[]>([]);
+  const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
+  const [selectedEventForPinDialog, setSelectedEventForPinDialog] = useState<GuildEvent | null>(null);
 
   const weekStartsOn = 1; // Monday
-
   const currentWeekStart = startOfWeek(currentDate, { weekStartsOn });
   const currentWeekEnd = endOfWeek(currentDate, { weekStartsOn });
   const daysInWeek = eachDayOfInterval({ start: currentWeekStart, end: currentWeekEnd });
-
   const hours = Array.from({ length: 24 }, (_, i) => i);
+
+  const currentUserRoleInGuild = useMemo(() => {
+    if (!user || !guild || !guild.roles) return null;
+    const roleInfo = guild.roles[user.uid];
+    if (typeof roleInfo === 'object' && roleInfo !== null && 'generalRole' in roleInfo) {
+      return (roleInfo as GuildMemberRoleInfo).generalRole;
+    }
+    return roleInfo as GuildRole | null;
+  }, [user, guild]);
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -312,6 +298,25 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     const intervalId = setInterval(updateCurrentTime, 60000);
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (!guildId) return;
+    const eventsRef = collection(db, `guilds/${guildId}/events`);
+    const q = firestoreQuery(eventsRef, orderBy("date", "asc"), orderBy("time", "asc"));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const fetchedEvents: GuildEvent[] = [];
+        querySnapshot.forEach((doc) => {
+            fetchedEvents.push({ id: doc.id, ...doc.data() } as GuildEvent);
+        });
+        setCreatedEvents(fetchedEvents);
+    }, (error) => {
+        console.error("Error fetching events: ", error);
+        toast({ title: "Erro ao buscar eventos", variant: "destructive" });
+    });
+    return () => unsubscribe();
+  }, [guildId, toast]);
+
 
   const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -327,8 +332,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
   }, [currentWeekStart, currentWeekEnd]);
 
   const eventsForWeek = useMemo(() => {
-    const allEvents = [...mockEvents, ...createdEvents]; // In future, fetch from Firestore
-    return allEvents.filter(event => {
+    return createdEvents.filter(event => {
       const eventDate = new Date(event.date);
       const endOfDay_currentWeekEnd = setHours(setMinutes(setSeconds(setMilliseconds(currentWeekEnd, 999), 59), 59), 23);
       return event.guildId === guildId &&
@@ -342,9 +346,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setSelectedSubcategory(null);
     setSelectedActivity(null);
     setCustomActivityName("");
-
     setCurrentSubcategories(TL_SUB_CATEGORIES[categoryId] || []);
-
     if (categoryId === 'other') {
       setCurrentActivities([]);
     } else {
@@ -360,7 +362,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
  useEffect(() => {
     if (selectedStartDate && selectedStartTime && !selectedEndDate) {
       let defaultDurationMinutes: number | null = null;
-
       if (selectedCategory === 'world_event') defaultDurationMinutes = 20;
       else if (selectedCategory === 'world_boss') defaultDurationMinutes = 50;
       else if (selectedCategory === 'arch_boss') defaultDurationMinutes = 50;
@@ -373,7 +374,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
           defaultDurationMinutes = 20;
         }
       }
-
       if (defaultDurationMinutes !== null) {
         const startTimeObj = combineDateTime(selectedStartDate, selectedStartTime);
         const endTimeObj = addMinutes(startTimeObj, defaultDurationMinutes);
@@ -402,14 +402,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     if (selectedCategory === 'other') {
       activityTitleToSave = customActivityName.trim();
     }
-
     if (!activityTitleToSave || !selectedStartDate || !user) {
       toast({ title: "Erro", description: "Campos obrigatórios não preenchidos para salvar a atividade.", variant: "destructive" });
       return;
     }
-
     const eventPinCode = generatePinCode ? generateNumericPin(6) : undefined;
-
     const newActivityData: Omit<GuildEvent, 'id'> & { createdAt: Timestamp } = {
       guildId: guildId,
       title: activityTitleToSave,
@@ -422,22 +419,16 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       dkpValue: dkpValueForEvent > 0 ? dkpValueForEvent : undefined,
       requiresPin: generatePinCode,
       pinCode: eventPinCode,
-      createdAt: serverTimestamp() as Timestamp, // Add server timestamp for creation
+      createdAt: serverTimestamp() as Timestamp,
     };
-    
     try {
       const eventsCollectionRef = collection(db, `guilds/${guildId}/events`);
       const docRef = await addDoc(eventsCollectionRef, newActivityData);
-      
-      const newEventWithId: GuildEvent = { ...newActivityData, id: docRef.id, createdAt: undefined }; // Use undefined or handle Timestamp if needed for local state
-      setCreatedEvents(prevEvents => [...prevEvents, newEventWithId]);
       toast({ title: "Atividade Salva!", description: `"${activityTitleToSave}" foi adicionado ao calendário.` });
-
       if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
         const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
         const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
-        const notificationLink = `/dashboard/calendar?guildId=${guildId}`; // Consider linking directly to event details in future
-
+        const notificationLink = `/dashboard/calendar?guildId=${guildId}`;
         try {
           const newNotificationRef = await addDoc(collection(db, `guilds/${guildId}/notifications`), {
             guildId: guildId,
@@ -448,7 +439,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             details: {
               activityTitle: activityTitleToSave,
               activityDate: activityDateFormatted,
-              eventId: docRef.id, // Store event ID in notification
+              eventId: docRef.id,
             },
             createdByUserId: user.uid,
             createdByUserDisplayname: user.displayName || user.email,
@@ -461,7 +452,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
       }
       setDialogIsOpen(false);
       resetDialogStates();
-
     } catch (error) {
         console.error("Error saving activity to Firestore:", error);
         toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a atividade no banco de dados.", variant: "destructive"});
@@ -490,6 +480,11 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     setGeneratePinCode(false);
   };
 
+  const handleEventCardClick = (event: GuildEvent) => {
+    setSelectedEventForPinDialog(event);
+    setIsPinDialogOpen(true);
+  };
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-var(--header-height))] bg-card p-4 rounded-lg shadow-lg">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-y-3 gap-x-2">
@@ -499,11 +494,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             Nova Atividade
           </Button>
         </div>
-
         <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center order-first sm:order-2 sm:flex-grow sm:text-center whitespace-nowrap px-2">
           {dateRangeText}
         </h2>
-
         <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end order-3">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'week'|'day')} disabled>
             <SelectTrigger className="w-[100px] bg-input border-border">
@@ -533,7 +526,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             </div>
           ))}
         </div>
-
         <div className={cn("row-start-2", TIME_GUTTER_WIDTH_CLASS)}>
           {hours.map(hour => (
             <div
@@ -545,7 +537,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             </div>
           ))}
         </div>
-
         <div className="row-start-2 grid grid-cols-7 col-start-2">
           {daysInWeek.map(day => (
             <div key={`event-col-${day.toString()}`} className="relative border-r border-border">
@@ -562,7 +553,12 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     style={{ height: `${HOVER_CELL_HEIGHT}px` }}
                   >
                     {eventsInCell.map(event => (
-                      <CalendarEventCard key={event.id} event={event} cellHeight={HOVER_CELL_HEIGHT} />
+                      <CalendarEventCard 
+                        key={event.id} 
+                        event={event} 
+                        cellHeight={HOVER_CELL_HEIGHT} 
+                        onClick={() => handleEventCardClick(event)}
+                      />
                     ))}
                   </div>
                 );
@@ -581,7 +577,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
         </div>
       </div>
 
-
       <Dialog open={dialogIsOpen} onOpenChange={(isOpen) => {
         setDialogIsOpen(isOpen);
         if (!isOpen) {
@@ -595,12 +590,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     Preencha os detalhes da atividade para adicioná-la ao calendário.
                 </DialogDescription>
             </DialogHeader>
-
             <div className="flex-grow overflow-y-auto">
                 <div className="px-6 py-4">
                     <TooltipProvider>
                         <div className="grid gap-6">
-                            {/* Category, Subcategory, Activity */}
                             <div className="grid grid-cols-1 gap-y-4">
                                 <div>
                                 <Label htmlFor="category" className="text-foreground font-semibold mb-1 block">Categoria</Label>
@@ -613,7 +606,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     </SelectContent>
                                 </Select>
                                 </div>
-
                                 <div>
                                 <Label htmlFor="subcategory" className="text-foreground font-semibold mb-1 block">Subcategoria</Label>
                                 <Select
@@ -643,7 +635,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     </SelectContent>
                                 </Select>
                                 </div>
-
                                 {selectedCategory === 'other' ? (
                                 <div>
                                     <Label htmlFor="customActivity" className="text-foreground font-semibold mb-1 block">Atividade/Evento</Label>
@@ -692,8 +683,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </div>
                                 )}
                             </div>
-
-                            {/* Date and Time Pickers */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                                 <div className="space-y-2">
                                 <Label htmlFor="start-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Início (Local)</Label>
@@ -742,7 +731,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </Popover>
                                 <p className="text-xs text-muted-foreground">Selecione data e hora de início no seu fuso horário local.</p>
                                 </div>
-
                                 <div className="space-y-2">
                                 <Label htmlFor="end-datetime-trigger" className="text-foreground font-semibold">Data e Hora de Fim (Opcional)</Label>
                                 <Popover>
@@ -792,8 +780,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 <p className="text-xs text-muted-foreground">Deixe em branco para usar duração padrão ou se não aplicável.</p>
                                 </div>
                             </div>
-
-                            {/* Mandatory and Attendance Value */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                                <div className="space-y-2">
                                     <div className="flex items-center mb-1">
@@ -810,7 +796,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-1 mb-1">
-                                        <Label htmlFor="dkpValueForEvent" className="text-foreground font-semibold">DKP da Atividade</Label>
+                                        <Label htmlFor="dkpValueForEvent" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
                                         <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
@@ -832,9 +818,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     />
                                 </div>
                             </div>
-
-
-                            {/* New Fields: Description, Announcement Channel, Announcement Time, etc. */}
                             <div className="space-y-4 pt-4">
                                 <div>
                                 <Label htmlFor="activity-description" className="text-foreground font-semibold mb-1 block">Descrição (Opcional)</Label>
@@ -846,7 +829,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     rows={3}
                                 />
                                 </div>
-
                                 <div>
                                 <div className="flex items-center gap-1 mb-1">
                                     <Label htmlFor="announcement-channel" className="text-foreground font-semibold">Canal de Anúncio</Label>
@@ -862,7 +844,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     </SelectContent>
                                 </Select>
                                 </div>
-
                                 <div>
                                     <div className="flex items-center gap-1 mb-1">
                                         <Label className="text-foreground font-semibold">Horário do Anúncio</Label>
@@ -908,7 +889,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">Selecione quanto tempo antes do evento o anúncio deve ser enviado (mínimo 10 minutos se agendado).</p>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
                                     <div className="flex items-center justify-between space-x-2 bg-background px-3 rounded-md border border-input h-10">
                                         <Label htmlFor="announce-discord-switch" className="text-foreground text-sm">Anunciar criação no Discord</Label>
@@ -938,7 +918,6 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
                     </TooltipProvider>
                 </div>
             </div>
-
             <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
                 <Button variant="outline" onClick={() => setDialogIsOpen(false)}>Cancelar</Button>
                 <Button
@@ -956,7 +935,14 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
             </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EventPinDialog 
+        event={selectedEventForPinDialog}
+        isOpen={isPinDialogOpen}
+        onClose={() => setIsPinDialogOpen(false)}
+        currentUserRole={currentUserRoleInGuild}
+        guildId={guildId}
+      />
     </div>
   );
 }
-
