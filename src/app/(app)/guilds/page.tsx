@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter as useNavigationRouter } from 'next/navigation'; 
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -10,11 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft, Gamepad2, Wand2, Shield, Swords, Dices, Crosshair, Bot } from 'lucide-react';
+import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft, Gamepad2, Wand2, Shield as ShieldIconLucide, Swords, Dices, Crosshair, Bot, Heart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy, writeBatch, serverTimestamp } from '@/lib/firebase';
-import type { Guild, AuditActionType, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added GuildMemberRoleInfo
-import { GuildRole, TLRole, TLWeapon } from '@/types/guildmaster'; // Added TLRole, TLWeapon
+import type { Guild, AuditActionType, GuildMemberRoleInfo } from '@/types/guildmaster';
+import { GuildRole, TLRole, TLWeapon } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -95,7 +96,7 @@ function ExploreGuildsContent() {
   const totalPages = Math.ceil(filteredGuilds.length / GUILDS_PER_PAGE);
 
   const processGuildJoin = async (guildToJoin: Guild, tlRoleWeaponData?: TLRoleWeaponFormValues) => {
-    if (!user) return; // Should already be checked by handleApplyToGuild
+    if (!user) return; 
     setIsJoining(guildToJoin.id);
 
     try {
@@ -104,7 +105,7 @@ function ExploreGuildsContent() {
       
       const memberRoleInfo: GuildMemberRoleInfo = {
         generalRole: GuildRole.Member,
-        notes: "", // Initialize notes
+        notes: "", 
       };
 
       if (guildToJoin.game === "Throne and Liberty" && tlRoleWeaponData) {
@@ -167,7 +168,7 @@ function ExploreGuildsContent() {
   };
   
   const handleDirectJoinOrPasswordPrompt = async (guild: Guild, guildPassword?: string) => {
-    if (!user) return; // Should be checked earlier
+    if (!user) return; 
     setIsJoining(guild.id);
     setPasswordError("");
 
@@ -177,12 +178,11 @@ function ExploreGuildsContent() {
       return;
     }
     
-    // Password is correct or not needed at this stage
     if (guild.game === "Throne and Liberty") {
       setGuildForTLSelection(guild);
       setShowTLSelectionDialog(true);
-      setSelectedGuildForPassword(null); // Close password dialog if it was open
-      setIsJoining(null); // Stop loading for join button, TL dialog will handle its own loading
+      setSelectedGuildForPassword(null); 
+      setIsJoining(null); 
     } else {
       await processGuildJoin(guild);
     }
@@ -201,7 +201,7 @@ function ExploreGuildsContent() {
     if (guild.password && !guild.isOpen) { 
       setSelectedGuildForPassword(guild);
     } else { 
-      handleDirectJoinOrPasswordPrompt(guild); // Directly try to join or open TL dialog
+      handleDirectJoinOrPasswordPrompt(guild); 
     }
   };
   
@@ -220,26 +220,26 @@ function ExploreGuildsContent() {
   const getTLRoleIcon = (role?: TLRole) => {
     if (!role) return null;
     switch (role) {
-      case TLRole.Tank: return <Shield className="mr-2 h-4 w-4 text-sky-500" />;
-      case TLRole.Healer: return <Heart className="mr-2 h-4 w-4 text-emerald-500" />; // Placeholder, replace with actual Healer icon if available in lucide
+      case TLRole.Tank: return <ShieldIconLucide className="mr-2 h-4 w-4 text-sky-500" />;
+      case TLRole.Healer: return <Heart className="mr-2 h-4 w-4 text-emerald-500" />; 
       case TLRole.DPS: return <Swords className="mr-2 h-4 w-4 text-rose-500" />;
       default: return null;
     }
   };
   
   const getTLWeaponIcon = (weapon?: TLWeapon) => {
-    if (!weapon) return null;
+    let iconSrc = "https://placehold.co/16x16.png?text=W";
     switch (weapon) {
-      case TLWeapon.SwordAndShield: return <Shield className="mr-2 h-4 w-4" />;
-      case TLWeapon.Greatsword: return <Swords className="mr-2 h-4 w-4" />; // Placeholder
-      case TLWeapon.Daggers: return <Swords className="mr-2 h-4 w-4" />; // Placeholder
-      case TLWeapon.Crossbow: return <Crosshair className="mr-2 h-4 w-4" />;
-      case TLWeapon.Bow: return <Crosshair className="mr-2 h-4 w-4" />; // Placeholder
-      case TLWeapon.Staff: return <Wand2 className="mr-2 h-4 w-4" />;
-      case TLWeapon.WandAndTome: return <Wand2 className="mr-2 h-4 w-4" />; // Placeholder
-      case TLWeapon.Spear: return <Swords className="mr-2 h-4 w-4" />; // Placeholder
-      default: return <Gamepad2 className="mr-2 h-4 w-4" />;
+      case TLWeapon.SwordAndShield: iconSrc = "https://i.imgur.com/jPEqyNb.png"; break;
+      case TLWeapon.Greatsword: iconSrc = "https://i.imgur.com/Tf1LymG.png"; break;
+      case TLWeapon.Daggers: iconSrc = "https://i.imgur.com/CEM1Oij.png"; break;
+      case TLWeapon.Crossbow: iconSrc = "https://i.imgur.com/u7pqt5H.png"; break;
+      case TLWeapon.Bow: iconSrc = "https://i.imgur.com/73c5Rl4.png"; break;
+      case TLWeapon.Staff: iconSrc = "https://i.imgur.com/wgjWVvI.png"; break;
+      case TLWeapon.WandAndTome: iconSrc = "https://i.imgur.com/BdYPLee.png"; break; 
+      case TLWeapon.Spear: iconSrc = "https://i.imgur.com/l2oHYwY.png"; break;
     }
+    return <Image src={iconSrc} alt={weapon || "Weapon"} width={16} height={16} className="mr-2" />;
   };
 
 

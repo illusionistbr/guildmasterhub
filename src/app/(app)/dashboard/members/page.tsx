@@ -56,7 +56,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIcon, BadgeCent, User,
+  Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Crosshair, Gamepad2
 } from 'lucide-react';
@@ -69,44 +69,38 @@ import { useHeader } from '@/contexts/HeaderContext';
 
 type MemberManagementAction = "changeRole" | "kick";
 
-// This function needs to be updated to reflect the new data structure and mocked fields
+const getWeaponIconPath = (weapon?: TLWeapon): string => {
+  if (!weapon) return "https://placehold.co/32x32.png?text=N/A";
+  switch (weapon) {
+    case TLWeapon.SwordAndShield: return "https://i.imgur.com/jPEqyNb.png";
+    case TLWeapon.Greatsword: return "https://i.imgur.com/Tf1LymG.png";
+    case TLWeapon.Daggers: return "https://i.imgur.com/CEM1Oij.png";
+    case TLWeapon.Crossbow: return "https://i.imgur.com/u7pqt5H.png";
+    case TLWeapon.Bow: return "https://i.imgur.com/73c5Rl4.png";
+    case TLWeapon.Staff: return "https://i.imgur.com/wgjWVvI.png";
+    case TLWeapon.WandAndTome: return "https://i.imgur.com/BdYPLee.png"; // Assuming "Wand" for "WandAndTome"
+    case TLWeapon.Spear: return "https://i.imgur.com/l2oHYwY.png";
+    default: return "https://placehold.co/32x32.png?text=WPN";
+  }
+};
+
 const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember => {
   const isTLGuild = guildGame === "Throne and Liberty";
   return {
     ...member,
     weapons: { 
-      mainHandIconUrl: member.tlPrimaryWeapon ? getWeaponIconPath(member.tlPrimaryWeapon) : `https://placehold.co/32x32.png`,
-      offHandIconUrl: member.tlSecondaryWeapon ? getWeaponIconPath(member.tlSecondaryWeapon) : `https://placehold.co/32x32.png`
+      mainHandIconUrl: member.tlPrimaryWeapon ? getWeaponIconPath(member.tlPrimaryWeapon) : `https://placehold.co/32x32.png?text=MH`,
+      offHandIconUrl: member.tlSecondaryWeapon ? getWeaponIconPath(member.tlSecondaryWeapon) : `https://placehold.co/32x32.png?text=OH`
     },
     gearScore: member.gearScore ?? Math.floor(3800 + Math.random() * 500),
     activityPoints: member.activityPoints ?? Math.floor(Math.random() * 100),
     dkpBalance: member.dkpBalance ?? Math.floor(Math.random() * 500),
     status: member.status ?? (Math.random() > 0.2 ? 'Ativo' : 'Inativo'),
-    // Ensure TL specific fields from GuildMemberRoleInfo are correctly passed or defaulted if needed
     tlRole: isTLGuild ? member.tlRole : undefined,
     tlPrimaryWeapon: isTLGuild ? member.tlPrimaryWeapon : undefined,
     tlSecondaryWeapon: isTLGuild ? member.tlSecondaryWeapon : undefined,
     notes: member.notes ?? "",
   };
-};
-
-// Helper to get placeholder weapon icons based on weapon type
-// In a real app, these would be actual icon URLs
-const getWeaponIconPath = (weapon?: TLWeapon): string => {
-  if (!weapon) return "https://placehold.co/32x32.png";
-  // This is just for placeholder, actual icons would differ
-  const base = "https://placehold.co/32x32.png?text=";
-  switch (weapon) {
-    case TLWeapon.SwordAndShield: return `${base}S&S`;
-    case TLWeapon.Greatsword: return `${base}GS`;
-    case TLWeapon.Daggers: return `${base}DG`;
-    case TLWeapon.Crossbow: return `${base}CB`;
-    case TLWeapon.Bow: return `${base}BW`;
-    case TLWeapon.Staff: return `${base}ST`;
-    case TLWeapon.WandAndTome: return `${base}W&T`;
-    case TLWeapon.Spear: return `${base}SP`;
-    default: return "https://placehold.co/32x32.png";
-  }
 };
 
 
@@ -128,8 +122,8 @@ function MembersPageContent() {
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [usernameFilter, setUsernameFilter] = useState("");
   const [activityDateRange, setActivityDateRange] = useState<DateRange | undefined>({
-    from: undefined, // Default to undefined
-    to: undefined, // Default to undefined
+    from: undefined, 
+    to: undefined, 
   });
   const [timeFromFilter, setTimeFromFilter] = useState("00:00");
   const [timeToFilter, setTimeToFilter] = useState("23:59");
@@ -185,7 +179,7 @@ function MembersPageContent() {
 
           if (userProfileSnap && userProfileSnap.exists()) {
             baseProfile = userProfileSnap.data() as UserProfile;
-          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) { // Fallback for owner if user doc not found yet
+          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) { 
             baseProfile = {
               uid: currentUser.uid,
               email: currentUser.email,
@@ -193,11 +187,11 @@ function MembersPageContent() {
               photoURL: currentUser.photoURL,
             };
           } else {
-            continue; // Skip if no profile data can be found
+            continue; 
           }
           
           const roleInfoSource = guildData.roles?.[uid];
-          let memberSpecificData: Partial<GuildMember> = { role: GuildRole.Member }; // Default general role
+          let memberSpecificData: Partial<GuildMember> = { role: GuildRole.Member }; 
 
           if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
             const fullRoleInfo = roleInfoSource as GuildMemberRoleInfo;
@@ -208,28 +202,28 @@ function MembersPageContent() {
               tlSecondaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlSecondaryWeapon : undefined,
               notes: fullRoleInfo.notes || "",
             };
-          } else if (typeof roleInfoSource === 'string') { // Backward compatibility
+          } else if (typeof roleInfoSource === 'string') { 
             memberSpecificData.role = roleInfoSource as GuildRole;
           }
           
           processedMembers.push(enhanceMemberData({
-            ...baseProfile, // from users collection or auth fallback
+            ...baseProfile, 
             uid: uid,
-            ...memberSpecificData, // from guild.roles[uid]
+            ...memberSpecificData, 
           }, guildData.game));
         }
         
         processedMembers.sort((a, b) => (a.displayName || a.uid).localeCompare(b.displayName || b.uid)); 
         setMembers(processedMembers);
 
-      } else { // Only owner might be present if memberIds is empty but ownerId is set
+      } else { 
          if (guildData.ownerId === currentUser.uid) {
             const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
             let ownerSpecificData: Partial<GuildMember> = { role: GuildRole.Leader };
              if (typeof ownerRoleInfoSource === 'object' && ownerRoleInfoSource !== null && 'generalRole' in ownerRoleInfoSource) {
                 const fullRoleInfo = ownerRoleInfoSource as GuildMemberRoleInfo;
                 ownerSpecificData = {
-                    role: fullRoleInfo.generalRole, // Should be Leader
+                    role: fullRoleInfo.generalRole, 
                     tlRole: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlRole : undefined,
                     tlPrimaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlPrimaryWeapon : undefined,
                     tlSecondaryWeapon: guildData.game === "Throne and Liberty" ? fullRoleInfo.tlSecondaryWeapon : undefined,
@@ -280,7 +274,7 @@ function MembersPageContent() {
     if (typeof roleInfo === 'object' && roleInfo !== null && 'generalRole' in roleInfo) {
       return (roleInfo as GuildMemberRoleInfo).generalRole;
     }
-    return roleInfo as GuildRole | null; // For backward compatibility or if user not in roles map
+    return roleInfo as GuildRole | null; 
   }, [currentUser, guild]);
 
 
@@ -341,13 +335,13 @@ function MembersPageContent() {
 
       if (typeof existingRoleInfo === 'object' && existingRoleInfo !== null && 'generalRole' in existingRoleInfo) {
         newRoleInfoPayload = { ...(existingRoleInfo as GuildMemberRoleInfo), generalRole: selectedNewRole };
-      } else { // Handle case where role info might be just a string (old format) or needs initialization
+      } else { 
         newRoleInfoPayload = {
           generalRole: selectedNewRole,
-          tlRole: actionUser.tlRole, // Preserve if exists
-          tlPrimaryWeapon: actionUser.tlPrimaryWeapon, // Preserve if exists
-          tlSecondaryWeapon: actionUser.tlSecondaryWeapon, // Preserve if exists
-          notes: actionUser.notes || "", // Preserve if exists
+          tlRole: actionUser.tlRole, 
+          tlPrimaryWeapon: actionUser.tlPrimaryWeapon, 
+          tlSecondaryWeapon: actionUser.tlSecondaryWeapon, 
+          notes: actionUser.notes || "", 
         };
       }
 
@@ -357,7 +351,7 @@ function MembersPageContent() {
         oldValue: oldRole, newValue: selectedNewRole 
       });
       toast({ title: "Cargo Atualizado!", description: `${actionUser.displayName} agora é ${selectedNewRole}.` });
-      fetchGuildAndMembers(); // Re-fetch to ensure consistency
+      fetchGuildAndMembers(); 
       closeActionDialog();
     } catch (error) {
       console.error("Erro ao mudar cargo:", error);
@@ -415,9 +409,9 @@ function MembersPageContent() {
 
       if (typeof existingRoleInfo === 'object' && existingRoleInfo !== null && 'generalRole' in existingRoleInfo) {
         updatedRoleInfoPayload = { ...(existingRoleInfo as GuildMemberRoleInfo), notes: currentNote };
-      } else { // Handle case where role info might be just a string or needs initialization
+      } else { 
         updatedRoleInfoPayload = {
-          generalRole: memberForNotes.role, // Existing general role
+          generalRole: memberForNotes.role, 
           tlRole: memberForNotes.tlRole,
           tlPrimaryWeapon: memberForNotes.tlPrimaryWeapon,
           tlSecondaryWeapon: memberForNotes.tlSecondaryWeapon,
@@ -434,7 +428,7 @@ function MembersPageContent() {
       });
 
       toast({ title: "Nota Salva!", description: `Nota para ${memberForNotes.displayName} foi salva.` });
-      fetchGuildAndMembers(); // Refresh data
+      fetchGuildAndMembers(); 
       setShowNotesDialog(false);
       setMemberForNotes(null);
     } catch (error) {
@@ -448,7 +442,7 @@ function MembersPageContent() {
   const getGeneralRoleIcon = (role: GuildRole) => {
     switch (role) {
       case GuildRole.Leader: return <Crown className="h-5 w-5 text-yellow-400" />;
-      case GuildRole.ViceLeader: return <ShieldIcon className="h-5 w-5 text-orange-400" />;
+      case GuildRole.ViceLeader: return <ShieldIconLucide className="h-5 w-5 text-orange-400" />;
       case GuildRole.Counselor: return <BadgeCent className="h-5 w-5 text-sky-400" />;
       case GuildRole.Officer: return <UserCog className="h-5 w-5 text-green-400" />;
       default: return <User className="h-5 w-5 text-muted-foreground" />;
@@ -467,9 +461,8 @@ function MembersPageContent() {
   
   const getTLRoleIcon = (role?: TLRole) => {
     if (!role) return null;
-    // Using existing Lucide icons as placeholders for TL roles
     switch (role) {
-      case TLRole.Tank: return <ShieldIcon className={cn("h-4 w-4", getTLRoleStyling(role))} />;
+      case TLRole.Tank: return <ShieldIconLucide className={cn("h-4 w-4", getTLRoleStyling(role))} />;
       case TLRole.Healer: return <Heart className={cn("h-4 w-4", getTLRoleStyling(role))} />;
       case TLRole.DPS: return <Swords className={cn("h-4 w-4", getTLRoleStyling(role))} />;
       default: return null;
@@ -482,7 +475,7 @@ function MembersPageContent() {
   const handleSelectAllRows = (checked: boolean) => {
     const newSelectedRows: Record<string, boolean> = {};
     if (checked) {
-      paginatedMembers.forEach(member => newSelectedRows[member.uid] = true); // Select only visible members
+      paginatedMembers.forEach(member => newSelectedRows[member.uid] = true); 
     }
     setSelectedRows(newSelectedRows);
   };
@@ -492,7 +485,6 @@ function MembersPageContent() {
   };
 
   const paginatedMembers = useMemo(() => {
-    // Basic username filter for now, can be expanded
     const filtered = members.filter(member => 
         (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
     );
@@ -506,10 +498,10 @@ function MembersPageContent() {
   if (loadingGuildData || authLoading) {
     return (
       <div className="space-y-4 p-4 md:p-6">
-        <Skeleton className="h-10 w-1/3 mb-6" /> {/* Page Title Skeleton */}
-        <Skeleton className="h-16 w-full" /> {/* Filters Skeleton */}
-        <Skeleton className="h-12 w-full" /> {/* Table Controls Skeleton */}
-        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} {/* Table Rows Skeleton */}
+        <Skeleton className="h-10 w-1/3 mb-6" /> 
+        <Skeleton className="h-16 w-full" /> 
+        <Skeleton className="h-12 w-full" /> 
+        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} 
       </div>
     );
   }
@@ -581,7 +573,7 @@ function MembersPageContent() {
             </div>
         </div>
          <div className="lg:col-span-3 flex justify-end gap-2 items-center mt-2 lg:mt-0">
-            <Button variant="outline" disabled><ShieldIcon className="mr-2 h-4 w-4" /> Verificar Equip.</Button>
+            <Button variant="outline" disabled><ShieldIconLucide className="mr-2 h-4 w-4" /> Verificar Equip.</Button>
             <Button disabled><UserPlus className="mr-2 h-4 w-4" /> Adicionar Membro</Button>
         </div>
       </div>
@@ -672,8 +664,8 @@ function MembersPageContent() {
                     </TableCell>
                   )}
                   <TableCell className="flex items-center gap-1">
-                    {member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt="Arma Principal" width={24} height={24} data-ai-hint="weapon sword"/>}
-                    {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt="Arma Secundária" width={24} height={24} data-ai-hint="weapon shield"/>}
+                    {member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
+                    {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}
                   </TableCell>
                   <TableCell className="flex items-center gap-1">
                     {member.gearScore} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
@@ -744,7 +736,7 @@ function MembersPageContent() {
                 <span className="text-sm text-muted-foreground">Linhas/pág:</span>
                 <Select value={rowsPerPage.toString()} onValueChange={(value) => { setRowsPerPage(Number(value)); setCurrentPage(1);}}>
                     <SelectTrigger className="w-[70px] h-8 text-xs">
-                        <SelectValue placeholder={rowsPerPage} />
+                        <SelectValue placeholder={rowsPerPage.toString()} />
                     </SelectTrigger>
                     <SelectContent>
                         {[10, 25, 50, 100].map(size => <SelectItem key={size} value={size.toString()} className="text-xs">{size}</SelectItem>)}
@@ -761,7 +753,6 @@ function MembersPageContent() {
         </div>
       </div>
 
-      {/* Note Edit Dialog */}
       {memberForNotes && (
         <Dialog open={showNotesDialog} onOpenChange={(isOpen) => { if (!isOpen) { setShowNotesDialog(false); setMemberForNotes(null); } }}>
           <NotesDialogContent className="sm:max-w-md">
