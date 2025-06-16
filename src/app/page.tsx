@@ -44,7 +44,7 @@ export default function LandingPage() {
       quote: "Organizar as raides era um caos. Com o GuildMasterHub, nossos eventos rodam com precisão militar. Derrotamos o Lich de Gelo na primeira semana de uso!",
       name: "Lord Kael",
       role: "Líder da [Ira dos Dragões]",
-      avatarUrl: "https://placehold.co/64x64.png?text=LK",
+      avatarUrl: "https://i.imgur.com/34n86yn.jpeg",
       avatarFallback: "LK",
       aiHint: "warrior avatar"
     },
@@ -52,7 +52,7 @@ export default function LandingPage() {
       quote: "Nossa página de recrutamento ficou incrível! Recebemos o dobro de aplicações de jogadores de alta qualidade desde que começamos a usar a plataforma.",
       name: "Zyra",
       role: "Oficial de [Sentinelas de Aço]",
-      avatarUrl: "https://placehold.co/64x64.png?text=ZY",
+      avatarUrl: "https://i.imgur.com/0ImxkVs.jpeg",
       avatarFallback: "ZY",
       aiHint: "mage avatar"
     },
