@@ -231,6 +231,9 @@ const ACTIVITY_ICONS: Record<string, string> = {
 
   // World Dungeons (Common Icon for all in this category)
   ...Object.fromEntries(TL_ACTIVITIES.world_dungeon.map(act => [act, 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/WM_LandMark_Dungeon_UsePoint_Sprite.webp'])),
+  
+  // Guild Contracts (Common Icon for all in this category)
+  ...Object.fromEntries(TL_ACTIVITIES.guild_contract.map(act => [act, 'https://i.imgur.com/I34gDeO.png'])),
 
   // Icons for activities containing "Boonstone" in their name (Applied after generic boonstone category icons)
   ...Object.fromEntries(
@@ -918,3 +921,5 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName }: ThroneAndLi
     </div>
   );
 }
+
+
