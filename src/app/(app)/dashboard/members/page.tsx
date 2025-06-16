@@ -92,7 +92,6 @@ const enhanceMemberData = (member: GuildMember, guildGame?: string): GuildMember
       offHandIconUrl: member.tlSecondaryWeapon ? getWeaponIconPath(member.tlSecondaryWeapon) : `https://placehold.co/32x32.png?text=OH`
     },
     gearScore: member.gearScore ?? Math.floor(3800 + Math.random() * 500),
-    activityPoints: member.activityPoints ?? Math.floor(Math.random() * 100),
     dkpBalance: member.dkpBalance ?? Math.floor(Math.random() * 500),
     status: member.status ?? statuses[Math.floor(Math.random() * statuses.length)],
     tlRole: isTLGuild ? member.tlRole : undefined,
@@ -470,9 +469,9 @@ function MembersPageContent() {
 
   const getStatusBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
-      case 'Ativo': return 'default'; // Will use primary color via CSS if not overridden
+      case 'Ativo': return 'default'; 
       case 'Inativo': return 'destructive';
-      case 'De Licença': return 'secondary'; // Using secondary for orange-like. Can be customized.
+      case 'De Licença': return 'secondary'; 
       default: return 'outline';
     }
   };
@@ -540,7 +539,7 @@ function MembersPageContent() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end p-4 bg-card rounded-lg shadow">
         <div>
-          <label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Nome de Usuário</label>
+          <label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</label>
           <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} />
         </div>
         <div>
@@ -644,7 +643,6 @@ function MembersPageContent() {
               <TableHead>Armas</TableHead>
               <TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               <TableHead>Rank <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              <TableHead>Pontos Ativ. <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               <TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               {isGuildLeaderOrVice && <TableHead>Nota</TableHead>}
               <TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
@@ -654,7 +652,7 @@ function MembersPageContent() {
           <TableBody>
             {paginatedMembers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={guild.game === "Throne and Liberty" ? (isGuildLeaderOrVice ? 11 : 10) : (isGuildLeaderOrVice ? 10 : 9)} className="text-center h-24">
+                <TableCell colSpan={guild.game === "Throne and Liberty" ? (isGuildLeaderOrVice ? 10 : 9) : (isGuildLeaderOrVice ? 9 : 8)} className="text-center h-24">
                   Nenhum membro encontrado {usernameFilter ? "com o filtro aplicado." : "nesta guilda."}
                 </TableCell>
               </TableRow>
@@ -697,12 +695,6 @@ function MembersPageContent() {
                     {member.role}
                   </TableCell>
                   
-                  <TableCell>
-                    <Badge variant={ (member.activityPoints ?? 0) > 50 ? "default" : ((member.activityPoints ?? 0) > 20 ? "secondary" : "destructive") } className="text-xs">
-                      {member.activityPoints ?? 0} pts
-                    </Badge>
-                  </TableCell>
-
                   <TableCell className="flex items-center gap-1">
                     {member.dkpBalance ?? 0} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
                   </TableCell>
