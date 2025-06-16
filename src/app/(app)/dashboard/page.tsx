@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart } from "lucide-react";
-import type { Guild, AuditActionType, Application, GuildMemberRoleInfo } from '@/types/guildmaster'; 
+import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart, CalendarDays } from "lucide-react";
+import type { Guild, AuditActionType, Application, GuildMemberRoleInfo, Event as GuildEventType } from '@/types/guildmaster'; 
 import { TLRole } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +26,13 @@ import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
 import { logGuildActivity } from '@/lib/auditLogService';
 
+const parseDateTime = (dateStr: string, timeStr: string): Date => {
+  const date = new Date(dateStr); // If dateStr is YYYY-MM-DD, this is UTC midnight
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  date.setHours(hours, minutes, 0, 0); // Sets local hours and minutes
+  return date;
+};
+
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
@@ -36,6 +43,7 @@ function DashboardPageContent() {
   const [loadingGuild, setLoadingGuild] = useState(true);
   const [isSavingImage, setIsSavingImage] = useState(false);
   const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
+  const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
   const [roleCounts, setRoleCounts] = useState({ tank: 0, dps: 0, healer: 0 });
   
   const { toast } = useToast();
@@ -175,21 +183,45 @@ function DashboardPageContent() {
   useEffect(() => {
     if (!currentGuild || !currentGuild.id) {
         setPendingApplicationsCount(0);
+        setUpcomingEventsCount(0);
         return;
     }
 
+    // Fetch pending applications count
     const applicationsRef = collection(db, `guilds/${currentGuild.id}/applications`);
-    const q = query(applicationsRef, where("status", "==", "pending"));
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const qApps = query(applicationsRef, where("status", "==", "pending"));
+    const unsubscribeApps = onSnapshot(qApps, (querySnapshot) => {
         setPendingApplicationsCount(querySnapshot.size);
     }, (error) => {
         console.error("Error fetching pending applications count:", error);
         setPendingApplicationsCount(0);
     });
 
-    return () => unsubscribe();
-  }, [currentGuild, toast]);
+    // Fetch upcoming events count
+    const eventsRef = collection(db, `guilds/${currentGuild.id}/events`);
+    const qEvents = query(eventsRef); // No specific ordering needed just for count
+    const unsubscribeEvents = onSnapshot(qEvents, (querySnapshot) => {
+        const now = new Date();
+        let count = 0;
+        querySnapshot.forEach((doc) => {
+            const eventData = doc.data() as GuildEventType;
+            const eventDateTime = parseDateTime(eventData.date, eventData.time);
+            if (eventDateTime >= now) {
+                count++;
+            }
+        });
+        setUpcomingEventsCount(count);
+    }, (error) => {
+        console.error("Error fetching upcoming events count:", error);
+        setUpcomingEventsCount(0);
+    });
+
+
+    return () => {
+      unsubscribeApps();
+      unsubscribeEvents();
+    }
+  }, [currentGuild]);
 
 
   const handleSaveImage = async (type: 'banner' | 'logo', imageUrl?: string | null, imageFile?: File | null) => {
@@ -597,7 +629,7 @@ function DashboardPageContent() {
       </div>
       
       {isTLGuild && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 px-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 px-4 mb-8">
           <StatCard
             title="Tanks"
             value={roleCounts.tank.toString()}
@@ -622,7 +654,7 @@ function DashboardPageContent() {
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 px-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 px-4">
         <StatCard
           title="Membros Ativos"
           value={currentGuild.memberCount.toString()}
@@ -631,6 +663,14 @@ function DashboardPageContent() {
           actionLabel="Gerenciar Membros"
         />
         
+        <StatCard
+          title="Próximos Eventos"
+          value={upcomingEventsCount.toString()}
+          icon={<CalendarDays className="h-8 w-8 text-primary" />}
+          actionHref={`/dashboard/calendar?guildId=${guildIdForLinks}`}
+          actionLabel="Ver Calendário"
+        />
+
         <StatCard
           title="Candidaturas Pendentes"
           value={pendingApplicationsCount.toString()}
@@ -657,11 +697,11 @@ function DashboardPageSkeleton() {
             <Skeleton className="h-6 w-1/2 mx-auto md:mx-0" />
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 px-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 px-4 mb-8">
           {[...Array(3)].map((_, i) => <Skeleton key={`role-skel-${i}`} className="h-40 w-full rounded-lg" />)}
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 px-4">
-          {[...Array(2)].map((_, i) => <Skeleton key={`main-skel-${i}`} className="h-40 w-full rounded-lg" />)}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 px-4">
+          {[...Array(3)].map((_, i) => <Skeleton key={`main-skel-${i}`} className="h-40 w-full rounded-lg" />)}
         </div>
       </div>
     );
