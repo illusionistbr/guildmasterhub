@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2, UserPlus } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
@@ -500,3 +500,4 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
