@@ -114,7 +114,6 @@ function ApplyPageContent() {
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
 
-        // Check if user is already a member AFTER fetching guild data
         if(guildData.memberIds?.includes(currentUser.uid)){
             toast({title: "Você já é membro!", description: `Você já faz parte da guilda ${guildData.name}.`, variant: "default"});
             router.push(`/dashboard?guildId=${guildId}`);
@@ -147,7 +146,6 @@ function ApplyPageContent() {
       return;
     }
 
-    // Re-check if user is already a member before submitting
     const guildDocRef = doc(db, "guilds", guildId);
     const freshGuildSnap = await getDoc(guildDocRef);
     if (!freshGuildSnap.exists()) {
@@ -174,7 +172,7 @@ function ApplyPageContent() {
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl,
       discordNick: data.discordNick,
-      status: 'pending', // Default, will be overridden for public guilds
+      status: 'pending', 
       ...(data.tlRole && { tlRole: data.tlRole }),
       ...(data.tlPrimaryWeapon && { tlPrimaryWeapon: data.tlPrimaryWeapon }),
       ...(data.tlSecondaryWeapon && { tlSecondaryWeapon: data.tlSecondaryWeapon }),
@@ -184,19 +182,21 @@ function ApplyPageContent() {
       const applicationsRef = collection(db, `guilds/${guildId}/applications`);
       const submittedAtTimestamp = serverTimestamp() as Timestamp;
 
-      if (guild.isOpen === true || !guild.password) { // PUBLIC GUILD - IMMEDIATE JOIN
+      if (guild.isOpen === true || !guild.password) { 
         const batch = writeBatch(db);
         const guildRef = doc(db, "guilds", guildId);
         
-        const memberRoleInfo: GuildMemberRoleInfo = {
-          generalRole: GuildRole.Member,
+        let memberRoleInfo: GuildMemberRoleInfo = {
+          generalRole: GuildRole.Membro,
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
-          ...(isTLGuild && {
-            tlRole: data.tlRole,
-            tlPrimaryWeapon: data.tlPrimaryWeapon,
-            tlSecondaryWeapon: data.tlSecondaryWeapon,
-          }),
+          dkpBalance: 0, 
         };
+
+        if (isTLGuild) {
+          memberRoleInfo.tlRole = data.tlRole;
+          memberRoleInfo.tlPrimaryWeapon = data.tlPrimaryWeapon;
+          memberRoleInfo.tlSecondaryWeapon = data.tlSecondaryWeapon;
+        }
 
         batch.update(guildRef, {
           memberIds: arrayUnion(currentUser.uid),
@@ -204,8 +204,7 @@ function ApplyPageContent() {
           [`roles.${currentUser.uid}`]: memberRoleInfo,
         });
 
-        // Optionally, save an "auto-approved" application for record
-        const appDocForPublicJoinRef = doc(applicationsRef); // Auto-generate ID
+        const appDocForPublicJoinRef = doc(applicationsRef); 
         batch.set(appDocForPublicJoinRef, {
           ...applicationBaseData,
           applicantDisplayName: currentUser.displayName || currentUser.email,
@@ -229,13 +228,13 @@ function ApplyPageContent() {
         toast({ title: "Bem-vindo(a) à Guilda!", description: `Você entrou na guilda ${guild.name}.` });
         form.reset();
 
-      } else { // PRIVATE GUILD - SUBMIT FOR REVIEW
+      } else { 
         const newApplicationRef = await addDoc(applicationsRef, {
           ...applicationBaseData,
           applicantDisplayName: currentUser.displayName || currentUser.email,
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
-          status: 'pending', // Explicitly pending for private guilds
+          status: 'pending', 
         });
 
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.APPLICATION_SUBMITTED, {
