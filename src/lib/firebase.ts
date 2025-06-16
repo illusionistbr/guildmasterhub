@@ -20,7 +20,8 @@ import {
   arrayUnion,
   arrayRemove,
   deleteField,
-  Timestamp // Import Timestamp here
+  Timestamp, // Import Timestamp here
+  onSnapshot // Import onSnapshot here
 } from "firebase/firestore";
 import { getAuth, updateProfile as firebaseUpdateProfile } from "firebase/auth"; // Renamed to avoid conflict
 import { 
@@ -77,10 +78,10 @@ export {
   arrayRemove,
   deleteField,
   Timestamp, // Export Timestamp here
+  onSnapshot, // Export onSnapshot here
   ref,
   uploadBytes,
   getDownloadURL,
   deleteObject,
   firebaseUpdateProfile // Exporting the renamed updateProfile
 };
-
