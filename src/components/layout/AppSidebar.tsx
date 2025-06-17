@@ -26,15 +26,10 @@ import {
   FileText,
   ListFilter,
   UsersRound,
-  KeyRound // Icon for Permissions
+  KeyRound
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-// We will need to fetch guild data or user's role to conditionally show permissions link
-// This might be complex for a sidebar. A simpler approach is to always show
-// and let the target page handle access control.
-// For now, no direct guild data fetching here to keep it simpler.
 
-// Main navigation items
 const mainNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { 
@@ -46,11 +41,11 @@ const mainNavItems = [
     ]
   },
   { 
-    label: "Calendario", 
+    label: "Calendário", 
     icon: CalendarDays,
     baseHref: "/dashboard/calendar",
     subItems: [
-      { baseHref: "/dashboard/calendar/settings", label: "Config. Calendario", icon: ListFilter },
+      { baseHref: "/dashboard/calendar/settings", label: "Config. Calendário", icon: ListFilter },
     ]
   },
   { 
@@ -66,9 +61,7 @@ const mainNavItems = [
     baseHref: "/dashboard/settings", 
     label: "Config. da Guilda", 
     icon: Settings,
-    subItems: [
-      { baseHref: "/dashboard/settings/permissions", label: "Cargos e Permissoes", icon: KeyRound },
-    ]
+    // Submenu removido, pois "Cargos e Permissões" agora é uma aba
   },
 ];
 
@@ -84,9 +77,6 @@ export function AppSidebar() {
   const generateHref = (baseHref: string) => {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
   };
-
-  // Conditional rendering of "Permissões" link might require fetching guild data
-  // or user's role here. For simplicity now, always render and let page handle denial.
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border">

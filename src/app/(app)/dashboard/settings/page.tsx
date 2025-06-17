@@ -6,10 +6,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Link from 'next/link';
+import Link from 'next/link'; // Keep Link if other parts need it
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch } from '@/lib/firebase';
-import type { Guild, GuildMemberRoleInfo } from '@/types/guildmaster';
+import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -30,21 +30,52 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
 import { hasPermission } from '@/lib/permissions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 
 const guildNameSchema = z.object({
-  name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no maximo 50 caracteres."),
+  name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
 });
 type GuildNameFormValues = z.infer<typeof guildNameSchema>;
 
 const guildPasswordSchema = z.object({
-  password: z.string().max(50, "Senha deve ter no maximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
+  password: z.string().max(50, "Senha deve ter no máximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
 });
 type GuildPasswordFormValues = z.infer<typeof guildPasswordSchema>;
+
+const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
+  [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Permite visualizar a lista de membros e seus perfis básicos." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: { title: "Gerenciar Cargos de Membros", description: "Permite modificar o cargo de outros membros." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Permite alterar o status de atividade dos membros (Ativo, Inativo, etc.)." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: { title: "Gerenciar Notas de Membros", description: "Permite adicionar ou editar notas administrativas sobre membros." },
+  [GuildPermission.MANAGE_MEMBERS_KICK]: { title: "Expulsar Membros", description: "Permite remover membros da guilda." },
+  [GuildPermission.MANAGE_EVENTS_CREATE]: { title: "Criar Eventos/Atividades", description: "Permite adicionar novos eventos ao calendário da guilda." },
+  [GuildPermission.MANAGE_EVENTS_EDIT]: { title: "Editar Eventos/Atividades", description: "Permite modificar detalhes de eventos existentes." },
+  [GuildPermission.MANAGE_EVENTS_DELETE]: { title: "Excluir Eventos/Atividades", description: "Permite remover eventos do calendário." },
+  [GuildPermission.MANAGE_EVENTS_VIEW_PIN]: { title: "Visualizar PIN de Eventos", description: "Permite ver os códigos PIN gerados para eventos." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Gerenciar Config. Gerais da Guilda", description: "Permite modificar nome, senha e outras configurações básicas da guilda." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: { title: "Gerenciar Aparência da Guilda", description: "Permite alterar logo e banner da guilda." },
+  [GuildPermission.MANAGE_ROLES_PERMISSIONS]: { title: "Gerenciar Cargos e Permissões", description: "Permite criar, editar, excluir cargos e definir suas permissões (acesso a esta aba)." },
+  [GuildPermission.MANAGE_GROUPS_CREATE]: { title: "Criar Grupos/Parties", description: "Permite formar e nomear grupos (parties) de membros." },
+  [GuildPermission.MANAGE_GROUPS_EDIT]: { title: "Editar Grupos/Parties", description: "Permite modificar a composição e detalhes de grupos existentes." },
+  [GuildPermission.MANAGE_GROUPS_DELETE]: { title: "Excluir Grupos/Parties", description: "Permite dissolver grupos (parties)." },
+  [GuildPermission.VIEW_AUDIT_LOG]: { title: "Ver Log de Auditoria", description: "Permite visualizar o histórico de ações administrativas na guilda." },
+  [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: { title: "Ver Candidaturas", description: "Permite visualizar candidaturas enviadas à guilda." },
+  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Processar Candidaturas", description: "Permite aprovar ou rejeitar candidaturas de novos membros." }
+};
+const allPermissionsList = Object.values(GuildPermission);
 
 
 function GuildSettingsPageContent() {
@@ -60,6 +91,12 @@ function GuildSettingsPageContent() {
   const [isSubmittingName, setIsSubmittingName] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // State for Permissions Tab
+  const [customRoles, setCustomRoles] = useState<Record<string, CustomRole>>({});
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   
   const guildId = searchParams.get('guildId');
 
@@ -95,10 +132,8 @@ function GuildSettingsPageContent() {
       GuildPermission.MANAGE_ROLES_PERMISSIONS
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
-
-  // Only the original owner can delete the guild
+  
   const canDeleteGuild = useMemo(() => currentUser?.uid === guild?.ownerId, [currentUser, guild]);
-
 
   useEffect(() => {
     if (authLoading) return;
@@ -120,20 +155,16 @@ function GuildSettingsPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) {
-          toast({ title: "Guilda nao encontrada", variant: "destructive" });
+          toast({ title: "Guilda não encontrada", variant: "destructive" });
           router.push('/guild-selection');
           return;
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
-        setHeaderTitle(`Configuracoes: ${guildData.name}`);
+        setHeaderTitle(`Configurações: ${guildData.name}`);
         
-        // Access to settings page itself can be broader, specific actions are permission-checked
-        // For example, anyone might view settings, but only those with permission can change them.
-        // Or, lock down the whole page if no relevant permissions exist.
-        // For now, we'll check if user is member; actions will check specific permissions.
         if (!guildData.memberIds?.includes(currentUser.uid)) {
-            toast({title: "Acesso Negado", description: "Voce nao e membro desta guilda.", variant: "destructive"});
+            toast({title: "Acesso Negado", description: "Você não é membro desta guilda.", variant: "destructive"});
             setAccessDenied(true);
             setLoadingData(false);
             return;
@@ -141,6 +172,7 @@ function GuildSettingsPageContent() {
         
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
+        setCustomRoles(guildData.customRoles || {});
 
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
@@ -158,7 +190,7 @@ function GuildSettingsPageContent() {
 
   const handleNameSubmit: SubmitHandler<GuildNameFormValues> = async (data) => {
     if (!guild || !currentUser || !canManageGeneralSettings) {
-      toast({ title: "Permissao Negada", description: "Voce nao tem permissao para alterar o nome da guilda.", variant: "destructive"});
+      toast({ title: "Permissão Negada", description: "Você não tem permissão para alterar o nome da guilda.", variant: "destructive"});
       return;
     }
     setIsSubmittingName(true);
@@ -175,7 +207,7 @@ function GuildSettingsPageContent() {
 
       setGuild(prev => prev ? { ...prev, name: data.name } : null);
       nameForm.reset({ name: data.name }); 
-      setHeaderTitle(`Configuracoes: ${data.name}`); 
+      setHeaderTitle(`Configurações: ${data.name}`); 
       toast({ title: "Nome da Guilda Atualizado!", description: `O nome da guilda foi alterado para ${data.name}.` });
     } catch (error) {
       console.error("Erro ao atualizar nome da guilda:", error);
@@ -187,7 +219,7 @@ function GuildSettingsPageContent() {
 
   const handlePasswordSubmit: SubmitHandler<GuildPasswordFormValues> = async (data) => {
      if (!guild || !currentUser || !canManageGeneralSettings) {
-      toast({ title: "Permissao Negada", description: "Voce nao tem permissao para alterar a senha da guilda.", variant: "destructive"});
+      toast({ title: "Permissão Negada", description: "Você não tem permissão para alterar a senha da guilda.", variant: "destructive"});
       return;
     }
     setIsSubmittingPassword(true);
@@ -205,11 +237,10 @@ function GuildSettingsPageContent() {
       if (oldPasswordExists && newPasswordExists && guild.password !== data.password) {
         logMessageToast = "Senha da guilda alterada.";
       } else if (!oldPasswordExists && newPasswordExists) {
-        logMessageToast = "Senha definida para a guilda (agora e privada).";
+        logMessageToast = "Senha definida para a guilda (agora é privada).";
       } else if (oldPasswordExists && !newPasswordExists) {
-        logMessageToast = "Senha da guilda removida (agora e aberta).";
+        logMessageToast = "Senha da guilda removida (agora é aberta).";
       }
-
 
       await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.GUILD_PASSWORD_UPDATED, {
         oldValue: oldPasswordExists ? "Senha Definida" : "Sem Senha",
@@ -222,10 +253,9 @@ function GuildSettingsPageContent() {
         changedField: 'visibility',
       });
 
-
       setGuild(prev => prev ? { ...prev, password: data.password, isOpen: !data.password } : null);
       passwordForm.reset({ password: data.password || "" });
-      toast({ title: "Senha da Guilda Atualizada!", description: logMessageToast || "Configuracao de senha salva." });
+      toast({ title: "Senha da Guilda Atualizada!", description: logMessageToast || "Configuração de senha salva." });
     } catch (error) {
       console.error("Erro ao atualizar senha da guilda:", error);
       toast({ title: "Erro ao Atualizar Senha", variant: "destructive" });
@@ -236,12 +266,11 @@ function GuildSettingsPageContent() {
 
   const handleDeleteGuild = async () => {
     if (!guild || !currentUser || !canDeleteGuild) {
-        toast({ title: "Acao nao permitida", description: "Apenas o fundador original pode excluir esta guilda.", variant: "destructive" });
+        toast({ title: "Ação não permitida", description: "Apenas o fundador original pode excluir esta guilda.", variant: "destructive" });
         return;
     }
     setIsDeleting(true);
     try {
-      // Delete subcollections first if they exist and rules allow (or do it via cloud function for safety)
       const subcollections = ['auditLogs', 'applications', 'events', 'groups', 'notifications'];
       for (const subcoll of subcollections) {
           const subcollRef = collection(db, `guilds/${guild.id}/${subcoll}`);
@@ -256,24 +285,137 @@ function GuildSettingsPageContent() {
       const guildRef = doc(db, "guilds", guild.id);
       await deleteDoc(guildRef);
       
-      toast({ title: "Guilda Excluida!", description: `A guilda ${guild.name} foi permanentemente excluida.` });
+      toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
       router.push('/guild-selection'); 
     } catch (error) {
       console.error("Erro ao excluir guilda:", error);
-      toast({ title: "Erro ao Excluir Guilda", description: "Nao foi possivel excluir a guilda. Verifique o console para mais detalhes.", variant: "destructive" });
+      toast({ title: "Erro ao Excluir Guilda", description: "Não foi possível excluir a guilda. Verifique o console para mais detalhes.", variant: "destructive" });
       setIsDeleting(false); 
     }
   };
 
+  // Permissions Tab Logic
+  const handlePermissionChange = (roleName: string, permission: PermissionEnum, checked: boolean) => {
+    setCustomRoles(prevRoles => {
+      const role = prevRoles[roleName];
+      if (!role) return prevRoles;
+
+      const newPermissions = checked
+        ? [...new Set([...role.permissions, permission])] 
+        : role.permissions.filter(p => p !== permission); 
+
+      return {
+        ...prevRoles,
+        [roleName]: { ...role, permissions: newPermissions },
+      };
+    });
+  };
+  
+  const handleCreateNewRole = () => {
+    if (!canManageRolesAndPermissions) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para criar cargos.", variant: "destructive"});
+        return;
+    }
+    const trimmedRoleName = newRoleName.trim();
+    if (!trimmedRoleName) {
+      toast({ title: "Nome Inválido", description: "O nome do cargo não pode estar vazio.", variant: "destructive" });
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmedRoleName)) {
+      toast({ title: "Nome Inválido", description: "O nome do cargo deve conter apenas letras (sem acentos ou ç), números e underscores (_).", variant: "destructive" });
+      return;
+    }
+    if (trimmedRoleName.length > 30) {
+      toast({ title: "Nome Muito Longo", description: "O nome do cargo não pode exceder 30 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (customRoles[trimmedRoleName] || trimmedRoleName === "Lider" || trimmedRoleName === "Membro") {
+      toast({ title: "Cargo Já Existe", description: `O cargo "${trimmedRoleName}" já existe ou é reservado.`, variant: "destructive" });
+      return;
+    }
+
+    setCustomRoles(prevRoles => ({
+      ...prevRoles,
+      [trimmedRoleName]: { permissions: [], description: `Cargo personalizado: ${trimmedRoleName}` },
+    }));
+    setNewRoleName("");
+    toast({ title: "Cargo Criado Localmente", description: `Cargo "${trimmedRoleName}" adicionado. Configure suas permissões e clique em "Salvar Alterações" para persistir.` });
+  };
+  
+  const handleDeleteRole = async (roleName: string) => {
+    if (!roleName || !guildId || !currentUser || !canManageRolesAndPermissions) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para excluir cargos.", variant: "destructive"});
+        setRoleToDelete(null);
+        return;
+    }
+    if (roleName === "Lider" || roleName === "Membro") {
+      toast({ title: "Ação Não Permitida", description: "Os cargos 'Lider' e 'Membro' não podem ser excluídos.", variant: "destructive" });
+      setRoleToDelete(null);
+      return;
+    }
+
+    setCustomRoles(prevRoles => {
+        const updatedRoles = { ...prevRoles };
+        delete updatedRoles[roleName];
+        return updatedRoles;
+    });
+
+    toast({ title: "Cargo Marcado para Exclusão", description: `O cargo "${roleName}" será removido ao salvar as alterações.` });
+    setRoleToDelete(null); 
+  };
+
+  const handleSaveChangesPermissions = async () => {
+    if (!guildId || !currentUser || !canManageRolesAndPermissions || !guild) {
+        toast({title: "Permissão Negada", description: "Você não tem permissão para salvar estas alterações.", variant: "destructive"});
+        return;
+    }
+    setIsSavingPermissions(true);
+    try {
+      const guildRef = doc(db, "guilds", guildId);
+      const rolesToSave = { ...customRoles };
+      if (!rolesToSave["Lider"]) {
+        rolesToSave["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
+      } else {
+         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, GuildPermission.MANAGE_ROLES_PERMISSIONS, ...Object.values(GuildPermission)])];
+      }
+      if (!rolesToSave["Membro"]) {
+        rolesToSave["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], description: "Membro padrão da guilda."};
+      }
+
+      await updateDoc(guildRef, { customRoles: rolesToSave });
+      setGuild(prev => prev ? { ...prev, customRoles: rolesToSave } : null);
+      setCustomRoles(rolesToSave);
+
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
+         details: { changedField: 'customRoles' } as any, 
+         roleName: "Todos os Cargos", 
+      });
+
+      toast({ title: "Permissões Salvas!", description: "As permissões dos cargos foram atualizadas com sucesso." });
+    } catch (error) {
+      console.error("Erro ao salvar permissões:", error);
+      toast({ title: "Erro ao Salvar", variant: "destructive" });
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  };
+
+  const sortedRoleNames = useMemo(() => Object.keys(customRoles).sort((roleA, roleB) => {
+    if (roleA === "Lider") return -1;
+    if (roleB === "Lider") return 1;
+    if (roleA === "Membro") return -1;
+    if (roleB === "Membro") return 1;
+    return roleA.localeCompare(roleB);
+  }), [customRoles]);
+
+
   if (loadingData || authLoading) {
     return (
       <div className="space-y-8 p-4 md:p-6">
-        <PageTitle title="Configuracoes da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" /> {/* Placeholder for permissions card */}
-        <Skeleton className="h-20 w-full" />
+        <PageTitle title="Configurações da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
+        <Skeleton className="h-12 w-full" /> 
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -284,7 +426,7 @@ function GuildSettingsPageContent() {
         <ShieldAlert className="h-24 w-24 text-destructive animate-pulse" />
         <h2 className="text-3xl font-headline text-destructive">Acesso Negado</h2>
         <p className="text-lg text-muted-foreground max-w-md">
-          Voce nao tem permissao para acessar as configuracoes desta guilda.
+          Você não tem permissão para acessar as configurações desta guilda.
         </p>
         <Button onClick={() => router.back()} variant="outline">Voltar</Button>
       </div>
@@ -295,9 +437,9 @@ function GuildSettingsPageContent() {
      return (
         <div className="flex flex-col items-center justify-center text-center space-y-6 p-8 rounded-lg bg-card shadow-xl mt-10">
             <VenetianMask className="h-24 w-24 text-primary" />
-            <h2 className="text-3xl font-headline">Guilda Nao Encontrada</h2>
+            <h2 className="text-3xl font-headline">Guilda Não Encontrada</h2>
             <p className="text-lg text-muted-foreground max-w-md">
-            Nao foi possivel carregar os dados da guilda.
+            Não foi possível carregar os dados da guilda.
             </p>
             <Button onClick={() => router.push('/guild-selection')} variant="outline">Selecionar Guilda</Button>
         </div>
@@ -305,143 +447,271 @@ function GuildSettingsPageContent() {
   }
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto">
       <PageTitle 
-        title={`Configuracoes de ${guild.name}`}
-        description="Gerencie as informacoes basicas e configuracoes de seguranca da sua guilda."
+        title={`Configurações de ${guild.name}`}
+        description="Gerencie as informações e permissões da sua guilda."
         icon={<SettingsIcon className="h-8 w-8 text-primary" />}
       />
 
-      <Card className="static-card-container">
-        <CardHeader>
-          <CardTitle>Alterar Nome da Guilda</CardTitle>
-        </CardHeader>
-        <Form {...nameForm}>
-          <form onSubmit={nameForm.handleSubmit(handleNameSubmit)}>
-            <CardContent>
-              <FormField
-                control={nameForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="guildName">Nome da Guilda</FormLabel>
-                    <FormControl>
-                      <Input id="guildName" {...field} className="form-input" disabled={!canManageGeneralSettings || isSubmittingName}/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingName}>
-                {isSubmittingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Salvar Nome
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissions}>Cargos e Permissões</TabsTrigger>
+        </TabsList>
 
-      <Card className="static-card-container">
-        <CardHeader>
-          <CardTitle>Alterar Senha da Guilda</CardTitle>
-          <CardDescription>Deixe em branco para tornar a guilda aberta (sem senha para entrar).</CardDescription>
-        </CardHeader>
-        <Form {...passwordForm}>
-          <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
-            <CardContent>
-              <FormField
-                control={passwordForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="guildPassword">Nova Senha (Opcional)</FormLabel>
-                    <FormControl>
-                      <div className="relative flex items-center">
-                        <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input id="guildPassword" type="password" {...field} placeholder="Deixe em branco para guilda aberta" className="form-input pl-10" disabled={!canManageGeneralSettings || isSubmittingPassword} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingPassword}>
-                {isSubmittingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Salvar Senha
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
+        <TabsContent value="general" className="mt-6 space-y-8">
+          <Card className="static-card-container">
+            <CardHeader>
+              <CardTitle>Alterar Nome da Guilda</CardTitle>
+            </CardHeader>
+            <Form {...nameForm}>
+              <form onSubmit={nameForm.handleSubmit(handleNameSubmit)}>
+                <CardContent>
+                  <FormField
+                    control={nameForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="guildName">Nome da Guilda</FormLabel>
+                        <FormControl>
+                          <Input id="guildName" {...field} className="form-input" disabled={!canManageGeneralSettings || isSubmittingName}/>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingName}>
+                    {isSubmittingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar Nome
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
 
-      {canManageRolesAndPermissions && (
-        <Card className="card-bg">
-          <CardHeader>
-            <CardTitle>Gerenciar Cargos e Permissoes</CardTitle>
-            <CardDescription>Crie cargos personalizados e defina as permissoes de cada um.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href={`/dashboard/settings/permissions?guildId=${guild.id}`} passHref>
-              <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
-                <ListChecks className="mr-2 h-5 w-5" />
-                Abrir Gerenciador de Permissoes
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-      
-      <Card className="static-card-container border-destructive/50">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CardDescription className="mb-4">
-            A exclusao da guilda e uma acao permanente e nao pode ser desfeita. 
-            Todos os dados associados, incluindo membros (de suas listas na guilda, nao contas de usuario), eventos e logs, serao perdidos. Apenas o fundador original pode excluir a guilda.
-          </CardDescription>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                className="w-full"
-                disabled={!canDeleteGuild || isDeleting}
-              >
-                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                Excluir Guilda Permanentemente
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-destructive">Tem certeza absoluta?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta acao nao pode ser desfeita. Isso excluira permanentemente a guilda "{guild.name}"
-                  e todos os seus dados associados.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => {}} disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteGuild}
-                  className={cn(buttonVariants({ variant: "destructive" }))}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Sim, excluir esta guilda
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
+          <Card className="static-card-container">
+            <CardHeader>
+              <CardTitle>Alterar Senha da Guilda</CardTitle>
+              <CardDescription>Deixe em branco para tornar a guilda aberta (sem senha para entrar).</CardDescription>
+            </CardHeader>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
+                <CardContent>
+                  <FormField
+                    control={passwordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="guildPassword">Nova Senha (Opcional)</FormLabel>
+                        <FormControl>
+                          <div className="relative flex items-center">
+                            <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                            <Input id="guildPassword" type="password" {...field} placeholder="Deixe em branco para guilda aberta" className="form-input pl-10" disabled={!canManageGeneralSettings || isSubmittingPassword} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingPassword}>
+                    {isSubmittingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar Senha
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+          
+          <Card className="static-card-container border-destructive/50">
+            <CardHeader>
+              <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="mb-4">
+                A exclusão da guilda é uma ação permanente e não pode ser desfeita. 
+                Todos os dados associados, incluindo membros (de suas listas na guilda, não contas de usuário), eventos e logs, serão perdidos. Apenas o fundador original pode excluir a guilda.
+              </CardDescription>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    disabled={!canDeleteGuild || isDeleting}
+                  >
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    Excluir Guilda Permanentemente
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive">Tem certeza absoluta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita. Isso excluirá permanentemente a guilda "{guild.name}"
+                      e todos os seus dados associados.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => {}} disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteGuild}
+                      className={cn(buttonVariants({ variant: "destructive" }))}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Sim, excluir esta guilda
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="permissions" className="mt-6 space-y-6">
+          {!canManageRolesAndPermissions ? (
+            <Card className="static-card-container">
+              <CardHeader>
+                <CardTitle className="text-destructive">Acesso Negado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Você não tem permissão para gerenciar cargos e permissões.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Card className="static-card-container">
+                <CardHeader>
+                  <CardTitle>Criar Novo Cargo</CardTitle>
+                  <CardDescription>Defina um nome para o novo cargo (sem acentos ou ç, apenas letras, números e underscore). As permissões podem ser configuradas abaixo.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row gap-2 items-end">
+                  <div className="flex-grow">
+                    <Label htmlFor="newRoleName">Nome do Cargo</Label>
+                    <Input
+                      id="newRoleName"
+                      value={newRoleName}
+                      onChange={(e) => setNewRoleName(e.target.value)}
+                      placeholder="Ex: Veterano, RecrutaChefe"
+                      className="form-input mt-1"
+                      disabled={!canManageRolesAndPermissions || isSavingPermissions}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCreateNewRole} 
+                    className="w-full sm:w-auto btn-gradient btn-style-secondary" 
+                    disabled={!canManageRolesAndPermissions || isSavingPermissions || !newRoleName.trim()}
+                  >
+                    <PlusCircle className="mr-2 h-5 w-5" /> Criar Cargo
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Accordion type="multiple" defaultValue={["Lider", "Membro"]} className="w-full space-y-6">
+                {sortedRoleNames.map((roleName) => {
+                  const roleData = customRoles[roleName];
+                  if (!roleData) return null;
+                  return (
+                    <AccordionItem 
+                        value={roleName} 
+                        key={roleName} 
+                        className="static-card-container rounded-xl overflow-hidden"
+                    >
+                        <AccordionPrimitive.Header className="flex">
+                        <AccordionTrigger className="flex w-full items-start justify-between p-3 sm:px-4 sm:py-3 hover:no-underline text-left">
+                            <div className="flex-grow space-y-1">
+                            <CardTitle className="text-xl sm:text-2xl">{roleName}</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                                {roleData.description || `Permissões para o cargo ${roleName}.`}
+                            </CardDescription>
+                            </div>
+                            {(roleName !== "Lider" && roleName !== "Membro") && (
+                            <AlertDialog onOpenChange={(open) => { if (open) { setRoleToDelete(roleName); } else if (!isSavingPermissions) { setRoleToDelete(null); } }}>
+                                <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:bg-destructive/10 h-7 w-7 shrink-0 ml-2 mt-1"
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissions}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
+                                    Membros com este cargo serão revertidos para "Membro" ao salvar as alterações.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                    onClick={() => handleDeleteRole(roleName) }
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                    Marcar para Excluir
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            )}
+                        </AccordionTrigger>
+                        </AccordionPrimitive.Header>
+                        <AccordionContent className="p-3 sm:px-4 sm:pb-4 pt-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {allPermissionsList.map(permission => {
+                            const permInfo = permissionDescriptions[permission];
+                            const isLiderManagingOwnPermissions = roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS;
+                            return (
+                                <div key={permission} className="flex items-start space-x-3 p-3 bg-background/50 dark:bg-input/30 rounded-md border border-border">
+                                <Checkbox
+                                    id={`${roleName}-${permission}`}
+                                    checked={roleData.permissions.includes(permission)}
+                                    onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissions || isLiderManagingOwnPermissions}
+                                    aria-label={`${permInfo.title} para ${roleName}`}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                    htmlFor={`${roleName}-${permission}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground cursor-pointer"
+                                    >
+                                    {permInfo.title}
+                                    </label>
+                                    <p className="text-xs text-muted-foreground">
+                                    {permInfo.description}
+                                    </p>
+                                </div>
+                                </div>
+                            );
+                            })}
+                        </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+              
+              <div className="flex justify-end mt-8">
+                <Button onClick={handleSaveChangesPermissions} className="btn-gradient btn-style-primary" disabled={isSavingPermissions || !canManageRolesAndPermissions}>
+                  {isSavingPermissions ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                  Salvar Permissões
+                </Button>
+              </div>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-
 
 export default function GuildSettingsPage() {
   return (
