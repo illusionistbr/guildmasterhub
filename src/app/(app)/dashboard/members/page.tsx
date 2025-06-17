@@ -477,9 +477,7 @@ function MembersListTabContent(
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={numSelectedRows === 0}>
-                <span>Ações <MoreVertical className="ml-2 h-4 w-4" /></span>
-              </Button>
+              <Button variant="outline" disabled={numSelectedRows === 0}><span>Ações <MoreVertical className="ml-2 h-4 w-4" /></span></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled>Promover Selecionados</DropdownMenuItem>
@@ -496,7 +494,7 @@ function MembersListTabContent(
       </div>
       <div className="overflow-x-auto bg-card p-2 rounded-lg shadow">
         <Table>
-          <TableHeader> <TableRow> <TableHead className="w-[50px]"> <Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/> </TableHead> <TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> {isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>} <TableHead>Armas</TableHead> <TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> <TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> <TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> {canManageMemberNotes && <TableHead>Nota</TableHead>} <TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> <TableHead className="text-right w-[120px]">Ações</TableHead> </TableRow> </TableHeader>
+          <TableHeader><TableRow><TableHead className="w-[50px]"> <Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/> </TableHead> <TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> {isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>} <TableHead>Armas</TableHead> <TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> <TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> <TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> {canManageMemberNotes && <TableHead>Nota</TableHead>} <TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead> <TableHead className="text-right w-[120px]">Ações</TableHead> </TableRow></TableHeader>
           <TableBody>
             {paginatedMembers.length === 0 && ( <TableRow> <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell> </TableRow> )}
             {paginatedMembers.map((member) => {
