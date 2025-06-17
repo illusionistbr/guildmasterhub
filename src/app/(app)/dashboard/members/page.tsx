@@ -7,8 +7,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile, AuditActionType, TLRole, TLWeapon, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
-import { GuildPermission, TLWeapon as TLWeaponEnum } from '@/types/guildmaster'; // TLWeaponEnum is used to avoid conflict with local type
+import type { Guild, GuildMember, UserProfile, AuditActionType, TLWeapon, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
+import { GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster'; // TLWeaponEnum is used to avoid conflict with local type, TLRole imported
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -502,33 +502,6 @@ function MembersListTabContent(
 }
 
 // --- GROUPS TAB CONTENT ---
-function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; }) {
-  const IconComponent = iconMap[group.icon];
-  return (
-    <Card className="w-full max-w-sm flex flex-col static-card-container">
-      <CardHeader className={cn("p-3 rounded-t-lg flex flex-row items-center justify-between", group.headerColor)}>
-        <div className="flex items-center gap-2"> <IconComponent className="h-5 w-5" /> <CardTitle className="text-lg font-semibold">{group.name}</CardTitle> </div>
-        {canManage && (
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/20" onClick={() => onEdit(group)}> <Edit2 className="h-4 w-4" /> </Button>
-            <AlertDialog> <AlertDialogTriggerUI asChild> <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/20"> <Trash2 className="h-4 w-4" /> </Button> </AlertDialogTriggerUI> <AlertDialogContent> <AlertDialogHeader> <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle> <AlertDialogDescription> Tem certeza que deseja excluir o grupo "{group.name}"? Esta ação não pode ser desfeita. </AlertDialogDescription> </AlertDialogHeader> <AlertDialogFooter> <AlertDialogCancel>Cancelar</AlertDialogCancel> <AlertDialogAction onClick={() => onDelete(group)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90"> Excluir </AlertDialogAction> </AlertDialogFooter> </AlertDialogContent> </AlertDialog>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="p-0 flex-grow">
-        <div className="divide-y divide-border">
-          {group.members.map((member, index) => (
-            <div key={member.memberId + index} className="p-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2"> <Avatar className="h-8 w-8"> <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${member.displayName?.substring(0,1)}`} alt={member.displayName} data-ai-hint="user avatar" /> <AvatarFallback>{member.displayName?.substring(0,1).toUpperCase() || 'M'}</AvatarFallback> </Avatar> <span className="text-sm font-medium text-foreground">{member.displayName}</span> </div>
-              <span className="text-xs text-muted-foreground truncate max-w-[100px] sm:max-w-[150px]" title={member.note}>{member.note || '-'}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function GroupsTabContent(
   { guild, guildMembers, currentUser, guildId, currentUserRoleInfo }:
   { guild: Guild; guildMembers: GuildMember[]; currentUser: UserProfile; guildId: string; currentUserRoleInfo: GuildMemberRoleInfo | null; }
@@ -796,3 +769,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
