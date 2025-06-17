@@ -46,6 +46,8 @@ export interface GuildMemberRoleInfo {
   characterNickname?: string; // Nick do personagem específico para esta guilda
   gearScore?: number;         // Gearscore específico para esta guilda
   gearScoreScreenshotUrl?: string; // Link da print do gearscore
+  gearBuildLink?: string; // Link para a build de equipamento
+  skillBuildLink?: string; // Link para a build de habilidades
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -163,6 +165,8 @@ export interface GuildMember extends UserProfile {
   characterNickname?: string; // Nick do personagem na guilda
   gearScore?: number; // Gearscore na guilda
   gearScoreScreenshotUrl?: string;
+  gearBuildLink?: string;
+  skillBuildLink?: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -240,7 +244,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;

@@ -46,6 +46,8 @@ export interface GuildMemberRoleInfo {
   characterNickname?: string;
   gearScore?: number;
   gearScoreScreenshotUrl?: string;
+  gearBuildLink?: string;
+  skillBuildLink?: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -160,6 +162,8 @@ export interface GuildMember extends UserProfile {
   characterNickname?: string;
   gearScore?: number;
   gearScoreScreenshotUrl?: string;
+  gearBuildLink?: string;
+  skillBuildLink?: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -237,7 +241,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;

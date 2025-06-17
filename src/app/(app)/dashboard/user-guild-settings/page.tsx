@@ -19,7 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { UserCog, Loader2, Save, Hash, ImageIcon, Shield, Swords, Wand2, ArrowLeft } from 'lucide-react';
+import { UserCog, Loader2, Save, Hash, ImageIcon, Shield, Swords, Wand2, ArrowLeft, Link2 as LinkIcon } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 
@@ -29,6 +29,8 @@ const userGuildSettingsSchema = z.object({
   characterNickname: z.string().min(2, "Nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
   gearScore: z.coerce.number().min(0, "Gearscore deve ser positivo.").max(10000, "Gearscore improvável.").optional(),
   gearScoreScreenshotUrl: z.string().url("URL inválida. Use Imgur, etc.").max(250, "URL muito longa.").optional().or(z.literal('')),
+  gearBuildLink: z.string().url("URL inválida para Gear Build Link.").max(250, "URL do Gear Build Link muito longa.").optional().or(z.literal('')),
+  skillBuildLink: z.string().url("URL inválida para Skill Build Link.").max(250, "URL do Skill Build Link muito longa.").optional().or(z.literal('')),
   tlRole: z.nativeEnum(TLRole).optional(),
   tlPrimaryWeapon: z.nativeEnum(TLWeapon).optional(),
   tlSecondaryWeapon: z.nativeEnum(TLWeapon).optional(),
@@ -57,6 +59,8 @@ function UserGuildSettingsPageContent() {
       characterNickname: "",
       gearScore: 0,
       gearScoreScreenshotUrl: "",
+      gearBuildLink: "",
+      skillBuildLink: "",
       tlRole: undefined,
       tlPrimaryWeapon: undefined,
       tlSecondaryWeapon: undefined,
@@ -100,6 +104,8 @@ function UserGuildSettingsPageContent() {
             characterNickname: userRoleData.characterNickname || currentUser.displayName || "",
             gearScore: userRoleData.gearScore || 0,
             gearScoreScreenshotUrl: userRoleData.gearScoreScreenshotUrl || "",
+            gearBuildLink: userRoleData.gearBuildLink || "",
+            skillBuildLink: userRoleData.skillBuildLink || "",
             tlRole: userRoleData.tlRole,
             tlPrimaryWeapon: userRoleData.tlPrimaryWeapon,
             tlSecondaryWeapon: userRoleData.tlSecondaryWeapon,
@@ -126,13 +132,17 @@ function UserGuildSettingsPageContent() {
       ...memberRoleInfo, // Preserve existing fields like roleName, status, dkpBalance
       characterNickname: data.characterNickname,
       gearScore: data.gearScore,
-      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || undefined, // Store as undefined if empty
+      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || undefined,
+      gearBuildLink: data.gearBuildLink || undefined,
+      skillBuildLink: data.skillBuildLink || undefined,
     };
 
     const updatedFields: string[] = [];
     if (memberRoleInfo.characterNickname !== data.characterNickname) updatedFields.push('Nickname do Personagem');
     if (memberRoleInfo.gearScore !== data.gearScore) updatedFields.push('Gearscore');
     if (memberRoleInfo.gearScoreScreenshotUrl !== (data.gearScoreScreenshotUrl || undefined)) updatedFields.push('Screenshot do Gearscore');
+    if (memberRoleInfo.gearBuildLink !== (data.gearBuildLink || undefined)) updatedFields.push('Gear Build Link');
+    if (memberRoleInfo.skillBuildLink !== (data.skillBuildLink || undefined)) updatedFields.push('Skill Build Link');
 
 
     if (isTLGuild) {
@@ -246,6 +256,40 @@ function UserGuildSettingsPageContent() {
                       </div>
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="gearBuildLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gear Build Link (Ex: Questlog.gg)</FormLabel>
+                    <FormControl>
+                      <div className="relative flex items-center">
+                        <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                        <Input {...field} placeholder="https://questlog.gg/..." className="form-input pl-10" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                     <p className="text-xs text-muted-foreground mt-1">Insira o link para sua build de equipamentos.</p>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="skillBuildLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Skill Build Link (Ex: Questlog.gg)</FormLabel>
+                    <FormControl>
+                      <div className="relative flex items-center">
+                        <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                        <Input {...field} placeholder="https://questlog.gg/..." className="form-input pl-10" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                     <p className="text-xs text-muted-foreground mt-1">Insira o link para sua build de habilidades.</p>
                   </FormItem>
                 )}
               />
