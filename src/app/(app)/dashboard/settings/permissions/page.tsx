@@ -36,6 +36,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import * as AccordionPrimitive from "@radix-ui/react-accordion"
 
 
 const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
@@ -48,7 +49,7 @@ const permissionDescriptions: Record<PermissionEnum, { title: string; descriptio
   [GuildPermission.MANAGE_EVENTS_EDIT]: { title: "Editar Eventos/Atividades", description: "Permite modificar detalhes de eventos existentes." },
   [GuildPermission.MANAGE_EVENTS_DELETE]: { title: "Excluir Eventos/Atividades", description: "Permite remover eventos do calendário." },
   [GuildPermission.MANAGE_EVENTS_VIEW_PIN]: { title: "Visualizar PIN de Eventos", description: "Permite ver os códigos PIN gerados para eventos." },
-  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Gerenciar Configurações Gerais da Guilda", description: "Permite modificar nome, senha e outras configurações básicas da guilda." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Gerenciar Config. Gerais da Guilda", description: "Permite modificar nome, senha e outras configurações básicas da guilda." },
   [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: { title: "Gerenciar Aparência da Guilda", description: "Permite alterar logo e banner da guilda." },
   [GuildPermission.MANAGE_ROLES_PERMISSIONS]: { title: "Gerenciar Cargos e Permissões", description: "Permite criar, editar, excluir cargos e definir suas permissões (acesso a esta tela)." },
   [GuildPermission.MANAGE_GROUPS_CREATE]: { title: "Criar Grupos/Parties", description: "Permite formar e nomear grupos (parties) de membros." },
@@ -280,7 +281,7 @@ function PermissionsPageContent() {
   const sortedRoleNames = Object.keys(customRoles).sort((roleA, roleB) => {
     if (roleA === "Lider") return -1;
     if (roleB === "Lider") return 1;
-    if (roleA === "Membro") return -1; // Changed to ensure Membro comes after Lider but before others
+    if (roleA === "Membro") return -1; 
     if (roleB === "Membro") return 1;
     return roleA.localeCompare(roleB);
   });
@@ -294,7 +295,7 @@ function PermissionsPageContent() {
         icon={<ListChecks className="h-8 w-8 text-primary" />}
       />
 
-      <Card className="card-bg">
+      <Card className="static-card-container">
         <CardHeader>
           <CardTitle>Criar Novo Cargo</CardTitle>
           <CardDescription>Defina um nome para o novo cargo (sem acentos ou ç, apenas letras, números e underscore). As permissões podem ser configuradas abaixo.</CardDescription>
@@ -326,52 +327,59 @@ function PermissionsPageContent() {
           const roleData = customRoles[roleName];
           if (!roleData) return null;
           return (
-            <AccordionItem value={roleName} key={roleName} className="border-none bg-card card-bg rounded-xl overflow-hidden">
-              <AccordionTrigger className="flex w-full items-center justify-between p-4 sm:p-6 hover:no-underline">
-                <div className="text-left">
-                  <CardTitle className="text-xl sm:text-2xl">{roleName}</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm mt-1">
-                    {roleData.description || `Permissões para o cargo ${roleName}.`}
-                  </CardDescription>
-                </div>
-                {(roleName !== "Lider" && roleName !== "Membro") && (
-                  <AlertDialog onOpenChange={(open) => { if (open) { setRoleToDelete(roleName); } else if (!isSaving) { setRoleToDelete(null); } }}>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:bg-destructive/10 shrink-0 ml-auto" // Added ml-auto for spacing if chevron is also present
-                        disabled={isSaving || !canManagePermissionsPage}
-                        onClick={(e) => {
-                           e.stopPropagation(); // Prevent accordion from toggling
-                           // Actual opening of AlertDialog is handled by its trigger
-                        }}
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
-                          Membros com este cargo serão revertidos para "Membro" ao salvar as alterações.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteRole(roleName) }
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Marcar para Excluir
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </AccordionTrigger>
-              <AccordionContent className="p-4 sm:p-6 pt-2">
+            <AccordionItem 
+              value={roleName} 
+              key={roleName} 
+              className="border-none static-card-container rounded-xl overflow-hidden"
+            >
+              <AccordionPrimitive.Header className="flex">
+                <AccordionTrigger className="flex w-full items-center justify-between p-3 sm:px-4 sm:py-3 hover:no-underline text-left">
+                  <div className="flex-grow">
+                    <CardTitle className="text-xl sm:text-2xl">{roleName}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm mt-1 text-muted-foreground">
+                      {roleData.description || `Permissões para o cargo ${roleName}.`}
+                    </CardDescription>
+                  </div>
+                  <div className="shrink-0 ml-2">
+                    {(roleName !== "Lider" && roleName !== "Membro") && (
+                      <AlertDialog onOpenChange={(open) => { if (open) { setRoleToDelete(roleName); } else if (!isSaving) { setRoleToDelete(null); } }}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:bg-destructive/10 h-7 w-7"
+                            disabled={isSaving || !canManagePermissionsPage}
+                            onClick={(e) => {
+                               e.stopPropagation();
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
+                              Membros com este cargo serão revertidos para "Membro" ao salvar as alterações.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteRole(roleName) }
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Marcar para Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </AccordionTrigger>
+              </AccordionPrimitive.Header>
+              <AccordionContent className="p-3 sm:px-4 sm:pb-4 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {allPermissions.map(permission => {
                     const permInfo = permissionDescriptions[permission];
