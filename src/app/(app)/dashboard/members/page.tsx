@@ -392,8 +392,12 @@ function MembersListTabContent(
     if (statusFilter !== "all") { tempMembers = tempMembers.filter(member => member.status === statusFilter); }
     if (gearSortOrder !== "default") { tempMembers.sort((a, b) => { const gearA = a.gearScore || 0; const gearB = b.gearScore || 0; return gearSortOrder === "asc" ? gearA - gearB : gearB - gearA; }); }
     if (dkpSortOrder !== "default") { tempMembers.sort((a, b) => { const dkpA = a.dkpBalance || 0; const dkpB = b.dkpBalance || 0; return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - dkpA; }); }
+    // Activity Date Range and Time filter logic (placeholder - not fully implemented)
+    if (activityDateRange?.from) {
+        // tempMembers = tempMembers.filter(member => { /* filter logic based on member.lastActivity */ });
+    }
     return tempMembers;
-  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game]);
+  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game, activityDateRange, timeFromFilter, timeToFilter]);
 
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -447,10 +451,10 @@ function MembersListTabContent(
           <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input", !activityDateRange?.from && "text-muted-foreground")}>
+              <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input",!activityDateRange?.from && "text-muted-foreground")}>
                 <CalendarDays className="mr-2 h-4 w-4" />
-                {activityDateRange?.from
-                  ? activityDateRange.to
+                {activityDateRange?.from && activityDateRange.from instanceof Date
+                  ? activityDateRange.to && activityDateRange.to instanceof Date
                     ? `${format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })} - ${format(activityDateRange.to, "dd/MM/yy", { locale: ptBR })}`
                     : format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })
                   : <span>Escolha um intervalo</span>
@@ -471,7 +475,22 @@ function MembersListTabContent(
           {numSelectedRows > 0 && <span className="text-sm text-muted-foreground">{numSelectedRows} de {paginatedMembers.length} linha(s) visíveis selecionada(s)</span>}
         </div>
         <div className="flex items-center gap-2">
-          <DropdownMenu> <DropdownMenuTrigger asChild> <Button variant="outline" disabled={numSelectedRows === 0}>Ações <MoreVertical className="ml-2 h-4 w-4" /></Button> </DropdownMenuTrigger> <DropdownMenuContent align="end"> <DropdownMenuItem disabled>Promover Selecionados</DropdownMenuItem> <DropdownMenuItem disabled>Rebaixar Selecionados</DropdownMenuItem> <DropdownMenuItem disabled>Alterar Status Selecionados</DropdownMenuItem> <DropdownMenuSeparator/> <DropdownMenuItem className="text-destructive focus:text-destructive" disabled>Remover Selecionados</DropdownMenuItem> </DropdownMenuContent> </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={numSelectedRows === 0}>
+                <span>Ações <MoreVertical className="ml-2 h-4 w-4" /></span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled>Promover Selecionados</DropdownMenuItem>
+              <DropdownMenuItem disabled>Rebaixar Selecionados</DropdownMenuItem>
+              <DropdownMenuItem disabled>Alterar Status Selecionados</DropdownMenuItem>
+              <DropdownMenuSeparator/>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" disabled>
+                Remover Selecionados
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" disabled><SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros Avançados</Button> <Button variant="outline" disabled><Download className="mr-2 h-4 w-4" /> Exportar</Button>
         </div>
       </div>
