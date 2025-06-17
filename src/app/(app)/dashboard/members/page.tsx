@@ -94,28 +94,41 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
 const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildMemberRoleInfo | undefined, guildData: Guild): GuildMember => {
   const isTLGuild = guildData.game === "Throne and Liberty";
   
-  let specificRoleInfo: Partial<GuildMemberRoleInfo> & { roleName: string } = {
-    roleName: guildRoleInfo?.roleName || "Membro", 
-    status: guildRoleInfo?.status || 'Ativo', 
-    dkpBalance: 0, 
-    notes: "", 
+  let specificRoleInfo: GuildMemberRoleInfo = {
+    roleName: "Membro", 
+    status: 'Ativo', 
+    dkpBalance: 0,
+    notes: "",
+    characterNickname: memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid,
+    gearScore: 0,
   };
 
   if (guildRoleInfo) {
     specificRoleInfo = {
-      roleName: guildRoleInfo.roleName,
-      tlRole: isTLGuild ? guildRoleInfo.tlRole : undefined,
-      tlPrimaryWeapon: isTLGuild ? guildRoleInfo.tlPrimaryWeapon : undefined,
-      tlSecondaryWeapon: isTLGuild ? guildRoleInfo.tlSecondaryWeapon : undefined,
-      notes: guildRoleInfo.notes || "",
-      status: guildRoleInfo.status || 'Ativo',
+      ...specificRoleInfo, // Start with defaults
+      ...guildRoleInfo,    // Override with actual role info
+      characterNickname: guildRoleInfo.characterNickname || memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid,
+      gearScore: guildRoleInfo.gearScore || 0,
+      status: guildRoleInfo.status || 'Ativo', // Ensure status defaults to Ativo if not present
       dkpBalance: guildRoleInfo.dkpBalance ?? 0,
     };
+  } else {
+    // If no guildRoleInfo, ensure characterNickname is set from base profile
+    specificRoleInfo.characterNickname = memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid;
   }
   
+  if (isTLGuild && guildRoleInfo) {
+    specificRoleInfo.tlRole = guildRoleInfo.tlRole;
+    specificRoleInfo.tlPrimaryWeapon = guildRoleInfo.tlPrimaryWeapon;
+    specificRoleInfo.tlSecondaryWeapon = guildRoleInfo.tlSecondaryWeapon;
+  }
+
   return {
     ...memberBaseProfile,
     roleName: specificRoleInfo.roleName,
+    characterNickname: specificRoleInfo.characterNickname,
+    gearScore: specificRoleInfo.gearScore,
+    gearScoreScreenshotUrl: specificRoleInfo.gearScoreScreenshotUrl,
     tlRole: specificRoleInfo.tlRole,
     tlPrimaryWeapon: specificRoleInfo.tlPrimaryWeapon,
     tlSecondaryWeapon: specificRoleInfo.tlSecondaryWeapon,
@@ -126,7 +139,6 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       mainHandIconUrl: specificRoleInfo.tlPrimaryWeapon ? getWeaponIconPath(specificRoleInfo.tlPrimaryWeapon) : undefined,
       offHandIconUrl: specificRoleInfo.tlSecondaryWeapon ? getWeaponIconPath(specificRoleInfo.tlSecondaryWeapon) : undefined
     },
-    gearScore: memberBaseProfile.gearScore ?? Math.floor(3800 + Math.random() * 500),
   };
 };
 
@@ -230,12 +242,12 @@ function MembersPageContent() {
       
       if (memberIdsToFetch.length > 0) {
         const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
-        const userProfileSnaps = await Promise.all(userProfilesPromises);
+        const userProfilesSnaps = await Promise.all(userProfilesPromises); // Corrected variable name
         
         const processedMembers: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
           const uid = memberIdsToFetch[i];
-          const userProfileSnap = userProfileSnaps[i];
+          const userProfileSnap = userProfilesSnaps[i]; // Accessing the corrected variable
           let baseProfile: UserProfile;
 
           if (userProfileSnap && userProfileSnap.exists()) {
@@ -248,6 +260,7 @@ function MembersPageContent() {
               photoURL: currentUser.photoURL,
             };
           } else {
+            console.warn(`User profile not found for UID: ${uid}, skipping member.`);
             continue; 
           }
           
@@ -255,7 +268,7 @@ function MembersPageContent() {
           processedMembers.push(enhanceMemberData(baseProfile, roleInfoSource, guildData));
         }
         
-        processedMembers.sort((a, b) => (a.displayName || a.uid).localeCompare(b.displayName || b.uid)); 
+        processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid)); 
         setMembers(processedMembers);
 
       } else { 
@@ -308,8 +321,14 @@ function MembersPageContent() {
 
   const availableRoleNamesForChange = useMemo(() => {
     if (!guild || !guild.customRoles) return [];
-    return ["Membro", ...Object.keys(guild.customRoles).filter(roleName => roleName !== "Lider")].sort();
-  }, [guild]);
+    // Ensure "Lider" and "Membro" are always present if they exist in customRoles, otherwise add sensible defaults
+    const defaultRoles = ["Membro"];
+    if (guild.customRoles["Lider"]) defaultRoles.unshift("Lider");
+    
+    return [...new Set([...defaultRoles, ...Object.keys(guild.customRoles)])]
+           .filter(roleName => roleName !== "Lider" || (actionUser?.uid === guild.ownerId)) // Allow Lider to be set for owner
+           .sort();
+  }, [guild, actionUser]);
 
 
   const openActionDialog = (member: GuildMember, type: MemberManagementAction) => {
@@ -329,11 +348,11 @@ function MembersPageContent() {
     if (!actionUser || !guild || selectedNewRoleName === '' || !guildId || !currentUser || !canManageMemberRoles) return;
     
     if (actionUser.uid === guild.ownerId && selectedNewRoleName !== "Lider") {
-        toast({ title: "Acao Invalida", description: "O cargo do fundador da guilda (Lider) nao pode ser alterado aqui.", variant: "destructive" });
+        toast({ title: "Acao Invalida", description: "O cargo do fundador da guilda (Lider) nao pode ser alterado para outro cargo aqui.", variant: "destructive" });
         return;
     }
     if (selectedNewRoleName === "Lider" && actionUser.uid !== guild.ownerId) {
-        toast({ title: "Acao Invalida", description: "Para transferir a lideranca, use uma funcionalidade especifica (a ser implementada).", variant: "destructive" });
+        toast({ title: "Acao Invalida", description: "Para transferir a lideranca, use uma funcionalidade especifica.", variant: "destructive" });
         return;
     }
 
@@ -341,29 +360,19 @@ function MembersPageContent() {
     setIsProcessingAction(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      const existingRoleInfo = guild.roles?.[actionUser.uid];
-      let newRoleInfoPayload: GuildMemberRoleInfo;
-
-      if (existingRoleInfo) {
-        newRoleInfoPayload = { ...existingRoleInfo, roleName: selectedNewRoleName };
-      } else { 
-        newRoleInfoPayload = {
-          roleName: selectedNewRoleName,
-          tlRole: actionUser.tlRole, 
-          tlPrimaryWeapon: actionUser.tlPrimaryWeapon, 
-          tlSecondaryWeapon: actionUser.tlSecondaryWeapon, 
-          notes: actionUser.notes || "", 
-          status: actionUser.status || 'Ativo',
-          dkpBalance: actionUser.dkpBalance || 0,
-        };
-      }
+      const existingRoleInfo = guild.roles?.[actionUser.uid] || { roleName: "Membro", status: 'Ativo', dkpBalance: 0 }; // Ensure default if somehow missing
+      
+      const newRoleInfoPayload: GuildMemberRoleInfo = { 
+        ...existingRoleInfo, // Spread existing to keep characterNickname, gearScore etc.
+        roleName: selectedNewRoleName 
+      };
 
       await updateDoc(guildRef, { [`roles.${actionUser.uid}`]: newRoleInfoPayload });
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_ROLE_CHANGED, { 
-        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.displayName || actionUser.email || actionUser.uid,
+        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName,
         oldValue: oldRoleName, newValue: selectedNewRoleName, changedField: 'roleName'
       });
-      toast({ title: "Cargo Atualizado!", description: `${actionUser.displayName} agora e ${selectedNewRoleName}.` });
+      toast({ title: "Cargo Atualizado!", description: `${actionUser.characterNickname || actionUser.displayName} agora e ${selectedNewRoleName}.` });
       fetchGuildAndMembers(); 
       closeActionDialog();
     } catch (error) {
@@ -389,31 +398,24 @@ function MembersPageContent() {
     setIsProcessingAction(true);
     try {
         const guildRef = doc(db, "guilds", guildId);
-        const existingRoleInfo = guild.roles?.[targetMember.uid];
-        let updatedRoleInfoPayload: GuildMemberRoleInfo;
-
-        if (existingRoleInfo) {
-            updatedRoleInfoPayload = { ...existingRoleInfo, status: statusToSet };
-        } else { 
-            updatedRoleInfoPayload = {
-                roleName: targetMember.roleName, 
-                status: statusToSet,
-                notes: targetMember.notes || "",
-                dkpBalance: targetMember.dkpBalance || 0,
-            };
-        }
+        const existingRoleInfo = guild.roles?.[targetMember.uid] || { roleName: targetMember.roleName, status: 'Ativo', dkpBalance: 0 };
+        
+        let updatedRoleInfoPayload: GuildMemberRoleInfo = { 
+          ...existingRoleInfo, 
+          status: statusToSet 
+        };
 
         await updateDoc(guildRef, { [`roles.${targetMember.uid}`]: updatedRoleInfoPayload });
         
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_STATUS_CHANGED, {
             targetUserId: targetMember.uid,
-            targetUserDisplayName: targetMember.displayName || targetMember.email || targetMember.uid,
+            targetUserDisplayName: targetMember.characterNickname || targetMember.displayName,
             oldValue: oldStatus,
             newValue: statusToSet,
             changedField: 'status'
         });
 
-        toast({ title: "Status Atualizado!", description: `O status de ${targetMember.displayName} foi alterado para ${displayMemberStatus(statusToSet)}.` });
+        toast({ title: "Status Atualizado!", description: `O status de ${targetMember.characterNickname || targetMember.displayName} foi alterado para ${displayMemberStatus(statusToSet)}.` });
         fetchGuildAndMembers(); 
         closeActionDialog();
     } catch (error) {
@@ -443,10 +445,10 @@ function MembersPageContent() {
       });
       await batch.commit();
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_KICKED, { 
-        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.displayName || actionUser.email || actionUser.uid,
+        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName,
         kickedUserRoleName: kickedUserRoleName 
       });
-      toast({ title: "Membro Removido", description: `${actionUser.displayName} foi removido.` });
+      toast({ title: "Membro Removido", description: `${actionUser.characterNickname || actionUser.displayName} foi removido.` });
       fetchGuildAndMembers();
       closeActionDialog();
     } catch (error) {
@@ -472,33 +474,23 @@ function MembersPageContent() {
     setIsSavingNote(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      const existingRoleInfo = guild.roles?.[memberForNotes.uid];
-      let updatedRoleInfoPayload: GuildMemberRoleInfo;
+      const existingRoleInfo = guild.roles?.[memberForNotes.uid] || { roleName: memberForNotes.roleName, status: 'Ativo', dkpBalance: 0 };
 
-      if (existingRoleInfo) {
-        updatedRoleInfoPayload = { ...existingRoleInfo, notes: currentNote };
-      } else { 
-        updatedRoleInfoPayload = {
-          roleName: memberForNotes.roleName, 
-          tlRole: memberForNotes.tlRole,
-          tlPrimaryWeapon: memberForNotes.tlPrimaryWeapon,
-          tlSecondaryWeapon: memberForNotes.tlSecondaryWeapon,
-          notes: currentNote,
-          status: memberForNotes.status || 'Ativo',
-          dkpBalance: memberForNotes.dkpBalance || 0,
-        };
-      }
+      let updatedRoleInfoPayload: GuildMemberRoleInfo = { 
+        ...existingRoleInfo, 
+        notes: currentNote 
+      };
 
       await updateDoc(guildRef, { [`roles.${memberForNotes.uid}`]: updatedRoleInfoPayload });
       
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_NOTE_UPDATED, {
         targetUserId: memberForNotes.uid,
-        targetUserDisplayName: memberForNotes.displayName || "N/A",
+        targetUserDisplayName: memberForNotes.characterNickname || memberForNotes.displayName,
         noteSummary: currentNote ? "Nota atualizada" : "Nota removida",
         changedField: 'notes'
       });
 
-      toast({ title: "Nota Salva!", description: `Nota para ${memberForNotes.displayName} foi salva.` });
+      toast({ title: "Nota Salva!", description: `Nota para ${memberForNotes.characterNickname || memberForNotes.displayName} foi salva.` });
       fetchGuildAndMembers(); 
       setShowNotesDialog(false);
       setMemberForNotes(null);
@@ -573,7 +565,7 @@ function MembersPageContent() {
 
     if (usernameFilter) {
         tempMembers = tempMembers.filter(member => 
-            (member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
+            (member.characterNickname || member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
         );
     }
     if (guild?.game === "Throne and Liberty" && tlRoleFilter !== "all") {
@@ -790,7 +782,7 @@ function MembersPageContent() {
           <TableBody>
             {paginatedMembers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 9 : 8) : (canManageMemberNotes ? 8 : 7)} className="text-center h-24">
+                <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24">
                   Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
                 </TableCell>
               </TableRow>
@@ -798,22 +790,23 @@ function MembersPageContent() {
             {paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid;
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
+              const displayName = member.characterNickname || member.displayName || member.email || member.uid;
 
               return (
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
                   <TableCell>
                     <div className="flex items-center">
-                      <Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${member.displayName}`}/>
+                      <Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${displayName}`}/>
                     </div>
                   </TableCell>
                   
                   <TableCell>
                     <div className="flex items-center gap-2 font-medium">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${member.displayName?.substring(0,1) || 'M'}`} alt={member.displayName || 'Avatar'} data-ai-hint="user avatar"/>
-                        <AvatarFallback>{member.displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
+                        <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${displayName?.substring(0,1) || 'M'}`} alt={displayName || 'Avatar'} data-ai-hint="user avatar"/>
+                        <AvatarFallback>{displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
                       </Avatar>
-                      {member.displayName || member.email || member.uid}
+                      {displayName}
                     </div>
                   </TableCell>
 
@@ -835,7 +828,12 @@ function MembersPageContent() {
 
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {member.gearScore} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                      {member.gearScore}
+                      {member.gearScoreScreenshotUrl && 
+                        <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" title="Ver screenshot do gearscore">
+                          <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
+                        </a>
+                      }
                     </div>
                   </TableCell>
                   
@@ -960,7 +958,7 @@ function MembersPageContent() {
         <Dialog open={showNotesDialog} onOpenChange={(isOpen) => { if (!isOpen) { setShowNotesDialog(false); setMemberForNotes(null); } }}>
           <NotesDialogContent className="sm:max-w-md">
             <NotesDialogHeader>
-              <NotesDialogTitle>Nota para {memberForNotes.displayName}</NotesDialogTitle>
+              <NotesDialogTitle>Nota para {memberForNotes.characterNickname || memberForNotes.displayName}</NotesDialogTitle>
               <NotesDialogDescription>
                 Adicione ou edite uma nota sobre este membro. Visivel apenas para quem tem permissao.
               </NotesDialogDescription>
@@ -991,7 +989,7 @@ function MembersPageContent() {
       <AlertDialog open={actionType === 'changeRole' && !!actionUser} onOpenChange={(isOpen) => !isOpen && closeActionDialog()}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Alterar Cargo de {actionUser?.displayName}</AlertDialogTitle>
+            <AlertDialogTitle>Alterar Cargo de {actionUser?.characterNickname || actionUser?.displayName}</AlertDialogTitle>
             <AlertDialogDescription>
               Selecione o novo cargo para este membro.
             </AlertDialogDescription>
@@ -1021,7 +1019,7 @@ function MembersPageContent() {
       <AlertDialog open={actionType === 'kick' && !!actionUser} onOpenChange={(isOpen) => !isOpen && closeActionDialog()}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover {actionUser?.displayName} da Guilda?</AlertDialogTitle>
+            <AlertDialogTitle>Remover {actionUser?.characterNickname || actionUser?.displayName} da Guilda?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acao e irreversivel. O membro sera removido da guilda e perdera seu cargo.
             </AlertDialogDescription>

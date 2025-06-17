@@ -76,17 +76,30 @@ export default function CreateGuildPage() {
     if (data.socialYoutube && data.socialYoutube.trim() !== "") socialLinks.youtube = data.socialYoutube.trim();
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
+    const ownerRoleInfo: GuildMemberRoleInfo = {
+      roleName: "Lider",
+      characterNickname: user.displayName || user.email || "Líder da Guilda", // Default character name
+      dkpBalance: 0,
+      status: 'Ativo'
+    };
+    if (data.game === "Throne and Liberty") {
+        // Default TL specific fields if needed, or leave them for user to fill later
+        ownerRoleInfo.tlRole = undefined; 
+        ownerRoleInfo.tlPrimaryWeapon = undefined;
+        ownerRoleInfo.tlSecondaryWeapon = undefined;
+    }
+
     const guildMemberRoles: { [key: string]: GuildMemberRoleInfo } = {
-      [user.uid]: { roleName: "Lider", dkpBalance: 0, status: 'Ativo' } 
+      [user.uid]: ownerRoleInfo
     };
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
       "Lider": {
-        permissions: Object.values(GuildPermission), 
+        permissions: Object.values(GuildPermission),
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
-        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], 
+        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW],
         description: "Membro padrão da guilda."
       }
     };
@@ -104,11 +117,11 @@ export default function CreateGuildPage() {
         bannerUrl: `https://placehold.co/1200x300.png`,
         logoUrl: `https://placehold.co/150x150.png`,
         roles: guildMemberRoles,
-        customRoles: initialCustomRoles, 
+        customRoles: initialCustomRoles,
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
     };
-    
+
     if (!guildData.socialLinks) delete guildData.socialLinks;
     if (!guildData.password) delete guildData.password;
     if (!guildData.description) guildData.description = "";
@@ -137,14 +150,14 @@ export default function CreateGuildPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   if (authLoading || !user) {
       return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
-      <PageTitle 
+      <PageTitle
         title="Forjar Nova Guilda"
         description="Defina os alicerces da sua nova comunidade de heróis."
         icon={<ShieldPlus className="h-8 w-8 text-primary" />}
@@ -159,7 +172,7 @@ export default function CreateGuildPage() {
         <CardHeader className="relative z-10">
           <CardTitle>Detalhes da Guilda</CardTitle>
           <CardDescription>
-            Preencha as informações abaixo para registrar sua guilda. 
+            Preencha as informações abaixo para registrar sua guilda.
             Detalhes como logotipo, eventos e outros ajustes finos devem ser feitos diretamente no dashboard da guilda após a criação.
           </CardDescription>
         </CardHeader>
@@ -173,8 +186,8 @@ export default function CreateGuildPage() {
                   <FormItem>
                     <FormLabel>Nome da Guilda <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
+                      <Input
+                        {...field}
                         placeholder="Ex: Os Guardioes Alados"
                         className={`mt-1 form-input ${errors.name ? 'border-destructive focus:border-destructive' : ''}`}
                       />
@@ -193,9 +206,9 @@ export default function CreateGuildPage() {
                     <FormControl>
                       <div className="relative flex items-center mt-1">
                         <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input 
+                        <Input
                           type="password"
-                          {...field} 
+                          {...field}
                           placeholder="Deixe em branco para guilda aberta"
                           className={`form-input pl-10 ${errors.password ? 'border-destructive focus:border-destructive' : ''}`}
                         />
@@ -206,7 +219,7 @@ export default function CreateGuildPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={control}
                 name="description"
@@ -214,8 +227,8 @@ export default function CreateGuildPage() {
                   <FormItem>
                     <FormLabel>Descrição (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        {...field} 
+                      <Textarea
+                        {...field}
                         placeholder="Ex: Uma guilda focada em exploracao e desafios epicos."
                         rows={3}
                         className={`mt-1 form-input ${errors.description ? 'border-destructive focus:border-destructive' : ''}`}

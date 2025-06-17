@@ -36,13 +36,16 @@ export enum TLWeapon {
   Bow = "Arco Longo",
   Staff = "Cajado",
   WandAndTome = "Varinha e Tomo",
-  Spear = "Lanca", 
+  Spear = "Lanca",
 }
 
-export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca'; 
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca';
 
 export interface GuildMemberRoleInfo {
-  roleName: string; 
+  roleName: string;
+  characterNickname?: string;
+  gearScore?: number;
+  gearScoreScreenshotUrl?: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -53,14 +56,14 @@ export interface GuildMemberRoleInfo {
 
 export interface CustomRole {
   permissions: GuildPermission[];
-  description?: string; 
+  description?: string;
 }
 
 export interface RecruitmentQuestion {
   id: string;
   text: string;
-  type: 'default' | 'custom'; 
-  isEnabled: boolean; 
+  type: 'default' | 'custom';
+  isEnabled: boolean;
 }
 
 
@@ -86,7 +89,7 @@ export interface Guild {
     discord?: string;
   };
   roles?: { [userId: string]: GuildMemberRoleInfo };
-  customRoles?: { [roleName: string]: CustomRole }; 
+  customRoles?: { [roleName: string]: CustomRole };
   recruitmentQuestions?: RecruitmentQuestion[];
 }
 
@@ -124,8 +127,8 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string;
-  applicantDisplayName: string;
+  applicantName: string; // characterNickname
+  applicantDisplayName: string; // UserProfile.displayName
   applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string;
@@ -137,7 +140,7 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  customAnswers?: { [questionId: string]: string }; 
+  customAnswers?: { [questionId: string]: string };
 }
 
 export interface UserProfile {
@@ -154,12 +157,14 @@ export interface UserProfile {
 
 export interface GuildMember extends UserProfile {
   roleName: string;
+  characterNickname?: string;
+  gearScore?: number;
+  gearScoreScreenshotUrl?: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
-  gearScore?: number;
   dkpBalance?: number;
   status?: MemberStatus;
 }
@@ -192,6 +197,7 @@ export enum AuditActionType {
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
+  MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED",
   DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
@@ -223,25 +229,26 @@ export enum AuditActionType {
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
-  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
+  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
+  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
   fieldName?: string;
-  kickedUserRoleName?: string; 
+  kickedUserRoleName?: string;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
   groupId?: string;
   groupName?: string;
-  roleName?: string; 
-  permissions?: GuildPermission[]; 
+  roleName?: string;
+  permissions?: GuildPermission[];
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
+    updatedFields?: string[];
   };
 }
 
@@ -276,5 +283,3 @@ export interface AppNotification {
   targetUserId?: string;
   isRead?: boolean;
 }
-
-    

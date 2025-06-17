@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarGroup,
+  SidebarSeparator // Import SidebarSeparator
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -23,14 +24,13 @@ import {
   ShieldEllipsis,
   LogOut,
   ClipboardList,
-  FileText,
   ListFilter,
   UsersRound,
-  KeyRound
+  UserCog // Icon for User Settings
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const mainNavItems = [
+const guildManagementNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { 
     label: "Membros", 
@@ -52,7 +52,6 @@ const mainNavItems = [
     label: "Recrutamento", 
     icon: UserPlus,
     baseHref: "/dashboard/recruitment",
-    // Submenu "Candidaturas" removido, agora é uma aba
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
   { 
@@ -61,6 +60,13 @@ const mainNavItems = [
     icon: Settings,
   },
 ];
+
+const userGuildSettingsNavItem = {
+  baseHref: "/dashboard/user-guild-settings",
+  label: "Minhas Configurações",
+  icon: UserCog,
+};
+
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -75,6 +81,66 @@ export function AppSidebar() {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
   };
 
+  const renderNavItems = (items: typeof guildManagementNavItems) => {
+    return items.map((item) => {
+      const currentHref = generateHref(item.baseHref);
+      const itemIsActive = isActive(currentHref);
+      const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
+      
+      return item.subItems ? (
+        <SidebarGroup key={item.label} className="p-0">
+          <SidebarMenuButton
+            asChild={!!item.baseHref}
+            href={item.baseHref ? currentHref : undefined}
+            tooltip={{ children: item.label, side: 'right', align: 'center' }}
+            isActive={itemIsActive || !!subItemsActive}
+            className="w-full justify-start"
+          >
+            {item.baseHref ? (
+               <Link href={currentHref}>
+                <item.icon />
+                <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+              </Link>
+            ) : (
+              <>
+                <item.icon />
+                <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+              </>
+            )}
+          </SidebarMenuButton>
+          <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
+            {item.subItems.map(subItem => {
+              const subItemHref = generateHref(subItem.baseHref);
+              const SubIcon = subItem.icon;
+              return (
+              <SidebarMenuItem key={subItem.baseHref} className="p-0">
+                <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
+                  {SubIcon && <SubIcon className="h-4 w-4"/>}
+                  <span>{subItem.label}</span>
+                </Link>
+              </SidebarMenuItem>
+              )
+            })}
+          </div>
+        </SidebarGroup>
+      ) : (
+        <SidebarMenuItem key={item.baseHref}>
+          <SidebarMenuButton
+            asChild
+            tooltip={{ children: item.label, side: 'right', align: 'center' }}
+            isActive={isActive(currentHref)}
+          >
+            <Link href={currentHref}>
+              <item.icon />
+              <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )
+    });
+  };
+
+
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
@@ -88,62 +154,23 @@ export function AppSidebar() {
 
       <SidebarContent className="flex-grow p-2">
         <SidebarMenu>
-          {mainNavItems.map((item) => {
-            const currentHref = generateHref(item.baseHref);
-            const itemIsActive = isActive(currentHref);
-            const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
-            
-            return item.subItems ? (
-              <SidebarGroup key={item.label} className="p-0">
-                <SidebarMenuButton
-                  asChild={!!item.baseHref}
-                  href={item.baseHref ? currentHref : undefined}
-                  tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={itemIsActive || !!subItemsActive}
-                  className="w-full justify-start"
-                >
-                  {item.baseHref ? (
-                     <Link href={currentHref}>
-                      <item.icon />
-                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                    </Link>
-                  ) : (
-                    <>
-                      <item.icon />
-                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                    </>
-                  )}
-                </SidebarMenuButton>
-                <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
-                  {item.subItems.map(subItem => {
-                    const subItemHref = generateHref(subItem.baseHref);
-                    const SubIcon = subItem.icon;
-                    return (
-                    <SidebarMenuItem key={subItem.baseHref} className="p-0">
-                      <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
-                        {SubIcon && <SubIcon className="h-4 w-4"/>}
-                        <span>{subItem.label}</span>
-                      </Link>
-                    </SidebarMenuItem>
-                    )
-                  })}
-                </div>
-              </SidebarGroup>
-            ) : (
-              <SidebarMenuItem key={item.baseHref}>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={isActive(currentHref)}
-                >
-                  <Link href={currentHref}>
-                    <item.icon />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
+          {renderNavItems(guildManagementNavItems)}
+          
+          <SidebarSeparator className="my-2" /> 
+
+          <SidebarMenuItem key={userGuildSettingsNavItem.baseHref}>
+            <SidebarMenuButton
+              asChild
+              tooltip={{ children: userGuildSettingsNavItem.label, side: 'right', align: 'center' }}
+              isActive={isActive(generateHref(userGuildSettingsNavItem.baseHref))}
+            >
+              <Link href={generateHref(userGuildSettingsNavItem.baseHref)}>
+                <userGuildSettingsNavItem.icon />
+                <span className="group-data-[collapsible=icon]:hidden">{userGuildSettingsNavItem.label}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
         </SidebarMenu>
       </SidebarContent>
 
@@ -158,5 +185,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    

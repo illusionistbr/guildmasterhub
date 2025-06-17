@@ -4,27 +4,27 @@
 import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp, updateDoc } from '@/lib/firebase'; 
-import type { Guild, Application, GuildMemberRoleInfo, UserProfile, RecruitmentQuestion } from '@/types/guildmaster'; 
-import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster'; 
+import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp, updateDoc } from '@/lib/firebase';
+import type { Guild, Application, GuildMemberRoleInfo, UserProfile, RecruitmentQuestion } from '@/types/guildmaster';
+import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'; 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'; 
-import { Badge } from '@/components/ui/badge'; 
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save, Info } from 'lucide-react'; 
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save, Info } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDistanceToNowStrict } from 'date-fns'; 
-import { ptBR } from 'date-fns/locale'; 
-import { logGuildActivity } from '@/lib/auditLogService'; 
+import { formatDistanceToNowStrict } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { logGuildActivity } from '@/lib/auditLogService';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,10 +34,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"; 
-import { hasPermission } from '@/lib/permissions'; 
+} from "@/components/ui/alert-dialog";
+import { hasPermission } from '@/lib/permissions';
 
-// Helper functions from applications/page.tsx
 const getWeaponIconPath = (weapon?: TLWeapon): string => {
   if (!weapon) return "https://placehold.co/24x24.png?text=N/A";
   switch (weapon) {
@@ -105,7 +104,7 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
       id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       text: newCustomQuestionText.trim(),
       type: 'custom',
-      isEnabled: true, // Custom questions are enabled by default when added
+      isEnabled: true,
     };
     setCustomQuestions(prev => [...prev, newQuestion]);
     setNewCustomQuestionText("");
@@ -124,7 +123,6 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
     setIsSaving(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      // Only custom questions are managed and saved here
       await updateDoc(guildRef, { recruitmentQuestions: customQuestions });
 
       await logGuildActivity(
@@ -225,7 +223,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
     return hasPermission(
       currentUserRoleInfo.roleName,
       guild.customRoles,
-      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS 
+      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS // This permission should allow managing questionnaire too
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
 
@@ -361,6 +359,9 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
                 roleName: "Membro",
+                characterNickname: application.applicantName, // Nickname from application
+                gearScore: application.gearScore,
+                gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || undefined,
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
@@ -591,7 +592,7 @@ function RecruitmentPage() {
   const [loadingGuildData, setLoadingGuildData] = useState(true);
   const [recruitmentLink, setRecruitmentLink] = useState<string | null>(null);
   
-  const initialTab = searchParams.get('tab') || "recruitment"; // Default to "recruitment" tab
+  const initialTab = searchParams.get('tab') || "recruitment";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const guildId = searchParams.get('guildId');
@@ -602,7 +603,7 @@ function RecruitmentPage() {
       setActiveTab(currentTab);
     } else {
       const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.set('tab', 'recruitment'); // Default to recruitment tab
+      newSearchParams.set('tab', 'recruitment'); 
       router.replace(`${window.location.pathname}?${newSearchParams.toString()}`, { scroll: false });
       setActiveTab("recruitment"); 
     }
@@ -721,5 +722,3 @@ export default function RecruitmentPageWrapper() {
     </Suspense>
   );
 }
-
-    

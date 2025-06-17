@@ -44,10 +44,7 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
      schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon).optional();
   }
 
-  // Add custom questions to schema
   customQuestions.forEach(q => {
-    // Assuming all custom questions are text for now and optional
-    // In a real scenario, you'd check q.answerType and q.isRequired
     schemaObject[q.id] = z.string().max(500, "Resposta muito longa.").optional();
   });
   
@@ -143,7 +140,7 @@ function ApplyPageContent() {
             defaultFormValues.tlSecondaryWeapon = undefined;
         }
         enabledCustomQuestions.forEach(q => {
-            defaultFormValues[q.id] = ""; // Initialize custom question fields
+            defaultFormValues[q.id] = "";
         });
 
         form.reset(defaultFormValues);
@@ -190,17 +187,18 @@ function ApplyPageContent() {
         }
     });
 
+    // applicantName no Firestore será o characterNickname da aplicação
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
       applicantId: currentUser.uid,
-      applicantName: data.characterNickname,
+      applicantName: data.characterNickname, // Nick do personagem da aplicação
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl,
       discordNick: data.discordNick,
       status: 'pending', 
-      ...(data.tlRole && { tlRole: data.tlRole }),
-      ...(data.tlPrimaryWeapon && { tlPrimaryWeapon: data.tlPrimaryWeapon }),
-      ...(data.tlSecondaryWeapon && { tlSecondaryWeapon: data.tlSecondaryWeapon }),
+      ...(isTLGuild && { tlRole: data.tlRole }),
+      ...(isTLGuild && { tlPrimaryWeapon: data.tlPrimaryWeapon }),
+      ...(isTLGuild && { tlSecondaryWeapon: data.tlSecondaryWeapon }),
       ...(Object.keys(customAnswers).length > 0 && { customAnswers: customAnswers }),
     };
 
@@ -214,6 +212,9 @@ function ApplyPageContent() {
         
         let memberRoleInfo: GuildMemberRoleInfo = {
           roleName: "Membro", 
+          characterNickname: data.characterNickname,
+          gearScore: data.gearScore,
+          gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || undefined,
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0, 
           status: 'Ativo',
@@ -234,7 +235,7 @@ function ApplyPageContent() {
         const appDocForPublicJoinRef = doc(applicationsRef); 
         batch.set(appDocForPublicJoinRef, {
           ...applicationBaseData,
-          applicantDisplayName: currentUser.displayName || currentUser.email,
+          applicantDisplayName: currentUser.displayName || currentUser.email, // Nome de usuário global
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
           status: 'auto_approved',
@@ -244,7 +245,7 @@ function ApplyPageContent() {
         
         await batch.commit();
 
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.MEMBER_JOINED, { 
+        await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.MEMBER_JOINED, { 
             targetUserId: currentUser.uid, 
             targetUserDisplayName: data.characterNickname,
             details: { joinMethod: 'public_form_join' } as any,
@@ -258,13 +259,13 @@ function ApplyPageContent() {
       } else { 
         const newApplicationRef = await addDoc(applicationsRef, {
           ...applicationBaseData,
-          applicantDisplayName: currentUser.displayName || currentUser.email,
+          applicantDisplayName: currentUser.displayName || currentUser.email, // Nome de usuário global
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
           status: 'pending', 
         });
 
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.APPLICATION_SUBMITTED, {
+        await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.APPLICATION_SUBMITTED, {
           applicationId: newApplicationRef.id,
           targetUserDisplayName: data.characterNickname,
         });
@@ -507,12 +508,11 @@ function ApplyPageContent() {
                     <FormField
                       key={question.id}
                       control={form.control}
-                      name={question.id as keyof ApplicationFormValues} // Cast needed if not all q.id are valid keys
+                      name={question.id as keyof ApplicationFormValues}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{question.text}</FormLabel>
                           <FormControl>
-                             {/* For now, all custom qs are text. Could be textarea if q.answerType === 'textarea' */}
                             <Input {...field} placeholder="Sua resposta..." className="form-input"/>
                           </FormControl>
                           <FormMessage />
@@ -552,4 +552,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-

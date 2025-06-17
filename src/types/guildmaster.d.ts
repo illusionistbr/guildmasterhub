@@ -43,6 +43,9 @@ export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca';
 
 export interface GuildMemberRoleInfo {
   roleName: string;
+  characterNickname?: string; // Nick do personagem específico para esta guilda
+  gearScore?: number;         // Gearscore específico para esta guilda
+  gearScoreScreenshotUrl?: string; // Link da print do gearscore
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -59,8 +62,8 @@ export interface CustomRole {
 export interface RecruitmentQuestion {
   id: string;
   text: string;
-  type: 'default' | 'custom'; // 'default' might not be used if we only allow custom
-  isEnabled: boolean; 
+  type: 'default' | 'custom';
+  isEnabled: boolean;
 }
 
 export interface Guild {
@@ -123,8 +126,8 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string;
-  applicantDisplayName: string;
+  applicantName: string; // Este deve ser o characterNickname da aplicação
+  applicantDisplayName: string; // Este é o UserProfile.displayName
   applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string;
@@ -136,29 +139,35 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  customAnswers?: { [questionId: string]: string }; 
+  customAnswers?: { [questionId: string]: string };
 }
 
 export interface UserProfile {
   uid: string;
   email: string | null;
-  displayName: string | null;
+  displayName: string | null; // Nickname global do usuário
   photoURL?: string | null;
   guilds?: string[];
   createdAt?: Timestamp;
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
   };
+  // gearScore global pode ser removido se sempre usarmos o específico da guilda
 }
 
 export interface GuildMember extends UserProfile {
-  roleName: string;
+  // roleName, tlRole, etc., virão de Guild.roles[userId]
+  // Esta interface representa o perfil base do usuário enriquecido com informações da guilda
+  // para exibição e contexto.
+  roleName: string; // Mantido para conveniência, mas a fonte é Guild.roles
+  characterNickname?: string; // Nick do personagem na guilda
+  gearScore?: number; // Gearscore na guilda
+  gearScoreScreenshotUrl?: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
-  gearScore?: number;
   dkpBalance?: number;
   status?: MemberStatus;
 }
@@ -167,7 +176,7 @@ export type GroupIconType = 'shield' | 'sword' | 'heart';
 
 export interface GuildGroupMember {
   memberId: string;
-  displayName: string;
+  displayName: string; // Deve ser o characterNickname se disponível
   photoURL?: string | null;
   note?: string;
 }
@@ -191,6 +200,7 @@ export enum AuditActionType {
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
+  MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED", // Novo tipo
   DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
@@ -221,16 +231,16 @@ export enum AuditActionType {
 
 export interface AuditLogDetails {
   targetUserId?: string;
-  targetUserDisplayName?: string;
-  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
-  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
+  targetUserDisplayName?: string; // Usar characterNickname se for atualização de perfil de membro
+  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
+  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
   fieldName?: string;
   kickedUserRoleName?: string;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
@@ -240,7 +250,8 @@ export interface AuditLogDetails {
   permissions?: GuildPermission[];
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
-    questionnaireChangeSummary?: string; 
+    questionnaireChangeSummary?: string;
+    updatedFields?: string[]; // Para MEMBER_GUILD_PROFILE_UPDATED
   };
 }
 
@@ -275,5 +286,3 @@ export interface AppNotification {
   targetUserId?: string;
   isRead?: boolean;
 }
-
-    
