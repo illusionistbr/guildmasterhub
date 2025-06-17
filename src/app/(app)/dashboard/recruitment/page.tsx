@@ -64,11 +64,8 @@ const getTLRoleIcon = (role?: TLRole) => {
 };
 
 const defaultRecruitmentQuestions: Omit<RecruitmentQuestion, 'isEnabled'>[] = [
-  { id: 'dq_experience', text: 'Qual sua experiência anterior em MMOs?', type: 'default' },
-  { id: 'dq_playstyle', text: 'Qual seu estilo de jogo (casual, hardcore, focado em PvP, PvE, etc.)?', type: 'default' },
-  { id: 'dq_availability', text: 'Quais seus horários de jogo (dias da semana e horários aproximados)?', type: 'default' },
-  { id: 'dq_why_join', text: 'Por que você quer se juntar à nossa guilda?', type: 'default' },
-  { id: 'dq_contribution', text: 'Como você acredita que pode contribuir para a guilda?', type: 'default' },
+  // Lista de perguntas padrão agora está vazia.
+  // O admin pode adicionar perguntas personalizadas se desejar.
 ];
 
 function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { guild: Guild | null; guildId: string | null; currentUser: UserProfile | null }) {
@@ -148,29 +145,33 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
     return <div className="text-center py-10">Carregando configurações do questionário...</div>;
   }
 
+  const defaultQuestionsToDisplay = questions.filter(q => q.type === 'default');
+
   return (
     <Card className="static-card-container mt-8">
       <CardHeader>
         <CardTitle className="flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" />Questionário de Recrutamento</CardTitle>
-        <CardDescription>Configure as perguntas que aparecerão no formulário de candidatura da sua guilda.</CardDescription>
+        <CardDescription>Configure as perguntas que aparecerão no formulário de candidatura da sua guilda. As perguntas padrão foram removidas por padrão, mas você pode adicionar perguntas personalizadas.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
-          <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Padrão</h4>
-          <div className="space-y-3">
-            {questions.filter(q => q.type === 'default').map(question => (
-              <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
-                <Label htmlFor={`q-${question.id}`} className="text-sm text-foreground flex-1 cursor-pointer">{question.text}</Label>
-                <Switch
-                  id={`q-${question.id}`}
-                  checked={question.isEnabled}
-                  onCheckedChange={() => handleToggleQuestion(question.id)}
-                  aria-label={`Ativar/desativar pergunta: ${question.text}`}
-                />
-              </div>
-            ))}
+        {defaultQuestionsToDisplay.length > 0 && (
+          <div>
+            <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Padrão</h4>
+            <div className="space-y-3">
+              {defaultQuestionsToDisplay.map(question => (
+                <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                  <Label htmlFor={`q-${question.id}`} className="text-sm text-foreground flex-1 cursor-pointer">{question.text}</Label>
+                  <Switch
+                    id={`q-${question.id}`}
+                    checked={question.isEnabled}
+                    onCheckedChange={() => handleToggleQuestion(question.id)}
+                    aria-label={`Ativar/desativar pergunta: ${question.text}`}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Personalizadas</h4>
@@ -182,6 +183,9 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
               </Button>
             </div>
           ))}
+          {questions.filter(q => q.type === 'custom').length === 0 && defaultQuestionsToDisplay.length === 0 && (
+             <p className="text-sm text-muted-foreground mb-3">Nenhuma pergunta configurada. Adicione perguntas personalizadas abaixo se desejar.</p>
+          )}
           <div className="flex items-end gap-2 mt-3">
             <div className="flex-grow">
               <Label htmlFor="newCustomQuestion" className="text-sm text-muted-foreground">Nova Pergunta Personalizada</Label>
@@ -604,9 +608,14 @@ function RecruitmentPage() {
     if (currentTab && (currentTab === "recruitment" || currentTab === "applications")) {
       setActiveTab(currentTab);
     } else {
+      // If no specific tab or invalid tab is in URL, default to "recruitment"
+      // and update URL to reflect this default for better UX consistency.
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set('tab', 'recruitment');
+      router.replace(`${window.location.pathname}?${newSearchParams.toString()}`, { scroll: false });
       setActiveTab("recruitment"); 
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -665,6 +674,13 @@ function RecruitmentPage() {
         });
     }
   };
+  
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('tab', newTab);
+    router.push(`${window.location.pathname}?${newSearchParams.toString()}`, { scroll: false });
+  };
 
   if (authLoading || loadingGuildData) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -685,7 +701,7 @@ function RecruitmentPage() {
         description="Gerencie o processo de recrutamento e as candidaturas da sua guilda."
         icon={<UserPlus className="h-8 w-8 text-primary" />}
       />
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="recruitment">Configurações</TabsTrigger>
           <TabsTrigger value="applications">Candidaturas</TabsTrigger>
