@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
+import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
@@ -223,6 +223,10 @@ export default function CreateGuildPage() {
         dkpSystemEnabled: false,
         dkpRedemptionWindow: { value: 24, unit: 'hours' },
         dkpDefaultsPerCategory: {},
+        dkpDecayEnabled: false, // Initialize new DKP decay fields
+        dkpDecayPercentage: 10,
+        dkpDecayIntervalDays: 30,
+        dkpDecayInitialDate: undefined, // Or Timestamp.now() if preferred
     };
 
     if (!guildData.socialLinks) delete guildData.socialLinks;

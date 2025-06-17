@@ -7,8 +7,8 @@ import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch } from '@/lib/firebase';
-import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum } from '@/types/guildmaster';
+import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment } from '@/lib/firebase';
+import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum, DkpDecayLogEntry } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -23,7 +23,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription as ShadCnAlertDialogDescription, // Alias to avoid conflict if any
+  AlertDialogDescription as ShadCnAlertDialogDescription, 
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -46,6 +46,11 @@ import {
 } from "@/components/ui/accordion";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { TL_EVENT_CATEGORIES } from '@/components/dashboard/calendar/ThroneAndLibertyCalendarView';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
 const guildNameSchema = z.object({
@@ -72,8 +77,25 @@ const dkpSettingsSchema = z.object({
     message: "Janela de Resgate é obrigatória quando o sistema DKP está habilitado.",
     path: ["dkpRedemptionWindowValue"],
 });
-
 type DkpSettingsFormValues = z.infer<typeof dkpSettingsSchema>;
+
+const dkpDecaySettingsSchema = z.object({
+  dkpDecayEnabled: z.boolean(),
+  dkpDecayPercentage: z.coerce.number().min(0, "Deve ser entre 0 e 100.").max(100, "Deve ser entre 0 e 100.").optional(),
+  dkpDecayIntervalDays: z.coerce.number().min(1, "Deve ser pelo menos 1 dia.").optional(),
+  dkpDecayInitialDate: z.date().optional(),
+}).refine(data => {
+  if (data.dkpDecayEnabled) {
+    return data.dkpDecayPercentage !== undefined &&
+           data.dkpDecayIntervalDays !== undefined &&
+           data.dkpDecayInitialDate !== undefined;
+  }
+  return true;
+}, {
+  message: "Porcentagem, Intervalo e Data Inicial são obrigatórios quando o Decaimento DKP está habilitado.",
+  path: ["dkpDecayPercentage"], // Can also set to the first problematic field or a general path
+});
+type DkpDecaySettingsFormValues = z.infer<typeof dkpDecaySettingsSchema>;
 
 
 const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
@@ -119,6 +141,10 @@ function GuildSettingsPageContent() {
   const [newRoleName, setNewRoleName] = useState("");
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [isSubmittingDkp, setIsSubmittingDkp] = useState(false);
+  const [isSubmittingDkpDecay, setIsSubmittingDkpDecay] = useState(false);
+  const [showOnDemandDecayDialog, setShowOnDemandDecayDialog] = useState(false);
+  const [isProcessingOnDemandDecay, setIsProcessingOnDemandDecay] = useState(false);
+  const [dkpDecayLogs, setDkpDecayLogs] = useState<DkpDecayLogEntry[]>([]); // Placeholder
 
   const guildId = searchParams.get('guildId');
 
@@ -141,6 +167,17 @@ function GuildSettingsPageContent() {
       dkpDefaultsPerCategory: {},
     },
   });
+
+  const dkpDecayForm = useForm<DkpDecaySettingsFormValues>({
+    resolver: zodResolver(dkpDecaySettingsSchema),
+    defaultValues: {
+      dkpDecayEnabled: false,
+      dkpDecayPercentage: 10,
+      dkpDecayIntervalDays: 30,
+      dkpDecayInitialDate: undefined,
+    }
+  });
+
 
   const currentUserRoleInfo = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return null;
@@ -167,6 +204,10 @@ function GuildSettingsPageContent() {
 
   const canManageDkpSettings = useMemo(() => {
     return currentUser?.uid === guild?.ownerId;
+  }, [currentUser, guild]);
+
+  const canManageDkpDecaySettings = useMemo(() => {
+    return currentUser?.uid === guild?.ownerId; // For now, owner only
   }, [currentUser, guild]);
 
 
@@ -215,6 +256,12 @@ function GuildSettingsPageContent() {
           dkpRedemptionWindowUnit: guildData.dkpRedemptionWindow?.unit || 'hours',
           dkpDefaultsPerCategory: guildData.dkpDefaultsPerCategory || {},
         });
+        dkpDecayForm.reset({
+          dkpDecayEnabled: guildData.dkpDecayEnabled || false,
+          dkpDecayPercentage: guildData.dkpDecayPercentage ?? 10,
+          dkpDecayIntervalDays: guildData.dkpDecayIntervalDays ?? 30,
+          dkpDecayInitialDate: guildData.dkpDecayInitialDate ? (guildData.dkpDecayInitialDate as Timestamp).toDate() : undefined,
+        });
 
 
         const initialRoles = guildData.customRoles || {};
@@ -241,7 +288,7 @@ function GuildSettingsPageContent() {
     return () => {
       setHeaderTitle(null);
     };
-  }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, dkpForm, setHeaderTitle]);
+  }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, dkpForm, dkpDecayForm, setHeaderTitle]);
 
   const handleNameSubmit: SubmitHandler<GuildNameFormValues> = async (data) => {
     if (!guild || !currentUser || !canManageGeneralSettings) {
@@ -326,7 +373,7 @@ function GuildSettingsPageContent() {
     }
     setIsDeleting(true);
     try {
-      const subcollections = ['auditLogs', 'applications', 'events', 'groups', 'notifications'];
+      const subcollections = ['auditLogs', 'applications', 'events', 'groups', 'notifications', 'dkpDecayLogs'];
       for (const subcoll of subcollections) {
           const subcollRef = collection(db, `guilds/${guild.id}/${subcoll}`);
           const subcollSnap = await getFirestoreDocs(subcollRef);
@@ -378,7 +425,7 @@ function GuildSettingsPageContent() {
         dkpForm.reset(data);
 
         await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_SETTINGS_UPDATED, {
-            changedField: 'dkpSystemEnabled',
+            changedField: 'dkpSystemEnabled', // Example logging, can be more detailed
             newValue: data.dkpSystemEnabled.toString(),
         });
 
@@ -388,6 +435,97 @@ function GuildSettingsPageContent() {
         toast({title: "Erro ao Salvar DKP", variant: "destructive"});
     } finally {
         setIsSubmittingDkp(false);
+    }
+  };
+
+  const handleDkpDecaySettingsSubmit: SubmitHandler<DkpDecaySettingsFormValues> = async (data) => {
+    if (!guild || !currentUser || !canManageDkpDecaySettings) {
+      toast({ title: "Permissão Negada", description: "Você não tem permissão para alterar as configurações de decaimento de DKP.", variant: "destructive" });
+      return;
+    }
+    setIsSubmittingDkpDecay(true);
+    try {
+      const guildRef = doc(db, "guilds", guild.id);
+      const updatePayload: Partial<Guild> = {
+        dkpDecayEnabled: data.dkpDecayEnabled,
+      };
+
+      if (data.dkpDecayEnabled) {
+        updatePayload.dkpDecayPercentage = data.dkpDecayPercentage;
+        updatePayload.dkpDecayIntervalDays = data.dkpDecayIntervalDays;
+        updatePayload.dkpDecayInitialDate = data.dkpDecayInitialDate ? Timestamp.fromDate(data.dkpDecayInitialDate) : undefined;
+      } else {
+        updatePayload.dkpDecayPercentage = undefined;
+        updatePayload.dkpDecayIntervalDays = undefined;
+        updatePayload.dkpDecayInitialDate = undefined;
+      }
+
+      await updateDoc(guildRef, updatePayload);
+      setGuild(prev => prev ? { ...prev, ...updatePayload } : null);
+      // dkpDecayForm.reset will be handled by useEffect re-fetch or manually after successful save
+
+      await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_DECAY_SETTINGS_UPDATED, {
+        changedField: 'dkpDecayEnabled', // Example logging
+        newValue: data.dkpDecayEnabled.toString(),
+      });
+
+      toast({ title: "Configurações de Decaimento DKP Salvas!", description: "As configurações do sistema de decaimento de DKP foram atualizadas." });
+    } catch (error) {
+      console.error("Erro ao salvar configurações de decaimento de DKP:", error);
+      toast({ title: "Erro ao Salvar Decaimento DKP", variant: "destructive" });
+    } finally {
+      setIsSubmittingDkpDecay(false);
+    }
+  };
+
+  const handleInitiateOnDemandDecay = async () => {
+    if (!guild || !currentUser || !canManageDkpDecaySettings || !guild.dkpDecayEnabled || guild.dkpDecayPercentage === undefined || guild.dkpDecayPercentage <= 0) {
+      toast({ title: "Ação Inválida", description: "O decaimento DKP não está habilitado, a porcentagem é zero ou você não tem permissão.", variant: "destructive" });
+      setShowOnDemandDecayDialog(false);
+      return;
+    }
+    setIsProcessingOnDemandDecay(true);
+    try {
+      const decayPercentage = guild.dkpDecayPercentage / 100;
+      const guildRef = doc(db, "guilds", guildId as string);
+      const guildSnapshot = await getDoc(guildRef); // Re-fetch to ensure latest roles
+      if (!guildSnapshot.exists()) {
+        throw new Error("Guilda não encontrada para o decaimento.");
+      }
+      const currentGuildData = guildSnapshot.data() as Guild;
+      const rolesToUpdate = currentGuildData.roles || {};
+      let affectedCount = 0;
+
+      const batch = writeBatch(db);
+      for (const memberId in rolesToUpdate) {
+        const memberRoleInfo = rolesToUpdate[memberId];
+        if (memberRoleInfo.dkpBalance && memberRoleInfo.dkpBalance > 0) {
+          const currentDkp = memberRoleInfo.dkpBalance;
+          const amountToDecay = Math.floor(currentDkp * decayPercentage);
+          const newDkp = currentDkp - amountToDecay;
+          
+          batch.update(guildRef, { [`roles.${memberId}.dkpBalance`]: newDkp });
+          affectedCount++;
+        }
+      }
+      await batch.commit();
+
+      await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_ON_DEMAND_DECAY_TRIGGERED, {
+        decayPercentage: guild.dkpDecayPercentage,
+        affectedMembersCount: affectedCount,
+        details: { decayType: 'on_demand' }
+      });
+      // TODO: Add to DKP Decay Logs subcollection
+
+      toast({ title: "Decaimento Sob Demanda Iniciado!", description: `DKP de ${affectedCount} membro(s) foi reduzido em ${guild.dkpDecayPercentage}%.` });
+      // Re-fetch guild data to reflect DKP changes if needed by other parts of the UI, or update local state.
+      // For settings page, it might not be immediately visible unless members page is also updated.
+    } catch (error) {
+      console.error("Erro ao iniciar decaimento sob demanda:", error);
+      toast({ title: "Erro no Decaimento", description: "Não foi possível processar o decaimento sob demanda.", variant: "destructive" });
+    } finally {
+      setIsProcessingOnDemandDecay(false);
+      setShowOnDemandDecayDialog(false);
     }
   };
 
@@ -516,10 +654,11 @@ function GuildSettingsPageContent() {
       <div className="space-y-8 p-4 md:p-6">
         <PageTitle title="Configurações da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4"> {/* Adjusted for new tab */}
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="permissions" disabled>Cargos e Permissões</TabsTrigger>
             <TabsTrigger value="dkp" disabled>DKP</TabsTrigger>
+            <TabsTrigger value="dkpDecay" disabled>Decaimento DKP</TabsTrigger> {/* New Tab Trigger */}
           </TabsList>
           <TabsContent value="general" className="mt-6">
             <Skeleton className="h-48 w-full mb-6" />
@@ -557,6 +696,9 @@ function GuildSettingsPageContent() {
     );
   }
 
+  const presetPercentages = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+  const presetIntervals = [7, 14, 30, 60, 90];
+
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
       <PageTitle
@@ -566,13 +708,15 @@ function GuildSettingsPageContent() {
       />
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4"> {/* Adjusted for new tab */}
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissionsPage}>Cargos e Permissões</TabsTrigger>
           <TabsTrigger value="dkp" disabled={!canManageDkpSettings}>DKP</TabsTrigger>
+          <TabsTrigger value="dkpDecay" disabled={!canManageDkpDecaySettings}>Decaimento DKP</TabsTrigger> {/* New Tab Trigger */}
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-8">
+          {/* General Settings Cards */}
           <Card className="static-card-container">
             <CardHeader>
               <CardTitle>Alterar Nome da Guilda</CardTitle>
@@ -685,7 +829,8 @@ function GuildSettingsPageContent() {
         </TabsContent>
 
         <TabsContent value="permissions" className="mt-6 space-y-6">
-          {!canManageRolesAndPermissionsPage ? (
+           {/* Permissions content from previous implementation */}
+            {!canManageRolesAndPermissionsPage ? (
             <Card className="static-card-container">
               <CardHeader>
                 <CardTitle className="text-destructive">Acesso Negado</CardTitle>
@@ -819,8 +964,10 @@ function GuildSettingsPageContent() {
             </>
           )}
         </TabsContent>
-         <TabsContent value="dkp" className="mt-6 space-y-6">
-          {!canManageDkpSettings ? (
+
+        <TabsContent value="dkp" className="mt-6 space-y-6">
+          {/* DKP Settings content from previous implementation */}
+           {!canManageDkpSettings ? (
              <Card className="static-card-container">
               <CardHeader>
                 <CardTitle className="text-destructive">Acesso Negado</CardTitle>
@@ -941,6 +1088,217 @@ function GuildSettingsPageContent() {
             </Form>
           )}
         </TabsContent>
+        
+        <TabsContent value="dkpDecay" className="mt-6 space-y-6">
+            {!canManageDkpDecaySettings ? (
+                <Card className="static-card-container">
+                  <CardHeader><CardTitle className="text-destructive">Acesso Negado</CardTitle></CardHeader>
+                  <CardContent><p className="text-muted-foreground">Você não tem permissão para gerenciar o decaimento de DKP.</p></CardContent>
+                </Card>
+            ) : (
+            <Form {...dkpDecayForm}>
+                <form onSubmit={dkpDecayForm.handleSubmit(handleDkpDecaySettingsSubmit)}>
+                    <Card className="static-card-container">
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <CardTitle className="flex items-center"><TrendingDown className="mr-2 h-5 w-5 text-primary" />Decaimento de DKP</CardTitle>
+                                 <FormField
+                                    control={dkpDecayForm.control}
+                                    name="dkpDecayEnabled"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-2">
+                                            <Switch
+                                                id="dkpDecayEnabledSwitch"
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isSubmittingDkpDecay}
+                                            />
+                                            <FormLabel htmlFor="dkpDecayEnabledSwitch" className="mb-0">Decaimento Habilitado</FormLabel>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <CardDescription>Configure as definições de decaimento de DKP para sua guilda.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-1">
+                                <h4 className="text-lg font-medium text-foreground">Configuração de Intervalo de Decaimento</h4>
+                                <p className="text-sm text-muted-foreground">
+                                    Configure como o DKP decai ao longo do tempo. O decaimento ajuda a prevenir o acúmulo de DKP e encoraja a participação ativa. O sistema reduzirá automaticamente o DKP de cada membro pela porcentagem especificada após cada período de intervalo.
+                                </p>
+                            </div>
+
+                            <FormField
+                                control={dkpDecayForm.control}
+                                name="dkpDecayPercentage"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center"><Percent className="mr-2 h-4 w-4"/>Porcentagem de Decaimento (%)</FormLabel>
+                                        <FormDescription>A porcentagem de DKP que será removida de cada membro após cada período de intervalo. Introduza um valor personalizado (0-100) ou selecione uma das opções predefinidas abaixo.</FormDescription>
+                                        <FormControl><Input type="number" {...field} placeholder="Ex: 10" className="form-input mt-1" disabled={!dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay} min="0" max="100" /></FormControl>
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {presetPercentages.map(p => (
+                                                <Button key={p} type="button" variant="outline" size="sm" onClick={() => dkpDecayForm.setValue("dkpDecayPercentage", p)} disabled={!dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay}>{p}%</Button>
+                                            ))}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={dkpDecayForm.control}
+                                name="dkpDecayIntervalDays"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4"/>Intervalo de Decaimento (dias)</FormLabel>
+                                        <FormDescription>O intervalo em dias em que o decaimento será aplicado. Introduza um valor personalizado ou selecione uma das opções predefinidas abaixo.</FormDescription>
+                                        <FormControl><Input type="number" {...field} placeholder="Ex: 30" className="form-input mt-1" disabled={!dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay} min="1"/></FormControl>
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {presetIntervals.map(i => (
+                                                <Button key={i} type="button" variant="outline" size="sm" onClick={() => dkpDecayForm.setValue("dkpDecayIntervalDays", i)} disabled={!dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay}>{i} dias</Button>
+                                            ))}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={dkpDecayForm.control}
+                                name="dkpDecayInitialDate"
+                                render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4"/>Data Inicial de Decaimento</FormLabel>
+                                    <FormDescription>Este é o ponto de partida para os cálculos de decaimento. Seu primeiro decaimento ocorrerá após um intervalo completo ter passado a partir desta data.</FormDescription>
+                                    <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn("w-full pl-3 text-left font-normal form-input mt-1", !field.value && "text-muted-foreground")}
+                                            disabled={!dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay}
+                                        >
+                                            {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 bg-card" align="start">
+                                        <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1)) || !dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay } // Can't pick past dates
+                                        initialFocus
+                                        locale={ptBR}
+                                        />
+                                    </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                         <CardFooter className="border-t pt-6">
+                            <Button type="submit" className="btn-gradient btn-style-primary ml-auto" disabled={!dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay}>
+                                {isSubmittingDkpDecay ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Salvar Alterações
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </form>
+            </Form>
+            )}
+
+            {canManageDkpDecaySettings && (
+            <>
+            <Card className="static-card-container">
+                <CardHeader>
+                    <CardTitle>Logs de Decaimento de DKP</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>#</TableHead>
+                                <TableHead>Tipo</TableHead>
+                                <TableHead>Porcentagem</TableHead>
+                                <TableHead>Acionado Em</TableHead>
+                                <TableHead>Acionado Por</TableHead>
+                                <TableHead className="text-right">Afetados</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {dkpDecayLogs.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                                        Sem resultados. Nenhum log de decaimento de DKP encontrado.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                dkpDecayLogs.map((log, index) => (
+                                <TableRow key={log.id || index}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{log.type === 'on_demand' ? 'Sob Demanda' : 'Agendado'}</TableCell>
+                                    <TableCell>{log.percentage}%</TableCell>
+                                    <TableCell>{log.timestamp ? format(log.timestamp.toDate(), "dd/MM/yy HH:mm", {locale: ptBR}) : '-'}</TableCell>
+                                    <TableCell>{log.triggeredByDisplayName || log.triggeredByUserId || 'Sistema'}</TableCell>
+                                    <TableCell className="text-right">{log.affectedMembersCount}</TableCell>
+                                    <TableCell>{log.status}</TableCell>
+                                </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                    {/* Placeholder for pagination */}
+                    <div className="flex items-center justify-end space-x-2 py-4 text-sm text-muted-foreground">
+                        0 de 0 linha(s) selecionada(s).  Linhas por página: 10. Página 1 de 0
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="static-card-container">
+                <CardHeader>
+                    <CardTitle>Decaimento de DKP Sob Demanda</CardTitle>
+                    <CardDescription>
+                        Iniciar um decaimento de DKP sob demanda é uma ação imediata que reduzirá o DKP de todos os membros de acordo com a porcentagem de decaimento configurada. Esta ação é separada e não afeta quaisquer decaimentos DKP agendados; decaimentos agendados continuarão a ocorrer conforme planejado.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AlertDialog open={showOnDemandDecayDialog} onOpenChange={setShowOnDemandDecayDialog}>
+                        <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full sm:w-auto" disabled={!guild?.dkpDecayEnabled || guild?.dkpDecayPercentage === undefined || guild?.dkpDecayPercentage <= 0 || isProcessingOnDemandDecay}>
+                           {isProcessingOnDemandDecay ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <TrendingDown className="mr-2 h-4 w-4"/>} 
+                           Iniciar Decaimento Sob Demanda
+                        </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Decaimento Sob Demanda?</AlertDialogTitle>
+                            <ShadCnAlertDialogDescription>
+                            Tem certeza que deseja aplicar um decaimento de DKP de <strong>{guild?.dkpDecayPercentage || 0}%</strong> a todos os membros da guilda imediatamente? Esta ação não pode ser desfeita.
+                            </ShadCnAlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isProcessingOnDemandDecay}>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleInitiateOnDemandDecay} disabled={isProcessingOnDemandDecay} className={cn(buttonVariants({variant: "destructive"}))}>
+                                {isProcessingOnDemandDecay && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Confirmar Decaimento
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </CardContent>
+                 <CardFooter>
+                    <p className="text-xs text-muted-foreground">
+                       Certifique-se de que as configurações de porcentagem de decaimento estão corretas antes de iniciar.
+                    </p>
+                </CardFooter>
+            </Card>
+            </>
+            )}
+        </TabsContent>
+
       </Tabs>
     </div>
   );

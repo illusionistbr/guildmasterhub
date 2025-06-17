@@ -104,6 +104,11 @@ export interface Guild {
   dkpDefaultsPerCategory?: {
     [categoryKey: string]: number;
   };
+  dkpDecayEnabled?: boolean;
+  dkpDecayPercentage?: number;
+  dkpDecayIntervalDays?: number;
+  dkpDecayInitialDate?: Timestamp;
+  lastDkpDecayTimestamp?: Timestamp;
 }
 
 export interface Event {
@@ -215,6 +220,8 @@ export enum AuditActionType {
   MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED",
   DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN",
   DKP_SETTINGS_UPDATED = "DKP_SETTINGS_UPDATED",
+  DKP_DECAY_SETTINGS_UPDATED = "DKP_DECAY_SETTINGS_UPDATED",
+  DKP_ON_DEMAND_DECAY_TRIGGERED = "DKP_ON_DEMAND_DECAY_TRIGGERED",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -245,18 +252,20 @@ export enum AuditActionType {
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
-  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
+  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number | Date;
+  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number | Date;
   fieldName?: string;
   kickedUserRoleName?: string;
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory' | 'dkpDecayEnabled' | 'dkpDecayPercentage' | 'dkpDecayIntervalDays' | 'dkpDecayInitialDate';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
+  decayPercentage?: number;
+  affectedMembersCount?: number;
   groupId?: string;
   groupName?: string;
   roleName?: string;
@@ -265,6 +274,7 @@ export interface AuditLogDetails {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
     updatedFields?: string[];
+    decayType?: 'on_demand' | 'scheduled';
   };
 }
 
@@ -275,6 +285,18 @@ export interface AuditLogEntry {
   actorDisplayName: string | null;
   action: AuditActionType;
   details?: AuditLogDetails;
+}
+
+export interface DkpDecayLogEntry {
+  id?: string;
+  timestamp: Timestamp;
+  type: 'scheduled' | 'on_demand';
+  percentage: number;
+  triggeredByUserId?: string; 
+  triggeredByDisplayName?: string | null;
+  affectedMembersCount: number;
+  status: 'completed' | 'failed' | 'in_progress';
+  details?: string; 
 }
 
 export type NotificationType = "MANDATORY_ACTIVITY_CREATED" | "GENERIC_INFO" | "GUILD_UPDATE" | "APPLICATION_RECEIVED" | "APPLICATION_STATUS_CHANGED";
