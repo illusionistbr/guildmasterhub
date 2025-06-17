@@ -15,7 +15,7 @@ import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, A
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy, writeBatch, serverTimestamp } from '@/lib/firebase';
 import type { Guild, AuditActionType, GuildMemberRoleInfo } from '@/types/guildmaster';
-import { GuildRole, TLRole, TLWeapon } from '@/types/guildmaster';
+import { TLRole, TLWeapon } from '@/types/guildmaster'; // GuildRole removed
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -97,8 +97,9 @@ function ExploreGuildsContent() {
       const batch = writeBatch(db);
       
       const memberRoleInfo: GuildMemberRoleInfo = {
-        generalRole: GuildRole.Member,
+        roleName: "Membro", // Changed from generalRole: GuildRole.Member
         notes: "Entrou diretamente (guilda pública, não-TL).", 
+        dkpBalance: 0, // Explicitly set dkpBalance
       };
       
       batch.update(guildRef, {
@@ -403,3 +404,6 @@ export default function GuildsPage() {
     </div>
   );
 }
+
+
+    
