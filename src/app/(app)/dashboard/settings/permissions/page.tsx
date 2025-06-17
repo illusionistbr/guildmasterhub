@@ -29,7 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { hasPermission } from '@/lib/permissions';
-import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton import
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Helper for permission descriptions
 const permissionDescriptions: Record<PermissionEnum, string> = {
@@ -152,21 +152,25 @@ function PermissionsPageContent() {
   };
   
   const handleCreateNewRole = () => {
+    if (!canManagePermissionsPage) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para criar cargos.", variant: "destructive"});
+        return;
+    }
     const trimmedRoleName = newRoleName.trim();
     if (!trimmedRoleName) {
-      toast({ title: "Nome Invalido", description: "O nome do cargo nao pode estar vazio.", variant: "destructive" });
+      toast({ title: "Nome Inválido", description: "O nome do cargo não pode estar vazio.", variant: "destructive" });
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmedRoleName)) {
-      toast({ title: "Nome Invalido", description: "O nome do cargo deve conter apenas letras (sem acentos), numeros e underscores.", variant: "destructive" });
+      toast({ title: "Nome Inválido", description: "O nome do cargo deve conter apenas letras (sem acentos), números e underscores.", variant: "destructive" });
       return;
     }
     if (trimmedRoleName.length > 30) {
-      toast({ title: "Nome Muito Longo", description: "O nome do cargo nao pode exceder 30 caracteres.", variant: "destructive" });
+      toast({ title: "Nome Muito Longo", description: "O nome do cargo não pode exceder 30 caracteres.", variant: "destructive" });
       return;
     }
     if (customRoles[trimmedRoleName]) {
-      toast({ title: "Cargo Ja Existe", description: `O cargo "${trimmedRoleName}" ja existe.`, variant: "destructive" });
+      toast({ title: "Cargo Já Existe", description: `O cargo "${trimmedRoleName}" já existe.`, variant: "destructive" });
       return;
     }
 
@@ -175,13 +179,17 @@ function PermissionsPageContent() {
       [trimmedRoleName]: { permissions: [], description: `Cargo personalizado: ${trimmedRoleName}` },
     }));
     setNewRoleName("");
-    toast({ title: "Cargo Criado", description: `Cargo "${trimmedRoleName}" adicionado. Configure suas permissoes.` });
+    toast({ title: "Cargo Criado", description: `Cargo "${trimmedRoleName}" adicionado. Configure suas permissões.` });
   };
   
   const handleDeleteRole = async () => {
-    if (!roleToDelete || !guildId || !currentUser) return;
+    if (!roleToDelete || !guildId || !currentUser || !canManagePermissionsPage) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para excluir cargos.", variant: "destructive"});
+        setRoleToDelete(null);
+        return;
+    }
     if (roleToDelete === "Lider" || roleToDelete === "Membro") {
-      toast({ title: "Acao Nao Permitida", description: "Os cargos 'Lider' e 'Membro' nao podem ser excluidos.", variant: "destructive" });
+      toast({ title: "Ação Não Permitida", description: "Os cargos 'Lider' e 'Membro' não podem ser excluídos.", variant: "destructive" });
       setRoleToDelete(null);
       return;
     }
@@ -199,12 +207,11 @@ function PermissionsPageContent() {
       });
 
       setCustomRoles(updatedRoles);
-      toast({ title: "Cargo Excluido!", description: `O cargo "${roleToDelete}" foi excluido.` });
+      toast({ title: "Cargo Excluído!", description: `O cargo "${roleToDelete}" foi excluído.` });
     } catch (error) {
       console.error("Erro ao excluir cargo:", error);
       toast({ title: "Erro ao Excluir Cargo", variant: "destructive" });
-      // Revert UI change if save fails
-      setCustomRoles(prev => ({ ...prev, [roleToDelete]: customRoles[roleToDelete] }));
+      setCustomRoles(customRoles); // Revert UI change if save fails
     } finally {
       setIsSaving(false);
       setRoleToDelete(null);
@@ -213,7 +220,7 @@ function PermissionsPageContent() {
 
   const handleSaveChanges = async () => {
     if (!guildId || !currentUser || !canManagePermissionsPage) {
-        toast({title: "Permissao Negada", description: "Voce nao tem permissao para salvar estas alteracoes.", variant: "destructive"});
+        toast({title: "Permissão Negada", description: "Você não tem permissão para salvar estas alterações.", variant: "destructive"});
         return;
     }
     setIsSaving(true);
@@ -222,12 +229,12 @@ function PermissionsPageContent() {
       await updateDoc(guildRef, { customRoles });
 
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
-         details: { changedField: 'customRoles' } as any, // General log for permission update
+         details: { changedField: 'customRoles' } as any, 
       });
 
-      toast({ title: "Permissoes Salvas!", description: "As permissoes dos cargos foram atualizadas com sucesso." });
+      toast({ title: "Permissões Salvas!", description: "As permissões dos cargos foram atualizadas com sucesso." });
     } catch (error) {
-      console.error("Erro ao salvar permissoes:", error);
+      console.error("Erro ao salvar permissões:", error);
       toast({ title: "Erro ao Salvar", variant: "destructive" });
     } finally {
       setIsSaving(false);
@@ -238,7 +245,7 @@ function PermissionsPageContent() {
   if (authLoading || loadingData) {
     return (
       <div className="space-y-4 p-4 md:p-6">
-        <PageTitle title="Gerenciar Permissoes de Cargos" icon={<ListChecks className="h-8 w-8 text-primary" />} />
+        <PageTitle title="Gerenciar Permissões de Cargos" icon={<ListChecks className="h-8 w-8 text-primary" />} />
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -252,7 +259,7 @@ function PermissionsPageContent() {
         <ShieldAlert className="h-24 w-24 text-destructive animate-pulse" />
         <h2 className="text-3xl font-headline text-destructive">Acesso Negado</h2>
         <p className="text-lg text-muted-foreground max-w-md">
-          Voce nao tem permissao para gerenciar os cargos e permissoes desta guilda.
+          Você não tem permissão para gerenciar os cargos e permissões desta guilda.
         </p>
         <Button onClick={() => router.back()} variant="outline">Voltar</Button>
       </div>
@@ -260,7 +267,7 @@ function PermissionsPageContent() {
   }
 
   if (!guild) {
-    return <div className="p-6 text-center">Guilda nao carregada ou nao encontrada.</div>;
+    return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
   }
   
   const allPermissions = Object.values(GuildPermission);
@@ -268,15 +275,15 @@ function PermissionsPageContent() {
   return (
     <div className="space-y-8">
       <PageTitle
-        title={`Gerenciar Permissoes: ${guild.name}`}
-        description="Crie cargos personalizados e defina quais permissoes cada cargo tera na guilda."
+        title={`Gerenciar Permissões: ${guild.name}`}
+        description="Crie cargos personalizados e defina quais permissões cada cargo terá na guilda."
         icon={<ListChecks className="h-8 w-8 text-primary" />}
       />
 
       <Card className="card-bg">
         <CardHeader>
           <CardTitle>Criar Novo Cargo</CardTitle>
-          <CardDescription>Defina um nome para o novo cargo (sem acentos, apenas letras, numeros e underscore). As permissoes podem ser configuradas abaixo.</CardDescription>
+          <CardDescription>Defina um nome para o novo cargo (sem acentos, apenas letras, números e underscore). As permissões podem ser configuradas abaixo.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-2 items-end">
           <div className="flex-grow">
@@ -287,9 +294,14 @@ function PermissionsPageContent() {
               onChange={(e) => setNewRoleName(e.target.value)}
               placeholder="Ex: Veterano, RecrutaChefe"
               className="form-input mt-1"
+              disabled={!canManagePermissionsPage || isSaving}
             />
           </div>
-          <Button onClick={handleCreateNewRole} className="w-full sm:w-auto btn-gradient btn-style-secondary" disabled={isSaving}>
+          <Button 
+            onClick={handleCreateNewRole} 
+            className="w-full sm:w-auto btn-gradient btn-style-secondary" 
+            disabled={!canManagePermissionsPage || isSaving}
+          >
             <PlusCircle className="mr-2 h-5 w-5" /> Criar Cargo
           </Button>
         </CardContent>
@@ -311,16 +323,16 @@ function PermissionsPageContent() {
             {(roleName !== "Lider" && roleName !== "Membro") && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                   <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" disabled={isSaving}>
+                   <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" disabled={isSaving || !canManagePermissionsPage}>
                      <Trash2 className="h-5 w-5" />
                    </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar Exclusao</AlertDialogTitle>
+                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir o cargo "{roleName}"? Esta acao nao pode ser desfeita.
-                            Membros com este cargo serao revertidos para "Membro" (ou outro cargo padrao se necessario).
+                            Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
+                            Membros com este cargo serão revertidos para "Membro" (ou outro cargo padrão se necessário).
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -340,7 +352,7 @@ function PermissionsPageContent() {
                   id={`${roleName}-${permission}`}
                   checked={roleData.permissions.includes(permission)}
                   onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                  disabled={isSaving || (roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS)}
+                  disabled={isSaving || !canManagePermissionsPage || (roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS)}
                 />
                 <div className="grid gap-1.5 leading-none">
                   <label
@@ -350,7 +362,7 @@ function PermissionsPageContent() {
                     {permissionDescriptions[permission].substring(0, permissionDescriptions[permission].indexOf(':') > 0 ? permissionDescriptions[permission].indexOf(':') : permissionDescriptions[permission].length) || permission.replace(/_/g, ' ').toLocaleLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    {permissionDescriptions[permission].substring(permissionDescriptions[permission].indexOf(':') + 1).trim() || "Gerencia esta permissao."}
+                    {permissionDescriptions[permission].substring(permissionDescriptions[permission].indexOf(':') + 1).trim() || "Gerencia esta permissão."}
                   </p>
                 </div>
               </div>
@@ -360,9 +372,9 @@ function PermissionsPageContent() {
       ))}
       
       <div className="flex justify-end mt-8">
-        <Button onClick={handleSaveChanges} className="btn-gradient btn-style-primary" disabled={isSaving}>
+        <Button onClick={handleSaveChanges} className="btn-gradient btn-style-primary" disabled={isSaving || !canManagePermissionsPage}>
           {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-          Salvar Alteracoes
+          Salvar Alterações
         </Button>
       </div>
     </div>
