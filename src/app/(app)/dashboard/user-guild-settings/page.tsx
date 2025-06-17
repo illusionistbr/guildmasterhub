@@ -14,7 +14,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Ensure Label is imported
+import { Label } from '@/components/ui/label'; 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -96,7 +96,6 @@ function UserGuildSettingsPageContent() {
         const userRoleData = guildData.roles?.[currentUser.uid];
         if (!userRoleData) {
           toast({ title: "Erro", description: "Suas informações não foram encontradas nesta guilda.", variant: "destructive" });
-          // Potentially redirect or handle missing role info
           setMemberRoleInfo(null);
         } else {
           setMemberRoleInfo(userRoleData);
@@ -129,7 +128,7 @@ function UserGuildSettingsPageContent() {
     setIsSubmitting(true);
 
     const updatedRoleInfo: GuildMemberRoleInfo = {
-      ...memberRoleInfo, // Preserve existing fields like roleName, status, dkpBalance
+      ...memberRoleInfo, 
       characterNickname: data.characterNickname,
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || undefined,
@@ -166,7 +165,7 @@ function UserGuildSettingsPageContent() {
          details: { updatedFields }
       });
       
-      setMemberRoleInfo(updatedRoleInfo); // Update local state
+      setMemberRoleInfo(updatedRoleInfo); 
       toast({ title: "Informações Atualizadas!", description: "Suas configurações na guilda foram salvas." });
     } catch (error) {
       console.error("Erro ao atualizar informações:", error);
@@ -212,8 +211,8 @@ function UserGuildSettingsPageContent() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Card className="static-card-container">
             <CardHeader>
-              <CardTitle>Informações Gerais do Personagem</CardTitle>
-              <CardDescription>Como você aparecerá para outros membros desta guilda.</CardDescription>
+              <CardTitle>Informações do Personagem</CardTitle>
+              <CardDescription>Como você aparecerá para outros membros desta guilda. Para guildas do jogo Throne and Liberty, campos adicionais específicos do jogo estarão disponíveis.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -293,81 +292,74 @@ function UserGuildSettingsPageContent() {
                   </FormItem>
                 )}
               />
+
+              {isTLGuild && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="tlRole"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sua Função (Tank/Healer/DPS)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""} >
+                          <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione sua função" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {Object.values(TLRole).map(role => (
+                              <SelectItem key={role} value={role}>
+                                  <div className="flex items-center gap-2">
+                                      {role === TLRole.Tank && <Shield className="h-4 w-4 text-sky-500" />}
+                                      {role === TLRole.Healer && <Wand2 className="h-4 w-4 text-emerald-500" />}
+                                      {role === TLRole.DPS && <Swords className="h-4 w-4 text-rose-500" />}
+                                      {role}
+                                  </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="tlPrimaryWeapon"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Arma Primária</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma primária" /></SelectTrigger></FormControl>
+                            <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="tlSecondaryWeapon"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Arma Secundária</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma secundária" /></SelectTrigger></FormControl>
+                            <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </>
+              )}
             </CardContent>
+            <CardFooter>
+              <Button type="submit" className="btn-gradient btn-style-primary ml-auto" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                Salvar Alterações
+              </Button>
+            </CardFooter>
           </Card>
-
-          {isTLGuild && (
-            <Card className="static-card-container">
-              <CardHeader>
-                <CardTitle>Configurações (Throne and Liberty)</CardTitle>
-                <CardDescription>Específico para guildas do jogo Throne and Liberty.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="tlRole"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sua Função (Tank/Healer/DPS)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""} >
-                        <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione sua função" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {Object.values(TLRole).map(role => (
-                            <SelectItem key={role} value={role}>
-                                <div className="flex items-center gap-2">
-                                    {role === TLRole.Tank && <Shield className="h-4 w-4 text-sky-500" />}
-                                    {role === TLRole.Healer && <Wand2 className="h-4 w-4 text-emerald-500" />}
-                                    {role === TLRole.DPS && <Swords className="h-4 w-4 text-rose-500" />}
-                                    {role}
-                                </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="tlPrimaryWeapon"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Arma Primária</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma primária" /></SelectTrigger></FormControl>
-                          <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tlSecondaryWeapon"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Arma Secundária</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma secundária" /></SelectTrigger></FormControl>
-                          <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="flex justify-end">
-            <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-              Salvar Alterações
-            </Button>
-          </div>
         </form>
       </Form>
     </div>
@@ -381,3 +373,4 @@ export default function UserGuildSettingsPage() {
     </Suspense>
   );
 }
+
