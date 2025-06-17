@@ -18,13 +18,16 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Loader2, ShieldAlert, KeyRound, Eye, VenetianMask } from 'lucide-react';
+import { Settings, Loader2, ShieldAlert, KeyRound, Eye, VenetianMask, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { hasPermission } from '@/lib/permissions';
+
+const EVENTS_PER_PAGE_OPTIONS = [10, 25, 50];
 
 function CalendarPinCodesPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -34,10 +37,14 @@ function CalendarPinCodesPageContent() {
   const { setHeaderTitle } = useHeader();
 
   const [guild, setGuild] = useState<Guild | null>(null);
-  const [events, setEvents] = useState<GuildEvent[]>([]);
+  const [allEvents, setAllEvents] = useState<GuildEvent[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [visiblePinCodes, setVisiblePinCodes] = useState<Record<string, boolean>>({});
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [eventsPerPage, setEventsPerPage] = useState(EVENTS_PER_PAGE_OPTIONS[0]);
+
 
   const guildId = searchParams.get('guildId');
 
@@ -108,24 +115,23 @@ function CalendarPinCodesPageContent() {
     if (!guildId || !currentUser || authLoading || accessDenied || !guild || !canViewPins) {
       if (!authLoading && (accessDenied || !guild)) {
           setLoadingData(false);
-          setEvents([]);
+          setAllEvents([]);
       }
       return;
     }
 
     setLoadingData(true);
     const eventsRef = collection(db, `guilds/${guildId}/events`);
-    // Order by date descending, then time descending to see most recent/upcoming first
     const q = query(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedEvents = querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as GuildEvent));
-      setEvents(fetchedEvents);
+      setAllEvents(fetchedEvents);
       setLoadingData(false);
     }, (error) => {
       console.error("Erro ao buscar eventos:", error);
       toast({ title: "Erro ao Carregar Eventos", variant: "destructive" });
-      setEvents([]);
+      setAllEvents([]);
       setLoadingData(false);
     });
 
@@ -133,13 +139,17 @@ function CalendarPinCodesPageContent() {
 
   }, [guildId, currentUser, authLoading, accessDenied, guild, toast, canViewPins]);
 
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * eventsPerPage;
+    return allEvents.slice(startIndex, startIndex + eventsPerPage);
+  }, [allEvents, currentPage, eventsPerPage]);
+
+  const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+
   const formatEventDateTime = (dateStr: string, timeStr: string): string => {
     try {
-        // dateStr is "YYYY-MM-DD", timeStr is "HH:MM"
         const [year, month, day] = dateStr.split('-').map(Number);
         const [hours, minutes] = timeStr.split(':').map(Number);
-        // Construct Date object using local time components
-        // Month is 0-indexed for Date constructor (0 = January, 1 = February, etc.)
         const localDate = new Date(year, month - 1, day, hours, minutes);
         return format(localDate, "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (e) {
@@ -152,7 +162,7 @@ function CalendarPinCodesPageContent() {
     setVisiblePinCodes(prev => ({...prev, [eventId]: !prev[eventId]}));
   }
 
-  if (authLoading || loadingData) {
+  if (authLoading || (loadingData && !guild)) {
     return (
         <div className="space-y-4 p-4 md:p-6">
             <PageTitle title="PIN Codes dos Eventos" icon={<KeyRound className="h-8 w-8 text-primary" />} />
@@ -187,7 +197,14 @@ function CalendarPinCodesPageContent() {
         icon={<KeyRound className="h-8 w-8 text-primary" />}
       />
 
-      {events.length === 0 && !loadingData && (
+      {loadingData && (
+        <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+        </div>
+      )}
+
+      {!loadingData && allEvents.length === 0 && (
         <div className="text-center py-10 bg-card rounded-lg shadow">
             <VenetianMask className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">Nenhum Evento com PIN Criado</p>
@@ -197,7 +214,8 @@ function CalendarPinCodesPageContent() {
         </div>
       )}
 
-      {events.length > 0 && (
+      {!loadingData && allEvents.length > 0 && (
+        <>
         <div className="overflow-x-auto bg-card p-4 sm:p-6 rounded-lg shadow">
           <Table>
             <TableHeader>
@@ -210,7 +228,7 @@ function CalendarPinCodesPageContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.map((event) => (
+              {paginatedEvents.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="font-medium">{event.title}</TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
@@ -239,6 +257,74 @@ function CalendarPinCodesPageContent() {
             </TableBody>
           </Table>
         </div>
+        <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow mt-4">
+            <div className="text-sm text-muted-foreground">
+                {allEvents.length} evento(s) no total.
+            </div>
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Linhas/pág:</span>
+                    <Select
+                        value={eventsPerPage.toString()}
+                        onValueChange={(value) => {
+                            setEventsPerPage(Number(value));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-[70px] h-8 text-xs form-input">
+                            <SelectValue placeholder={eventsPerPage.toString()} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {EVENTS_PER_PAGE_OPTIONS.map(size => (
+                                <SelectItem key={size} value={size.toString()} className="text-xs">{size}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                    Página {totalPages > 0 ? currentPage : 0} de {totalPages}
+                </span>
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1 || totalPages === 0}
+                    >
+                        <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1 || totalPages === 0}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                    >
+                        <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        </div>
+        </>
       )}
     </div>
   );
