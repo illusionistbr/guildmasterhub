@@ -7,7 +7,7 @@ import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment } from '@/lib/firebase';
+import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment, deleteField } from '@/lib/firebase'; // Added deleteField
 import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum, DkpDecayLogEntry } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -93,7 +93,7 @@ const dkpDecaySettingsSchema = z.object({
   return true;
 }, {
   message: "Porcentagem, Intervalo e Data Inicial são obrigatórios quando o Decaimento DKP está habilitado.",
-  path: ["dkpDecayPercentage"], // Can also set to the first problematic field or a general path
+  path: ["dkpDecayPercentage"], 
 });
 type DkpDecaySettingsFormValues = z.infer<typeof dkpDecaySettingsSchema>;
 
@@ -144,7 +144,7 @@ function GuildSettingsPageContent() {
   const [isSubmittingDkpDecay, setIsSubmittingDkpDecay] = useState(false);
   const [showOnDemandDecayDialog, setShowOnDemandDecayDialog] = useState(false);
   const [isProcessingOnDemandDecay, setIsProcessingOnDemandDecay] = useState(false);
-  const [dkpDecayLogs, setDkpDecayLogs] = useState<DkpDecayLogEntry[]>([]); // Placeholder
+  const [dkpDecayLogs, setDkpDecayLogs] = useState<DkpDecayLogEntry[]>([]); 
 
   const guildId = searchParams.get('guildId');
 
@@ -207,7 +207,7 @@ function GuildSettingsPageContent() {
   }, [currentUser, guild]);
 
   const canManageDkpDecaySettings = useMemo(() => {
-    return currentUser?.uid === guild?.ownerId; // For now, owner only
+    return currentUser?.uid === guild?.ownerId; 
   }, [currentUser, guild]);
 
 
@@ -416,16 +416,16 @@ function GuildSettingsPageContent() {
             };
             updatePayload.dkpDefaultsPerCategory = data.dkpDefaultsPerCategory || {};
         } else {
-            updatePayload.dkpRedemptionWindow = undefined;
-            updatePayload.dkpDefaultsPerCategory = undefined;
+            updatePayload.dkpRedemptionWindow = deleteField() as any; 
+            updatePayload.dkpDefaultsPerCategory = deleteField() as any; 
         }
 
-        await updateDoc(guildRef, updatePayload);
+        await updateDoc(guildRef, updatePayload as { [key: string]: any });
         setGuild(prev => prev ? { ...prev, ...updatePayload } : null);
         dkpForm.reset(data);
 
         await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_SETTINGS_UPDATED, {
-            changedField: 'dkpSystemEnabled', // Example logging, can be more detailed
+            changedField: 'dkpSystemEnabled', 
             newValue: data.dkpSystemEnabled.toString(),
         });
 
@@ -446,26 +446,41 @@ function GuildSettingsPageContent() {
     setIsSubmittingDkpDecay(true);
     try {
       const guildRef = doc(db, "guilds", guild.id);
-      const updatePayload: Partial<Guild> = {
+      const updatePayload: { [key: string]: any } = { // Use a more flexible type for payload
         dkpDecayEnabled: data.dkpDecayEnabled,
       };
 
       if (data.dkpDecayEnabled) {
         updatePayload.dkpDecayPercentage = data.dkpDecayPercentage;
         updatePayload.dkpDecayIntervalDays = data.dkpDecayIntervalDays;
-        updatePayload.dkpDecayInitialDate = data.dkpDecayInitialDate ? Timestamp.fromDate(data.dkpDecayInitialDate) : undefined;
+        updatePayload.dkpDecayInitialDate = data.dkpDecayInitialDate ? Timestamp.fromDate(data.dkpDecayInitialDate) : deleteField();
       } else {
-        updatePayload.dkpDecayPercentage = undefined;
-        updatePayload.dkpDecayIntervalDays = undefined;
-        updatePayload.dkpDecayInitialDate = undefined;
+        updatePayload.dkpDecayPercentage = deleteField();
+        updatePayload.dkpDecayIntervalDays = deleteField();
+        updatePayload.dkpDecayInitialDate = deleteField();
       }
 
       await updateDoc(guildRef, updatePayload);
-      setGuild(prev => prev ? { ...prev, ...updatePayload } : null);
-      // dkpDecayForm.reset will be handled by useEffect re-fetch or manually after successful save
+      setGuild(prev => {
+        if (!prev) return null;
+        const newGuildState = { ...prev, ...updatePayload };
+        // If fields were deleted, ensure they are removed from local state too
+        if (!data.dkpDecayEnabled) {
+            delete newGuildState.dkpDecayPercentage;
+            delete newGuildState.dkpDecayIntervalDays;
+            delete newGuildState.dkpDecayInitialDate;
+        }
+        return newGuildState;
+      });
+      
+      dkpDecayForm.reset({
+          ...data,
+          dkpDecayInitialDate: data.dkpDecayInitialDate ? data.dkpDecayInitialDate : undefined,
+      });
+
 
       await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_DECAY_SETTINGS_UPDATED, {
-        changedField: 'dkpDecayEnabled', // Example logging
+        changedField: 'dkpDecayEnabled', 
         newValue: data.dkpDecayEnabled.toString(),
       });
 
@@ -488,7 +503,7 @@ function GuildSettingsPageContent() {
     try {
       const decayPercentage = guild.dkpDecayPercentage / 100;
       const guildRef = doc(db, "guilds", guildId as string);
-      const guildSnapshot = await getDoc(guildRef); // Re-fetch to ensure latest roles
+      const guildSnapshot = await getDoc(guildRef); 
       if (!guildSnapshot.exists()) {
         throw new Error("Guilda não encontrada para o decaimento.");
       }
@@ -515,11 +530,9 @@ function GuildSettingsPageContent() {
         affectedMembersCount: affectedCount,
         details: { decayType: 'on_demand' }
       });
-      // TODO: Add to DKP Decay Logs subcollection
-
+      
       toast({ title: "Decaimento Sob Demanda Iniciado!", description: `DKP de ${affectedCount} membro(s) foi reduzido em ${guild.dkpDecayPercentage}%.` });
-      // Re-fetch guild data to reflect DKP changes if needed by other parts of the UI, or update local state.
-      // For settings page, it might not be immediately visible unless members page is also updated.
+      
     } catch (error) {
       console.error("Erro ao iniciar decaimento sob demanda:", error);
       toast({ title: "Erro no Decaimento", description: "Não foi possível processar o decaimento sob demanda.", variant: "destructive" });
@@ -654,11 +667,11 @@ function GuildSettingsPageContent() {
       <div className="space-y-8 p-4 md:p-6">
         <PageTitle title="Configurações da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4"> {/* Adjusted for new tab */}
+          <TabsList className="grid w-full grid-cols-4"> 
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="permissions" disabled>Cargos e Permissões</TabsTrigger>
             <TabsTrigger value="dkp" disabled>DKP</TabsTrigger>
-            <TabsTrigger value="dkpDecay" disabled>Decaimento DKP</TabsTrigger> {/* New Tab Trigger */}
+            <TabsTrigger value="dkpDecay" disabled>Decaimento DKP</TabsTrigger> 
           </TabsList>
           <TabsContent value="general" className="mt-6">
             <Skeleton className="h-48 w-full mb-6" />
@@ -708,15 +721,15 @@ function GuildSettingsPageContent() {
       />
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4"> {/* Adjusted for new tab */}
+        <TabsList className="grid w-full grid-cols-4"> 
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissionsPage}>Cargos e Permissões</TabsTrigger>
           <TabsTrigger value="dkp" disabled={!canManageDkpSettings}>DKP</TabsTrigger>
-          <TabsTrigger value="dkpDecay" disabled={!canManageDkpDecaySettings}>Decaimento DKP</TabsTrigger> {/* New Tab Trigger */}
+          <TabsTrigger value="dkpDecay" disabled={!canManageDkpDecaySettings}>Decaimento DKP</TabsTrigger> 
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-8">
-          {/* General Settings Cards */}
+          
           <Card className="static-card-container">
             <CardHeader>
               <CardTitle>Alterar Nome da Guilda</CardTitle>
@@ -829,7 +842,7 @@ function GuildSettingsPageContent() {
         </TabsContent>
 
         <TabsContent value="permissions" className="mt-6 space-y-6">
-           {/* Permissions content from previous implementation */}
+           
             {!canManageRolesAndPermissionsPage ? (
             <Card className="static-card-container">
               <CardHeader>
@@ -966,7 +979,7 @@ function GuildSettingsPageContent() {
         </TabsContent>
 
         <TabsContent value="dkp" className="mt-6 space-y-6">
-          {/* DKP Settings content from previous implementation */}
+          
            {!canManageDkpSettings ? (
              <Card className="static-card-container">
               <CardHeader>
@@ -1187,7 +1200,7 @@ function GuildSettingsPageContent() {
                                         mode="single"
                                         selected={field.value}
                                         onSelect={field.onChange}
-                                        disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1)) || !dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay } // Can't pick past dates
+                                        disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1)) || !dkpDecayForm.watch("dkpDecayEnabled") || isSubmittingDkpDecay } 
                                         initialFocus
                                         locale={ptBR}
                                         />
@@ -1250,7 +1263,7 @@ function GuildSettingsPageContent() {
                             )}
                         </TableBody>
                     </Table>
-                    {/* Placeholder for pagination */}
+                    
                     <div className="flex items-center justify-end space-x-2 py-4 text-sm text-muted-foreground">
                         0 de 0 linha(s) selecionada(s).  Linhas por página: 10. Página 1 de 0
                     </div>
