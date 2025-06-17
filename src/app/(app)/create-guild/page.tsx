@@ -53,7 +53,14 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
     { value: "Solar", label: "Solar" },
     { value: "Syleus", label: "Syleus" },
   ],
-  "NA East": [],
+  "NA East": [
+    { value: "Snowburn", label: "Snowburn" },
+    { value: "Carnage", label: "Carnage" },
+    { value: "Adrenaline", label: "Adrenaline" },
+    { value: "Ivory", label: "Ivory" },
+    { value: "Stellarite", label: "Stellarite" },
+    { value: "Pippin", label: "Pippin" },
+  ],
   "NA West": [],
   "Europe": [],
   "South America": [],
@@ -116,9 +123,10 @@ export default function CreateGuildPage() {
   }, [watchedGame, setValue]);
 
   useEffect(() => {
-    if (watchedRegion) { // If region changes (or is set initially), reset server
-      setValue("server", undefined);
-    }
+    // If region changes (or is set initially), reset server
+    // This ensures that if a user picks a region, then changes their mind and picks another,
+    // the server field for the old region isn't carried over.
+    setValue("server", undefined);
   }, [watchedRegion, setValue]);
 
 
