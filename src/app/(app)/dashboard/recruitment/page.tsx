@@ -4,24 +4,27 @@
 import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image'; // Added for ApplicationsTabContent
+import Image from 'next/image'; 
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp } from '@/lib/firebase'; // Combined imports
-import type { Guild, Application, GuildMemberRoleInfo, UserProfile } from '@/types/guildmaster'; // Combined imports
-import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster'; // Added for ApplicationsTabContent
+import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp, updateDoc } from '@/lib/firebase'; 
+import type { Guild, Application, GuildMemberRoleInfo, UserProfile, RecruitmentQuestion } from '@/types/guildmaster'; 
+import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster'; 
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'; // CardFooter added for ApplicationsTabContent
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'; 
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'; // Added for ApplicationsTabContent
-import { Badge } from '@/components/ui/badge'; // Added for ApplicationsTabContent
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'; 
+import { Badge } from '@/components/ui/badge'; 
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2 } from 'lucide-react'; // Combined icons
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save } from 'lucide-react'; 
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDistanceToNowStrict } from 'date-fns'; // Added for ApplicationsTabContent
-import { ptBR } from 'date-fns/locale'; // Added for ApplicationsTabContent
-import { logGuildActivity } from '@/lib/auditLogService'; // Added for ApplicationsTabContent
+import { formatDistanceToNowStrict } from 'date-fns'; 
+import { ptBR } from 'date-fns/locale'; 
+import { logGuildActivity } from '@/lib/auditLogService'; 
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,8 +34,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"; // Added for ApplicationsTabContent
-import { hasPermission } from '@/lib/permissions'; // Added for ApplicationsTabContent
+} from "@/components/ui/alert-dialog"; 
+import { hasPermission } from '@/lib/permissions'; 
 
 // Helper functions from applications/page.tsx
 const getWeaponIconPath = (weapon?: TLWeapon): string => {
@@ -60,11 +63,176 @@ const getTLRoleIcon = (role?: TLRole) => {
     }
 };
 
+const defaultRecruitmentQuestions: Omit<RecruitmentQuestion, 'isEnabled'>[] = [
+  { id: 'dq_experience', text: 'Qual sua experiência anterior em MMOs?', type: 'default' },
+  { id: 'dq_playstyle', text: 'Qual seu estilo de jogo (casual, hardcore, focado em PvP, PvE, etc.)?', type: 'default' },
+  { id: 'dq_availability', text: 'Quais seus horários de jogo (dias da semana e horários aproximados)?', type: 'default' },
+  { id: 'dq_why_join', text: 'Por que você quer se juntar à nossa guilda?', type: 'default' },
+  { id: 'dq_contribution', text: 'Como você acredita que pode contribuir para a guilda?', type: 'default' },
+];
 
-function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkToClipboard }: { guild: Guild | null; guildId: string | null; recruitmentLink: string | null; copyLinkToClipboard: () => void; }) {
+function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { guild: Guild | null; guildId: string | null; currentUser: UserProfile | null }) {
+  const { toast } = useToast();
+  const [questions, setQuestions] = useState<RecruitmentQuestion[]>([]);
+  const [newCustomQuestion, setNewCustomQuestion] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (guild) {
+      const initialQuestions = defaultRecruitmentQuestions.map(dq => {
+        const savedQuestion = guild.recruitmentQuestions?.find(sq => sq.id === dq.id);
+        return { ...dq, isEnabled: savedQuestion ? savedQuestion.isEnabled : true };
+      });
+      const customQuestions = guild.recruitmentQuestions?.filter(sq => sq.type === 'custom') || [];
+      setQuestions([...initialQuestions, ...customQuestions]);
+    } else {
+       setQuestions(defaultRecruitmentQuestions.map(dq => ({...dq, isEnabled: true})));
+    }
+  }, [guild]);
+
+  const handleToggleQuestion = (id: string) => {
+    setQuestions(prev => prev.map(q => q.id === id ? { ...q, isEnabled: !q.isEnabled } : q));
+  };
+
+  const handleAddCustomQuestion = () => {
+    if (newCustomQuestion.trim() === "") {
+      toast({ title: "Pergunta Vazia", description: "O texto da pergunta personalizada não pode estar vazio.", variant: "destructive" });
+      return;
+    }
+    const newQuestion: RecruitmentQuestion = {
+      id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      text: newCustomQuestion.trim(),
+      type: 'custom',
+      isEnabled: true,
+    };
+    setQuestions(prev => [...prev, newQuestion]);
+    setNewCustomQuestion("");
+    toast({ title: "Pergunta Adicionada", description: "Nova pergunta personalizada adicionada localmente. Lembre-se de salvar." });
+  };
+
+  const handleDeleteCustomQuestion = (id: string) => {
+    setQuestions(prev => prev.filter(q => q.id !== id));
+  };
+
+  const handleSaveQuestionnaire = async () => {
+    if (!guildId || !currentUser) {
+      toast({ title: "Erro", description: "Guilda ou usuário não autenticado.", variant: "destructive"});
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const guildRef = doc(db, "guilds", guildId);
+      // Salvar apenas as perguntas ativas do tipo 'default' e todas as customizadas
+      const questionsToSave = questions.filter(q => (q.type === 'default' && q.isEnabled) || q.type === 'custom');
+      
+      await updateDoc(guildRef, { recruitmentQuestions: questionsToSave });
+
+      await logGuildActivity(
+        guildId,
+        currentUser.uid,
+        currentUser.displayName,
+        AuditActionType.RECRUITMENT_QUESTIONNAIRE_UPDATED,
+        { changedField: 'recruitmentQuestions', details: { questionnaireChangeSummary: `${questionsToSave.length} perguntas configuradas.` } }
+      );
+
+      toast({ title: "Questionário Salvo!", description: "As configurações do questionário de recrutamento foram salvas." });
+    } catch (error) {
+      console.error("Erro ao salvar questionário:", error);
+      toast({ title: "Erro ao Salvar", description: "Não foi possível salvar o questionário.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  if (!guild || !guildId) {
+    return <div className="text-center py-10">Carregando configurações do questionário...</div>;
+  }
+
+  return (
+    <Card className="static-card-container mt-8">
+      <CardHeader>
+        <CardTitle className="flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" />Questionário de Recrutamento</CardTitle>
+        <CardDescription>Configure as perguntas que aparecerão no formulário de candidatura da sua guilda.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Padrão</h4>
+          <div className="space-y-3">
+            {questions.filter(q => q.type === 'default').map(question => (
+              <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                <Label htmlFor={`q-${question.id}`} className="text-sm text-foreground flex-1 cursor-pointer">{question.text}</Label>
+                <Switch
+                  id={`q-${question.id}`}
+                  checked={question.isEnabled}
+                  onCheckedChange={() => handleToggleQuestion(question.id)}
+                  aria-label={`Ativar/desativar pergunta: ${question.text}`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Personalizadas</h4>
+          {questions.filter(q => q.type === 'custom').map(question => (
+            <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-2">
+              <p className="text-sm text-foreground flex-1">{question.text}</p>
+              <Button variant="ghost" size="icon" onClick={() => handleDeleteCustomQuestion(question.id)} className="text-destructive hover:bg-destructive/10 h-7 w-7">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex items-end gap-2 mt-3">
+            <div className="flex-grow">
+              <Label htmlFor="newCustomQuestion" className="text-sm text-muted-foreground">Nova Pergunta Personalizada</Label>
+              <Textarea
+                id="newCustomQuestion"
+                placeholder="Digite o texto da sua pergunta personalizada..."
+                value={newCustomQuestion}
+                onChange={(e) => setNewCustomQuestion(e.target.value)}
+                rows={2}
+                className="form-input mt-1"
+              />
+            </div>
+            <Button onClick={handleAddCustomQuestion} variant="outline" className="shrink-0 btn-gradient btn-style-secondary">
+              <PlusCircleIcon className="mr-2 h-4 w-4" /> Adicionar
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button onClick={handleSaveQuestionnaire} disabled={isSaving} className="btn-gradient btn-style-primary ml-auto">
+          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Salvar Questionário
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+
+function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkToClipboard, currentUser }: { guild: Guild | null; guildId: string | null; recruitmentLink: string | null; copyLinkToClipboard: () => void; currentUser: UserProfile | null; }) {
   if (!guild || !guildId) {
     return <div className="text-center py-10">Carregando informações da guilda...</div>;
   }
+  
+  const currentUserRoleInfo = useMemo(() => {
+    if (!currentUser || !guild || !guild.roles) return null;
+    return guild.roles[currentUser.uid];
+  }, [currentUser, guild]);
+
+  const canManageQuestionnaire = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    // Assuming MANAGE_RECRUITMENT_PROCESS_APPLICATIONS also allows questionnaire editing.
+    // Consider a more specific permission like MANAGE_RECRUITMENT_SETTINGS if needed.
+    return hasPermission(
+      currentUserRoleInfo.roleName,
+      guild.customRoles,
+      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS 
+    );
+  }, [currentUserRoleInfo, guild?.customRoles]);
+
+
   return (
     <div className="space-y-6 pt-6">
       <Card className="static-card-container">
@@ -95,6 +263,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
           </p>
         </CardContent>
       </Card>
+      {canManageQuestionnaire && <RecruitmentQuestionnaireSettings guild={guild} guildId={guildId} currentUser={currentUser} />}
     </div>
   );
 }
@@ -518,7 +687,7 @@ function RecruitmentPage() {
       />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="recruitment">Recrutamento</TabsTrigger>
+          <TabsTrigger value="recruitment">Configurações</TabsTrigger>
           <TabsTrigger value="applications">Candidaturas</TabsTrigger>
         </TabsList>
         <TabsContent value="recruitment">
@@ -527,6 +696,7 @@ function RecruitmentPage() {
             guildId={guildId}
             recruitmentLink={recruitmentLink}
             copyLinkToClipboard={copyLinkToClipboard}
+            currentUser={user}
           />
         </TabsContent>
         <TabsContent value="applications">

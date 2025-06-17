@@ -56,6 +56,15 @@ export interface CustomRole {
   description?: string;
 }
 
+export interface RecruitmentQuestion {
+  id: string;
+  text: string;
+  type: 'default' | 'custom';
+  isEnabled: boolean;
+  // isRequired?: boolean; // For future implementation
+  // answerType?: 'text' | 'textarea' | 'select'; // For future implementation
+}
+
 export interface Guild {
   id: string;
   name: string;
@@ -79,6 +88,7 @@ export interface Guild {
   };
   roles?: { [userId: string]: GuildMemberRoleInfo };
   customRoles?: { [roleName: string]: CustomRole };
+  recruitmentQuestions?: RecruitmentQuestion[];
 }
 
 export interface Event {
@@ -128,6 +138,7 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
+  // answers?: { [questionId: string]: string }; // For future implementation
 }
 
 export interface UserProfile {
@@ -200,6 +211,7 @@ export enum AuditActionType {
   APPLICATION_SUBMITTED = "APPLICATION_SUBMITTED",
   APPLICATION_ACCEPTED = "APPLICATION_ACCEPTED",
   APPLICATION_REJECTED = "APPLICATION_REJECTED",
+  RECRUITMENT_QUESTIONNAIRE_UPDATED = "RECRUITMENT_QUESTIONNAIRE_UPDATED",
   GROUP_CREATED = "GROUP_CREATED",
   GROUP_UPDATED = "GROUP_UPDATED",
   GROUP_DELETED = "GROUP_DELETED",
@@ -220,7 +232,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
@@ -230,6 +242,7 @@ export interface AuditLogDetails {
   permissions?: GuildPermission[];
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
+    questionnaireChangeSummary?: string; // e.g., "3 perguntas atualizadas, 1 adicionada"
   };
 }
 
@@ -264,3 +277,5 @@ export interface AppNotification {
   targetUserId?: string;
   isRead?: boolean;
 }
+
+    
