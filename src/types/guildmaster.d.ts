@@ -34,21 +34,21 @@ export enum TLWeapon {
   Greatsword = "Greatsword",
   Daggers = "Daggers",
   Crossbow = "Crossbow",
-  Longbow = "Longbow", // Corrected from Bow
+  Longbow = "Longbow",
   Staff = "Staff",
   WandAndTome = "Wand and Tome",
   Spear = "Spear",
 }
 
-export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca';
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licença';
 
 export interface GuildMemberRoleInfo {
   roleName: string;
-  characterNickname?: string; // Nick do personagem específico para esta guilda
-  gearScore?: number;         // Gearscore específico para esta guilda
-  gearScoreScreenshotUrl?: string; // Link da print do gearscore
-  gearBuildLink?: string; // Link para a build de equipamento
-  skillBuildLink?: string; // Link para a build de habilidades
+  characterNickname?: string;
+  gearScore?: number;
+  gearScoreScreenshotUrl?: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -80,6 +80,7 @@ export interface Guild {
   ownerDisplayName?: string;
   memberIds?: string[];
   game?: string;
+  region?: string; // Added region field
   tags?: string[];
   createdAt?: Date | Timestamp;
   password?: string;
@@ -129,11 +130,11 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string; // Este deve ser o characterNickname da aplicação
-  applicantDisplayName: string; // Este é o UserProfile.displayName
+  applicantName: string; 
+  applicantDisplayName: string; 
   applicantPhotoURL?: string | null;
   gearScore: number;
-  gearScoreScreenshotUrl: string;
+  gearScoreScreenshotUrl: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -148,26 +149,22 @@ export interface Application {
 export interface UserProfile {
   uid: string;
   email: string | null;
-  displayName: string | null; // Nickname global do usuário
+  displayName: string | null; 
   photoURL?: string | null;
   guilds?: string[];
   createdAt?: Timestamp;
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
   };
-  // gearScore global pode ser removido se sempre usarmos o específico da guilda
 }
 
 export interface GuildMember extends UserProfile {
-  // roleName, tlRole, etc., virão de Guild.roles[userId]
-  // Esta interface representa o perfil base do usuário enriquecido com informações da guilda
-  // para exibição e contexto.
-  roleName: string; // Mantido para conveniência, mas a fonte é Guild.roles
-  characterNickname?: string; // Nick do personagem na guilda
-  gearScore?: number; // Gearscore na guilda
-  gearScoreScreenshotUrl?: string;
-  gearBuildLink?: string;
-  skillBuildLink?: string;
+  roleName: string; 
+  characterNickname?: string; 
+  gearScore?: number; 
+  gearScoreScreenshotUrl?: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -181,7 +178,7 @@ export type GroupIconType = 'shield' | 'sword' | 'heart';
 
 export interface GuildGroupMember {
   memberId: string;
-  displayName: string; // Deve ser o characterNickname se disponível
+  displayName: string; 
   photoURL?: string | null;
   note?: string;
 }
@@ -236,7 +233,7 @@ export enum AuditActionType {
 
 export interface AuditLogDetails {
   targetUserId?: string;
-  targetUserDisplayName?: string; // Usar characterNickname se for atualização de perfil de membro
+  targetUserDisplayName?: string; 
   oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
   newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
   fieldName?: string;
@@ -256,7 +253,7 @@ export interface AuditLogDetails {
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
-    updatedFields?: string[]; // Para MEMBER_GUILD_PROFILE_UPDATED
+    updatedFields?: string[]; 
   };
 }
 

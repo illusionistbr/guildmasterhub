@@ -14,14 +14,14 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft } from 'lucide-react';
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 
-const guildSchema = z.object({
+const guildSchemaBase = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
   description: z.string().max(500, "Descrição deve ter no máximo 500 caracteres.").optional(),
   game: z.string().min(1, "Selecionar um jogo é obrigatório.").max(50, "Nome do jogo deve ter no máximo 50 caracteres."),
@@ -30,9 +30,30 @@ const guildSchema = z.object({
   socialX: z.string().url("URL do X (Twitter) inválida.").max(200, "Link do X (Twitter) muito longo.").optional().or(z.literal('')),
   socialYoutube: z.string().url("URL do YouTube inválida.").max(200, "Link do YouTube muito longo.").optional().or(z.literal('')),
   socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
+  region: z.string().optional(),
 });
 
+const guildSchema = guildSchemaBase.refine(data => {
+    if (data.game === "Throne and Liberty" && !data.region) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Região é obrigatória para Throne and Liberty.",
+    path: ["region"],
+});
+
+
 type GuildFormValues = z.infer<typeof guildSchema>;
+
+const tlRegions = [
+  { value: "Korea", label: "Korea" },
+  { value: "NA East", label: "NA East" },
+  { value: "NA West", label: "NA West" },
+  { value: "Europe", label: "Europe" },
+  { value: "South America", label: "South America" },
+  { value: "Asia Pacific", label: "Asia Pacific" },
+];
 
 export default function CreateGuildPage() {
   const { user, loading: authLoading } = useAuth();
@@ -51,10 +72,18 @@ export default function CreateGuildPage() {
       socialX: "",
       socialYoutube: "",
       socialDiscord: "",
+      region: undefined,
     }
   });
 
-  const { handleSubmit, control, formState: { errors } } = form;
+  const { handleSubmit, control, formState: { errors }, watch, setValue } = form;
+  const watchedGame = watch("game");
+
+  useEffect(() => {
+    if (watchedGame !== "Throne and Liberty") {
+      setValue("region", undefined);
+    }
+  }, [watchedGame, setValue]);
 
 
   useEffect(() => {
@@ -77,28 +106,32 @@ export default function CreateGuildPage() {
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
     const ownerRoleInfo: GuildMemberRoleInfo = {
-      roleName: "Lider",
+      roleName: "Líder",
       characterNickname: user.displayName || user.email || "Líder da Guilda",
       dkpBalance: 0,
       status: 'Ativo'
     };
+    
+    // Se o jogo for Throne and Liberty, inicializa os campos específicos como undefined.
+    // Caso contrário, não os inclui no objeto.
     if (data.game === "Throne and Liberty") {
         ownerRoleInfo.tlRole = undefined;
         ownerRoleInfo.tlPrimaryWeapon = undefined;
         ownerRoleInfo.tlSecondaryWeapon = undefined;
     }
 
+
     const guildMemberRoles: { [key: string]: GuildMemberRoleInfo } = {
       [user.uid]: ownerRoleInfo
     };
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
-      "Lider": {
-        permissions: Object.values(GuildPermission), // Lider gets all permissions
+      "Líder": {
+        permissions: Object.values(GuildPermission), 
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
-        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], // Membro default permissions
+        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], 
         description: "Membro padrão da guilda."
       }
     };
@@ -107,6 +140,7 @@ export default function CreateGuildPage() {
         name: data.name,
         description: data.description || "",
         game: data.game,
+        ...(data.game === "Throne and Liberty" && data.region && { region: data.region }),
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
@@ -124,6 +158,9 @@ export default function CreateGuildPage() {
     if (!guildData.socialLinks) delete guildData.socialLinks;
     if (!guildData.password) delete guildData.password;
     if (!guildData.description) guildData.description = "";
+    if (guildData.game !== "Throne and Liberty" || !guildData.region) {
+        delete guildData.region;
+    }
 
 
     try {
@@ -143,7 +180,7 @@ export default function CreateGuildPage() {
       router.push(`/dashboard?guildId=${newGuildRef.id}`);
 
     } catch (error) {
-      console.error("Error creating guild:", error);
+      console.error("Erro ao criar guilda:", error);
       toast({ title: "Erro ao Criar Guilda", description: "Não foi possível criar a guilda. Tente novamente.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
@@ -255,7 +292,6 @@ export default function CreateGuildPage() {
                           <SelectContent>
                             <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
                             <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
-                            {/* Adicione outras opções de jogo aqui no futuro */}
                           </SelectContent>
                         </Select>
                     </div>
@@ -263,6 +299,34 @@ export default function CreateGuildPage() {
                   </FormItem>
                 )}
               />
+
+              {watchedGame === "Throne and Liberty" && (
+                <FormField
+                  control={control}
+                  name="region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                      <div className="relative flex items-center mt-1">
+                         <Globe className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                          <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger className={`form-input pl-10 ${errors.region ? 'border-destructive focus:border-destructive' : ''}`}>
+                                <SelectValue placeholder="Selecione uma região" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {tlRegions.map(region => (
+                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
 
               <div className="space-y-1">

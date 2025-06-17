@@ -40,15 +40,15 @@ export enum TLWeapon {
   Spear = "Spear",
 }
 
-export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca';
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licença';
 
 export interface GuildMemberRoleInfo {
   roleName: string;
   characterNickname?: string;
   gearScore?: number;
-  gearScoreScreenshotUrl?: string;
-  gearBuildLink?: string;
-  skillBuildLink?: string;
+  gearScoreScreenshotUrl?: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -81,6 +81,7 @@ export interface Guild {
   ownerDisplayName?: string;
   memberIds?: string[];
   game?: string;
+  region?: string; // Added region field
   tags?: string[];
   createdAt?: Date | Timestamp;
   password?: string;
@@ -130,11 +131,11 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string; // characterNickname
-  applicantDisplayName: string; // UserProfile.displayName
+  applicantName: string; 
+  applicantDisplayName: string; 
   applicantPhotoURL?: string | null;
   gearScore: number;
-  gearScoreScreenshotUrl: string;
+  gearScoreScreenshotUrl: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -162,9 +163,9 @@ export interface GuildMember extends UserProfile {
   roleName: string;
   characterNickname?: string;
   gearScore?: number;
-  gearScoreScreenshotUrl?: string;
-  gearBuildLink?: string;
-  skillBuildLink?: string;
+  gearScoreScreenshotUrl?: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
