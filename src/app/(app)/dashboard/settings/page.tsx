@@ -15,7 +15,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -23,7 +23,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogDescription as ShadCnAlertDialogDescription, // Alias to avoid conflict if any
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -70,7 +70,7 @@ const dkpSettingsSchema = z.object({
     return true;
 }, {
     message: "Janela de Resgate é obrigatória quando o sistema DKP está habilitado.",
-    path: ["dkpRedemptionWindowValue"], // Path to show error, can be adjusted
+    path: ["dkpRedemptionWindowValue"],
 });
 
 type DkpSettingsFormValues = z.infer<typeof dkpSettingsSchema>;
@@ -165,7 +165,7 @@ function GuildSettingsPageContent() {
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
 
-  const canManageDkpSettings = useMemo(() => { // For now, only owner can manage DKP
+  const canManageDkpSettings = useMemo(() => {
     return currentUser?.uid === guild?.ownerId;
   }, [currentUser, guild]);
 
@@ -364,22 +364,21 @@ function GuildSettingsPageContent() {
 
         if (data.dkpSystemEnabled) {
             updatePayload.dkpRedemptionWindow = {
-                value: data.dkpRedemptionWindowValue || 24, // Default if somehow undefined
-                unit: data.dkpRedemptionWindowUnit || 'hours', // Default if somehow undefined
+                value: data.dkpRedemptionWindowValue || 24,
+                unit: data.dkpRedemptionWindowUnit || 'hours',
             };
             updatePayload.dkpDefaultsPerCategory = data.dkpDefaultsPerCategory || {};
         } else {
-            // Optionally clear these if system is disabled, or keep them for re-enabling
-            updatePayload.dkpRedemptionWindow = undefined; // Or set to null
-            updatePayload.dkpDefaultsPerCategory = undefined; // Or set to null
+            updatePayload.dkpRedemptionWindow = undefined;
+            updatePayload.dkpDefaultsPerCategory = undefined;
         }
 
         await updateDoc(guildRef, updatePayload);
         setGuild(prev => prev ? { ...prev, ...updatePayload } : null);
-        dkpForm.reset(data); // Reset form with current data
+        dkpForm.reset(data);
 
         await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_SETTINGS_UPDATED, {
-            changedField: 'dkpSystemEnabled', // Primary field, can add more details
+            changedField: 'dkpSystemEnabled',
             newValue: data.dkpSystemEnabled.toString(),
         });
 
@@ -663,10 +662,10 @@ function GuildSettingsPageContent() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-destructive">Tem certeza absoluta?</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <ShadCnAlertDialogDescription>
                       Esta ação não pode ser desfeita. Isso excluirá permanentemente a guilda "{guild.name}"
                       e todos os seus dados associados.
-                    </AlertDialogDescription>
+                    </ShadCnAlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => {}} disabled={isDeleting}>Cancelar</AlertDialogCancel>
@@ -757,10 +756,10 @@ function GuildSettingsPageContent() {
                                 <AlertDialogContent>
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                                    <AlertDialogDescription>
+                                    <ShadCnAlertDialogDescription>
                                     Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
                                     Membros com este cargo serão revertidos para "Membro" ao salvar as alterações.
-                                    </AlertDialogDescription>
+                                    </ShadCnAlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -864,7 +863,7 @@ function GuildSettingsPageContent() {
                                 <>
                                     <div className="space-y-2">
                                         <Label className="font-semibold">Janela de Resgate de DKP</Label>
-                                        <CardDescription>Tempo máximo após o fim de um evento para resgatar DKP com PIN.</CardDescription>
+                                        <FormDescription>Tempo máximo após o fim de um evento para resgatar DKP com PIN.</FormDescription>
                                         <div className="flex items-center gap-2 pt-1">
                                             <FormField
                                                 control={dkpForm.control}
@@ -900,7 +899,7 @@ function GuildSettingsPageContent() {
 
                                     <div className="space-y-2">
                                         <Label className="font-semibold">DKP Padrão por Categoria de Evento</Label>
-                                        <CardDescription>Defina o valor DKP padrão para cada tipo de evento ao criá-lo. Pode ser alterado no momento da criação.</CardDescription>
+                                        <FormDescription>Defina o valor DKP padrão para cada tipo de evento ao criá-lo. Pode ser alterado no momento da criação.</FormDescription>
                                         <div className="space-y-3 pt-1 max-h-60 overflow-y-auto pr-2">
                                             {TL_EVENT_CATEGORIES.map(category => (
                                                 <FormField
