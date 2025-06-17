@@ -31,7 +31,7 @@ const manualConfirmationSchema = z.object({
   notes: z.string().max(500, "Notas podem ter no máximo 500 caracteres.").optional(),
 }).refine(data => data.screenshotUrl || data.screenshotFile, {
   message: "Forneça uma URL ou faça upload de um arquivo de screenshot.",
-  path: ["screenshotUrl"], // or screenshotFile, error will appear on one
+  path: ["screenshotUrl"], 
 });
 
 type ManualConfirmationFormValues = z.infer<typeof manualConfirmationSchema>;
@@ -51,10 +51,6 @@ function ManualConfirmationPageContent() {
   const [pinUsed, setPinUsed] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-
-  const guildId = searchParams.get('guildId');
-  const eventId = searchParams.get('eventId');
-
   const form = useForm<ManualConfirmationFormValues>({
     resolver: zodResolver(manualConfirmationSchema),
     defaultValues: {
@@ -68,16 +64,16 @@ function ManualConfirmationPageContent() {
     return () => setHeaderTitle(null);
   }, [setHeaderTitle]);
 
-  const fetchEventAndConfirmationData = useCallback(async () => {
-    if (!currentUser || !guildId || !eventId) {
+  const fetchEventAndConfirmationData = useCallback(async (currentGuildId: string, currentEventId: string) => {
+    if (!currentUser) { // currentUser check is already in useEffect, but good for safety
       setLoadingData(false);
       return;
     }
     setLoadingData(true);
     try {
-      const guildDocRef = doc(db, "guilds", guildId);
-      const eventDocRef = doc(db, `guilds/${guildId}/events`, eventId);
-      const manualConfirmationDocRef = doc(db, `guilds/${guildId}/events/${eventId}/manualConfirmations`, currentUser.uid);
+      const guildDocRef = doc(db, "guilds", currentGuildId);
+      const eventDocRef = doc(db, `guilds/${currentGuildId}/events`, currentEventId);
+      const manualConfirmationDocRef = doc(db, `guilds/${currentGuildId}/events/${currentEventId}/manualConfirmations`, currentUser.uid);
 
       const [guildSnap, eventSnap, confirmationSnap] = await Promise.all([
         getDoc(guildDocRef),
@@ -89,11 +85,15 @@ function ManualConfirmationPageContent() {
         toast({ title: "Guilda não encontrada", variant: "destructive" });
         router.push('/guild-selection'); return;
       }
-      setGuild(guildSnap.data() as Guild);
+      const guildData = guildSnap.data() as Guild;
+      setGuild(guildData);
+      // Set header title here once guild data is fetched
+      setHeaderTitle(`Conf. Manual: ${guildData.name}`);
+
 
       if (!eventSnap.exists()) {
         toast({ title: "Evento não encontrado", variant: "destructive" });
-        router.push(`/dashboard/calendar?guildId=${guildId}`); return;
+        router.push(`/dashboard/calendar?guildId=${currentGuildId}`); return;
       }
       const eventData = eventSnap.data() as GuildEvent;
       setEvent(eventData);
@@ -112,34 +112,58 @@ function ManualConfirmationPageContent() {
     } finally {
       setLoadingData(false);
     }
-  }, [currentUser, guildId, eventId, router, toast]);
+  }, [currentUser, router, toast, setHeaderTitle]); // Removed guildId, eventId from here as they are passed as params
+
+  const guildIdFromParams = searchParams.get('guildId');
+  const eventIdFromParams = searchParams.get('eventId');
 
   useEffect(() => {
     if (authLoading) return;
-    if (!currentUser) { router.push(`/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildId}&eventId=${eventId}`); return; }
-    if (!guildId || !eventId) { toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido.", variant: "destructive" }); router.push('/dashboard'); return; }
-    fetchEventAndConfirmationData();
-  }, [authLoading, currentUser, guildId, eventId, router, toast, fetchEventAndConfirmationData]);
+
+    if (!currentUser) {
+      const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdFromParams || ''}&eventId=${eventIdFromParams || ''}`;
+      router.push(redirectPath);
+      return;
+    }
+
+    // Check parameters after auth loading is complete and user is confirmed
+    if (!guildIdFromParams || !eventIdFromParams) {
+      // Only show toast and redirect if params are definitively missing client-side post-auth
+      if (typeof window !== 'undefined') { // Ensures this runs client-side
+        toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
+        if (!guildIdFromParams) {
+          router.push('/guild-selection');
+        } else {
+          router.push(`/dashboard/calendar?guildId=${guildIdFromParams}`);
+        }
+      }
+      setLoadingData(false); // Stop loading if redirecting or params missing
+      return;
+    }
+    
+    fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams);
+  }, [authLoading, currentUser, guildIdFromParams, eventIdFromParams, router, toast, fetchEventAndConfirmationData]);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 2 * 1024 * 1024) { 
         toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
         form.setValue("screenshotFile", undefined);
         setPreviewImage(null);
-        e.target.value = ""; // Clear the input
+        e.target.value = ""; 
         return;
       }
       if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
         toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
         form.setValue("screenshotFile", undefined);
         setPreviewImage(null);
-        e.target.value = ""; // Clear the input
+        e.target.value = ""; 
         return;
       }
       form.setValue("screenshotFile", file);
-      form.setValue("screenshotUrl", ""); // Clear URL if file is chosen
+      form.setValue("screenshotUrl", ""); 
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result as string);
@@ -152,7 +176,7 @@ function ManualConfirmationPageContent() {
   };
 
   const onSubmit: SubmitHandler<ManualConfirmationFormValues> = async (data) => {
-    if (!currentUser || !guildId || !eventId || !event) {
+    if (!currentUser || !guildIdFromParams || !eventIdFromParams || !event) {
       toast({ title: "Erro", description: "Dados essenciais ausentes.", variant: "destructive" });
       return;
     }
@@ -169,7 +193,7 @@ function ManualConfirmationPageContent() {
         const file = data.screenshotFile;
         const fileExtension = file.name.split('.').pop();
         const fileName = `${Date.now()}-${currentUser.uid}.${fileExtension}`;
-        const filePath = `guilds/${guildId}/event_confirmations/${eventId}/${currentUser.uid}/${fileName}`;
+        const filePath = `guilds/${guildIdFromParams}/event_confirmations/${eventIdFromParams}/${currentUser.uid}/${fileName}`;
         const imageStorageRef = storageFirebaseRef(storage, filePath);
 
         const uploadResult = await uploadBytes(imageStorageRef, file);
@@ -185,7 +209,7 @@ function ManualConfirmationPageContent() {
       const confirmationData: ManualConfirmation = {
         userId: currentUser.uid,
         userDisplayName: currentUser.displayName || currentUser.email,
-        eventId: eventId,
+        eventId: eventIdFromParams,
         eventTitle: event.title,
         screenshotUrl: imageUrl,
         notes: data.notes || "",
@@ -193,19 +217,21 @@ function ManualConfirmationPageContent() {
         status: 'pending',
       };
 
-      const confirmationDocRef = doc(db, `guilds/${guildId}/events/${eventId}/manualConfirmations`, currentUser.uid);
+      const confirmationDocRef = doc(db, `guilds/${guildIdFromParams}/events/${eventIdFromParams}/manualConfirmations`, currentUser.uid);
       await setDoc(confirmationDocRef, confirmationData);
 
       await logGuildActivity(
-        guildId,
+        guildIdFromParams,
         currentUser.uid,
         currentUser.displayName,
         AuditActionType.MANUAL_CONFIRMATION_SUBMITTED,
-        { eventId: eventId, eventName: event.title, targetUserId: currentUser.uid, screenshotUrl: imageUrl }
+        { eventId: eventIdFromParams, eventName: event.title, targetUserId: currentUser.uid, screenshotUrl: imageUrl }
       );
 
       toast({ title: "Confirmação Enviada!", description: "Sua submissão manual foi enviada para aprovação." });
-      fetchEventAndConfirmationData(); // Refresh data to show status
+      if (guildIdFromParams && eventIdFromParams) { // Ensure IDs are valid before fetching again
+        fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams);
+      }
       form.reset();
       setPreviewImage(null);
 
@@ -297,7 +323,7 @@ function ManualConfirmationPageContent() {
                 <FormField
                   control={form.control}
                   name="screenshotFile"
-                  render={({ field: { onChange, value, ...rest } }) => ( // Destructure field to manually handle onChange
+                  render={({ field: { onChange, value, ...rest } }) => ( 
                     <FormItem>
                       <FormLabel>Upload da Screenshot (Máx 2MB: PNG, JPG, GIF, WEBP)</FormLabel>
                       <FormControl>
@@ -306,7 +332,7 @@ function ManualConfirmationPageContent() {
                           <Input
                             type="file"
                             accept="image/png, image/jpeg, image/gif, image/webp"
-                            onChange={handleFileChange} // Use custom handler
+                            onChange={handleFileChange} 
                             className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                             disabled={!!form.watch("screenshotUrl")}
                             {...rest}
