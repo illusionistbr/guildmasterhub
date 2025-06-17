@@ -443,8 +443,24 @@ function MembersListTabContent(
             <SelectContent> <SelectItem value="all">Todos</SelectItem> {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).map(statusVal => <SelectItem key={statusVal} value={statusVal}>{displayMemberStatus(statusVal)}</SelectItem>)} </SelectContent>
           </Select>
         </div>
-        <div className="xl:col-span-3"> <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
-          <Popover> <PopoverTrigger asChild> <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input",!activityDateRange?.from && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {activityDateRange?.from ? (activityDateRange.to ? (<>{format(new Date(activityDateRange.from), "dd/MM/yy", {locale:ptBR})} - {format(new Date(activityDateRange.to), "dd/MM/yy", {locale:ptBR})}</>) : format(new Date(activityDateRange.from), "dd/MM/yy", {locale:ptBR})) : (<span>Escolha um intervalo</span>)} </Button> </PopoverTrigger> <PopoverContent className="w-auto p-0 bg-card" align="start"> <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={(range) => { setActivityDateRange(range); setCurrentPage(1); }} numberOfMonths={2} locale={ptBR}/> </PopoverContent> </Popover>
+        <div className="xl:col-span-3">
+          <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input", !activityDateRange?.from && "text-muted-foreground")}>
+                <CalendarDays className="mr-2 h-4 w-4" />
+                {activityDateRange?.from
+                  ? activityDateRange.to
+                    ? `${format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })} - ${format(activityDateRange.to, "dd/MM/yy", { locale: ptBR })}`
+                    : format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })
+                  : <span>Escolha um intervalo</span>
+                }
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-card" align="start">
+              <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={(range) => { setActivityDateRange(range || undefined); setCurrentPage(1); }} numberOfMonths={2} locale={ptBR}/>
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="grid grid-cols-2 gap-2 xl:col-span-2"> <div> <Label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</Label> <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => { setTimeFromFilter(e.target.value); setCurrentPage(1); }} className="form-input" /> </div> <div> <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label> <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => { setTimeToFilter(e.target.value); setCurrentPage(1);}} className="form-input" /> </div> </div>
         <div className="xl:col-span-1 flex justify-end items-end gap-2"> <Button variant="outline" disabled className="w-full"><Filter className="mr-2 h-4 w-4" /> Aplicar</Button> </div>
@@ -731,7 +747,7 @@ function MembersPageContainer() {
           const uid = memberIdsToFetch[i]; const userProfileSnap = userProfileSnaps[i];
           let baseProfile: UserProfile;
           if (userProfileSnap && userProfileSnap.exists()) { baseProfile = userProfileSnap.data() as UserProfile;
-          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) { baseProfile = { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`, photoURL: currentUser.photoURL, };
+          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) { baseProfile = { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`, photoURL: currentUser.photoURL, guilds: [], lastNotificationsCheckedTimestamp: {} };
           } else { console.warn(`User profile not found for UID: ${uid}, skipping member.`); continue; }
           const roleInfoSource = guildData.roles?.[uid];
           const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
@@ -745,7 +761,7 @@ function MembersPageContainer() {
       } else {
          if (guildData.ownerId === currentUser.uid) {
             const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
-            const ownerBaseProfile: UserProfile = { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`, photoURL: currentUser.photoURL, };
+            const ownerBaseProfile: UserProfile = { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`, photoURL: currentUser.photoURL, guilds: [], lastNotificationsCheckedTimestamp: {} };
             const ownerEnhanced = enhanceMemberData(ownerBaseProfile, ownerRoleInfoSource, guildData);
             setMembers([ownerEnhanced]);
             setGuildMembersForGroups([ownerEnhanced]);
