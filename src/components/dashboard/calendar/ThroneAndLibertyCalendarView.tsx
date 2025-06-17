@@ -877,7 +877,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
                                 {guild?.dkpSystemEnabled && (
                                 <div className="space-y-2">
                                    <div className="flex items-center gap-1 mb-1">
-                                        <Label htmlFor="dkpValueForEvent" className="text-foreground font-semibold">Valor de Presença (DKP)</Label>
+                                        <Label htmlFor="dkpValueForEvent" className="text-foreground font-semibold">Valor da Atividade (DKP)</Label>
                                         <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground">
