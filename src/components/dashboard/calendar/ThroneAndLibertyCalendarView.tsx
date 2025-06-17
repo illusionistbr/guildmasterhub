@@ -57,10 +57,10 @@ const HOVER_CELL_HEIGHT = 60; // px, for 1-hour slots
 const TIME_GUTTER_WIDTH_CLASS = "w-16";
 
 export const TL_EVENT_CATEGORIES = [
-  { id: 'world_event', label: 'Evento Mundial' },
-  { id: 'world_dungeon', label: 'Masmorra Mundial' },
-  { id: 'world_boss', label: 'Chefe Mundial' },
-  { id: 'arch_boss', label: 'Arqui-Chefe' },
+  { id: 'world_event', label: 'World Event' },
+  { id: 'world_dungeon', label: 'World Dungeon' },
+  { id: 'world_boss', label: 'World Boss' },
+  { id: 'arch_boss', label: 'Arch Boss' },
   { id: 'boonstone', label: 'Pedra de Oferenda (Boonstone)' },
   { id: 'riftstone', label: 'Pedra de Fenda (Riftstone)' },
   { id: 'war', label: 'Guerra' },
