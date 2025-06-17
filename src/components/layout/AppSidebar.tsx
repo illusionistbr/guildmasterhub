@@ -52,16 +52,13 @@ const mainNavItems = [
     label: "Recrutamento", 
     icon: UserPlus,
     baseHref: "/dashboard/recruitment",
-    subItems: [
-      { baseHref: "/dashboard/recruitment/applications", label: "Candidaturas", icon: FileText },
-    ]
+    // Submenu "Candidaturas" removido, agora é uma aba
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
   { 
     baseHref: "/dashboard/settings", 
     label: "Config. da Guilda", 
     icon: Settings,
-    // Submenu removido, pois "Cargos e Permissões" agora é uma aba
   },
 ];
 
@@ -161,3 +158,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+    
