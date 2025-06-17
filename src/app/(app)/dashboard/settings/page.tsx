@@ -118,6 +118,8 @@ const permissionDescriptions: Record<PermissionEnum, { title: string; descriptio
   [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: { title: "Ver Candidaturas", description: "Permite visualizar candidaturas enviadas à guilda." },
   [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Processar Candidaturas", description: "Permite aprovar ou rejeitar candidaturas de novos membros." },
   [GuildPermission.VIEW_MEMBER_DETAILED_INFO]: { title: "Ver Informações Detalhadas de Membros", description: "Permite visualizar gearscore, links de build e outras informações detalhadas dos membros." },
+  [GuildPermission.MANAGE_DKP_SETTINGS]: { title: "Gerenciar Configurações DKP", description: "Permite habilitar/desabilitar o sistema DKP, definir janela de resgate e valores padrão por evento." },
+  [GuildPermission.MANAGE_DKP_DECAY_SETTINGS]: { title: "Gerenciar Decaimento DKP", description: "Permite configurar o decaimento automático de DKP, incluindo porcentagem, intervalo e data inicial." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -203,12 +205,22 @@ function GuildSettingsPageContent() {
   }, [currentUserRoleInfo, guild?.customRoles]);
 
   const canManageDkpSettings = useMemo(() => {
-    return currentUser?.uid === guild?.ownerId;
-  }, [currentUser, guild]);
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(
+        currentUserRoleInfo.roleName,
+        guild.customRoles,
+        GuildPermission.MANAGE_DKP_SETTINGS
+    );
+  }, [currentUserRoleInfo, guild?.customRoles]);
 
   const canManageDkpDecaySettings = useMemo(() => {
-    return currentUser?.uid === guild?.ownerId; 
-  }, [currentUser, guild]);
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(
+        currentUserRoleInfo.roleName,
+        guild.customRoles,
+        GuildPermission.MANAGE_DKP_DECAY_SETTINGS
+    );
+  }, [currentUserRoleInfo, guild?.customRoles]);
 
 
   const canDeleteGuild = useMemo(() => currentUser?.uid === guild?.ownerId, [currentUser, guild]);
@@ -622,16 +634,19 @@ function GuildSettingsPageContent() {
       const guildRef = doc(db, "guilds", guildId);
       const rolesToSave = { ...customRoles };
 
+      const defaultLiderPermissions = Object.values(GuildPermission);
+      const defaultMembroPermissions = [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO];
+
       if (!rolesToSave["Lider"]) {
-        rolesToSave["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
+        rolesToSave["Lider"] = { permissions: defaultLiderPermissions, description: "Fundador e administrador principal da guilda."};
       } else {
-         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, ...Object.values(GuildPermission)])];
+         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, ...defaultLiderPermissions])];
       }
 
       if (!rolesToSave["Membro"]) {
-        rolesToSave["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], description: "Membro padrão da guilda."};
+        rolesToSave["Membro"] = { permissions: defaultMembroPermissions, description: "Membro padrão da guilda."};
       } else {
-        rolesToSave["Membro"].permissions = [...new Set([...rolesToSave["Membro"].permissions, GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO])];
+        rolesToSave["Membro"].permissions = [...new Set([...rolesToSave["Membro"].permissions, ...defaultMembroPermissions])];
       }
 
 
@@ -938,19 +953,21 @@ function GuildSettingsPageContent() {
                             {allPermissionsList.map(permission => {
                             const permInfo = permissionDescriptions[permission];
                             const isLiderManagingOwnPermissions = roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS;
+                            const isLiderManagingDKPPermissions = roleName === "Lider" && (permission === GuildPermission.MANAGE_DKP_SETTINGS || permission === GuildPermission.MANAGE_DKP_DECAY_SETTINGS);
+
                             return (
                                 <div key={permission} className="flex items-start space-x-3 p-3 bg-background/50 dark:bg-input/30 rounded-md border border-border">
                                 <Checkbox
                                     id={`${roleName}-${permission}`}
                                     checked={roleData.permissions.includes(permission)}
                                     onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || roleName === "Lider"}
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS)}
                                     aria-label={`${permInfo.title} para ${roleName}`}
                                 />
                                 <div className="grid gap-1.5 leading-none">
                                     <label
                                     htmlFor={`${roleName}-${permission}`}
-                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", roleName === "Lider" || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions) ? "peer-disabled:opacity-70" : "")}
+                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS) || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions) ? "peer-disabled:opacity-70" : "")}
                                     >
                                     {permInfo.title}
                                     </label>

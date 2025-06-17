@@ -193,7 +193,7 @@ export default function CreateGuildPage() {
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
       "Lider": {
-        permissions: Object.values(GuildPermission),
+        permissions: Object.values(GuildPermission), // Leader gets all permissions
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
@@ -223,10 +223,10 @@ export default function CreateGuildPage() {
         dkpSystemEnabled: false,
         dkpRedemptionWindow: { value: 24, unit: 'hours' },
         dkpDefaultsPerCategory: {},
-        dkpDecayEnabled: false, // Initialize new DKP decay fields
+        dkpDecayEnabled: false, 
         dkpDecayPercentage: 10,
         dkpDecayIntervalDays: 30,
-        dkpDecayInitialDate: undefined, // Or Timestamp.now() if preferred
+        dkpDecayInitialDate: undefined,
     };
 
     if (!guildData.socialLinks) delete guildData.socialLinks;
