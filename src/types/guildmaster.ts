@@ -22,8 +22,6 @@ export enum GuildPermission {
   MANAGE_RECRUITMENT_PROCESS_APPLICATIONS = "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS",
 }
 
-// GuildRole enum is removed. We will use string identifiers like "Lider", "Membro", and custom ones.
-
 export enum TLRole {
   Tank = "Tank",
   Healer = "Healer",
@@ -38,13 +36,13 @@ export enum TLWeapon {
   Bow = "Arco Longo",
   Staff = "Cajado",
   WandAndTome = "Varinha e Tomo",
-  Spear = "Lanca", // ASCII for compatibility
+  Spear = "Lanca", 
 }
 
-export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca'; // ASCII for "Licença"
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca'; 
 
 export interface GuildMemberRoleInfo {
-  roleName: string; // e.g., "Lider", "Membro", "Chefe Raide"
+  roleName: string; 
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -55,16 +53,14 @@ export interface GuildMemberRoleInfo {
 
 export interface CustomRole {
   permissions: GuildPermission[];
-  description?: string; // Optional: a description for the role
+  description?: string; 
 }
 
 export interface RecruitmentQuestion {
   id: string;
   text: string;
-  type: 'default' | 'custom';
-  isEnabled: boolean;
-  // isRequired?: boolean; // For future implementation
-  // answerType?: 'text' | 'textarea' | 'select'; // For future implementation
+  type: 'default' | 'custom'; 
+  isEnabled: boolean; 
 }
 
 
@@ -90,7 +86,7 @@ export interface Guild {
     discord?: string;
   };
   roles?: { [userId: string]: GuildMemberRoleInfo };
-  customRoles?: { [roleName: string]: CustomRole }; // Maps roleName to its permissions
+  customRoles?: { [roleName: string]: CustomRole }; 
   recruitmentQuestions?: RecruitmentQuestion[];
 }
 
@@ -141,7 +137,7 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  // answers?: { [questionId: string]: string }; // For future implementation
+  customAnswers?: { [questionId: string]: string }; 
 }
 
 export interface UserProfile {
@@ -230,7 +226,7 @@ export interface AuditLogDetails {
   oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
   newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
   fieldName?: string;
-  kickedUserRoleName?: string; // Changed from kickedUserRole
+  kickedUserRoleName?: string; 
   eventName?: string;
   eventId?: string;
   achievementName?: string;
@@ -241,8 +237,8 @@ export interface AuditLogDetails {
   dkpValueAwarded?: number;
   groupId?: string;
   groupName?: string;
-  roleName?: string; // For role related audit logs
-  permissions?: GuildPermission[]; // For permission changes
+  roleName?: string; 
+  permissions?: GuildPermission[]; 
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;

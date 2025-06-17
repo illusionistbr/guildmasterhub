@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'; 
 import { Badge } from '@/components/ui/badge'; 
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save } from 'lucide-react'; 
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save, InfoCircle } from 'lucide-react'; 
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNowStrict } from 'date-fns'; 
@@ -63,52 +63,57 @@ const getTLRoleIcon = (role?: TLRole) => {
     }
 };
 
-const defaultRecruitmentQuestions: Omit<RecruitmentQuestion, 'isEnabled'>[] = [
-  // Lista de perguntas padrão agora está vazia.
-  // O admin pode adicionar perguntas personalizadas se desejar.
+interface FixedFormFieldDisplay {
+  id: string;
+  text: string;
+  isTLSpecific?: boolean;
+}
+
+const fixedApplicationFields: FixedFormFieldDisplay[] = [
+  { id: 'fixed_char_nick', text: 'Nick do Personagem' },
+  { id: 'fixed_gear_score', text: 'Gearscore' },
+  { id: 'fixed_gear_score_ss', text: 'Link para Screenshot do Gearscore' },
+  { id: 'fixed_discord_nick', text: 'Seu Nick no Discord' },
+  { id: 'fixed_tl_role', text: 'Sua Função (Tank/Healer/DPS)', isTLSpecific: true },
+  { id: 'fixed_tl_primary_weapon', text: 'Arma Primária', isTLSpecific: true },
+  { id: 'fixed_tl_secondary_weapon', text: 'Arma Secundária', isTLSpecific: true },
 ];
+
 
 function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { guild: Guild | null; guildId: string | null; currentUser: UserProfile | null }) {
   const { toast } = useToast();
-  const [questions, setQuestions] = useState<RecruitmentQuestion[]>([]);
-  const [newCustomQuestion, setNewCustomQuestion] = useState("");
+  const [customQuestions, setCustomQuestions] = useState<RecruitmentQuestion[]>([]);
+  const [newCustomQuestionText, setNewCustomQuestionText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  const isTLGuild = guild?.game === "Throne and Liberty";
+
   useEffect(() => {
-    if (guild) {
-      const initialQuestions = defaultRecruitmentQuestions.map(dq => {
-        const savedQuestion = guild.recruitmentQuestions?.find(sq => sq.id === dq.id);
-        return { ...dq, isEnabled: savedQuestion ? savedQuestion.isEnabled : true };
-      });
-      const customQuestions = guild.recruitmentQuestions?.filter(sq => sq.type === 'custom') || [];
-      setQuestions([...initialQuestions, ...customQuestions]);
+    if (guild && guild.recruitmentQuestions) {
+      setCustomQuestions(guild.recruitmentQuestions.filter(q => q.type === 'custom'));
     } else {
-       setQuestions(defaultRecruitmentQuestions.map(dq => ({...dq, isEnabled: true})));
+      setCustomQuestions([]);
     }
   }, [guild]);
 
-  const handleToggleQuestion = (id: string) => {
-    setQuestions(prev => prev.map(q => q.id === id ? { ...q, isEnabled: !q.isEnabled } : q));
-  };
-
   const handleAddCustomQuestion = () => {
-    if (newCustomQuestion.trim() === "") {
+    if (newCustomQuestionText.trim() === "") {
       toast({ title: "Pergunta Vazia", description: "O texto da pergunta personalizada não pode estar vazio.", variant: "destructive" });
       return;
     }
     const newQuestion: RecruitmentQuestion = {
       id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      text: newCustomQuestion.trim(),
+      text: newCustomQuestionText.trim(),
       type: 'custom',
-      isEnabled: true,
+      isEnabled: true, // Custom questions are enabled by default when added
     };
-    setQuestions(prev => [...prev, newQuestion]);
-    setNewCustomQuestion("");
+    setCustomQuestions(prev => [...prev, newQuestion]);
+    setNewCustomQuestionText("");
     toast({ title: "Pergunta Adicionada", description: "Nova pergunta personalizada adicionada localmente. Lembre-se de salvar." });
   };
 
   const handleDeleteCustomQuestion = (id: string) => {
-    setQuestions(prev => prev.filter(q => q.id !== id));
+    setCustomQuestions(prev => prev.filter(q => q.id !== id));
   };
 
   const handleSaveQuestionnaire = async () => {
@@ -119,17 +124,15 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
     setIsSaving(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      // Salvar apenas as perguntas ativas do tipo 'default' e todas as customizadas
-      const questionsToSave = questions.filter(q => (q.type === 'default' && q.isEnabled) || q.type === 'custom');
-      
-      await updateDoc(guildRef, { recruitmentQuestions: questionsToSave });
+      // Only custom questions are managed and saved here
+      await updateDoc(guildRef, { recruitmentQuestions: customQuestions });
 
       await logGuildActivity(
         guildId,
         currentUser.uid,
         currentUser.displayName,
         AuditActionType.RECRUITMENT_QUESTIONNAIRE_UPDATED,
-        { changedField: 'recruitmentQuestions', details: { questionnaireChangeSummary: `${questionsToSave.length} perguntas configuradas.` } }
+        { changedField: 'recruitmentQuestions', details: { questionnaireChangeSummary: `${customQuestions.length} perguntas personalizadas configuradas.` } }
       );
 
       toast({ title: "Questionário Salvo!", description: "As configurações do questionário de recrutamento foram salvas." });
@@ -145,55 +148,47 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
     return <div className="text-center py-10">Carregando configurações do questionário...</div>;
   }
 
-  const defaultQuestionsToDisplay = questions.filter(q => q.type === 'default');
-
   return (
     <Card className="static-card-container mt-8">
       <CardHeader>
         <CardTitle className="flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" />Questionário de Recrutamento</CardTitle>
-        <CardDescription>Configure as perguntas que aparecerão no formulário de candidatura da sua guilda. As perguntas padrão foram removidas por padrão, mas você pode adicionar perguntas personalizadas.</CardDescription>
+        <CardDescription>Revise os campos padrão do formulário e adicione perguntas personalizadas se desejar.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {defaultQuestionsToDisplay.length > 0 && (
-          <div>
-            <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Padrão</h4>
-            <div className="space-y-3">
-              {defaultQuestionsToDisplay.map(question => (
-                <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
-                  <Label htmlFor={`q-${question.id}`} className="text-sm text-foreground flex-1 cursor-pointer">{question.text}</Label>
-                  <Switch
-                    id={`q-${question.id}`}
-                    checked={question.isEnabled}
-                    onCheckedChange={() => handleToggleQuestion(question.id)}
-                    aria-label={`Ativar/desativar pergunta: ${question.text}`}
-                  />
-                </div>
-              ))}
-            </div>
+        <div>
+          <h4 className="text-lg font-semibold text-foreground mb-3">Campos Padrão do Formulário (Informativo)</h4>
+          <div className="space-y-2">
+            {fixedApplicationFields.filter(field => !field.isTLSpecific || isTLGuild).map(field => (
+              <div key={field.id} className="flex items-center p-3 bg-muted/30 rounded-md border border-input">
+                <InfoCircle className="mr-3 h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <p className="text-sm text-foreground flex-1">{field.text}</p>
+              </div>
+            ))}
           </div>
-        )}
+           <p className="text-xs text-muted-foreground mt-3">Estes campos já fazem parte do formulário de aplicação padrão e não podem ser removidos ou desativados.</p>
+        </div>
 
         <div>
           <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Personalizadas</h4>
-          {questions.filter(q => q.type === 'custom').map(question => (
-            <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-2">
+          {customQuestions.map(question => (
+            <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-2 border border-input">
               <p className="text-sm text-foreground flex-1">{question.text}</p>
               <Button variant="ghost" size="icon" onClick={() => handleDeleteCustomQuestion(question.id)} className="text-destructive hover:bg-destructive/10 h-7 w-7">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           ))}
-          {questions.filter(q => q.type === 'custom').length === 0 && defaultQuestionsToDisplay.length === 0 && (
-             <p className="text-sm text-muted-foreground mb-3">Nenhuma pergunta configurada. Adicione perguntas personalizadas abaixo se desejar.</p>
+          {customQuestions.length === 0 && (
+             <p className="text-sm text-muted-foreground mb-3">Nenhuma pergunta personalizada adicionada. Adicione abaixo se desejar.</p>
           )}
           <div className="flex items-end gap-2 mt-3">
             <div className="flex-grow">
-              <Label htmlFor="newCustomQuestion" className="text-sm text-muted-foreground">Nova Pergunta Personalizada</Label>
+              <Label htmlFor="newCustomQuestionText" className="text-sm text-muted-foreground">Nova Pergunta Personalizada</Label>
               <Textarea
-                id="newCustomQuestion"
+                id="newCustomQuestionText"
                 placeholder="Digite o texto da sua pergunta personalizada..."
-                value={newCustomQuestion}
-                onChange={(e) => setNewCustomQuestion(e.target.value)}
+                value={newCustomQuestionText}
+                onChange={(e) => setNewCustomQuestionText(e.target.value)}
                 rows={2}
                 className="form-input mt-1"
               />
@@ -227,8 +222,6 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
 
   const canManageQuestionnaire = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
-    // Assuming MANAGE_RECRUITMENT_PROCESS_APPLICATIONS also allows questionnaire editing.
-    // Consider a more specific permission like MANAGE_RECRUITMENT_SETTINGS if needed.
     return hasPermission(
       currentUserRoleInfo.roleName,
       guild.customRoles,
@@ -598,7 +591,7 @@ function RecruitmentPage() {
   const [loadingGuildData, setLoadingGuildData] = useState(true);
   const [recruitmentLink, setRecruitmentLink] = useState<string | null>(null);
   
-  const initialTab = searchParams.get('tab') || "recruitment";
+  const initialTab = searchParams.get('tab') || "recruitment"; // Default to "recruitment" tab
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const guildId = searchParams.get('guildId');
@@ -608,10 +601,8 @@ function RecruitmentPage() {
     if (currentTab && (currentTab === "recruitment" || currentTab === "applications")) {
       setActiveTab(currentTab);
     } else {
-      // If no specific tab or invalid tab is in URL, default to "recruitment"
-      // and update URL to reflect this default for better UX consistency.
       const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.set('tab', 'recruitment');
+      newSearchParams.set('tab', 'recruitment'); // Default to recruitment tab
       router.replace(`${window.location.pathname}?${newSearchParams.toString()}`, { scroll: false });
       setActiveTab("recruitment"); 
     }
@@ -732,3 +723,4 @@ export default function RecruitmentPageWrapper() {
 }
 
     
+

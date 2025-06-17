@@ -59,10 +59,8 @@ export interface CustomRole {
 export interface RecruitmentQuestion {
   id: string;
   text: string;
-  type: 'default' | 'custom';
-  isEnabled: boolean;
-  // isRequired?: boolean; // For future implementation
-  // answerType?: 'text' | 'textarea' | 'select'; // For future implementation
+  type: 'default' | 'custom'; // 'default' might not be used if we only allow custom
+  isEnabled: boolean; 
 }
 
 export interface Guild {
@@ -138,7 +136,7 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  // answers?: { [questionId: string]: string }; // For future implementation
+  customAnswers?: { [questionId: string]: string }; 
 }
 
 export interface UserProfile {
@@ -242,7 +240,7 @@ export interface AuditLogDetails {
   permissions?: GuildPermission[];
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
-    questionnaireChangeSummary?: string; // e.g., "3 perguntas atualizadas, 1 adicionada"
+    questionnaireChangeSummary?: string; 
   };
 }
 

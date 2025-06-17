@@ -10,12 +10,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, updateDoc, arrayUnion, increment as firebaseIncrement, writeBatch } from '@/lib/firebase';
-import type { Guild, Application, GuildMemberRoleInfo } from '@/types/guildmaster';
+import type { Guild, Application, GuildMemberRoleInfo, RecruitmentQuestion } from '@/types/guildmaster';
 import { TLRole, TLWeapon, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -25,28 +26,32 @@ import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
 
-const getBaseApplicationSchema = (isTLGuild: boolean) => {
-  let schema = z.object({
+const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: RecruitmentQuestion[] = []) => {
+  let schemaObject: any = {
     characterNickname: z.string().min(2, "Nickname do personagem deve ter pelo menos 2 caracteres.").max(50),
     gearScore: z.coerce.number().min(0, "Gearscore deve ser um número positivo.").max(10000, "Gearscore improvável."),
     gearScoreScreenshotUrl: z.string().url("Por favor, insira uma URL válida para a screenshot.").min(10, "URL da screenshot muito curta."),
     discordNick: z.string().min(2, "Nick do Discord deve ter pelo menos 2 caracteres.").max(50),
-  });
+  };
 
   if (isTLGuild) {
-    schema = schema.extend({
-      tlRole: z.nativeEnum(TLRole, { required_error: "Função (Tank/Healer/DPS) é obrigatória." }),
-      tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
-      tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
-    });
+    schemaObject.tlRole = z.nativeEnum(TLRole, { required_error: "Função (Tank/Healer/DPS) é obrigatória." });
+    schemaObject.tlPrimaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." });
+    schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." });
   } else {
-     schema = schema.extend({
-      tlRole: z.nativeEnum(TLRole).optional(),
-      tlPrimaryWeapon: z.nativeEnum(TLWeapon).optional(),
-      tlSecondaryWeapon: z.nativeEnum(TLWeapon).optional(),
-    });
+     schemaObject.tlRole = z.nativeEnum(TLRole).optional();
+     schemaObject.tlPrimaryWeapon = z.nativeEnum(TLWeapon).optional();
+     schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon).optional();
   }
-  return schema;
+
+  // Add custom questions to schema
+  customQuestions.forEach(q => {
+    // Assuming all custom questions are text for now and optional
+    // In a real scenario, you'd check q.answerType and q.isRequired
+    schemaObject[q.id] = z.string().max(500, "Resposta muito longa.").optional();
+  });
+  
+  return z.object(schemaObject);
 };
 
 type ApplicationFormValues = z.infer<ReturnType<typeof getBaseApplicationSchema>>;
@@ -63,11 +68,13 @@ function ApplyPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [activeCustomQuestions, setActiveCustomQuestions] = useState<RecruitmentQuestion[]>([]);
+
 
   const guildId = searchParams.get('guildId');
   
   const isTLGuild = guild?.game === "Throne and Liberty";
-  const applicationSchema = getBaseApplicationSchema(isTLGuild);
+  const applicationSchema = getBaseApplicationSchema(isTLGuild, activeCustomQuestions);
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
@@ -121,13 +128,25 @@ function ApplyPageContent() {
         }
         
         setGuild(guildData);
-        form.reset({ 
+        const enabledCustomQuestions = guildData.recruitmentQuestions?.filter(q => q.isEnabled && q.type === 'custom') || [];
+        setActiveCustomQuestions(enabledCustomQuestions);
+
+        let defaultFormValues: any = { 
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
             gearScoreScreenshotUrl: "",
             discordNick: "",
-            ...(guildData.game === "Throne and Liberty" && { tlRole: undefined, tlPrimaryWeapon: undefined, tlSecondaryWeapon: undefined }),
+        };
+        if (guildData.game === "Throne and Liberty") {
+            defaultFormValues.tlRole = undefined;
+            defaultFormValues.tlPrimaryWeapon = undefined;
+            defaultFormValues.tlSecondaryWeapon = undefined;
+        }
+        enabledCustomQuestions.forEach(q => {
+            defaultFormValues[q.id] = ""; // Initialize custom question fields
         });
+
+        form.reset(defaultFormValues);
 
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
@@ -161,9 +180,15 @@ function ApplyPageContent() {
         return;
     }
 
-
     setIsSubmitting(true);
     setSubmissionStatus('idle');
+
+    const customAnswers: { [questionId: string]: string } = {};
+    activeCustomQuestions.forEach(q => {
+        if (data[q.id] !== undefined) {
+            customAnswers[q.id] = data[q.id] as string;
+        }
+    });
 
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
@@ -176,6 +201,7 @@ function ApplyPageContent() {
       ...(data.tlRole && { tlRole: data.tlRole }),
       ...(data.tlPrimaryWeapon && { tlPrimaryWeapon: data.tlPrimaryWeapon }),
       ...(data.tlSecondaryWeapon && { tlSecondaryWeapon: data.tlSecondaryWeapon }),
+      ...(Object.keys(customAnswers).length > 0 && { customAnswers: customAnswers }),
     };
 
     try {
@@ -474,6 +500,28 @@ function ApplyPageContent() {
                   </div>
                 </>
               )}
+              {activeCustomQuestions.length > 0 && (
+                <div className="pt-4 space-y-5 border-t border-border">
+                  <h3 className="text-lg font-semibold text-primary">Perguntas Adicionais da Guilda</h3>
+                  {activeCustomQuestions.map((question) => (
+                    <FormField
+                      key={question.id}
+                      control={form.control}
+                      name={question.id as keyof ApplicationFormValues} // Cast needed if not all q.id are valid keys
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{question.text}</FormLabel>
+                          <FormControl>
+                             {/* For now, all custom qs are text. Could be textarea if q.answerType === 'textarea' */}
+                            <Input {...field} placeholder="Sua resposta..." className="form-input"/>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </CardContent>
             <CardFooter className="p-0 pt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
@@ -504,3 +552,4 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
