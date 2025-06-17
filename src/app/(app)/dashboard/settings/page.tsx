@@ -277,10 +277,11 @@ function GuildSettingsPageContent() {
 
 
         const initialRoles = guildData.customRoles || {};
+        const allCurrentPermissions = Object.values(GuildPermission);
         if (!initialRoles["Lider"]) {
-          initialRoles["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
+          initialRoles["Lider"] = { permissions: [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN])], description: "Fundador e administrador principal da guilda."};
         } else {
-           initialRoles["Lider"].permissions = [...new Set([...initialRoles["Lider"].permissions, ...Object.values(GuildPermission)])];
+           initialRoles["Lider"].permissions = [...new Set([...initialRoles["Lider"].permissions, ...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN])];
         }
         if (!initialRoles["Membro"]) {
           initialRoles["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], description: "Membro padrão da guilda."};
@@ -634,7 +635,8 @@ function GuildSettingsPageContent() {
       const guildRef = doc(db, "guilds", guildId);
       const rolesToSave = { ...customRoles };
 
-      const defaultLiderPermissions = Object.values(GuildPermission);
+      const allCurrentPermissions = Object.values(GuildPermission);
+      const defaultLiderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN])];
       const defaultMembroPermissions = [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO];
 
       if (!rolesToSave["Lider"]) {
@@ -954,6 +956,8 @@ function GuildSettingsPageContent() {
                             const permInfo = permissionDescriptions[permission];
                             const isLiderManagingOwnPermissions = roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS;
                             const isLiderManagingDKPPermissions = roleName === "Lider" && (permission === GuildPermission.MANAGE_DKP_SETTINGS || permission === GuildPermission.MANAGE_DKP_DECAY_SETTINGS);
+                            const isLiderManagingViewPin = roleName === "Lider" && permission === GuildPermission.MANAGE_EVENTS_VIEW_PIN;
+
 
                             return (
                                 <div key={permission} className="flex items-start space-x-3 p-3 bg-background/50 dark:bg-input/30 rounded-md border border-border">
@@ -961,13 +965,13 @@ function GuildSettingsPageContent() {
                                     id={`${roleName}-${permission}`}
                                     checked={roleData.permissions.includes(permission)}
                                     onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS)}
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || isLiderManagingViewPin || (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS && permission !== GuildPermission.MANAGE_EVENTS_VIEW_PIN) }
                                     aria-label={`${permInfo.title} para ${roleName}`}
                                 />
                                 <div className="grid gap-1.5 leading-none">
                                     <label
                                     htmlFor={`${roleName}-${permission}`}
-                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS) || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions) ? "peer-disabled:opacity-70" : "")}
+                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS && permission !== GuildPermission.MANAGE_EVENTS_VIEW_PIN) || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || isLiderManagingViewPin) ? "peer-disabled:opacity-70" : "")}
                                     >
                                     {permInfo.title}
                                     </label>
