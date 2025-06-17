@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField, collection, writeBatch } from '@/lib/firebase';
 import { type Guild, type GuildMember, type UserProfile, AuditActionType, TLRole, TLWeapon, type GuildMemberRoleInfo, type MemberStatus, GuildPermission, CustomRole } from '@/types/guildmaster';
@@ -50,6 +51,11 @@ import {
   DialogFooter as NotesDialogFooter,
   DialogHeader as NotesDialogHeader,
   DialogTitle as NotesDialogTitle,
+  DialogContent as MemberDetailsDialogContent,
+  DialogHeader as MemberDetailsDialogHeader,
+  DialogTitle as MemberDetailsDialogTitle,
+  DialogDescription as MemberDetailsDialogDescription,
+  DialogFooter as MemberDetailsDialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -60,7 +66,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format } from 'date-fns';
@@ -109,11 +115,13 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       ...guildRoleInfo,    // Override with actual role info
       characterNickname: guildRoleInfo.characterNickname || memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid,
       gearScore: guildRoleInfo.gearScore || 0,
-      status: guildRoleInfo.status || 'Ativo', // Ensure status defaults to Ativo if not present
+      gearScoreScreenshotUrl: guildRoleInfo.gearScoreScreenshotUrl,
+      gearBuildLink: guildRoleInfo.gearBuildLink,
+      skillBuildLink: guildRoleInfo.skillBuildLink,
+      status: guildRoleInfo.status || 'Ativo', 
       dkpBalance: guildRoleInfo.dkpBalance ?? 0,
     };
   } else {
-    // If no guildRoleInfo, ensure characterNickname is set from base profile
     specificRoleInfo.characterNickname = memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid;
   }
   
@@ -129,6 +137,8 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
     characterNickname: specificRoleInfo.characterNickname,
     gearScore: specificRoleInfo.gearScore,
     gearScoreScreenshotUrl: specificRoleInfo.gearScoreScreenshotUrl,
+    gearBuildLink: specificRoleInfo.gearBuildLink,
+    skillBuildLink: specificRoleInfo.skillBuildLink,
     tlRole: specificRoleInfo.tlRole,
     tlPrimaryWeapon: specificRoleInfo.tlPrimaryWeapon,
     tlSecondaryWeapon: specificRoleInfo.tlSecondaryWeapon,
@@ -189,6 +199,9 @@ function MembersPageContent() {
   const [currentNote, setCurrentNote] = useState("");
   const [isSavingNote, setIsSavingNote] = useState(false);
 
+  const [showMemberDetailsDialog, setShowMemberDetailsDialog] = useState(false);
+  const [selectedMemberForDetails, setSelectedMemberForDetails] = useState<GuildMember | null>(null);
+
 
   const guildId = searchParams.get('guildId');
 
@@ -242,12 +255,12 @@ function MembersPageContent() {
       
       if (memberIdsToFetch.length > 0) {
         const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
-        const userProfilesSnaps = await Promise.all(userProfilesPromises); // Corrected variable name
+        const userProfileSnaps = await Promise.all(userProfilesPromises);
         
         const processedMembers: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
           const uid = memberIdsToFetch[i];
-          const userProfileSnap = userProfilesSnaps[i]; // Accessing the corrected variable
+          const userProfileSnap = userProfileSnaps[i];
           let baseProfile: UserProfile;
 
           if (userProfileSnap && userProfileSnap.exists()) {
@@ -318,15 +331,16 @@ function MembersPageContent() {
   const canKickMembers = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK), [currentUserRoleInfo, guild?.customRoles]);
   const canManageMemberStatus = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS), [currentUserRoleInfo, guild?.customRoles]);
   const canManageMemberNotes = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES), [currentUserRoleInfo, guild?.customRoles]);
+  const canViewDetailedMemberInfo = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO), [currentUserRoleInfo, guild?.customRoles]);
+
 
   const availableRoleNamesForChange = useMemo(() => {
     if (!guild || !guild.customRoles) return [];
-    // Ensure "Lider" and "Membro" are always present if they exist in customRoles, otherwise add sensible defaults
     const defaultRoles = ["Membro"];
     if (guild.customRoles["Lider"]) defaultRoles.unshift("Lider");
     
     return [...new Set([...defaultRoles, ...Object.keys(guild.customRoles)])]
-           .filter(roleName => roleName !== "Lider" || (actionUser?.uid === guild.ownerId)) // Allow Lider to be set for owner
+           .filter(roleName => roleName !== "Lider" || (actionUser?.uid === guild.ownerId)) 
            .sort();
   }, [guild, actionUser]);
 
@@ -360,10 +374,10 @@ function MembersPageContent() {
     setIsProcessingAction(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      const existingRoleInfo = guild.roles?.[actionUser.uid] || { roleName: "Membro", status: 'Ativo', dkpBalance: 0 }; // Ensure default if somehow missing
+      const existingRoleInfo = guild.roles?.[actionUser.uid] || { roleName: "Membro", status: 'Ativo', dkpBalance: 0 }; 
       
       const newRoleInfoPayload: GuildMemberRoleInfo = { 
-        ...existingRoleInfo, // Spread existing to keep characterNickname, gearScore etc.
+        ...existingRoleInfo, 
         roleName: selectedNewRoleName 
       };
 
@@ -501,6 +515,16 @@ function MembersPageContent() {
       setIsSavingNote(false);
     }
   };
+  
+  const handleViewMemberDetails = (member: GuildMember) => {
+    if (canViewDetailedMemberInfo) {
+      setSelectedMemberForDetails(member);
+      setShowMemberDetailsDialog(true);
+    } else {
+      toast({ title: "Permissão Negada", description: "Você não tem permissão para ver detalhes dos membros.", variant: "destructive" });
+    }
+  };
+
 
   const getRoleIcon = (roleName: string) => {
     if (roleName === "Lider") return <Crown className="h-5 w-5 text-yellow-400" />;
@@ -801,7 +825,11 @@ function MembersPageContent() {
                   </TableCell>
                   
                   <TableCell>
-                    <div className="flex items-center gap-2 font-medium">
+                    <div 
+                      className={cn("flex items-center gap-2 font-medium", canViewDetailedMemberInfo && "cursor-pointer hover:text-primary transition-colors")}
+                      onClick={() => handleViewMemberDetails(member)}
+                      title={canViewDetailedMemberInfo ? "Ver detalhes do membro" : ""}
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${displayName?.substring(0,1) || 'M'}`} alt={displayName || 'Avatar'} data-ai-hint="user avatar"/>
                         <AvatarFallback>{displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
@@ -872,7 +900,10 @@ function MembersPageContent() {
 
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Search className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewMemberDetails(member)} disabled={!canViewDetailedMemberInfo}>
+                        <Search className="h-4 w-4" />
+                        <span className="sr-only">Ver Detalhes</span>
+                      </Button>
                       {!isCurrentUserTarget && ( 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -985,6 +1016,56 @@ function MembersPageContent() {
         </Dialog>
       )}
 
+      {selectedMemberForDetails && (
+        <MemberDetailsDialog open={showMemberDetailsDialog} onOpenChange={setShowMemberDetailsDialog}>
+            <MemberDetailsDialogContent className="sm:max-w-lg">
+                <MemberDetailsDialogHeader>
+                    <MemberDetailsDialogTitle className="flex items-center">
+                        <Avatar className="h-10 w-10 mr-3">
+                           <AvatarImage src={selectedMemberForDetails.photoURL || `https://placehold.co/40x40.png?text=${(selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName)?.substring(0,1) || 'M'}`} alt={selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName || 'Avatar'} data-ai-hint="user avatar"/>
+                           <AvatarFallback>{(selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName)?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback>
+                        </Avatar>
+                        Detalhes de {selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName}
+                    </MemberDetailsDialogTitle>
+                    <MemberDetailsDialogDescription>
+                        Informações específicas do membro na guilda.
+                    </MemberDetailsDialogDescription>
+                </MemberDetailsDialogHeader>
+                <div className="py-4 space-y-3">
+                    <p><strong>Nickname na Guilda:</strong> {selectedMemberForDetails.characterNickname || "N/A"}</p>
+                    <p><strong>Gearscore:</strong> {selectedMemberForDetails.gearScore ?? "N/A"}</p>
+                    {selectedMemberForDetails.gearScoreScreenshotUrl ? (
+                        <p><strong>Print do Gearscore:</strong> <Link href={selectedMemberForDetails.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver Screenshot <Eye className="inline h-4 w-4 ml-1"/></Link></p>
+                    ) : <p><strong>Print do Gearscore:</strong> N/A</p>}
+                    {selectedMemberForDetails.gearBuildLink ? (
+                        <p><strong>Gear Build Link:</strong> <Link href={selectedMemberForDetails.gearBuildLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver Build de Equipamento <LinkIcon className="inline h-4 w-4 ml-1"/></Link></p>
+                    ) : <p><strong>Gear Build Link:</strong> N/A</p>}
+                    {selectedMemberForDetails.skillBuildLink ? (
+                        <p><strong>Skill Build Link:</strong> <Link href={selectedMemberForDetails.skillBuildLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver Build de Habilidades <LinkIcon className="inline h-4 w-4 ml-1"/></Link></p>
+                    ) : <p><strong>Skill Build Link:</strong> N/A</p>}
+
+                    {isTLGuild && (
+                        <>
+                            <hr className="my-3 border-border"/>
+                            <p className="flex items-center gap-1"><strong>Função (TL):</strong> {getTLRoleIcon(selectedMemberForDetails.tlRole)} {selectedMemberForDetails.tlRole || "N/A"}</p>
+                            <div className="flex items-center gap-2">
+                                <strong>Armas (TL):</strong>
+                                {selectedMemberForDetails.weapons?.mainHandIconUrl && <Image src={selectedMemberForDetails.weapons.mainHandIconUrl} alt={selectedMemberForDetails.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
+                                {selectedMemberForDetails.weapons?.offHandIconUrl && <Image src={selectedMemberForDetails.weapons.offHandIconUrl} alt={selectedMemberForDetails.tlSecondaryWeapon || "Arma Secundaria"} width={24} height={24} data-ai-hint="weapon shield"/>}
+                                {!selectedMemberForDetails.weapons?.mainHandIconUrl && !selectedMemberForDetails.weapons?.offHandIconUrl && "N/A"}
+                            </div>
+                            {selectedMemberForDetails.tlPrimaryWeapon && <p className="text-sm text-muted-foreground ml-4">- {selectedMemberForDetails.tlPrimaryWeapon}</p>}
+                            {selectedMemberForDetails.tlSecondaryWeapon && <p className="text-sm text-muted-foreground ml-4">- {selectedMemberForDetails.tlSecondaryWeapon}</p>}
+                        </>
+                    )}
+                </div>
+                <MemberDetailsDialogFooter>
+                    <Button variant="outline" onClick={() => setShowMemberDetailsDialog(false)}>Fechar</Button>
+                </MemberDetailsDialogFooter>
+            </MemberDetailsDialogContent>
+        </MemberDetailsDialog>
+      )}
+
 
       <AlertDialog open={actionType === 'changeRole' && !!actionUser} onOpenChange={(isOpen) => !isOpen && closeActionDialog()}>
         <AlertDialogContent>
@@ -1048,3 +1129,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+

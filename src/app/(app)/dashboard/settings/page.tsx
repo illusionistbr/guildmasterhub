@@ -72,7 +72,8 @@ const permissionDescriptions: Record<PermissionEnum, { title: string; descriptio
   [GuildPermission.MANAGE_GROUPS_DELETE]: { title: "Excluir Grupos/Parties", description: "Permite dissolver grupos (parties)." },
   [GuildPermission.VIEW_AUDIT_LOG]: { title: "Ver Log de Auditoria", description: "Permite visualizar o histórico de ações administrativas na guilda." },
   [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: { title: "Ver Candidaturas", description: "Permite visualizar candidaturas enviadas à guilda." },
-  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Processar Candidaturas", description: "Permite aprovar ou rejeitar candidaturas de novos membros." }
+  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Processar Candidaturas", description: "Permite aprovar ou rejeitar candidaturas de novos membros." },
+  [GuildPermission.VIEW_MEMBER_DETAILED_INFO]: { title: "Ver Informações Detalhadas de Membros", description: "Permite visualizar gearscore, links de build e outras informações detalhadas dos membros." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -170,10 +171,19 @@ function GuildSettingsPageContent() {
         
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
-        setCustomRoles(guildData.customRoles || {
-          "Lider": { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."},
-          "Membro": { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], description: "Membro padrão da guilda."}
-        });
+        
+        const initialRoles = guildData.customRoles || {};
+        if (!initialRoles["Lider"]) {
+          initialRoles["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
+        } else {
+          // Ensure Lider always has all permissions, including new ones
+           initialRoles["Lider"].permissions = [...new Set([...initialRoles["Lider"].permissions, ...Object.values(GuildPermission)])];
+        }
+        if (!initialRoles["Membro"]) {
+          initialRoles["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], description: "Membro padrão da guilda."};
+        }
+        setCustomRoles(initialRoles);
+
 
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
@@ -374,14 +384,21 @@ function GuildSettingsPageContent() {
     try {
       const guildRef = doc(db, "guilds", guildId);
       const rolesToSave = { ...customRoles };
+      
+      // Ensure Lider always has all permissions
       if (!rolesToSave["Lider"]) {
         rolesToSave["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
       } else {
-         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, GuildPermission.MANAGE_ROLES_PERMISSIONS, ...Object.values(GuildPermission)])];
+         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, ...Object.values(GuildPermission)])];
       }
+
+      // Ensure Membro has at least VIEW_MEMBERS_VIEW and VIEW_MEMBER_DETAILED_INFO
       if (!rolesToSave["Membro"]) {
-        rolesToSave["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], description: "Membro padrão da guilda."};
+        rolesToSave["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], description: "Membro padrão da guilda."};
+      } else {
+        rolesToSave["Membro"].permissions = [...new Set([...rolesToSave["Membro"].permissions, GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO])];
       }
+
 
       await updateDoc(guildRef, { customRoles: rolesToSave });
       setGuild(prev => prev ? { ...prev, customRoles: rolesToSave } : null);

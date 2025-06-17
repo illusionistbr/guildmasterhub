@@ -78,12 +78,11 @@ export default function CreateGuildPage() {
 
     const ownerRoleInfo: GuildMemberRoleInfo = {
       roleName: "Lider",
-      characterNickname: user.displayName || user.email || "Líder da Guilda", // Default character name
+      characterNickname: user.displayName || user.email || "Líder da Guilda",
       dkpBalance: 0,
       status: 'Ativo'
     };
     if (data.game === "Throne and Liberty") {
-        // Default TL specific fields if needed, or leave them for user to fill later
         ownerRoleInfo.tlRole = undefined; 
         ownerRoleInfo.tlPrimaryWeapon = undefined;
         ownerRoleInfo.tlSecondaryWeapon = undefined;
@@ -95,11 +94,11 @@ export default function CreateGuildPage() {
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
       "Lider": {
-        permissions: Object.values(GuildPermission),
+        permissions: Object.values(GuildPermission), // Lider gets all permissions
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
-        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW],
+        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], // Membro default permissions
         description: "Membro padrão da guilda."
       }
     };
@@ -363,3 +362,4 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
