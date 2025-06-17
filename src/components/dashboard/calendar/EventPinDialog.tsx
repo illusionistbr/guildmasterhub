@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, updateDoc, arrayUnion, increment, writeBatch, Timestamp } from '@/lib/firebase';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { hasPermission } from '@/lib/permissions';
-import { add, isAfter, isBefore } from 'date-fns'; // Added isBefore
+import { add, isAfter, isBefore } from 'date-fns';
 
 interface EventPinDialogProps {
   event: GuildEvent | null;
@@ -25,16 +25,14 @@ interface EventPinDialogProps {
   guildId: string | null;
 }
 
-// Helper function to parse date and time strings into a Date object
 const parseEventDateTimeString = (dateStr: string, timeStr: string): Date => {
   const [year, month, day] = dateStr.split('-').map(Number);
   const [hours, minutes] = timeStr.split(':').map(Number);
-  // Month is 0-indexed in JavaScript Date
   return new Date(year, month - 1, day, hours, minutes);
 };
 
-
 export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole: currentUserRoleInfo, guildId }: EventPinDialogProps) {
+  // === ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP ===
   const { user: currentUser } = useAuth();
   const [pinInputs, setPinInputs] = useState<string[]>(Array(6).fill(""));
   const [showPin, setShowPin] = useState(false);
@@ -50,7 +48,6 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
   }, [isOpen, event]);
 
   const canCurrentUserRevealPin = useMemo(() => {
-    // Check for guild and currentUserRoleInfo before accessing their properties
     if (!currentUserRoleInfo || !guild || !guild.customRoles) {
       return false;
     }
@@ -59,12 +56,58 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       guild.customRoles,
       GuildPermission.MANAGE_EVENTS_VIEW_PIN
     );
-  }, [currentUserRoleInfo, guild]); // Dependency on guild object
+  }, [currentUserRoleInfo, guild]);
+  // === END OF HOOKS ===
 
-  // Early return must be after all hook calls
-  if (!event || !guildId || !currentUser || !guild) return null;
+  // === EARLY RETURNS (GUARD CLAUSES) - AFTER ALL HOOKS ===
+  if (!event || !guildId || !currentUser || !guild) {
+    return null;
+  }
 
+  // Other conditional returns based on component logic (these are fine here)
+  if (!guild.dkpSystemEnabled && event.requiresPin) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-primary flex items-center">
+              <AlertTriangle className="mr-2 h-6 w-6 text-yellow-500" /> {event.title}
+            </DialogTitle>
+            <DialogDescription>
+              O sistema de DKP e PINs está atualmente desabilitado para esta guilda, mas este evento requer um PIN.
+              Contacte um administrador.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
+  if (!guild.dkpSystemEnabled && !event.requiresPin) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-primary flex items-center">
+               {event.title}
+            </DialogTitle>
+            <DialogDescription>
+              Este evento não requer PIN e o sistema DKP está desabilitado. Nenhuma ação de PIN é necessária.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  // === END OF EARLY RETURNS ===
+
+  // === COMPONENT LOGIC AND HANDLERS ===
   const handleInputChange = (index: number, value: string) => {
     if (/^[0-9]?$/.test(value)) {
       const newPinInputs = [...pinInputs];
@@ -95,7 +138,6 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       return;
     }
 
-    // Check if event has ended before allowing PIN redemption
     if (event.endDate && event.endTime) {
       const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
       const currentTime = new Date();
@@ -106,9 +148,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
           variant: "default",
           duration: 7000,
           action: (
-            <Button variant="outline" size="sm" onClick={() => {
-              // Potentially close the toast if needed, though default duration might be enough
-            }}>
+            <Button variant="outline" size="sm" onClick={() => {}}>
               <Clock className="mr-2 h-4 w-4" /> OK
             </Button>
           )
@@ -118,7 +158,6 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       }
     }
 
-    // Check DKP Redemption Window
     if (guild.dkpRedemptionWindow && event.endDate && event.endTime) {
         const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
         let redemptionDeadline: Date;
@@ -132,7 +171,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
             case 'days':
                 redemptionDeadline = add(eventEndDateTime, { days: guild.dkpRedemptionWindow.value });
                 break;
-            default: // Fallback, though schema should prevent this
+            default:
                 redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
                 break;
         }
@@ -143,10 +182,8 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
         }
     }
 
-
     if (!event.dkpValue || event.dkpValue <= 0) {
       toast({ title: "Sem DKP", description: "Este evento não concede DKP ou o valor é zero.", variant: "default" });
-      // Still allow presence registration if PIN matches, even if DKP is 0
     }
 
     const enteredPin = pinInputs.join("");
@@ -219,49 +256,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   };
 
-  if (!guild.dkpSystemEnabled && event.requiresPin) { // If DKP is off but event somehow has requiresPin true
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="font-headline text-primary flex items-center">
-              <AlertTriangle className="mr-2 h-6 w-6 text-yellow-500" /> {event.title}
-            </DialogTitle>
-            <DialogDescription>
-              O sistema de DKP e PINs está atualmente desabilitado para esta guilda, mas este evento requer um PIN.
-              Contacte um administrador.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-2">
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-  
-  // If DKP system is disabled AND event does not require PIN (legacy or manually set)
-  if (!guild.dkpSystemEnabled && !event.requiresPin) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="font-headline text-primary flex items-center">
-               {event.title}
-            </DialogTitle>
-            <DialogDescription>
-              Este evento não requer PIN e o sistema DKP está desabilitado. Nenhuma ação de PIN é necessária.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-2">
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-
+  // === MAIN JSX RETURN ===
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
@@ -326,4 +321,3 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     </Dialog>
   );
 }
-
