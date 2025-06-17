@@ -35,7 +35,7 @@ const guildSchemaBase = z.object({
 });
 
 const tlRegions = [
-  { value: "Korea", label: "Korea" },
+  { value: "Korea", label: "Coreia" },
   { value: "NA East", label: "América do Norte (Leste)" },
   { value: "NA West", label: "América do Norte (Oeste)" },
   { value: "Europe", label: "Europa" },
@@ -179,7 +179,7 @@ export default function CreateGuildPage() {
       dkpBalance: 0,
       status: 'Ativo'
     };
-    
+
     if (data.game === "Throne and Liberty") {
         ownerRoleInfo.tlRole = undefined;
         ownerRoleInfo.tlPrimaryWeapon = undefined;
@@ -193,11 +193,11 @@ export default function CreateGuildPage() {
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
       "Lider": {
-        permissions: Object.values(GuildPermission), 
+        permissions: Object.values(GuildPermission),
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
-        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], 
+        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO],
         description: "Membro padrão da guilda."
       }
     };
@@ -220,6 +220,9 @@ export default function CreateGuildPage() {
         customRoles: initialCustomRoles,
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
+        dkpSystemEnabled: false,
+        dkpRedemptionWindow: { value: 24, unit: 'hours' },
+        dkpDefaultsPerCategory: {},
     };
 
     if (!guildData.socialLinks) delete guildData.socialLinks;

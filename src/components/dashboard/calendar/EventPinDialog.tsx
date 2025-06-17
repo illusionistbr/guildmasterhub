@@ -1,26 +1,28 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react'; // Added useEffect and useMemo
-import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added Guild and GuildMemberRoleInfo
-import { GuildPermission, AuditActionType } from '@/types/guildmaster'; // Added GuildPermission and corrected AuditActionType import
+import React, { useState, useEffect, useMemo } from 'react';
+import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster';
+import { GuildPermission, AuditActionType } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, updateDoc, arrayUnion, increment, writeBatch } from '@/lib/firebase';
+import { db, doc, updateDoc, arrayUnion, increment, writeBatch, Timestamp } from '@/lib/firebase';
 import { logGuildActivity } from '@/lib/auditLogService';
-import { hasPermission } from '@/lib/permissions'; // Import hasPermission
+import { hasPermission } from '@/lib/permissions';
+import { add, isAfter } from 'date-fns';
+
 
 interface EventPinDialogProps {
   event: GuildEvent | null;
-  guild: Guild | null; // Add guild to props
+  guild: Guild | null;
   isOpen: boolean;
   onClose: () => void;
-  currentUserRole: GuildMemberRoleInfo | null; // Renamed for clarity
+  currentUserRole: GuildMemberRoleInfo | null;
   guildId: string | null;
 }
 
@@ -39,7 +41,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   }, [isOpen, event]);
 
-  if (!event || !guildId || !currentUser || !guild) return null; // Check for guild
+  if (!event || !guildId || !currentUser || !guild) return null;
 
   const canCurrentUserRevealPin = useMemo(() => {
     if (!currentUserRoleInfo || !guild.customRoles) return false;
@@ -69,11 +71,35 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
   };
 
   const handleSubmitPin = async () => {
+    if (!guild.dkpSystemEnabled) {
+      toast({ title: "Sistema DKP Desabilitado", description: "O sistema de DKP e PINs está desabilitado para esta guilda.", variant: "default" });
+      onClose();
+      return;
+    }
+
     if (!event.requiresPin || !event.pinCode) {
       toast({ title: "PIN não necessário", description: "Este evento não requer PIN.", variant: "default" });
       onClose();
       return;
     }
+
+    // Check DKP Redemption Window
+    if (guild.dkpRedemptionWindow && event.endDate && event.endTime) {
+        const eventEndDateTime = new Date(`${event.endDate}T${event.endTime}`);
+        let redemptionDeadline: Date;
+        if (guild.dkpRedemptionWindow.unit === 'hours') {
+            redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
+        } else { // days
+            redemptionDeadline = add(eventEndDateTime, { days: guild.dkpRedemptionWindow.value });
+        }
+        if (isAfter(new Date(), redemptionDeadline)) {
+            toast({ title: "Janela de Resgate Expirada", description: "O tempo para resgatar DKP para este evento expirou.", variant: "destructive" });
+            onClose();
+            return;
+        }
+    }
+
+
     if (!event.dkpValue || event.dkpValue <= 0) {
       toast({ title: "Sem DKP", description: "Este evento não concede DKP ou o valor é zero.", variant: "default" });
     }
@@ -142,6 +168,27 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   };
 
+  if (!guild.dkpSystemEnabled) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-primary flex items-center">
+              <AlertTriangle className="mr-2 h-6 w-6 text-yellow-500" /> {event.title}
+            </DialogTitle>
+            <DialogDescription>
+              O sistema de DKP e PINs está atualmente desabilitado para esta guilda.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
@@ -206,3 +253,4 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     </Dialog>
   );
 }
+

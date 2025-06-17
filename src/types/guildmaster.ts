@@ -82,7 +82,7 @@ export interface Guild {
   memberIds?: string[];
   game?: string;
   region?: string;
-  server?: string; // Added server field
+  server?: string;
   tags?: string[];
   createdAt?: Date | Timestamp;
   password?: string;
@@ -96,6 +96,14 @@ export interface Guild {
   roles?: { [userId: string]: GuildMemberRoleInfo };
   customRoles?: { [roleName: string]: CustomRole };
   recruitmentQuestions?: RecruitmentQuestion[];
+  dkpSystemEnabled?: boolean;
+  dkpRedemptionWindow?: {
+    value: number;
+    unit: 'hours' | 'days';
+  };
+  dkpDefaultsPerCategory?: {
+    [categoryKey: string]: number;
+  };
 }
 
 export interface Event {
@@ -132,8 +140,8 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string; 
-  applicantDisplayName: string; 
+  applicantName: string;
+  applicantDisplayName: string;
   applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string | null;
@@ -206,6 +214,7 @@ export enum AuditActionType {
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
   MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED",
   DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN",
+  DKP_SETTINGS_UPDATED = "DKP_SETTINGS_UPDATED",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -244,7 +253,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;

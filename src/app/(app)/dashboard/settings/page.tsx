@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -43,6 +45,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { TL_EVENT_CATEGORIES } from '@/components/dashboard/calendar/ThroneAndLibertyCalendarView';
+
 
 const guildNameSchema = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
@@ -53,6 +57,24 @@ const guildPasswordSchema = z.object({
   password: z.string().max(50, "Senha deve ter no máximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
 });
 type GuildPasswordFormValues = z.infer<typeof guildPasswordSchema>;
+
+const dkpSettingsSchema = z.object({
+  dkpSystemEnabled: z.boolean(),
+  dkpRedemptionWindowValue: z.coerce.number().min(1, "Deve ser pelo menos 1").optional(),
+  dkpRedemptionWindowUnit: z.enum(['hours', 'days']).optional(),
+  dkpDefaultsPerCategory: z.record(z.coerce.number().min(0).optional()).optional(),
+}).refine(data => {
+    if (data.dkpSystemEnabled) {
+        return data.dkpRedemptionWindowValue !== undefined && data.dkpRedemptionWindowUnit !== undefined;
+    }
+    return true;
+}, {
+    message: "Janela de Resgate é obrigatória quando o sistema DKP está habilitado.",
+    path: ["dkpRedemptionWindowValue"], // Path to show error, can be adjusted
+});
+
+type DkpSettingsFormValues = z.infer<typeof dkpSettingsSchema>;
+
 
 const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
   [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Permite visualizar a lista de membros e seus perfis básicos." },
@@ -96,6 +118,7 @@ function GuildSettingsPageContent() {
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  const [isSubmittingDkp, setIsSubmittingDkp] = useState(false);
 
   const guildId = searchParams.get('guildId');
 
@@ -107,6 +130,16 @@ function GuildSettingsPageContent() {
   const passwordForm = useForm<GuildPasswordFormValues>({
     resolver: zodResolver(guildPasswordSchema),
     defaultValues: { password: "" },
+  });
+
+  const dkpForm = useForm<DkpSettingsFormValues>({
+    resolver: zodResolver(dkpSettingsSchema),
+    defaultValues: {
+      dkpSystemEnabled: false,
+      dkpRedemptionWindowValue: 24,
+      dkpRedemptionWindowUnit: 'hours',
+      dkpDefaultsPerCategory: {},
+    },
   });
 
   const currentUserRoleInfo = useMemo(() => {
@@ -131,6 +164,11 @@ function GuildSettingsPageContent() {
       GuildPermission.MANAGE_ROLES_PERMISSIONS
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
+
+  const canManageDkpSettings = useMemo(() => { // For now, only owner can manage DKP
+    return currentUser?.uid === guild?.ownerId;
+  }, [currentUser, guild]);
+
 
   const canDeleteGuild = useMemo(() => currentUser?.uid === guild?.ownerId, [currentUser, guild]);
 
@@ -171,12 +209,18 @@ function GuildSettingsPageContent() {
 
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
+        dkpForm.reset({
+          dkpSystemEnabled: guildData.dkpSystemEnabled || false,
+          dkpRedemptionWindowValue: guildData.dkpRedemptionWindow?.value || 24,
+          dkpRedemptionWindowUnit: guildData.dkpRedemptionWindow?.unit || 'hours',
+          dkpDefaultsPerCategory: guildData.dkpDefaultsPerCategory || {},
+        });
+
 
         const initialRoles = guildData.customRoles || {};
         if (!initialRoles["Lider"]) {
           initialRoles["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
         } else {
-          // Ensure Lider always has all permissions, including new ones
            initialRoles["Lider"].permissions = [...new Set([...initialRoles["Lider"].permissions, ...Object.values(GuildPermission)])];
         }
         if (!initialRoles["Membro"]) {
@@ -197,7 +241,7 @@ function GuildSettingsPageContent() {
     return () => {
       setHeaderTitle(null);
     };
-  }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, setHeaderTitle]);
+  }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, dkpForm, setHeaderTitle]);
 
   const handleNameSubmit: SubmitHandler<GuildNameFormValues> = async (data) => {
     if (!guild || !currentUser || !canManageGeneralSettings) {
@@ -306,6 +350,49 @@ function GuildSettingsPageContent() {
     }
   };
 
+  const handleDkpSettingsSubmit: SubmitHandler<DkpSettingsFormValues> = async (data) => {
+    if (!guild || !currentUser || !canManageDkpSettings) {
+        toast({title: "Permissão Negada", description: "Você não tem permissão para alterar as configurações de DKP.", variant: "destructive"});
+        return;
+    }
+    setIsSubmittingDkp(true);
+    try {
+        const guildRef = doc(db, "guilds", guild.id);
+        const updatePayload: Partial<Guild> = {
+            dkpSystemEnabled: data.dkpSystemEnabled,
+        };
+
+        if (data.dkpSystemEnabled) {
+            updatePayload.dkpRedemptionWindow = {
+                value: data.dkpRedemptionWindowValue || 24, // Default if somehow undefined
+                unit: data.dkpRedemptionWindowUnit || 'hours', // Default if somehow undefined
+            };
+            updatePayload.dkpDefaultsPerCategory = data.dkpDefaultsPerCategory || {};
+        } else {
+            // Optionally clear these if system is disabled, or keep them for re-enabling
+            updatePayload.dkpRedemptionWindow = undefined; // Or set to null
+            updatePayload.dkpDefaultsPerCategory = undefined; // Or set to null
+        }
+
+        await updateDoc(guildRef, updatePayload);
+        setGuild(prev => prev ? { ...prev, ...updatePayload } : null);
+        dkpForm.reset(data); // Reset form with current data
+
+        await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.DKP_SETTINGS_UPDATED, {
+            changedField: 'dkpSystemEnabled', // Primary field, can add more details
+            newValue: data.dkpSystemEnabled.toString(),
+        });
+
+        toast({title: "Configurações de DKP Salvas!", description: "As configurações do sistema DKP foram atualizadas."});
+    } catch (error) {
+        console.error("Erro ao salvar configurações de DKP:", error);
+        toast({title: "Erro ao Salvar DKP", variant: "destructive"});
+    } finally {
+        setIsSubmittingDkp(false);
+    }
+  };
+
+
   const handlePermissionChange = (roleName: string, permission: PermissionEnum, checked: boolean) => {
     setCustomRoles(prevRoles => {
       const role = prevRoles[roleName];
@@ -385,14 +472,12 @@ function GuildSettingsPageContent() {
       const guildRef = doc(db, "guilds", guildId);
       const rolesToSave = { ...customRoles };
 
-      // Ensure Lider always has all permissions
       if (!rolesToSave["Lider"]) {
         rolesToSave["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
       } else {
          rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, ...Object.values(GuildPermission)])];
       }
 
-      // Ensure Membro has at least VIEW_MEMBERS_VIEW and VIEW_MEMBER_DETAILED_INFO
       if (!rolesToSave["Membro"]) {
         rolesToSave["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], description: "Membro padrão da guilda."};
       } else {
@@ -432,9 +517,10 @@ function GuildSettingsPageContent() {
       <div className="space-y-8 p-4 md:p-6">
         <PageTitle title="Configurações da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="permissions" disabled>Cargos e Permissões</TabsTrigger>
+            <TabsTrigger value="dkp" disabled>DKP</TabsTrigger>
           </TabsList>
           <TabsContent value="general" className="mt-6">
             <Skeleton className="h-48 w-full mb-6" />
@@ -481,9 +567,10 @@ function GuildSettingsPageContent() {
       />
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissionsPage}>Cargos e Permissões</TabsTrigger>
+          <TabsTrigger value="dkp" disabled={!canManageDkpSettings}>DKP</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-8">
@@ -731,6 +818,128 @@ function GuildSettingsPageContent() {
                 </Button>
               </div>
             </>
+          )}
+        </TabsContent>
+         <TabsContent value="dkp" className="mt-6 space-y-6">
+          {!canManageDkpSettings ? (
+             <Card className="static-card-container">
+              <CardHeader>
+                <CardTitle className="text-destructive">Acesso Negado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Você não tem permissão para gerenciar as configurações de DKP.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Form {...dkpForm}>
+                <form onSubmit={dkpForm.handleSubmit(handleDkpSettingsSubmit)}>
+                    <Card className="static-card-container">
+                        <CardHeader>
+                            <CardTitle className="flex items-center"><Coins className="mr-2 h-5 w-5 text-primary" />Configurações do Sistema DKP</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <FormField
+                                control={dkpForm.control}
+                                name="dkpSystemEnabled"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">Habilitar Sistema DKP</FormLabel>
+                                            <FormDescription>
+                                                Ativa ou desativa o sistema de DKP e PINs para eventos.
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isSubmittingDkp}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+
+                            {dkpForm.watch("dkpSystemEnabled") && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label className="font-semibold">Janela de Resgate de DKP</Label>
+                                        <CardDescription>Tempo máximo após o fim de um evento para resgatar DKP com PIN.</CardDescription>
+                                        <div className="flex items-center gap-2 pt-1">
+                                            <FormField
+                                                control={dkpForm.control}
+                                                name="dkpRedemptionWindowValue"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex-1">
+                                                        <FormControl><Input type="number" {...field} className="form-input" disabled={isSubmittingDkp} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={dkpForm.control}
+                                                name="dkpRedemptionWindowUnit"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex-1">
+                                                        <Select onValueChange={field.onChange} value={field.value} disabled={isSubmittingDkp}>
+                                                            <FormControl><SelectTrigger className="form-input"><SelectValue /></SelectTrigger></FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="hours">Horas</SelectItem>
+                                                                <SelectItem value="days">Dias</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                         {dkpForm.formState.errors.dkpRedemptionWindowValue?.message && !dkpForm.formState.errors.dkpRedemptionWindowValue?.ref?.name && (
+                                            <p className="text-sm font-medium text-destructive">{dkpForm.formState.errors.dkpRedemptionWindowValue.message}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="font-semibold">DKP Padrão por Categoria de Evento</Label>
+                                        <CardDescription>Defina o valor DKP padrão para cada tipo de evento ao criá-lo. Pode ser alterado no momento da criação.</CardDescription>
+                                        <div className="space-y-3 pt-1 max-h-60 overflow-y-auto pr-2">
+                                            {TL_EVENT_CATEGORIES.map(category => (
+                                                <FormField
+                                                    key={category.id}
+                                                    control={dkpForm.control}
+                                                    name={`dkpDefaultsPerCategory.${category.id}`}
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                                            <FormLabel className="mb-1 sm:mb-0">{category.label}</FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    type="number"
+                                                                    {...field}
+                                                                    onChange={e => field.onChange(parseInt(e.target.value,10) || 0)}
+                                                                    value={field.value || 0}
+                                                                    className="form-input sm:w-24"
+                                                                    disabled={isSubmittingDkp}
+                                                                    min="0"
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage className="sm:ml-2"/>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </CardContent>
+                        <CardFooter>
+                             <Button type="submit" className="btn-gradient btn-style-primary ml-auto" disabled={isSubmittingDkp}>
+                                {isSubmittingDkp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Salvar Configurações DKP
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </form>
+            </Form>
           )}
         </TabsContent>
       </Tabs>

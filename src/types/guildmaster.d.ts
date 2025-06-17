@@ -81,7 +81,7 @@ export interface Guild {
   memberIds?: string[];
   game?: string;
   region?: string;
-  server?: string; // Added server field
+  server?: string;
   tags?: string[];
   createdAt?: Date | Timestamp;
   password?: string;
@@ -95,6 +95,14 @@ export interface Guild {
   roles?: { [userId: string]: GuildMemberRoleInfo };
   customRoles?: { [roleName: string]: CustomRole };
   recruitmentQuestions?: RecruitmentQuestion[];
+  dkpSystemEnabled?: boolean;
+  dkpRedemptionWindow?: {
+    value: number;
+    unit: 'hours' | 'days';
+  };
+  dkpDefaultsPerCategory?: {
+    [categoryKey: string]: number;
+  };
 }
 
 export interface Event {
@@ -131,8 +139,8 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string; 
-  applicantDisplayName: string; 
+  applicantName: string;
+  applicantDisplayName: string;
   applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string | null;
@@ -150,7 +158,7 @@ export interface Application {
 export interface UserProfile {
   uid: string;
   email: string | null;
-  displayName: string | null; 
+  displayName: string | null;
   photoURL?: string | null;
   guilds?: string[];
   createdAt?: Timestamp;
@@ -160,9 +168,9 @@ export interface UserProfile {
 }
 
 export interface GuildMember extends UserProfile {
-  roleName: string; 
-  characterNickname?: string; 
-  gearScore?: number; 
+  roleName: string;
+  characterNickname?: string;
+  gearScore?: number;
   gearScoreScreenshotUrl?: string | null;
   gearBuildLink?: string | null;
   skillBuildLink?: string | null;
@@ -179,7 +187,7 @@ export type GroupIconType = 'shield' | 'sword' | 'heart';
 
 export interface GuildGroupMember {
   memberId: string;
-  displayName: string; 
+  displayName: string;
   photoURL?: string | null;
   note?: string;
 }
@@ -203,8 +211,9 @@ export enum AuditActionType {
   MEMBER_JOINED = "MEMBER_JOINED",
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
-  MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED", 
+  MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED",
   DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN",
+  DKP_SETTINGS_UPDATED = "DKP_SETTINGS_UPDATED",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -234,7 +243,7 @@ export enum AuditActionType {
 
 export interface AuditLogDetails {
   targetUserId?: string;
-  targetUserDisplayName?: string; 
+  targetUserDisplayName?: string;
   oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
   newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[] | number;
   fieldName?: string;
@@ -243,7 +252,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
@@ -254,7 +263,7 @@ export interface AuditLogDetails {
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
-    updatedFields?: string[]; 
+    updatedFields?: string[];
   };
 }
 
