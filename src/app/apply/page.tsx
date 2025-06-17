@@ -187,13 +187,12 @@ function ApplyPageContent() {
         }
     });
 
-    // applicantName no Firestore será o characterNickname da aplicação
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
       applicantId: currentUser.uid,
-      applicantName: data.characterNickname, // Nick do personagem da aplicação
+      applicantName: data.characterNickname,
       gearScore: data.gearScore,
-      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl,
+      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl, // This will be "" if empty, which is fine
       discordNick: data.discordNick,
       status: 'pending', 
       ...(isTLGuild && { tlRole: data.tlRole }),
@@ -214,7 +213,8 @@ function ApplyPageContent() {
           roleName: "Membro", 
           characterNickname: data.characterNickname,
           gearScore: data.gearScore,
-          gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || undefined,
+          gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null, // Store empty as null
+          // No gearBuildLink or skillBuildLink from application form, so they remain undefined/not set
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0, 
           status: 'Ativo',
@@ -235,7 +235,7 @@ function ApplyPageContent() {
         const appDocForPublicJoinRef = doc(applicationsRef); 
         batch.set(appDocForPublicJoinRef, {
           ...applicationBaseData,
-          applicantDisplayName: currentUser.displayName || currentUser.email, // Nome de usuário global
+          applicantDisplayName: currentUser.displayName || currentUser.email, 
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
           status: 'auto_approved',
@@ -259,7 +259,7 @@ function ApplyPageContent() {
       } else { 
         const newApplicationRef = await addDoc(applicationsRef, {
           ...applicationBaseData,
-          applicantDisplayName: currentUser.displayName || currentUser.email, // Nome de usuário global
+          applicantDisplayName: currentUser.displayName || currentUser.email, 
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
           status: 'pending', 

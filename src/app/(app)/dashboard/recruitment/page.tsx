@@ -44,7 +44,7 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
     case TLWeapon.Greatsword: return "https://i.imgur.com/Tf1LymG.png";
     case TLWeapon.Daggers: return "https://i.imgur.com/CEM1Oij.png";
     case TLWeapon.Crossbow: return "https://i.imgur.com/u7pqt5H.png";
-    case TLWeapon.Bow: return "https://i.imgur.com/73c5Rl4.png";
+    case TLWeapon.Longbow: return "https://i.imgur.com/73c5Rl4.png";
     case TLWeapon.Staff: return "https://i.imgur.com/wgjWVvI.png";
     case TLWeapon.WandAndTome: return "https://i.imgur.com/BdYPLee.png";
     case TLWeapon.Spear: return "https://i.imgur.com/l2oHYwY.png";
@@ -223,7 +223,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
     return hasPermission(
       currentUserRoleInfo.roleName,
       guild.customRoles,
-      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS // This permission should allow managing questionnaire too
+      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS 
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
 
@@ -359,9 +359,10 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
                 roleName: "Membro",
-                characterNickname: application.applicantName, // Nickname from application
+                characterNickname: application.applicantName, 
                 gearScore: application.gearScore,
-                gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || undefined,
+                gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || null, 
+                // No gearBuildLink or skillBuildLink from application form when accepting
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,

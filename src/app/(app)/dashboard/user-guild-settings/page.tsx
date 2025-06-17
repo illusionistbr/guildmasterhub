@@ -127,22 +127,21 @@ function UserGuildSettingsPageContent() {
     }
     setIsSubmitting(true);
 
+    const updatedFields: string[] = [];
+    if (memberRoleInfo.characterNickname !== data.characterNickname) updatedFields.push('Nickname do Personagem');
+    if (memberRoleInfo.gearScore !== data.gearScore) updatedFields.push('Gearscore');
+    if (memberRoleInfo.gearScoreScreenshotUrl !== (data.gearScoreScreenshotUrl || null)) updatedFields.push('Screenshot do Gearscore');
+    if (memberRoleInfo.gearBuildLink !== (data.gearBuildLink || null)) updatedFields.push('Gear Build Link');
+    if (memberRoleInfo.skillBuildLink !== (data.skillBuildLink || null)) updatedFields.push('Skill Build Link');
+
     const updatedRoleInfo: GuildMemberRoleInfo = {
       ...memberRoleInfo, 
       characterNickname: data.characterNickname,
       gearScore: data.gearScore,
-      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || undefined,
-      gearBuildLink: data.gearBuildLink || undefined,
-      skillBuildLink: data.skillBuildLink || undefined,
+      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
+      gearBuildLink: data.gearBuildLink || null,
+      skillBuildLink: data.skillBuildLink || null,
     };
-
-    const updatedFields: string[] = [];
-    if (memberRoleInfo.characterNickname !== data.characterNickname) updatedFields.push('Nickname do Personagem');
-    if (memberRoleInfo.gearScore !== data.gearScore) updatedFields.push('Gearscore');
-    if (memberRoleInfo.gearScoreScreenshotUrl !== (data.gearScoreScreenshotUrl || undefined)) updatedFields.push('Screenshot do Gearscore');
-    if (memberRoleInfo.gearBuildLink !== (data.gearBuildLink || undefined)) updatedFields.push('Gear Build Link');
-    if (memberRoleInfo.skillBuildLink !== (data.skillBuildLink || undefined)) updatedFields.push('Skill Build Link');
-
 
     if (isTLGuild) {
       updatedRoleInfo.tlRole = data.tlRole;
@@ -373,4 +372,3 @@ export default function UserGuildSettingsPage() {
     </Suspense>
   );
 }
-
