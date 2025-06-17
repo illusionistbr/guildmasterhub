@@ -68,9 +68,9 @@ export const TL_EVENT_CATEGORIES = [
   { id: 'guild_contract', label: 'Guild Contract' },
   { id: 'raid', label: 'Raid' },
   { id: 'tax_delivery', label: 'Tax Delivery' },
-  { id: 'war_games', label: 'Jogos de Guerra' },
-  { id: 'other', label: 'Outro' },
-  { id: 'lawless_wilds', label: 'Terras Sem Lei' },
+  { id: 'war_games', label: 'War Games' },
+  { id: 'other', label: 'Other' },
+  { id: 'lawless_wilds', label: 'Lawless Wilds' },
 ];
 
 const TL_SUB_CATEGORIES: Record<string, string[]> = {
@@ -166,7 +166,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
     'Vila Vienta',
   ],
   war_games: [
-    'Jogos de Guerra',
+    'War Games',
   ],
   lawless_wilds: [
     'Ilha Nebulosa',
