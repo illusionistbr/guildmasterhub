@@ -100,7 +100,7 @@ export interface Guild {
   dkpSystemEnabled?: boolean;
   dkpRedemptionWindow?: {
     value: number;
-    unit: 'hours' | 'days';
+    unit: 'minutes' | 'hours' | 'days';
   };
   dkpDefaultsPerCategory?: {
     [categoryKey: string]: number;

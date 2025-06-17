@@ -114,14 +114,23 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       }
     }
 
-    // Check DKP Redemption Window (original logic)
+    // Check DKP Redemption Window
     if (guild.dkpRedemptionWindow && event.endDate && event.endTime) {
         const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
         let redemptionDeadline: Date;
-        if (guild.dkpRedemptionWindow.unit === 'hours') {
-            redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
-        } else { // days
-            redemptionDeadline = add(eventEndDateTime, { days: guild.dkpRedemptionWindow.value });
+        switch (guild.dkpRedemptionWindow.unit) {
+            case 'minutes':
+                redemptionDeadline = add(eventEndDateTime, { minutes: guild.dkpRedemptionWindow.value });
+                break;
+            case 'hours':
+                redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
+                break;
+            case 'days':
+                redemptionDeadline = add(eventEndDateTime, { days: guild.dkpRedemptionWindow.value });
+                break;
+            default: // Fallback, though schema should prevent this
+                redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
+                break;
         }
         if (isAfter(new Date(), redemptionDeadline)) {
             toast({ title: "Janela de Resgate Expirada", description: "O tempo para resgatar DKP para este evento expirou.", variant: "destructive" });

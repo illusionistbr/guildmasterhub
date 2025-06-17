@@ -66,7 +66,7 @@ type GuildPasswordFormValues = z.infer<typeof guildPasswordSchema>;
 const dkpSettingsSchema = z.object({
   dkpSystemEnabled: z.boolean(),
   dkpRedemptionWindowValue: z.coerce.number().min(1, "Deve ser pelo menos 1").optional(),
-  dkpRedemptionWindowUnit: z.enum(['hours', 'days']).optional(),
+  dkpRedemptionWindowUnit: z.enum(['minutes', 'hours', 'days']).optional(),
   dkpDefaultsPerCategory: z.record(z.coerce.number().min(0).optional()).optional(),
 }).refine(data => {
     if (data.dkpSystemEnabled) {
@@ -1064,6 +1064,7 @@ function GuildSettingsPageContent() {
                                                         <Select onValueChange={field.onChange} value={field.value} disabled={isSubmittingDkp}>
                                                             <FormControl><SelectTrigger className="form-input"><SelectValue /></SelectTrigger></FormControl>
                                                             <SelectContent>
+                                                                <SelectItem value="minutes">Minutos</SelectItem>
                                                                 <SelectItem value="hours">Horas</SelectItem>
                                                                 <SelectItem value="days">Dias</SelectItem>
                                                             </SelectContent>
