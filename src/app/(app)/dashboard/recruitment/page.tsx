@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'; 
 import { Badge } from '@/components/ui/badge'; 
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save, InfoCircle } from 'lucide-react'; 
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save, Info } from 'lucide-react'; 
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNowStrict } from 'date-fns'; 
@@ -160,7 +160,7 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
           <div className="space-y-2">
             {fixedApplicationFields.filter(field => !field.isTLSpecific || isTLGuild).map(field => (
               <div key={field.id} className="flex items-center p-3 bg-muted/30 rounded-md border border-input">
-                <InfoCircle className="mr-3 h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <Info className="mr-3 h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <p className="text-sm text-foreground flex-1">{field.text}</p>
               </div>
             ))}
@@ -723,4 +723,3 @@ export default function RecruitmentPageWrapper() {
 }
 
     
-
