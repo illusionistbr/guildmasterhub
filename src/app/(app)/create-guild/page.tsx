@@ -14,7 +14,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe } from 'lucide-react';
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
@@ -31,29 +31,56 @@ const guildSchemaBase = z.object({
   socialYoutube: z.string().url("URL do YouTube inválida.").max(200, "Link do YouTube muito longo.").optional().or(z.literal('')),
   socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
   region: z.string().optional(),
+  server: z.string().optional(),
 });
 
-const guildSchema = guildSchemaBase.refine(data => {
-    if (data.game === "Throne and Liberty" && !data.region) {
-        return false;
+const tlRegions = [
+  { value: "Korea", label: "Korea" },
+  { value: "NA East", label: "América do Norte (Leste)" },
+  { value: "NA West", label: "América do Norte (Oeste)" },
+  { value: "Europe", label: "Europa" },
+  { value: "South America", label: "América do Sul" },
+  { value: "Asia Pacific", label: "Ásia-Pacífico" },
+];
+
+const tlServers: Record<string, Array<{ value: string; label: string }>> = {
+  "Korea": [
+    { value: "Unknown", label: "Unknown" },
+    { value: "Belluatan", label: "Belluatan" },
+    { value: "Greedal", label: "Greedal" },
+    { value: "Kallis", label: "Kallis" },
+    { value: "Sienna", label: "Sienna" },
+    { value: "Solar", label: "Solar" },
+    { value: "Syleus", label: "Syleus" },
+  ],
+  "NA East": [],
+  "NA West": [],
+  "Europe": [],
+  "South America": [],
+  "Asia Pacific": [],
+};
+
+const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
+    if (data.game === "Throne and Liberty") {
+        if (!data.region) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Região é obrigatória para Throne and Liberty.",
+                path: ["region"],
+            });
+        } else if (data.region && tlServers[data.region]?.length > 0 && !data.server) {
+             ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Servidor é obrigatório para esta região em Throne and Liberty.",
+                path: ["server"],
+            });
+        }
     }
-    return true;
-}, {
-    message: "Região é obrigatória para Throne and Liberty.",
-    path: ["region"],
 });
 
 
 type GuildFormValues = z.infer<typeof guildSchema>;
 
-const tlRegions = [
-  { value: "Korea", label: "Korea" },
-  { value: "NA East", label: "NA East" },
-  { value: "NA West", label: "NA West" },
-  { value: "Europe", label: "Europe" },
-  { value: "South America", label: "South America" },
-  { value: "Asia Pacific", label: "Asia Pacific" },
-];
 
 export default function CreateGuildPage() {
   const { user, loading: authLoading } = useAuth();
@@ -73,17 +100,26 @@ export default function CreateGuildPage() {
       socialYoutube: "",
       socialDiscord: "",
       region: undefined,
+      server: undefined,
     }
   });
 
   const { handleSubmit, control, formState: { errors }, watch, setValue } = form;
   const watchedGame = watch("game");
+  const watchedRegion = watch("region");
 
   useEffect(() => {
     if (watchedGame !== "Throne and Liberty") {
       setValue("region", undefined);
+      setValue("server", undefined);
     }
   }, [watchedGame, setValue]);
+
+  useEffect(() => {
+    if (watchedRegion) { // If region changes (or is set initially), reset server
+      setValue("server", undefined);
+    }
+  }, [watchedRegion, setValue]);
 
 
   useEffect(() => {
@@ -112,8 +148,6 @@ export default function CreateGuildPage() {
       status: 'Ativo'
     };
     
-    // Se o jogo for Throne and Liberty, inicializa os campos específicos como undefined.
-    // Caso contrário, não os inclui no objeto.
     if (data.game === "Throne and Liberty") {
         ownerRoleInfo.tlRole = undefined;
         ownerRoleInfo.tlPrimaryWeapon = undefined;
@@ -126,7 +160,7 @@ export default function CreateGuildPage() {
     };
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
-      "Líder": {
+      "Lider": {
         permissions: Object.values(GuildPermission), 
         description: "Fundador e administrador principal da guilda."
       },
@@ -141,6 +175,7 @@ export default function CreateGuildPage() {
         description: data.description || "",
         game: data.game,
         ...(data.game === "Throne and Liberty" && data.region && { region: data.region }),
+        ...(data.game === "Throne and Liberty" && data.region && data.server && { server: data.server }),
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
@@ -161,6 +196,9 @@ export default function CreateGuildPage() {
     if (guildData.game !== "Throne and Liberty" || !guildData.region) {
         delete guildData.region;
     }
+    if (guildData.game !== "Throne and Liberty" || !guildData.server) {
+        delete guildData.server;
+    }
 
 
     try {
@@ -168,7 +206,7 @@ export default function CreateGuildPage() {
 
       toast({
         title: "Guilda Criada com Sucesso!",
-        description: `${data.name} está pronta para a aventura! Detalhes como logo e eventos podem ser configurados no dashboard.`,
+        description: `${data.name} está pronta para a aventura! Detalhes como logo e eventos podem ser configurados no painel de controle.`,
         duration: 7000,
         action: (
             <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${newGuildRef.id}`)}>
@@ -209,7 +247,7 @@ export default function CreateGuildPage() {
           <CardTitle>Detalhes da Guilda</CardTitle>
           <CardDescription>
             Preencha as informações abaixo para registrar sua guilda.
-            Detalhes como logotipo, eventos e outros ajustes finos devem ser feitos diretamente no dashboard da guilda após a criação.
+            Detalhes como logotipo, eventos e outros ajustes finos devem ser feitos diretamente no painel de controle da guilda após a criação.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -301,31 +339,69 @@ export default function CreateGuildPage() {
               />
 
               {watchedGame === "Throne and Liberty" && (
-                <FormField
-                  control={control}
-                  name="region"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                      <div className="relative flex items-center mt-1">
-                         <Globe className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                          <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
-                            <FormControl>
-                              <SelectTrigger className={`form-input pl-10 ${errors.region ? 'border-destructive focus:border-destructive' : ''}`}>
-                                <SelectValue placeholder="Selecione uma região" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {tlRegions.map(region => (
-                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
+                <>
+                  <FormField
+                    control={control}
+                    name="region"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                        <div className="relative flex items-center mt-1">
+                           <Globe className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                            <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger className={`form-input pl-10 ${errors.region ? 'border-destructive focus:border-destructive' : ''}`}>
+                                  <SelectValue placeholder="Selecione uma região" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {tlRegions.map(region => (
+                                  <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {watchedRegion && (
+                     <FormField
+                        control={control}
+                        name="server"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                            <div className="relative flex items-center mt-1">
+                              <ServerIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value || ""}
+                                defaultValue={field.value || ""}
+                                disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className={`form-input pl-10 ${errors.server ? 'border-destructive focus:border-destructive' : ''}`}>
+                                    <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {tlServers[watchedRegion]?.length > 0 ? (
+                                    tlServers[watchedRegion].map(server => (
+                                      <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
+                                    ))
+                                  ) : (
+                                    <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                   )}
-                />
+                </>
               )}
 
 
@@ -400,7 +476,7 @@ export default function CreateGuildPage() {
               </div>
               <Alert variant="default" className="bg-background border-accent/30">
                   <AlertCircle className="h-4 w-4 text-accent" />
-                  <AlertTitle className="font-semibold">Ajustes Finos no Dashboard</AlertTitle>
+                  <AlertTitle className="font-semibold">Ajustes Finos no Painel de Controle</AlertTitle>
                   <AlertDescription className="text-xs">
                   Lembre-se: O logotipo, banner, gerenciamento de membros, eventos e outras configurações detalhadas da guilda são gerenciados através do painel da guilda após sua criação.
                   </AlertDescription>

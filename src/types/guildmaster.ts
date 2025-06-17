@@ -81,7 +81,8 @@ export interface Guild {
   ownerDisplayName?: string;
   memberIds?: string[];
   game?: string;
-  region?: string; // Added region field
+  region?: string;
+  server?: string; // Added server field
   tags?: string[];
   createdAt?: Date | Timestamp;
   password?: string;
@@ -243,7 +244,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
@@ -289,3 +290,4 @@ export interface AppNotification {
   targetUserId?: string;
   isRead?: boolean;
 }
+
