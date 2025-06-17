@@ -128,19 +128,20 @@ export function AppNotifications() {
           ) : (
             <div className="divide-y">
               {notifications.map((notification) => (
-                <Link key={notification.id} href={notification.link} passHref legacyBehavior>
-                  <a
-                    className="block p-3 hover:bg-muted transition-colors"
-                    onClick={() => setIsPopoverOpen(false)} // Close popover on click
-                  >
-                    <div className="flex items-start">
-                      {getNotificationIcon(notification.type)}
-                      <div className="flex-1">
-                        <p className="text-sm text-foreground mb-0.5 leading-snug">{notification.message}</p>
-                        <p className="text-xs text-muted-foreground">{formatTimestamp(notification.timestamp)}</p>
-                      </div>
+                <Link
+                  key={notification.id}
+                  href={notification.link}
+                  passHref
+                  className="block p-3 hover:bg-muted transition-colors"
+                  onClick={() => setIsPopoverOpen(false)} // Close popover on click
+                >
+                  <div className="flex items-start">
+                    {getNotificationIcon(notification.type)}
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground mb-0.5 leading-snug">{notification.message}</p>
+                      <p className="text-xs text-muted-foreground">{formatTimestamp(notification.timestamp)}</p>
                     </div>
-                  </a>
+                  </div>
                 </Link>
               ))}
             </div>
