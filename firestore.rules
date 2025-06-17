@@ -4,188 +4,231 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
-    function isOwner(guildDoc) {
-      return request.auth != null && request.auth.uid == guildDoc.ownerId;
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    function isMember(guildDoc) {
+    function isOwner(guildDocData) {
+      return isAuthenticated() && request.auth.uid == guildDocData.ownerId;
+    }
+
+    function isGuildMember(guildDocData) {
       // Ensure memberIds exists and is a list before calling hasAny
-      return request.auth != null && 
-             'memberIds' in guildDoc && 
-             guildDoc.memberIds != null && 
-             guildDoc.memberIds.hasAny([request.auth.uid]);
+      return isAuthenticated() &&
+             guildDocData.memberIds != null &&
+             typeof guildDocData.memberIds.hasAny == 'function' && // Check if it's a list-like object for rules
+             guildDocData.memberIds.hasAny([request.auth.uid]);
     }
 
-    // Checks if the currently authenticated user has a specific permission in the given guildDoc
-    function hasPermission(guildDoc, permission) {
-      // Ensure roles and customRoles paths exist before trying to access them
-      return request.auth != null &&
-             'roles' in guildDoc && request.auth.uid in guildDoc.roles &&
-             guildDoc.roles[request.auth.uid].roleName != null && // roleName itself exists
-             'customRoles' in guildDoc && guildDoc.roles[request.auth.uid].roleName in guildDoc.customRoles &&
-             guildDoc.customRoles[guildDoc.roles[request.auth.uid].roleName].permissions != null && // permissions list exists
-             guildDoc.customRoles[guildDoc.roles[request.auth.uid].roleName].permissions.hasAny([permission]);
+    // permissionName must be a string literal like 'MANAGE_MEMBERS_KICK'
+    function hasGuildPermission(guildDocData, permissionName) {
+      return isAuthenticated() &&
+             guildDocData.roles != null &&
+             request.auth.uid in guildDocData.roles &&
+             guildDocData.roles[request.auth.uid].roleName != null && // Ensure roleName is not null
+             guildDocData.customRoles != null &&
+             guildDocData.roles[request.auth.uid].roleName in guildDocData.customRoles &&
+             guildDocData.customRoles[guildDocData.roles[request.auth.uid].roleName].permissions != null &&
+             typeof guildDocData.customRoles[guildDocData.roles[request.auth.uid].roleName].permissions.hasAny == 'function' &&
+             guildDocData.customRoles[guildDocData.roles[request.auth.uid].roleName].permissions.hasAny([permissionName]);
     }
 
-    // Checks if a user is trying to update only their own allowed profile fields within the roles map
-    function isSelfProfileUpdate(newRoleData, oldRoleData) {
-      let modifiableBySelf = [
-        'characterNickname', 'gearScore', 'gearScoreScreenshotUrl',
-        'gearBuildLink', 'skillBuildLink', 'tlRole',
-        'tlPrimaryWeapon', 'tlSecondaryWeapon'
-      ];
-      let adminOnlyFields = ['roleName', 'status', 'notes', 'dkpBalance'];
-
-      let adminFieldIsAttemptedChange = adminOnlyFields.filter(field => newRoleData[field] != oldRoleData[field]).size() > 0;
-      if (adminFieldIsAttemptedChange) {
-        return false;
-      }
-
-      let modifiableFieldIsChanged = modifiableBySelf.filter(field => newRoleData[field] != oldRoleData[field]).size() > 0;
-      if (!modifiableFieldIsChanged) {
-        // If nothing allowed is changed, this specific self-update rule part isn't met.
-        // This also handles the case where no fields changed at all.
-        return false; 
-      }
-      
-      let allChangedKeysInRole = newRoleData.diff(oldRoleData).affectedKeys();
-      // Ensure all keys that *did* change are within the 'modifiableBySelf' list.
-      // The filter constructs the list of keys from `modifiableBySelf` that were actually affected.
-      // `hasOnly` then checks if `allChangedKeysInRole` is exactly that set.
-      return allChangedKeysInRole.hasOnly(
-        modifiableBySelf.filter(key => allChangedKeysInRole.hasAny([key]))
-      );
-    }
-    
-    // User collection
+    // User profiles
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth.uid == userId && 
-                       request.resource.data.uid == userId && // Ensure uid is set correctly
-                       request.resource.data.email == request.auth.token.email && // Ensure email matches auth
-                       !("createdAt" in resource.data); // createdAt only on create
-      allow update: if request.auth.uid == userId &&
-                       request.resource.data.uid == resource.data.uid && // UID cannot change
-                       request.resource.data.email == resource.data.email && // Email cannot change (usually)
-                       !("createdAt" in request.resource.data); // createdAt cannot be updated
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
+                       request.resource.data.uid == userId &&
+                       request.resource.data.createdAt == request.time &&
+                       !("guilds" in request.resource.data); // guilds should be empty on creation
+      allow update: if isAuthenticated() && request.auth.uid == userId &&
+                       // Allow updating displayName, photoURL, lastNotificationsCheckedTimestamp
+                       request.resource.data.keys().hasOnly(['displayName', 'photoURL', 'lastNotificationsCheckedTimestamp', 'uid', 'email', 'createdAt']) &&
+                       request.resource.data.uid == resource.data.uid &&
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.createdAt == resource.data.createdAt;
     }
 
-    // Guilds collection
+    // Guilds
     match /guilds/{guildId} {
-      allow read: if isMember(resource.data);
-      allow create: if request.auth.uid == request.resource.data.ownerId &&
-                       !("createdAt" in resource.data); // Ensure createdAt is server-side
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       request.resource.data.memberIds.hasAll([request.auth.uid]) &&
+                       request.resource.data.memberCount == 1 &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.name.size() > 0;
 
-      allow update: if request.auth != null && (
-        // Case 1: Owner is making changes.
-        (isOwner(request.resource.data) && (
-            // Sub-case 1.1: Owner changing top-level config (NOT roles or customRoles map itself)
-            (
-              // Check that *only* allowed top-level fields are being modified.
-              request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly([
-                    'name', 'description', 'password', 'isOpen', 'bannerUrl', 'logoUrl', 'socialLinks', 'game', 'region', 'server', 'tags', 'recruitmentQuestions',
-                    'dkpSystemEnabled', 'dkpRedemptionWindow', 'dkpDefaultsPerCategory',
-                    'dkpDecayEnabled', 'dkpDecayPercentage', 'dkpDecayIntervalDays', 'dkpDecayInitialDate'
-                ].filter(key => // Filter for keys that were actually added, changed, or removed
-                    (request.resource.data[key] != resource.data[key]) || // Covers value changes and additions where old value was undefined
-                    (key in resource.data && !(key in request.resource.data)) ||    // Field deleted
-                    (!(key in resource.data) && (key in request.resource.data))     // Field added (and not present in old)
-                )) &&
-             request.resource.data.diff(resource.data).affectedKeys().size() > 0 // At least one of these fields changed
-            ) ||
-            // Sub-case 1.2: Owner changing something within the 'roles' map (e.g., DKP decay, manual role edits)
-            (
-              request.resource.data.roles != resource.data.roles &&
-              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles'])
-            )
-          )
-        ) ||
-        // Case 2: User with MANAGE_ROLES_PERMISSIONS updating customRoles (and nothing else)
-        (hasPermission(request.resource.data, 'MANAGE_ROLES_PERMISSIONS') &&
-          request.resource.data.customRoles != resource.data.customRoles &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customRoles'])
-        ) ||
-        // Case 3: Member self-updating their own allowed profile fields in their roles entry (and nothing else at top level)
-        (
-          isMember(request.resource.data) && request.auth.uid in request.resource.data.roles && // Member and has a role entry
-          resource.data.roles[request.auth.uid] != null && // Old role data must exist for comparison
-          request.resource.data.roles[request.auth.uid] != resource.data.roles[request.auth.uid] && // Their own role data actually changed
-          isSelfProfileUpdate(request.resource.data.roles[request.auth.uid], resource.data.roles[request.auth.uid]) && // The change consists of allowed fields
-          // Ensure that only their specific part of the roles map changed, or if other top-level fields change, another rule must permit it.
-          // This checks if the *only* top-level key affected is 'roles', and within 'roles', only their entry changed.
+      allow update: if isAuthenticated() && (
+        // 1. Owner can update most top-level fields
+        (isOwner(resource.data) &&
+          request.resource.data.ownerId == resource.data.ownerId && // Cannot change owner
+          request.resource.data.createdAt == resource.data.createdAt && // Cannot change createdAt
+          // memberCount and memberIds are managed by specific join/kick/accept logic, not direct owner update here for safety
+          request.resource.data.memberCount == resource.data.memberCount &&
+          request.resource.data.memberIds.toSet() == resource.data.memberIds.toSet() &&
+          // Check that only allowed fields are part of the update diff or roles/customRoles (which have their own detailed rules below if not owner)
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
-            request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid])
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'name', 'description', 'bannerUrl', 'logoUrl', 'game', 'region', 'server', 'tags',
+              'password', 'isOpen', 'socialLinks',
+              'dkpSystemEnabled', 'dkpRedemptionWindow', 'dkpDefaultsPerCategory',
+              'dkpDecayEnabled', 'dkpDecayPercentage', 'dkpDecayIntervalDays', 'dkpDecayInitialDate',
+              'lastDkpDecayTimestamp', 'roles', 'customRoles', 'recruitmentQuestions'
+              // Exclude memberIds, memberCount, ownerId, createdAt from this general owner update condition as they are sensitive
+            ])
           )
-        )
+        ) ||
+        // 2. Member updating their own character info (specific fields within roles[uid])
+        (isGuildMember(resource.data) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
+          request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid]) &&
+          request.resource.data.roles[request.auth.uid].diff(resource.data.roles[request.auth.uid]).affectedKeys()
+            .hasOnly(['characterNickname', 'gearScore', 'gearScoreScreenshotUrl', 'gearBuildLink', 'skillBuildLink', 'tlRole', 'tlPrimaryWeapon', 'tlSecondaryWeapon', 'notes', 'status']) &&
+          request.resource.data.roles[request.auth.uid].roleName == resource.data.roles[request.auth.uid].roleName &&
+          request.resource.data.roles[request.auth.uid].dkpBalance == resource.data.roles[request.auth.uid].dkpBalance
+        ) ||
+        // 3. Updating customRoles by someone with MANAGE_ROLES_PERMISSIONS
+        (hasGuildPermission(resource.data, 'MANAGE_ROLES_PERMISSIONS') &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customRoles']) &&
+          request.resource.data.ownerId == resource.data.ownerId && // Non-owners cannot change other guild settings
+          request.resource.data.memberCount == resource.data.memberCount &&
+          request.resource.data.memberIds.toSet() == resource.data.memberIds.toSet()
+        ) ||
+        // 4. Updating specific fields in roles map by users with MANAGE_MEMBERS_EDIT_ROLE, MANAGE_MEMBERS_EDIT_STATUS, or MANAGE_MEMBERS_EDIT_NOTES
+        ( (hasGuildPermission(resource.data, 'MANAGE_MEMBERS_EDIT_ROLE') || hasGuildPermission(resource.data, 'MANAGE_MEMBERS_EDIT_STATUS') || hasGuildPermission(resource.data, 'MANAGE_MEMBERS_EDIT_NOTES') ) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
+          request.resource.data.roles.diff(resource.data.roles).affectedKeys().size() > 0 &&
+          request.resource.data.roles.diff(resource.data.roles).affectedKeys().map(
+            uid =>
+              (uid != request.auth.uid || isOwner(resource.data)) && // Cannot edit self unless owner
+              (request.resource.data.roles[uid].diff(resource.data.roles[uid]).affectedKeys().hasOnly(['roleName', 'status', 'notes'])) &&
+              (uid != resource.data.ownerId || isOwner(resource.data)) && // Cannot edit owner unless owner
+              request.resource.data.roles[uid].dkpBalance == resource.data.roles[uid].dkpBalance // Cannot change DKP with these permissions
+          ).hasAll([true]) &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.memberCount == resource.data.memberCount &&
+          request.resource.data.memberIds.toSet() == resource.data.memberIds.toSet()
+        ) ||
+        // 5. Kicking a member (updates memberIds, memberCount, roles.{kickedUid})
+        ((isOwner(resource.data) || hasGuildPermission(resource.data, 'MANAGE_MEMBERS_KICK')) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberCount', 'roles']) &&
+          request.resource.data.memberCount == resource.data.memberCount - 1 &&
+          request.resource.data.roles.keys().size() == resource.data.roles.keys().size() - 1 &&
+          !request.resource.data.memberIds.hasAll(resource.data.memberIds) && // Ensures a member was actually removed
+          request.resource.data.ownerId == resource.data.ownerId // Prevent changing ownerId during kick
+        ) ||
+        // 6. Accepting an application (updates memberIds, memberCount, roles.{newMemberUid})
+        (((isOwner(resource.data) || hasGuildPermission(resource.data, 'MANAGE_RECRUITMENT_PROCESS_APPLICATIONS'))) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberCount', 'roles']) &&
+          request.resource.data.memberCount == resource.data.memberCount + 1 &&
+          request.resource.data.roles.keys().size() == resource.data.roles.keys().size() + 1 &&
+          !resource.data.memberIds.hasAll(request.resource.data.memberIds) && // Ensures a member was actually added
+          request.resource.data.ownerId == resource.data.ownerId // Prevent changing ownerId during accept
+        ) ||
+        // 7. DKP awarded via PIN or On-Demand Decay (owner updates roles for on-demand, member updates self for PIN)
+        (
+          (isGuildMember(resource.data) && // For PIN redemption
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
+            request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid]) &&
+            request.resource.data.roles[request.auth.uid].diff(resource.data.roles[request.auth.uid]).affectedKeys().hasOnly(['dkpBalance']) &&
+            request.resource.data.roles[request.auth.uid].dkpBalance >= resource.data.roles[request.auth.uid].dkpBalance // DKP can only increase or stay same
+          ) ||
+          (isOwner(resource.data) && // For On-Demand Decay by Owner
+            request.resource.data.dkpDecayEnabled == true &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
+            request.resource.data.roles.diff(resource.data.roles).affectedKeys().map( // Check all affected roles
+              uid => request.resource.data.roles[uid].diff(resource.data.roles[uid]).affectedKeys().hasOnly(['dkpBalance'])
+            ).hasAll([true])
+          )
+        ) &&
+        request.resource.data.ownerId == resource.data.ownerId // General safety: ownerId cannot change during these DKP ops
       );
 
-      allow delete: if isOwner(resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data);
 
       // Subcollections
       match /auditLogs/{logId} {
-        allow read: if isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data) &&
-                       hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'VIEW_AUDIT_LOG');
-        allow create: if request.auth.uid == request.resource.data.actorId &&
-                         isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data) &&
-                         !("timestamp" in resource.data); // Ensure timestamp is server-generated
+        allow read: if isAuthenticated() && hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'VIEW_AUDIT_LOG');
+        allow create: if isAuthenticated() && isGuildMember(get(/databases/$(database)/documents/guilds/$(guildId)).data) &&
+                         request.resource.data.actorId == request.auth.uid &&
+                         request.resource.data.timestamp == request.time;
         allow update, delete: if false;
       }
 
       match /applications/{applicationId} {
-        allow read: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_RECRUITMENT_VIEW_APPLICATIONS');
-        allow create: if request.auth.uid == request.resource.data.applicantId &&
-                         !("submittedAt" in resource.data); // Ensure submittedAt is server-generated
-        allow update: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_RECRUITMENT_PROCESS_APPLICATIONS') &&
+        allow read: if isAuthenticated() && (
+                       hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_RECRUITMENT_VIEW_APPLICATIONS') ||
+                       request.auth.uid == resource.data.applicantId
+                     );
+        allow create: if isAuthenticated() &&
+                         request.resource.data.applicantId == request.auth.uid &&
+                         request.resource.data.guildId == guildId &&
+                         request.resource.data.status == 'pending' &&
+                         request.resource.data.submittedAt == request.time;
+        allow update: if isAuthenticated() && hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_RECRUITMENT_PROCESS_APPLICATIONS') &&
                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt']) &&
-                         !("submittedAt" in request.resource.data); // submittedAt should not change
-        allow delete: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_RECRUITMENT_PROCESS_APPLICATIONS');
+                         request.resource.data.reviewedAt == request.time &&
+                         request.resource.data.reviewedBy == request.auth.uid &&
+                         request.resource.data.applicantId == resource.data.applicantId &&
+                         request.resource.data.guildId == resource.data.guildId &&
+                         request.resource.data.submittedAt == resource.data.submittedAt;
+        allow delete: if false;
       }
 
       match /events/{eventId} {
-        allow read: if isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data);
-        allow create: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_EVENTS_CREATE') &&
-                         !("createdAt" in resource.data);
-        allow update: if (
-                        hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_EVENTS_EDIT') &&
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                          'title', 'description', 'date', 'time', 'endDate', 'endTime', 'location', 'dkpValue', 'requiresPin', 'category', 'subCategory'
-                        ].filter(key => // Filter for keys that actually changed
-                            (request.resource.data[key] != resource.data[key]) ||
-                            (key in resource.data && !(key in request.resource.data)) ||
-                            (!(key in resource.data) && (key in request.resource.data))
-                        )) && request.resource.data.diff(resource.data).affectedKeys().size() > 0 && // Ensure at least one field changed
-                        !("createdAt" in request.resource.data) // createdAt cannot be changed
-                       ) ||
-                       ( // Allow any member to update attendeesWithPin (e.g., when submitting a PIN)
-                         isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data) &&
-                         request.resource.data.attendeesWithPin != resource.data.attendeesWithPin &&
-                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeesWithPin']) &&
-                         !("createdAt" in request.resource.data) // createdAt cannot be changed
+        allow read: if isAuthenticated() && isGuildMember(get(/databases/$(database)/documents/guilds/$(guildId)).data);
+        allow create: if isAuthenticated() && hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_EVENTS_CREATE') &&
+                         request.resource.data.organizerId == request.auth.uid &&
+                         request.resource.data.guildId == guildId &&
+                         request.resource.data.createdAt == request.time;
+        allow update: if isAuthenticated() && (
+                        (request.auth.uid == resource.data.organizerId && request.resource.data.organizerId == resource.data.organizerId) ||
+                        hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_EVENTS_EDIT')
+                       ) &&
+                       request.resource.data.guildId == resource.data.guildId &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       (
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeesWithPin']) || // Member redeeming PIN
+                         request.resource.data.diff(resource.data).affectedKeys().hasAny([ // Organizer/Admin editing event
+                           'title', 'description', 'date', 'time', 'endDate', 'endTime', 'location',
+                           'dkpValue', 'requiresPin', 'pinCode', 'attendeesWithPin', 'category', 'subCategory'
+                         ])
                        );
-        allow delete: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_EVENTS_DELETE');
+        allow delete: if isAuthenticated() && (
+                         request.auth.uid == resource.data.organizerId ||
+                         hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_EVENTS_DELETE')
+                       );
       }
 
       match /groups/{groupId} {
-        allow read: if isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data);
-        allow create: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_GROUPS_CREATE') &&
-                         !("createdAt" in resource.data);
-        allow update: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_GROUPS_EDIT') &&
-                         !("createdAt" in request.resource.data);
-        allow delete: if hasPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_GROUPS_DELETE');
+        allow read: if isAuthenticated() && isGuildMember(get(/databases/$(database)/documents/guilds/$(guildId)).data);
+        allow create: if isAuthenticated() && hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_GROUPS_CREATE') &&
+                         request.resource.data.createdBy == request.auth.uid &&
+                         request.resource.data.guildId == guildId &&
+                         request.resource.data.createdAt == request.time;
+        allow update: if isAuthenticated() && hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_GROUPS_EDIT') &&
+                         request.resource.data.createdBy == resource.data.createdBy &&
+                         request.resource.data.guildId == resource.data.guildId &&
+                         request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isAuthenticated() && hasGuildPermission(get(/databases/$(database)/documents/guilds/$(guildId)).data, 'MANAGE_GROUPS_DELETE');
       }
-      
+
       match /notifications/{notificationId} {
-        allow read: if isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data);
-        allow create: if (isOwner(get(/databases/$(database)/documents/guilds/$(guildId)).data) ||
-                         (isMember(get(/databases/$(database)/documents/guilds/$(guildId)).data) && request.auth.uid == request.resource.data.createdByUserId)) &&
-                         !("timestamp" in resource.data);
+        allow read: if isAuthenticated() && isGuildMember(get(/databases/$(database)/documents/guilds/$(guildId)).data);
+        allow create: if isAuthenticated() && isGuildMember(get(/databases/$(database)/documents/guilds/$(guildId)).data) &&
+                         request.resource.data.createdByUserId == request.auth.uid &&
+                         request.resource.data.guildId == guildId &&
+                         request.resource.data.timestamp == request.time;
         allow update, delete: if false;
+      }
+
+      match /dkpDecayLogs/{logId} {
+          allow read: if isAuthenticated() && isOwner(get(/databases/$(database)/documents/guilds/$(guildId)).data);
+          allow create: if isAuthenticated() && isOwner(get(/databases/$(database)/documents/guilds/$(guildId)).data) &&
+                           request.resource.data.timestamp == request.time;
+          allow update, delete: if false;
       }
     }
   }
 }
-
-    
