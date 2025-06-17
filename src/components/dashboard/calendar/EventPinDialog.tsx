@@ -49,16 +49,20 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   }, [isOpen, event]);
 
-  if (!event || !guildId || !currentUser || !guild) return null;
-
   const canCurrentUserRevealPin = useMemo(() => {
-    if (!currentUserRoleInfo || !guild.customRoles) return false;
+    // Check for guild and currentUserRoleInfo before accessing their properties
+    if (!currentUserRoleInfo || !guild || !guild.customRoles) {
+      return false;
+    }
     return hasPermission(
       currentUserRoleInfo.roleName,
       guild.customRoles,
       GuildPermission.MANAGE_EVENTS_VIEW_PIN
     );
-  }, [currentUserRoleInfo, guild.customRoles]);
+  }, [currentUserRoleInfo, guild]); // Dependency on guild object
+
+  // Early return must be after all hook calls
+  if (!event || !guildId || !currentUser || !guild) return null;
 
 
   const handleInputChange = (index: number, value: string) => {
