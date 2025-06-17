@@ -86,7 +86,12 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
     { value: "Eldritch", label: "Eldritch" },
     { value: "Chamir", label: "Chamir" },
   ],
-  "Asia Pacific": [],
+  "Asia Pacific": [
+    { value: "Valkarg", label: "Valkarg" },
+    { value: "Sunstorm", label: "Sunstorm" },
+    { value: "Amethyst", label: "Amethyst" },
+    { value: "Titanspine", label: "Titanspine" },
+  ],
 };
 
 const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
