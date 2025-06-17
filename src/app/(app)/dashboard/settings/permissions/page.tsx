@@ -36,28 +36,27 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import * as AccordionPrimitive from "@radix-ui/react-accordion"
 
 
 const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
-  [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Lista de Membros e Perfis Básicos", description: "Permite visualizar a lista completa de membros da guilda e seus perfis detalhados." },
-  [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: { title: "Alterar Cargos de Membros", description: "Permite modificar o cargo atribuído a outros membros da guilda." },
-  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Modificar Status de Membros", description: "Permite alterar o status de atividade de outros membros (ex: Ativo, Inativo, Licença)." },
-  [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: { title: "Adicionar ou Editar Notas Administrativas sobre Membros", description: "Permite criar ou modificar notas internas visíveis apenas para cargos com permissão." },
-  [GuildPermission.MANAGE_MEMBERS_KICK]: { title: "Expulsar Membros da Guilda", description: "Permite remover permanentemente membros da guilda." },
-  [GuildPermission.MANAGE_EVENTS_CREATE]: { title: "Criar Novos Eventos e Atividades no Calendário", description: "Permite adicionar novos eventos, raides, ou outras atividades ao calendário da guilda." },
-  [GuildPermission.MANAGE_EVENTS_EDIT]: { title: "Editar Eventos Existentes no Calendário", description: "Permite modificar detalhes de eventos já criados, como data, hora e descrição." },
-  [GuildPermission.MANAGE_EVENTS_DELETE]: { title: "Excluir Eventos do Calendário", description: "Permite remover eventos do calendário da guilda." },
-  [GuildPermission.MANAGE_EVENTS_VIEW_PIN]: { title: "Visualizar Códigos PIN de Eventos", description: "Permite ver os códigos PIN gerados para eventos, geralmente para confirmação de presença ou DKP." },
-  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Alterar Configurações Gerais da Guilda", description: "Permite modificar o nome da guilda, sua senha de acesso e outras configurações básicas." },
-  [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: { title: "Modificar a Aparência da Guilda", description: "Permite alterar o logo e o banner da guilda, personalizando sua identidade visual." },
-  [GuildPermission.MANAGE_ROLES_PERMISSIONS]: { title: "Gerenciar Cargos e Suas Permissões", description: "Permite criar, editar e excluir cargos, bem como definir as permissões de cada um (acesso a esta tela)." },
-  [GuildPermission.MANAGE_GROUPS_CREATE]: { title: "Criar Novos Grupos/Parties para Membros", description: "Permite formar e nomear grupos (parties) de membros para atividades específicas." },
-  [GuildPermission.MANAGE_GROUPS_EDIT]: { title: "Editar Grupos/Parties Existentes", description: "Permite modificar a composição e detalhes de grupos já formados." },
-  [GuildPermission.MANAGE_GROUPS_DELETE]: { title: "Excluir Grupos/Parties", description: "Permite dissolver grupos (parties) que não são mais necessários." },
-  [GuildPermission.VIEW_AUDIT_LOG]: { title: "Acessar o Log de Auditoria da Guilda", description: "Permite visualizar o histórico de todas as ações administrativas importantes realizadas na guilda." },
-  [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: { title: "Visualizar Candidaturas Enviadas à Guilda", description: "Permite ver a lista de jogadores que se candidataram para entrar na guilda." },
-  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Aprovar ou Rejeitar Candidaturas", description: "Permite aceitar ou recusar candidaturas de novos membros." }
+  [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Permite visualizar a lista de membros e seus perfis básicos." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: { title: "Gerenciar Cargos de Membros", description: "Permite modificar o cargo de outros membros." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Permite alterar o status de atividade dos membros (Ativo, Inativo, etc.)." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: { title: "Gerenciar Notas de Membros", description: "Permite adicionar ou editar notas administrativas sobre membros." },
+  [GuildPermission.MANAGE_MEMBERS_KICK]: { title: "Expulsar Membros", description: "Permite remover membros da guilda." },
+  [GuildPermission.MANAGE_EVENTS_CREATE]: { title: "Criar Eventos/Atividades", description: "Permite adicionar novos eventos ao calendário da guilda." },
+  [GuildPermission.MANAGE_EVENTS_EDIT]: { title: "Editar Eventos/Atividades", description: "Permite modificar detalhes de eventos existentes." },
+  [GuildPermission.MANAGE_EVENTS_DELETE]: { title: "Excluir Eventos/Atividades", description: "Permite remover eventos do calendário." },
+  [GuildPermission.MANAGE_EVENTS_VIEW_PIN]: { title: "Visualizar PIN de Eventos", description: "Permite ver os códigos PIN gerados para eventos." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Gerenciar Configurações Gerais da Guilda", description: "Permite modificar nome, senha e outras configurações básicas da guilda." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: { title: "Gerenciar Aparência da Guilda", description: "Permite alterar logo e banner da guilda." },
+  [GuildPermission.MANAGE_ROLES_PERMISSIONS]: { title: "Gerenciar Cargos e Permissões", description: "Permite criar, editar, excluir cargos e definir suas permissões (acesso a esta tela)." },
+  [GuildPermission.MANAGE_GROUPS_CREATE]: { title: "Criar Grupos/Parties", description: "Permite formar e nomear grupos (parties) de membros." },
+  [GuildPermission.MANAGE_GROUPS_EDIT]: { title: "Editar Grupos/Parties", description: "Permite modificar a composição e detalhes de grupos existentes." },
+  [GuildPermission.MANAGE_GROUPS_DELETE]: { title: "Excluir Grupos/Parties", description: "Permite dissolver grupos (parties)." },
+  [GuildPermission.VIEW_AUDIT_LOG]: { title: "Ver Log de Auditoria", description: "Permite visualizar o histórico de ações administrativas na guilda." },
+  [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: { title: "Ver Candidaturas", description: "Permite visualizar candidaturas enviadas à guilda." },
+  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Processar Candidaturas", description: "Permite aprovar ou rejeitar candidaturas de novos membros." }
 };
 
 
@@ -124,7 +123,8 @@ function PermissionsPageContent() {
         setCustomRoles(guildData.customRoles || {});
 
         const userRoleInfo = guildData.roles?.[currentUser.uid];
-        if (!userRoleInfo || !hasPermission(userRoleInfo.roleName, guildData.customRoles, GuildPermission.MANAGE_ROLES_PERMISSIONS)) {
+        const currentCustomRoles = guildData.customRoles || {};
+        if (!userRoleInfo || !hasPermission(userRoleInfo.roleName, currentCustomRoles, GuildPermission.MANAGE_ROLES_PERMISSIONS)) {
           setAccessDenied(true);
         }
 
@@ -189,29 +189,24 @@ function PermissionsPageContent() {
     toast({ title: "Cargo Criado Localmente", description: `Cargo "${trimmedRoleName}" adicionado. Configure suas permissões e clique em "Salvar Alterações" no final da página para persistir.` });
   };
   
-  const handleDeleteRole = async () => {
-    if (!roleToDelete || !guildId || !currentUser || !canManagePermissionsPage) {
+  const handleDeleteRole = async (roleName: string) => {
+    if (!roleName || !guildId || !currentUser || !canManagePermissionsPage) {
         toast({ title: "Permissão Negada", description: "Você não tem permissão para excluir cargos.", variant: "destructive"});
         setRoleToDelete(null);
         return;
     }
-    if (roleToDelete === "Lider" || roleToDelete === "Membro") {
+    if (roleName === "Lider" || roleName === "Membro") {
       toast({ title: "Ação Não Permitida", description: "Os cargos 'Lider' e 'Membro' não podem ser excluídos.", variant: "destructive" });
       setRoleToDelete(null);
       return;
     }
 
-    // Optimistically update UI, then save
     const rolesBeforeDelete = { ...customRoles };
     const updatedRolesLocal = { ...customRoles };
-    delete updatedRolesLocal[roleToDelete];
+    delete updatedRolesLocal[roleName];
     setCustomRoles(updatedRolesLocal);
 
-    // Persist change (ideally this would be part of a larger "save all" if UX allows, but for delete it's often immediate)
-    // For now, this delete will be part of the main "Save Changes" button.
-    // If an immediate delete is desired, the handleSaveChanges logic would need to be callable for this specific action.
-    // For now, let's assume this state change is picked up by the main save button.
-    toast({ title: "Cargo Marcado para Exclusão", description: `O cargo "${roleToDelete}" será removido ao salvar as alterações.` });
+    toast({ title: "Cargo Marcado para Exclusão", description: `O cargo "${roleName}" será removido ao salvar as alterações.` });
     setRoleToDelete(null); 
   };
 
@@ -224,13 +219,11 @@ function PermissionsPageContent() {
     setIsSaving(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      // Ensure 'Lider' and 'Membro' roles exist with their default minimum permissions if they were somehow deleted from local state
       const rolesToSave = { ...customRoles };
       if (!rolesToSave["Lider"]) {
         rolesToSave["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
       } else {
-        // Ensure Lider always has MANAGE_ROLES_PERMISSIONS
-         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, GuildPermission.MANAGE_ROLES_PERMISSIONS])];
+         rolesToSave["Lider"].permissions = [...new Set([...rolesToSave["Lider"].permissions, GuildPermission.MANAGE_ROLES_PERMISSIONS, ...Object.values(GuildPermission)])];
       }
       if (!rolesToSave["Membro"]) {
         rolesToSave["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], description: "Membro padrão da guilda."};
@@ -238,10 +231,11 @@ function PermissionsPageContent() {
 
 
       await updateDoc(guildRef, { customRoles: rolesToSave });
-      setCustomRoles(rolesToSave); // Update local state with potentially corrected Lider/Membro roles
+      setCustomRoles(rolesToSave); 
 
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
          details: { changedField: 'customRoles' } as any, 
+         roleName: "Todos os Cargos", 
       });
 
       toast({ title: "Permissões Salvas!", description: "As permissões dos cargos foram atualizadas com sucesso." });
@@ -286,7 +280,7 @@ function PermissionsPageContent() {
   const sortedRoleNames = Object.keys(customRoles).sort((roleA, roleB) => {
     if (roleA === "Lider") return -1;
     if (roleB === "Lider") return 1;
-    if (roleA === "Membro") return -1;
+    if (roleA === "Membro") return -1; // Changed to ensure Membro comes after Lider but before others
     if (roleB === "Membro") return 1;
     return roleA.localeCompare(roleB);
   });
@@ -327,92 +321,86 @@ function PermissionsPageContent() {
         </CardContent>
       </Card>
 
-      <Accordion type="multiple" className="w-full space-y-6">
+      <Accordion type="multiple" defaultValue={["Lider", "Membro"]} className="w-full space-y-6">
         {sortedRoleNames.map((roleName) => {
           const roleData = customRoles[roleName];
           if (!roleData) return null;
           return (
-            <AccordionItem value={roleName} key={roleName} className="border-none">
-              <Card className="card-bg overflow-hidden">
-                <AccordionPrimitive.Header className="flex items-center justify-between w-full pr-4 sm:pr-6">
-                  <AccordionTrigger className="flex-1 py-4 px-4 sm:px-6 text-left hover:no-underline">
-                    <CardTitle className="text-xl sm:text-2xl">{roleName}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm mt-1">
-                      {roleData.description || `Permissões para o cargo ${roleName}.`}
-                    </CardDescription>
-                  </AccordionTrigger>
-                  {(roleName !== "Lider" && roleName !== "Membro") && (
-                    <AlertDialog onOpenChange={(open) => { if (open) { setRoleToDelete(roleName); } else if (!isSaving) { setRoleToDelete(null); } }}>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:bg-destructive/10 shrink-0"
-                          disabled={isSaving || !canManagePermissionsPage}
-                          onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling
+            <AccordionItem value={roleName} key={roleName} className="border-none bg-card card-bg rounded-xl overflow-hidden">
+              <AccordionTrigger className="flex w-full items-center justify-between p-4 sm:p-6 hover:no-underline">
+                <div className="text-left">
+                  <CardTitle className="text-xl sm:text-2xl">{roleName}</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
+                    {roleData.description || `Permissões para o cargo ${roleName}.`}
+                  </CardDescription>
+                </div>
+                {(roleName !== "Lider" && roleName !== "Membro") && (
+                  <AlertDialog onOpenChange={(open) => { if (open) { setRoleToDelete(roleName); } else if (!isSaving) { setRoleToDelete(null); } }}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 shrink-0 ml-auto" // Added ml-auto for spacing if chevron is also present
+                        disabled={isSaving || !canManagePermissionsPage}
+                        onClick={(e) => {
+                           e.stopPropagation(); // Prevent accordion from toggling
+                           // Actual opening of AlertDialog is handled by its trigger
+                        }}
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
+                          Membros com este cargo serão revertidos para "Membro" ao salvar as alterações.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteRole(roleName) }
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
-                            Membros com este cargo serão revertidos para "Membro" ao salvar as alterações.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => {
-                              // We mark for deletion, actual deletion happens on main save or if we change this to immediate
-                              const updatedRolesLocal = { ...customRoles };
-                              delete updatedRolesLocal[roleName];
-                              setCustomRoles(updatedRolesLocal);
-                              toast({ title: "Cargo Marcado para Exclusão", description: `O cargo "${roleName}" será removido ao salvar as alterações.` });
-                              setRoleToDelete(null); // Clear after marking
-                            }}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Marcar para Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </AccordionPrimitive.Header>
-                <AccordionContent>
-                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6 pt-2">
+                          Marcar para Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </AccordionTrigger>
+              <AccordionContent className="p-4 sm:p-6 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {allPermissions.map(permission => {
-                      const permInfo = permissionDescriptions[permission];
-                      const isLiderManagingOwnPermissions = roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS;
-                      return (
+                    const permInfo = permissionDescriptions[permission];
+                    const isLiderManagingOwnPermissions = roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS;
+                    return (
                         <div key={permission} className="flex items-start space-x-3 p-3 bg-background/50 dark:bg-input/30 rounded-md border border-border">
-                          <Checkbox
+                        <Checkbox
                             id={`${roleName}-${permission}`}
                             checked={roleData.permissions.includes(permission)}
                             onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
                             disabled={isSaving || !canManagePermissionsPage || isLiderManagingOwnPermissions}
                             aria-label={`${permInfo.title} para ${roleName}`}
-                          />
-                          <div className="grid gap-1.5 leading-none">
+                        />
+                        <div className="grid gap-1.5 leading-none">
                             <label
-                              htmlFor={`${roleName}-${permission}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground cursor-pointer"
+                            htmlFor={`${roleName}-${permission}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground cursor-pointer"
                             >
-                              {permInfo.title}
+                            {permInfo.title}
                             </label>
                             <p className="text-xs text-muted-foreground">
-                              {permInfo.description}
+                            {permInfo.description}
                             </p>
-                          </div>
                         </div>
-                      );
+                        </div>
+                    );
                     })}
-                  </CardContent>
-                </AccordionContent>
-              </Card>
+                </div>
+              </AccordionContent>
             </AccordionItem>
           );
         })}
@@ -435,3 +423,4 @@ export default function PermissionsPage() {
     </Suspense>
   );
 }
+
