@@ -8,14 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, updateDoc, arrayUnion, increment, writeBatch, Timestamp } from '@/lib/firebase';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { hasPermission } from '@/lib/permissions';
-import { add, isAfter } from 'date-fns';
-
+import { add, isAfter, isBefore } from 'date-fns'; // Added isBefore
 
 interface EventPinDialogProps {
   event: GuildEvent | null;
@@ -25,6 +24,15 @@ interface EventPinDialogProps {
   currentUserRole: GuildMemberRoleInfo | null;
   guildId: string | null;
 }
+
+// Helper function to parse date and time strings into a Date object
+const parseEventDateTimeString = (dateStr: string, timeStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  // Month is 0-indexed in JavaScript Date
+  return new Date(year, month - 1, day, hours, minutes);
+};
+
 
 export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole: currentUserRoleInfo, guildId }: EventPinDialogProps) {
   const { user: currentUser } = useAuth();
@@ -83,9 +91,32 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       return;
     }
 
-    // Check DKP Redemption Window
+    // Check if event has ended before allowing PIN redemption
+    if (event.endDate && event.endTime) {
+      const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
+      const currentTime = new Date();
+      if (isBefore(currentTime, eventEndDateTime)) {
+        toast({
+          title: "Evento em Andamento",
+          description: "O PIN só pode ser resgatado após o término do evento.",
+          variant: "default",
+          duration: 7000,
+          action: (
+            <Button variant="outline" size="sm" onClick={() => {
+              // Potentially close the toast if needed, though default duration might be enough
+            }}>
+              <Clock className="mr-2 h-4 w-4" /> OK
+            </Button>
+          )
+        });
+        onClose();
+        return;
+      }
+    }
+
+    // Check DKP Redemption Window (original logic)
     if (guild.dkpRedemptionWindow && event.endDate && event.endTime) {
-        const eventEndDateTime = new Date(`${event.endDate}T${event.endTime}`);
+        const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
         let redemptionDeadline: Date;
         if (guild.dkpRedemptionWindow.unit === 'hours') {
             redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
@@ -102,6 +133,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
 
     if (!event.dkpValue || event.dkpValue <= 0) {
       toast({ title: "Sem DKP", description: "Este evento não concede DKP ou o valor é zero.", variant: "default" });
+      // Still allow presence registration if PIN matches, even if DKP is 0
     }
 
     const enteredPin = pinInputs.join("");
@@ -112,7 +144,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
 
     if (event.attendeesWithPin?.includes(currentUser.uid)) {
-      toast({ title: "Presença Já Registrada", description: "Sua presença (e DKP) para este evento já foi registrada com PIN.", variant: "default" });
+      toast({ title: "Presença Já Registrada", description: "Sua presença (e DKP, se aplicável) para este evento já foi registrada com PIN.", variant: "default" });
       onClose();
       return;
     }
@@ -128,9 +160,11 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
         attendeesWithPin: arrayUnion(currentUser.uid)
       });
 
+      let dkpAwarded = 0;
       if (event.dkpValue && event.dkpValue > 0) {
+        dkpAwarded = event.dkpValue;
         batch.update(guildRef, {
-          [userRolePath]: increment(event.dkpValue)
+          [userRolePath]: increment(dkpAwarded)
         });
       }
 
@@ -144,13 +178,17 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
         {
           eventId: event.id,
           eventName: event.title,
-          dkpValueAwarded: event.dkpValue || 0,
+          dkpValueAwarded: dkpAwarded,
           targetUserId: currentUser.uid,
           targetUserDisplayName: currentUser.displayName
         }
       );
 
-      toast({ title: "Sucesso!", description: `Presença registrada e ${event.dkpValue || 0} DKP creditados para ${event.title}.` });
+      if (dkpAwarded > 0) {
+        toast({ title: "Sucesso!", description: `Presença registrada e ${dkpAwarded} DKP creditados para ${event.title}.` });
+      } else {
+        toast({ title: "Presença Registrada!", description: `Sua presença para ${event.title} foi registrada. Nenhum DKP foi concedido para este evento.` });
+      }
       onClose();
     } catch (error) {
       console.error("Error submitting PIN and awarding DKP:", error);
@@ -168,7 +206,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   };
 
-  if (!guild.dkpSystemEnabled) {
+  if (!guild.dkpSystemEnabled && event.requiresPin) { // If DKP is off but event somehow has requiresPin true
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-border">
@@ -177,7 +215,29 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
               <AlertTriangle className="mr-2 h-6 w-6 text-yellow-500" /> {event.title}
             </DialogTitle>
             <DialogDescription>
-              O sistema de DKP e PINs está atualmente desabilitado para esta guilda.
+              O sistema de DKP e PINs está atualmente desabilitado para esta guilda, mas este evento requer um PIN.
+              Contacte um administrador.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  
+  // If DKP system is disabled AND event does not require PIN (legacy or manually set)
+  if (!guild.dkpSystemEnabled && !event.requiresPin) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-primary flex items-center">
+               {event.title}
+            </DialogTitle>
+            <DialogDescription>
+              Este evento não requer PIN e o sistema DKP está desabilitado. Nenhuma ação de PIN é necessária.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-2">
@@ -198,7 +258,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
           </DialogTitle>
           <DialogDescription>
             {event.requiresPin
-              ? "Insira o código PIN de 6 dígitos para registrar presença e resgatar seus pontos DKP."
+              ? "Insira o código PIN de 6 dígitos para registrar presença e resgatar seus pontos DKP (se aplicável)."
               : "Este evento não requer um código PIN."}
           </DialogDescription>
         </DialogHeader>
@@ -227,7 +287,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
 
             <Button onClick={handleSubmitPin} className="w-full btn-gradient btn-style-secondary" disabled={isSubmittingPin || pinInputs.join("").length !== 6}>
               {isSubmittingPin ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Verificar Presença e Resgatar DKP
+              Registrar Presença
             </Button>
 
             {canCurrentUserRevealPin && (
