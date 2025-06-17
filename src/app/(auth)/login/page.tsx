@@ -47,16 +47,16 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-mail</Label>
             <div className="relative flex items-center">
               <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="seuemail@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="seuemail@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
@@ -65,13 +65,13 @@ export default function LoginPage() {
             <Label htmlFor="password">Senha</Label>
             <div className="relative flex items-center">
               <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="********" 
+              <Input
+                id="password"
+                type="password"
+                placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
@@ -96,3 +96,4 @@ export default function LoginPage() {
     </>
   );
 }
+

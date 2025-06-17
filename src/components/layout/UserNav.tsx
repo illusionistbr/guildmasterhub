@@ -67,16 +67,16 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings"> 
+            <Link href="/dashboard/settings">
               <Settings className="mr-2 h-4 w-4" />
               <span>Configurações</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator /> {/* Novo separador adicionado */}
+        <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings"> 
+            <Link href="/dashboard/settings">
               <UserCircle className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </Link>

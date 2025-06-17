@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  ClipboardList, Loader2, ShieldAlert, VenetianMask, UserCog, UserX, UserPlus, 
-  LogOut as LogOutIcon, ImagePlus, ImagePlay, CalendarDays, CalendarPlus, 
+import {
+  ClipboardList, Loader2, ShieldAlert, VenetianMask, UserCog, UserX, UserPlus,
+  LogOut as LogOutIcon, ImagePlus, ImagePlay, CalendarDays, CalendarPlus,
   CalendarMinus, CalendarX, Trophy, CalendarIcon as CalendarIconLucide, Filter, XCircle, ListChecks
 } from 'lucide-react';
 import { formatDistanceToNowStrict, format } from 'date-fns';
@@ -49,7 +49,7 @@ function AuditLogPageContent() {
   const [submittedEndDate, setSubmittedEndDate] = useState<Date | undefined>(undefined);
 
   const guildId = searchParams.get('guildId');
-  
+
   const currentUserRoleInfo = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return null;
     return guild.roles[currentUser.uid];
@@ -75,7 +75,7 @@ function AuditLogPageContent() {
       const guildSnap = await getDoc(guildDocRef);
 
       if (!guildSnap.exists()) {
-        toast({ title: "Guilda nao encontrada", variant: "destructive" });
+        toast({ title: "Guilda não encontrada", variant: "destructive" });
         router.push('/guild-selection');
         setLoadingData(false);
         return;
@@ -104,7 +104,7 @@ function AuditLogPageContent() {
         const endTimestamp = Timestamp.fromDate(endOfDay);
         logsQuery = query(logsQuery, where("timestamp", "<=", endTimestamp));
       }
-      
+
       const logsSnapshot = await getFirestoreDocs(logsQuery);
       const fetchedLogs = logsSnapshot.docs.map(logDoc => ({ id: logDoc.id, ...logDoc.data() } as AuditLogEntry));
       setAuditLogs(fetchedLogs);
@@ -112,9 +112,9 @@ function AuditLogPageContent() {
     } catch (error) {
       console.error("Erro ao buscar dados de auditoria:", error);
       if (error instanceof Error && error.message.includes("indexes")) {
-          toast({title: "Erro de Indice", description: "Pode ser necessario criar um indice no Firestore para esta consulta. Verifique o console do Firebase.", variant: "destructive", duration: 10000});
+          toast({title: "Erro de Índice", description: "Pode ser necessário criar um índice no Firestore para esta consulta. Verifique o console do Firebase.", variant: "destructive", duration: 10000});
       } else {
-        toast({ title: "Erro ao carregar dados", description: "Nao foi possivel carregar os logs de auditoria.", variant: "destructive" });
+        toast({ title: "Erro ao carregar dados", description: "Não foi possível carregar os logs de auditoria.", variant: "destructive" });
       }
     } finally {
       setLoadingData(false);
@@ -137,7 +137,7 @@ function AuditLogPageContent() {
 
   const handleApplyFilters = () => {
     if (selectedStartDate && selectedEndDate && selectedStartDate > selectedEndDate) {
-        toast({ title: "Datas Invalidas", description: "A data de inicio nao pode ser posterior a data de fim.", variant: "destructive"});
+        toast({ title: "Datas Inválidas", description: "A data de início não pode ser posterior à data de fim.", variant: "destructive"});
         return;
     }
     setSubmittedStartDate(selectedStartDate);
@@ -158,10 +158,10 @@ function AuditLogPageContent() {
       const absoluteTime = format(date, "dd/MM/yyyy HH:mm:ss", { locale: ptBR });
       return `${relativeTime} (${absoluteTime})`;
     } catch (e) {
-      return "Data invalida";
+      return "Data inválida";
     }
   };
-  
+
   const getActionIcon = (action: AuditActionType) => {
     switch (action) {
       case AuditActionType.MEMBER_ROLE_CHANGED: return <UserCog className="h-5 w-5 text-blue-500" />;
@@ -228,22 +228,22 @@ function AuditLogPageContent() {
       case AuditActionType.CUSTOM_ROLE_DELETED:
         return `${actor} excluiu o cargo personalizado "${log.details?.roleName}".`;
       case AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE:
-        return `${actor} atualizou as permissoes para o cargo "${log.details?.roleName}".`;
+        return `${actor} atualizou as permissões para o cargo "${log.details?.roleName}".`;
       default:
         if (log.action && log.action.startsWith("GUILD_")) {
-          return `${actor} atualizou as configuracoes da guilda (${log.action.replace("GUILD_", "").toLowerCase().replace("_", " ")}).`;
+          return `${actor} atualizou as configurações da guilda (${log.action.replace("GUILD_", "").toLowerCase().replace("_", " ")}).`;
         }
-        return `Acao desconhecida ou nao detalhada: ${log.action}`;
+        return `Ação desconhecida ou não detalhada: ${log.action}`;
     }
   };
 
-  if (loadingData && !guild) { 
+  if (loadingData && !guild) {
     return (
       <div className="space-y-4 p-4 md:p-6">
         <PageTitle title="Auditoria da Guilda" icon={<ClipboardList className="h-8 w-8 text-primary" />} />
-        <Skeleton className="h-24 w-full" /> 
-        <Skeleton className="h-12 w-full" /> 
-        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} 
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-12 w-full" />
+        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
       </div>
     );
   }
@@ -254,28 +254,28 @@ function AuditLogPageContent() {
         <ShieldAlert className="h-24 w-24 text-destructive animate-pulse" />
         <h2 className="text-3xl font-headline text-destructive">Acesso Negado</h2>
         <p className="text-lg text-muted-foreground max-w-md">
-          Voce nao tem permissao para visualizar os logs de auditoria desta guilda.
+          Você não tem permissão para visualizar os logs de auditoria desta guilda.
         </p>
         <Button onClick={() => router.back()} variant="outline">Voltar</Button>
       </div>
     );
   }
-  
-  if (!guild && !loadingData) { 
-    return <div className="p-6 text-center">Guilda nao carregada ou nao encontrada.</div>;
+
+  if (!guild && !loadingData) {
+    return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <PageTitle 
-        title={`Logs de Auditoria de ${guild?.name || 'Guilda'}`} 
+      <PageTitle
+        title={`Logs de Auditoria de ${guild?.name || 'Guilda'}`}
         description="Visualize as atividades importantes da guilda."
         icon={<ClipboardList className="h-8 w-8 text-primary" />}
       />
-      
+
       <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg shadow">
         <div className="flex-1 space-y-1">
-          <Label htmlFor="start-date" className="text-sm font-medium">Data de Inicio</Label>
+          <Label htmlFor="start-date" className="text-sm font-medium">Data de Início</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -352,9 +352,9 @@ function AuditLogPageContent() {
             <VenetianMask className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">Nenhuma Atividade Registrada</p>
             <p className="text-muted-foreground mt-2">
-                {(submittedStartDate || submittedEndDate) 
-                  ? "Nenhum log encontrado para o periodo selecionado."
-                  : "Ainda nao ha logs de auditoria para esta guilda."
+                {(submittedStartDate || submittedEndDate)
+                  ? "Nenhum log encontrado para o período selecionado."
+                  : "Ainda não há logs de auditoria para esta guilda."
                 }
             </p>
         </div>
@@ -368,7 +368,7 @@ function AuditLogPageContent() {
                 <TableHead className="w-[50px] hidden sm:table-cell"></TableHead>
                 <TableHead>Data/Hora</TableHead>
                 <TableHead>Autor</TableHead>
-                <TableHead>Descricao da Acao</TableHead>
+                <TableHead>Descrição da Ação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -397,3 +397,4 @@ export default function AuditLogPage() {
     </Suspense>
   );
 }
+

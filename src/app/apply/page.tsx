@@ -47,7 +47,7 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
   customQuestions.forEach(q => {
     schemaObject[q.id] = z.string().max(500, "Resposta muito longa.").optional();
   });
-  
+
   return z.object(schemaObject);
 };
 
@@ -69,7 +69,7 @@ function ApplyPageContent() {
 
 
   const guildId = searchParams.get('guildId');
-  
+
   const isTLGuild = guild?.game === "Throne and Liberty";
   const applicationSchema = getBaseApplicationSchema(isTLGuild, activeCustomQuestions);
 
@@ -83,7 +83,7 @@ function ApplyPageContent() {
       ...(isTLGuild && { tlRole: undefined, tlPrimaryWeapon: undefined, tlSecondaryWeapon: undefined }),
     },
   });
-  
+
    useEffect(() => {
     if (currentUser?.displayName && !form.getValues("characterNickname")) {
       form.setValue("characterNickname", currentUser.displayName);
@@ -101,7 +101,7 @@ function ApplyPageContent() {
 
     if (!guildId) {
       toast({ title: "ID da Guilda Ausente", description: "Nenhum ID de guilda fornecido para aplicar.", variant: "destructive" });
-      router.push('/guilds'); 
+      router.push('/guilds');
       return;
     }
 
@@ -111,7 +111,7 @@ function ApplyPageContent() {
         const guildDocRef = doc(db, "guilds", guildId);
         const guildSnap = await getDoc(guildDocRef);
 
-        if (!guildSnap.exists()) { 
+        if (!guildSnap.exists()) {
           toast({ title: "Guilda Não Encontrada", description: "Esta guilda não pode receber aplicações ou não existe.", variant: "destructive" });
           router.push('/guilds');
           return;
@@ -123,12 +123,12 @@ function ApplyPageContent() {
             router.push(`/dashboard?guildId=${guildId}`);
             return;
         }
-        
+
         setGuild(guildData);
         const enabledCustomQuestions = guildData.recruitmentQuestions?.filter(q => q.isEnabled && q.type === 'custom') || [];
         setActiveCustomQuestions(enabledCustomQuestions);
 
-        let defaultFormValues: any = { 
+        let defaultFormValues: any = {
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
             gearScoreScreenshotUrl: "",
@@ -192,9 +192,9 @@ function ApplyPageContent() {
       applicantId: currentUser.uid,
       applicantName: data.characterNickname,
       gearScore: data.gearScore,
-      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl, // This will be "" if empty, which is fine
+      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
       discordNick: data.discordNick,
-      status: 'pending', 
+      status: 'pending',
       ...(isTLGuild && { tlRole: data.tlRole }),
       ...(isTLGuild && { tlPrimaryWeapon: data.tlPrimaryWeapon }),
       ...(isTLGuild && { tlSecondaryWeapon: data.tlSecondaryWeapon }),
@@ -205,18 +205,18 @@ function ApplyPageContent() {
       const applicationsRef = collection(db, `guilds/${guildId}/applications`);
       const submittedAtTimestamp = serverTimestamp() as Timestamp;
 
-      if (guild.isOpen === true || !guild.password) { 
+      if (guild.isOpen === true || !guild.password) {
         const batch = writeBatch(db);
         const guildRef = doc(db, "guilds", guildId);
-        
+
         let memberRoleInfo: GuildMemberRoleInfo = {
-          roleName: "Membro", 
+          roleName: "Membro",
           characterNickname: data.characterNickname,
           gearScore: data.gearScore,
           gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null, // Store empty as null
           // No gearBuildLink or skillBuildLink from application form, so they remain undefined/not set
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
-          dkpBalance: 0, 
+          dkpBalance: 0,
           status: 'Ativo',
         };
 
@@ -232,21 +232,21 @@ function ApplyPageContent() {
           [`roles.${currentUser.uid}`]: memberRoleInfo,
         });
 
-        const appDocForPublicJoinRef = doc(applicationsRef); 
+        const appDocForPublicJoinRef = doc(applicationsRef);
         batch.set(appDocForPublicJoinRef, {
           ...applicationBaseData,
-          applicantDisplayName: currentUser.displayName || currentUser.email, 
+          applicantDisplayName: currentUser.displayName || currentUser.email,
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
           status: 'auto_approved',
           reviewedBy: 'system',
           reviewedAt: submittedAtTimestamp,
         });
-        
+
         await batch.commit();
 
-        await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.MEMBER_JOINED, { 
-            targetUserId: currentUser.uid, 
+        await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.MEMBER_JOINED, {
+            targetUserId: currentUser.uid,
             targetUserDisplayName: data.characterNickname,
             details: { joinMethod: 'public_form_join' } as any,
         });
@@ -256,13 +256,13 @@ function ApplyPageContent() {
         toast({ title: "Bem-vindo(a) à Guilda!", description: `Você entrou na guilda ${guild.name}.` });
         form.reset();
 
-      } else { 
+      } else {
         const newApplicationRef = await addDoc(applicationsRef, {
           ...applicationBaseData,
-          applicantDisplayName: currentUser.displayName || currentUser.email, 
+          applicantDisplayName: currentUser.displayName || currentUser.email,
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
-          status: 'pending', 
+          status: 'pending',
         });
 
         await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.APPLICATION_SUBMITTED, {
@@ -272,7 +272,7 @@ function ApplyPageContent() {
         setSuccessMessage(`Sua candidatura para ${guild.name} foi enviada com sucesso.`);
         setSubmissionStatus('success');
         toast({ title: "Candidatura Enviada!", description: `Sua candidatura para ${guild.name} foi enviada com sucesso.` });
-        form.reset(); 
+        form.reset();
       }
     } catch (error: any) {
       console.error("Erro ao processar candidatura:", error);
@@ -304,7 +304,7 @@ function ApplyPageContent() {
       </div>
     );
   }
-  
+
   if (!guild) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-landing-gradient text-center">
@@ -320,15 +320,15 @@ function ApplyPageContent() {
         <Card className="w-full max-w-lg card-bg">
           <CardHeader>
             <CardTitle className="text-3xl font-headline text-primary flex items-center justify-center">
-              <CheckCircle className="mr-3 h-8 w-8 text-green-500"/> 
+              <CheckCircle className="mr-3 h-8 w-8 text-green-500"/>
               {guild.isOpen || !guild.password ? "Entrada Confirmada!" : "Candidatura Enviada!"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-lg text-foreground">{successMessage}</p>
             <p className="text-muted-foreground mt-2">
-              {guild.isOpen || !guild.password 
-                ? "Você já pode acessar o dashboard da guilda." 
+              {guild.isOpen || !guild.password
+                ? "Você já pode acessar o dashboard da guilda."
                 : "A liderança da guilda revisará sua aplicação em breve. Você pode verificar o status em suas notificações ou na página da guilda se for aceito."}
             </p>
           </CardContent>
@@ -355,7 +355,7 @@ function ApplyPageContent() {
           </h1>
         </Link>
       </div>
-      
+
       <Card className="w-full max-w-2xl z-10 bg-card p-6 sm:p-8 rounded-xl shadow-2xl shadow-primary/20 border border-border">
         <CardHeader className="text-center p-0 pb-6">
             <div className="flex items-center justify-center gap-3 mb-2">
@@ -368,7 +368,7 @@ function ApplyPageContent() {
                  </CardTitle>
             </div>
           <CardDescription>
-            {guild.isOpen || !guild.password 
+            {guild.isOpen || !guild.password
                 ? `Preencha o formulário abaixo para entrar na guilda ${guild.name}.`
                 : `Preencha o formulário abaixo para enviar sua candidatura para ${guild.name}.`}
           </CardDescription>
@@ -427,7 +427,7 @@ function ApplyPageContent() {
                     )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="gearScoreScreenshotUrl"
@@ -529,8 +529,8 @@ function ApplyPageContent() {
                 </Button>
                 <Button type="submit" className="btn-gradient btn-style-primary w-full sm:w-auto" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UserPlusIcon className="mr-2 h-5 w-5" />}
-                    {isSubmitting 
-                        ? (guild.isOpen || !guild.password ? 'Entrando...' : 'Enviando...') 
+                    {isSubmitting
+                        ? (guild.isOpen || !guild.password ? 'Entrando...' : 'Enviando...')
                         : (guild.isOpen || !guild.password ? 'Confirmar e Entrar' : 'Enviar Candidatura')}
                 </Button>
             </CardFooter>
@@ -552,3 +552,4 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+

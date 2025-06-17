@@ -66,7 +66,7 @@ export function AppNotifications() {
   const handlePopoverOpenChange = async (open: boolean) => {
     setIsPopoverOpen(open);
     if (open && user && currentGuildId) {
-      setShowNotificationAlert(false); 
+      setShowNotificationAlert(false);
       try {
         const userDocRef = doc(db, "users", user.uid);
         await updateDoc(userDocRef, {
@@ -77,7 +77,7 @@ export function AppNotifications() {
       }
     }
   };
-  
+
   const formatTimestamp = (timestamp: Timestamp | undefined): string => {
     if (!timestamp) return "";
     try {
@@ -150,3 +150,4 @@ export function AppNotifications() {
     </Popover>
   );
 }
+

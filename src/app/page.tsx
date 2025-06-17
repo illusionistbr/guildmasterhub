@@ -90,7 +90,7 @@ export default function LandingPage() {
               Poupe tempo, administre os membros sem esforço e mantenha a sua guilda próspera com as nossas ferramentas avançadas para jogadores de MMO.
             </p>
             <Button asChild size="lg" className="btn-gradient btn-style-primary px-8 py-3.5 text-lg w-full sm:w-auto">
-              <Link href="/signup">Crie ou junte-se a uma guild agora</Link>
+              <Link href="/signup">Crie ou junte-se a uma guilda agora</Link>
             </Button>
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
               <div className="flex -space-x-3">
@@ -113,7 +113,7 @@ export default function LandingPage() {
                     <Star key={i} className="h-5 w-5 fill-current" />
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">aprovado por milhares de jogadores</p>
+                <p className="text-xs text-muted-foreground">Aprovado por milhares de jogadores</p>
               </div>
             </div>
           </div>
@@ -236,3 +236,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

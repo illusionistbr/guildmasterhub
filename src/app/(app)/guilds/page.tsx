@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter as useNavigationRouter } from 'next/navigation'; 
+import { useRouter as useNavigationRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,7 @@ const tlRoleWeaponSchema = z.object({
 type TLRoleWeaponFormValues = z.infer<typeof tlRoleWeaponSchema>;
 
 
-function ExploreGuildsContent() { 
+function ExploreGuildsContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useNavigationRouter();
@@ -46,7 +46,7 @@ function ExploreGuildsContent() {
   const [loadingGuilds, setLoadingGuilds] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const [selectedGuildForPassword, setSelectedGuildForPassword] = useState<Guild | null>(null);
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -71,7 +71,7 @@ function ExploreGuildsContent() {
   }, [toast]);
 
   const filteredGuilds = useMemo(() => {
-    return allGuilds.filter(guild => 
+    return allGuilds.filter(guild =>
       guild.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [allGuilds, searchTerm]);
@@ -84,26 +84,26 @@ function ExploreGuildsContent() {
   const totalPages = Math.ceil(filteredGuilds.length / GUILDS_PER_PAGE);
 
   const processGuildJoin = async (guildToJoin: Guild) => {
-    if (!user) return; 
+    if (!user) return;
     setIsJoining(guildToJoin.id);
 
     try {
       const guildRef = doc(db, "guilds", guildToJoin.id);
       const batch = writeBatch(db);
-      
+
       const memberRoleInfo: GuildMemberRoleInfo = {
-        roleName: "Membro", 
-        notes: "Entrou diretamente (guilda pública, não-TL).", 
-        dkpBalance: 0, 
+        roleName: "Membro",
+        notes: "Entrou diretamente (guilda pública, não-TL).",
+        dkpBalance: 0,
         status: 'Ativo',
       };
-      
+
       batch.update(guildRef, {
         memberIds: arrayUnion(user.uid),
         memberCount: firebaseIncrement(1),
         [`roles.${user.uid}`]: memberRoleInfo
       });
-      
+
       await batch.commit();
 
       await logGuildActivity(
@@ -118,24 +118,24 @@ function ExploreGuildsContent() {
         }
       );
 
-      toast({ 
-        title: "Bem-vindo(a) à Guilda!", 
+      toast({
+        title: "Bem-vindo(a) à Guilda!",
         description: `Você entrou na guilda ${guildToJoin.name}.`,
         action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guildToJoin.id}`)}>Ver Dashboard</Button>
       });
 
-      setSelectedGuildForPassword(null); 
+      setSelectedGuildForPassword(null);
       setPasswordInput("");
 
-      setAllGuilds(prevGuilds => 
-        prevGuilds.map(g => 
-          g.id === guildToJoin.id 
-            ? { 
-                ...g, 
-                memberIds: [...(g.memberIds || []), user.uid], 
+      setAllGuilds(prevGuilds =>
+        prevGuilds.map(g =>
+          g.id === guildToJoin.id
+            ? {
+                ...g,
+                memberIds: [...(g.memberIds || []), user.uid],
                 memberCount: (g.memberCount || 0) + 1,
-                roles: { ...(g.roles || {}), [user.uid]: memberRoleInfo } 
-              } 
+                roles: { ...(g.roles || {}), [user.uid]: memberRoleInfo }
+              }
             : g
         )
       );
@@ -148,9 +148,9 @@ function ExploreGuildsContent() {
       setIsJoining(null);
     }
   };
-  
+
   const handleJoinAction = async (guild: Guild, guildPassword?: string) => {
-    if (!user) return; 
+    if (!user) return;
     setIsJoining(guild.id);
     setPasswordError("");
 
@@ -162,17 +162,17 @@ function ExploreGuildsContent() {
         }
         router.push(`/apply?guildId=${guild.id}`);
         setIsJoining(null);
-        setSelectedGuildForPassword(null); 
+        setSelectedGuildForPassword(null);
         return;
     }
-    
+
     if (guild.game === "Throne and Liberty") {
       router.push(`/apply?guildId=${guild.id}`);
     } else {
       await processGuildJoin(guild);
     }
     setIsJoining(null);
-    setSelectedGuildForPassword(null); 
+    setSelectedGuildForPassword(null);
   };
 
   const handleApplyToGuild = (guild: Guild) => {
@@ -188,12 +188,12 @@ function ExploreGuildsContent() {
 
     if (guild.game === "Throne and Liberty" || (guild.password && !guild.isOpen)) {
       router.push(`/apply?guildId=${guild.id}`);
-    } 
-    else { 
-      processGuildJoin(guild); 
+    }
+    else {
+      processGuildJoin(guild);
     }
   };
-  
+
   const handlePasswordDialogSubmit = () => {
     if (selectedGuildForPassword) {
       if (selectedGuildForPassword.password === passwordInput) {
@@ -225,13 +225,13 @@ function ExploreGuildsContent() {
           <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
             {guild.name}
           </h3>
-          
+
           <p className="text-xs sm:text-sm text-muted-foreground truncate text-center px-1 sm:px-2">
             Líder: {guild.ownerDisplayName || 'Desconhecido'}
           </p>
-          
-          <Button 
-            onClick={() => !isUserMember && handleApplyToGuild(guild)} 
+
+          <Button
+            onClick={() => !isUserMember && handleApplyToGuild(guild)}
             disabled={isLoadingThisGuild || isUserMember}
             className={`btn-gradient ${isUserMember ? 'bg-green-600 hover:bg-green-700' : 'btn-style-secondary'} whitespace-nowrap justify-self-end`}
             size="sm"
@@ -263,7 +263,7 @@ function ExploreGuildsContent() {
     <div className="space-y-6">
         <div className="relative max-w-lg">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input 
+            <Input
                 type="text"
                 placeholder="Buscar pelo nome da guilda..."
                 value={searchTerm || ""}
@@ -333,13 +333,13 @@ function ExploreGuildsContent() {
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setSelectedGuildForPassword(null)}>Cancelar</Button>
-               <Button 
+               <Button
                   onClick={() => {
                       if (selectedGuildForPassword) {
                           router.push(`/apply?guildId=${selectedGuildForPassword.id}`);
                           setSelectedGuildForPassword(null);
                       }
-                  }} 
+                  }}
                   variant="outline"
                   className="border-primary text-primary hover:bg-primary/10"
               >
@@ -357,11 +357,11 @@ function ExploreGuildsContent() {
   );
 }
 
-export default function GuildsPage() { 
+export default function GuildsPage() {
   const router = useNavigationRouter();
   return (
     <div className="space-y-8">
-      <PageTitle 
+      <PageTitle
         title="Explorar Guildas"
         description="Encontre e junte-se a novas guildas para suas aventuras."
         icon={<Users className="h-8 w-8 text-primary" />}
@@ -384,3 +384,4 @@ export default function GuildsPage() {
     </div>
   );
 }
+

@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     setLoading(false);
     toast({
       title: "Link Enviado!",
-      description: `Se uma conta com o email ${email} existir, um link de recuperação foi enviado.`,
+      description: `Se uma conta com o e-mail ${email} existir, um link de recuperação foi enviado.`,
     });
     setEmail("");
   };
@@ -33,22 +33,22 @@ export default function ForgotPasswordPage() {
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-headline text-primary">Recuperar Senha</CardTitle>
         <CardDescription>
-          Insira seu email para receber um link de recuperação de senha.
+          Insira seu e-mail para receber um link de recuperação de senha.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-mail</Label>
             <div className="relative flex items-center">
               <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="seuemail@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="seuemail@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
@@ -68,3 +68,4 @@ export default function ForgotPasswordPage() {
     </>
   );
 }
+

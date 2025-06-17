@@ -27,15 +27,15 @@ import { cn } from "@/lib/utils";
 import { hasPermission } from '@/lib/permissions';
 
 const groupMemberSchema = z.object({
-  memberId: z.string().min(1, "Membro e obrigatorio."),
-  note: z.string().max(100, "Nota pode ter no maximo 100 caracteres.").optional(),
+  memberId: z.string().min(1, "Membro é obrigatório."),
+  note: z.string().max(100, "Nota pode ter no máximo 100 caracteres.").optional(),
 });
 
 const groupFormSchema = z.object({
-  name: z.string().min(3, "Nome do grupo deve ter pelo menos 3 caracteres.").max(50, "Nome do grupo deve ter no maximo 50 caracteres."),
-  icon: z.enum(['shield', 'sword', 'heart'], { required_error: "Icone e obrigatorio." }),
-  headerColor: z.string().min(1, "Cor do cabecalho e obrigatoria."),
-  members: z.array(groupMemberSchema).min(1, "Adicione pelo menos 1 membro.").max(6, "Maximo de 6 membros por grupo."),
+  name: z.string().min(3, "Nome do grupo deve ter pelo menos 3 caracteres.").max(50, "Nome do grupo deve ter no máximo 50 caracteres."),
+  icon: z.enum(['shield', 'sword', 'heart'], { required_error: "Ícone é obrigatório." }),
+  headerColor: z.string().min(1, "Cor do cabeçalho é obrigatória."),
+  members: z.array(groupMemberSchema).min(1, "Adicione pelo menos 1 membro.").max(6, "Máximo de 6 membros por grupo."),
 });
 
 type GroupFormValues = z.infer<typeof groupFormSchema>;
@@ -80,9 +80,9 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusao</AlertDialogTitle>
+                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Tem certeza que deseja excluir o grupo "{group.name}"? Esta acao nao pode ser desfeita.
+                    Tem certeza que deseja excluir o grupo "{group.name}"? Esta ação não pode ser desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -189,7 +189,7 @@ function GroupsPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) {
-          toast({ title: "Guilda nao encontrada", variant: "destructive" });
+          toast({ title: "Guilda não encontrada", variant: "destructive" });
           router.push('/guild-selection');
           return;
         }
@@ -241,12 +241,12 @@ function GroupsPageContent() {
 
 
   const handleOpenDialog = (groupToEdit: GuildGroup | null = null) => {
-     const canEdit = groupToEdit ? 
+     const canEdit = groupToEdit ?
         hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) :
         hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
 
     if (!canEdit) {
-        toast({title: "Permissao Negada", description: `Voce nao tem permissao para ${groupToEdit ? 'editar' : 'criar'} grupos.`, variant: "destructive"});
+        toast({title: "Permissão Negada", description: `Você não tem permissão para ${groupToEdit ? 'editar' : 'criar'} grupos.`, variant: "destructive"});
         return;
     }
     setEditingGroup(groupToEdit);
@@ -270,17 +270,17 @@ function GroupsPageContent() {
 
   const onSubmitGroup: SubmitHandler<GroupFormValues> = async (data) => {
     if (!currentUser || !guildId) return;
-    
+
     const requiredPermission = editingGroup ? GuildPermission.MANAGE_GROUPS_EDIT : GuildPermission.MANAGE_GROUPS_CREATE;
     if (!hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, requiredPermission)) {
-        toast({title: "Permissao Negada", description: `Voce nao tem permissao para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"});
+        toast({title: "Permissão Negada", description: `Você não tem permissão para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"});
         return;
     }
 
     setIsSubmitting(true);
 
     const groupMembersData: GuildGroupMember[] = data.members
-      .filter(m => m.memberId) 
+      .filter(m => m.memberId)
       .map(m => {
         const memberProfile = guildMembers.find(gm => gm.uid === m.memberId);
         return {
@@ -296,7 +296,7 @@ function GroupsPageContent() {
       icon: data.icon,
       headerColor: data.headerColor,
       members: groupMembersData,
-      guildId: guildId, 
+      guildId: guildId,
     };
 
     try {
@@ -323,17 +323,17 @@ function GroupsPageContent() {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleDeleteGroup = async (groupToDelete: GuildGroup) => {
     if (!groupToDelete || !currentUser || !guildId || !hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE)) {
-        toast({title: "Permissao Negada", description: "Voce nao tem permissao para excluir grupos.", variant: "destructive"});
+        toast({title: "Permissão Negada", description: "Você não tem permissão para excluir grupos.", variant: "destructive"});
         return;
     }
     setIsSubmitting(true);
     try {
       await deleteDoc(doc(db, `guilds/${guildId}/groups`, groupToDelete.id));
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.GROUP_DELETED, { groupId: groupToDelete.id, groupName: groupToDelete.name });
-      toast({ title: "Grupo Excluido!", description: `O grupo "${groupToDelete.name}" foi excluido.`});
+      toast({ title: "Grupo Excluído!", description: `O grupo "${groupToDelete.name}" foi excluído.`});
     } catch (error) {
       console.error("Erro ao excluir grupo:", error);
       toast({ title: "Erro ao Excluir", variant: "destructive" });
@@ -370,17 +370,17 @@ function GroupsPageContent() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              {hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ? "Crie o primeiro grupo para sua guilda!" : "Ainda nao ha grupos formados nesta guilda."}
+              {hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ? "Crie o primeiro grupo para sua guilda!" : "Ainda não há grupos formados nesta guilda."}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {groups.map(group => (
-            <GroupCard 
-              key={group.id} 
-              group={group} 
-              onEdit={handleOpenDialog} 
+            <GroupCard
+              key={group.id}
+              group={group}
+              onEdit={handleOpenDialog}
               onDelete={handleDeleteGroup}
               canManage={canManageGroups} // This prop needs to be derived from specific edit/delete permissions now
             />
@@ -413,13 +413,13 @@ function GroupsPageContent() {
                   name="icon"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Icone do Grupo</FormLabel>
+                      <FormLabel>Ícone do Grupo</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione um icone" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione um ícone" /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="shield"><Shield className="inline mr-2 h-4 w-4"/> Escudo</SelectItem>
                           <SelectItem value="sword"><Swords className="inline mr-2 h-4 w-4"/> Espada</SelectItem>
-                          <SelectItem value="heart"><Heart className="inline mr-2 h-4 w-4"/> Coracao</SelectItem>
+                          <SelectItem value="heart"><Heart className="inline mr-2 h-4 w-4"/> Coração</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -431,7 +431,7 @@ function GroupsPageContent() {
                   name="headerColor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cor do Cabecalho</FormLabel>
+                      <FormLabel>Cor do Cabeçalho</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione uma cor" /></SelectTrigger></FormControl>
                         <SelectContent>
@@ -452,7 +452,7 @@ function GroupsPageContent() {
               </div>
 
               <div className="space-y-3">
-                <FormLabel>Membros do Grupo (Maximo 6)</FormLabel>
+                <FormLabel>Membros do Grupo (Máximo 6)</FormLabel>
                 {fields.map((item, index) => (
                   <div key={item.id} className="flex flex-col sm:flex-row items-start gap-2 p-3 border rounded-md bg-input/30">
                     <div className="flex-grow w-full sm:w-auto">
@@ -518,20 +518,20 @@ function GroupsPageContent() {
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)} disabled={isSubmitting}>Cancelar</Button>
               <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {editingGroup ? "Salvar Alteracoes" : "Criar Grupo"}
+                {editingGroup ? "Salvar Alterações" : "Criar Grupo"}
               </Button>
             </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       <AlertDialog open={!!groupToDelete} onOpenChange={() => setGroupToDelete(null)}>
           <AlertDialogContent>
               <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusao</AlertDialogTitle>
+                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                   <AlertDialogDescription>
-                      Tem certeza que deseja excluir o grupo "{groupToDelete?.name}"? Esta acao nao pode ser desfeita.
+                      Tem certeza que deseja excluir o grupo "{groupToDelete?.name}"? Esta ação não pode ser desfeita.
                   </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -554,3 +554,4 @@ export default function GroupsPage() {
     </Suspense>
   );
 }
+

@@ -14,7 +14,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; 
+import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,7 +68,7 @@ function UserGuildSettingsPageContent() {
   });
 
   useEffect(() => {
-    if (guild?.name) setHeaderTitle(`Minhas Configs: ${guild.name}`);
+    if (guild?.name) setHeaderTitle(`Minhas Configs.: ${guild.name}`);
     return () => setHeaderTitle(null);
   }, [guild?.name, setHeaderTitle]);
 
@@ -135,7 +135,7 @@ function UserGuildSettingsPageContent() {
     if (memberRoleInfo.skillBuildLink !== (data.skillBuildLink || null)) updatedFields.push('Skill Build Link');
 
     const updatedRoleInfo: GuildMemberRoleInfo = {
-      ...memberRoleInfo, 
+      ...memberRoleInfo,
       characterNickname: data.characterNickname,
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
@@ -163,8 +163,8 @@ function UserGuildSettingsPageContent() {
          targetUserDisplayName: data.characterNickname || currentUser.displayName || currentUser.email || "Usuário",
          details: { updatedFields }
       });
-      
-      setMemberRoleInfo(updatedRoleInfo); 
+
+      setMemberRoleInfo(updatedRoleInfo);
       toast({ title: "Informações Atualizadas!", description: "Suas configurações na guilda foram salvas." });
     } catch (error) {
       console.error("Erro ao atualizar informações:", error);
@@ -178,8 +178,7 @@ function UserGuildSettingsPageContent() {
     return (
       <div className="space-y-8 p-4 md:p-6">
         <PageTitle title="Minhas Configurações na Guilda" icon={<UserCog className="h-8 w-8 text-primary" />} />
-        <Skeleton className="h-64 w-full" />
-        {isTLGuild && <Skeleton className="h-72 w-full" />}
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
@@ -372,3 +371,4 @@ export default function UserGuildSettingsPage() {
     </Suspense>
   );
 }
+

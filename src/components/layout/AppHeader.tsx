@@ -31,9 +31,9 @@ export function AppHeader({ showSidebarTrigger }: AppHeaderProps) {
             </span>
           </Link>
         </div>
-        
+
         <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
-          <AppNotifications /> 
+          <AppNotifications />
           <UserNav />
         </div>
       </div>
@@ -41,3 +41,4 @@ export function AppHeader({ showSidebarTrigger }: AppHeaderProps) {
     </header>
   );
 }
+

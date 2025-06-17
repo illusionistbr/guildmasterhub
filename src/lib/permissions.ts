@@ -3,7 +3,7 @@ import type { Guild, GuildPermission, CustomRole } from '@/types/guildmaster';
 
 /**
  * Checks if a user with a given roleName has a specific permission.
- * 
+ *
  * @param roleName The name of the user's role.
  * @param customRoles The guild's customRoles object.
  * @param requiredPermission The permission to check for.
@@ -28,7 +28,7 @@ export function hasPermission(
 
 /**
  * Retrieves all permissions for a given roleName.
- * 
+ *
  * @param roleName The name of the user's role.
  * @param customRoles The guild's customRoles object.
  * @returns An array of GuildPermission for the role, or an empty array if not found.
@@ -48,7 +48,7 @@ export function getPermissionsForRole(
  * Checks if the user is the owner of the guild.
  * This is a direct check against the guild's ownerId field,
  * separate from the dynamic role system.
- * 
+ *
  * @param userId The UID of the user to check.
  * @param guild The guild object.
  * @returns True if the user is the owner, false otherwise.
@@ -59,3 +59,4 @@ export function isGuildOwner(userId: string | undefined | null, guild: Guild | u
     }
     return guild.ownerId === userId;
 }
+

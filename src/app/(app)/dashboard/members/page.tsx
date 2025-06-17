@@ -63,7 +63,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon
@@ -99,10 +99,10 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
 
 const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildMemberRoleInfo | undefined, guildData: Guild): GuildMember => {
   const isTLGuild = guildData.game === "Throne and Liberty";
-  
+
   let specificRoleInfo: GuildMemberRoleInfo = {
-    roleName: "Membro", 
-    status: 'Ativo', 
+    roleName: "Membro",
+    status: 'Ativo',
     dkpBalance: 0,
     notes: "",
     characterNickname: memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid,
@@ -115,16 +115,16 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       ...guildRoleInfo,    // Override with actual role info
       characterNickname: guildRoleInfo.characterNickname || memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid,
       gearScore: guildRoleInfo.gearScore || 0,
-      gearScoreScreenshotUrl: guildRoleInfo.gearScoreScreenshotUrl,
-      gearBuildLink: guildRoleInfo.gearBuildLink,
-      skillBuildLink: guildRoleInfo.skillBuildLink,
-      status: guildRoleInfo.status || 'Ativo', 
+      gearScoreScreenshotUrl: guildRoleInfo.gearScoreScreenshotUrl || null,
+      gearBuildLink: guildRoleInfo.gearBuildLink || null,
+      skillBuildLink: guildRoleInfo.skillBuildLink || null,
+      status: guildRoleInfo.status || 'Ativo',
       dkpBalance: guildRoleInfo.dkpBalance ?? 0,
     };
   } else {
     specificRoleInfo.characterNickname = memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid;
   }
-  
+
   if (isTLGuild && guildRoleInfo) {
     specificRoleInfo.tlRole = guildRoleInfo.tlRole;
     specificRoleInfo.tlPrimaryWeapon = guildRoleInfo.tlPrimaryWeapon;
@@ -145,7 +145,7 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
     notes: specificRoleInfo.notes,
     status: specificRoleInfo.status,
     dkpBalance: specificRoleInfo.dkpBalance,
-    weapons: { 
+    weapons: {
       mainHandIconUrl: specificRoleInfo.tlPrimaryWeapon ? getWeaponIconPath(specificRoleInfo.tlPrimaryWeapon) : undefined,
       offHandIconUrl: specificRoleInfo.tlSecondaryWeapon ? getWeaponIconPath(specificRoleInfo.tlSecondaryWeapon) : undefined
     },
@@ -179,14 +179,14 @@ function MembersPageContent() {
   const [usernameFilter, setUsernameFilter] = useState("");
   const [tlRoleFilter, setTlRoleFilter] = useState<TLRole | "all">("all");
   const [gearSortOrder, setGearSortOrder] = useState<GearSortOrder>("default");
-  const [rankFilter, setRankFilter] = useState<string | "all">("all"); 
+  const [rankFilter, setRankFilter] = useState<string | "all">("all");
   const [dkpSortOrder, setDkpSortOrder] = useState<DkpSortOrder>("default");
   const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all");
 
 
   const [activityDateRange, setActivityDateRange] = useState<DateRange | undefined>({
-    from: undefined, 
-    to: undefined, 
+    from: undefined,
+    to: undefined,
   });
   const [timeFromFilter, setTimeFromFilter] = useState("00:00");
   const [timeToFilter, setTimeToFilter] = useState("23:59");
@@ -222,7 +222,7 @@ function MembersPageContent() {
     }
 
     const initialRank = searchParams.get('rankFilter') as string | "all" | null;
-     if (initialRank) { 
+     if (initialRank) {
       setRankFilter(initialRank);
     }
 
@@ -241,7 +241,7 @@ function MembersPageContent() {
       const guildSnap = await getDoc(guildDocRef);
 
       if (!guildSnap.exists()) {
-        toast({ title: "Guilda nao encontrada", variant: "destructive" });
+        toast({ title: "Guilda não encontrada", variant: "destructive" });
         router.push('/guild-selection');
         return;
       }
@@ -252,11 +252,11 @@ function MembersPageContent() {
       if (guildData.ownerId && !memberIdsToFetch.includes(guildData.ownerId)) {
           memberIdsToFetch = [...new Set([...memberIdsToFetch, guildData.ownerId])];
       }
-      
+
       if (memberIdsToFetch.length > 0) {
         const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
         const userProfileSnaps = await Promise.all(userProfilesPromises);
-        
+
         const processedMembers: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
           const uid = memberIdsToFetch[i];
@@ -265,7 +265,7 @@ function MembersPageContent() {
 
           if (userProfileSnap && userProfileSnap.exists()) {
             baseProfile = userProfileSnap.data() as UserProfile;
-          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) { 
+          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) {
             baseProfile = {
               uid: currentUser.uid,
               email: currentUser.email,
@@ -274,17 +274,17 @@ function MembersPageContent() {
             };
           } else {
             console.warn(`User profile not found for UID: ${uid}, skipping member.`);
-            continue; 
+            continue;
           }
-          
+
           const roleInfoSource = guildData.roles?.[uid];
           processedMembers.push(enhanceMemberData(baseProfile, roleInfoSource, guildData));
         }
-        
-        processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid)); 
+
+        processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid));
         setMembers(processedMembers);
 
-      } else { 
+      } else {
          if (guildData.ownerId === currentUser.uid) {
             const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
             const ownerBaseProfile: UserProfile = {
@@ -300,7 +300,7 @@ function MembersPageContent() {
       }
     } catch (error) {
       console.error("Erro ao buscar dados da guilda e membros:", error);
-      toast({ title: "Erro ao carregar dados", description: "Nao foi possivel carregar os membros da guilda.", variant: "destructive" });
+      toast({ title: "Erro ao carregar dados", description: "Não foi possível carregar os membros da guilda.", variant: "destructive" });
     } finally {
       setLoadingGuildData(false);
     }
@@ -338,9 +338,9 @@ function MembersPageContent() {
     if (!guild || !guild.customRoles) return [];
     const defaultRoles = ["Membro"];
     if (guild.customRoles["Lider"]) defaultRoles.unshift("Lider");
-    
+
     return [...new Set([...defaultRoles, ...Object.keys(guild.customRoles)])]
-           .filter(roleName => roleName !== "Lider" || (actionUser?.uid === guild.ownerId)) 
+           .filter(roleName => roleName !== "Lider" || (actionUser?.uid === guild.ownerId))
            .sort();
   }, [guild, actionUser]);
 
@@ -348,7 +348,7 @@ function MembersPageContent() {
   const openActionDialog = (member: GuildMember, type: MemberManagementAction) => {
     setActionUser(member);
     setActionType(type);
-    setSelectedNewRoleName(''); 
+    setSelectedNewRoleName('');
     setSelectedNewStatus('');
   };
 
@@ -360,13 +360,13 @@ function MembersPageContent() {
 
   const handleChangeRole = async () => {
     if (!actionUser || !guild || selectedNewRoleName === '' || !guildId || !currentUser || !canManageMemberRoles) return;
-    
+
     if (actionUser.uid === guild.ownerId && selectedNewRoleName !== "Lider") {
-        toast({ title: "Acao Invalida", description: "O cargo do fundador da guilda (Lider) nao pode ser alterado para outro cargo aqui.", variant: "destructive" });
+        toast({ title: "Ação Inválida", description: "O cargo do fundador da guilda (Líder) não pode ser alterado para outro cargo aqui.", variant: "destructive" });
         return;
     }
     if (selectedNewRoleName === "Lider" && actionUser.uid !== guild.ownerId) {
-        toast({ title: "Acao Invalida", description: "Para transferir a lideranca, use uma funcionalidade especifica.", variant: "destructive" });
+        toast({ title: "Ação Inválida", description: "Para transferir a liderança, use uma funcionalidade específica.", variant: "destructive" });
         return;
     }
 
@@ -374,20 +374,20 @@ function MembersPageContent() {
     setIsProcessingAction(true);
     try {
       const guildRef = doc(db, "guilds", guildId);
-      const existingRoleInfo = guild.roles?.[actionUser.uid] || { roleName: "Membro", status: 'Ativo', dkpBalance: 0 }; 
-      
-      const newRoleInfoPayload: GuildMemberRoleInfo = { 
-        ...existingRoleInfo, 
-        roleName: selectedNewRoleName 
+      const existingRoleInfo = guild.roles?.[actionUser.uid] || { roleName: "Membro", status: 'Ativo', dkpBalance: 0 };
+
+      const newRoleInfoPayload: GuildMemberRoleInfo = {
+        ...existingRoleInfo,
+        roleName: selectedNewRoleName
       };
 
       await updateDoc(guildRef, { [`roles.${actionUser.uid}`]: newRoleInfoPayload });
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ROLE_CHANGED, { 
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ROLE_CHANGED, {
         targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName || "",
         oldValue: oldRoleName, newValue: selectedNewRoleName, changedField: 'roleName'
       });
-      toast({ title: "Cargo Atualizado!", description: `${actionUser.characterNickname || actionUser.displayName} agora e ${selectedNewRoleName}.` });
-      fetchGuildAndMembers(); 
+      toast({ title: "Cargo Atualizado!", description: `${actionUser.characterNickname || actionUser.displayName} agora é ${selectedNewRoleName}.` });
+      fetchGuildAndMembers();
       closeActionDialog();
     } catch (error) {
       console.error("Erro ao mudar cargo:", error);
@@ -402,10 +402,10 @@ function MembersPageContent() {
     const statusToSet = newStatus || selectedNewStatus;
 
     if (!targetMember || !guild || statusToSet === '' || !guildId || !currentUser || !canManageMemberStatus) return;
-    
+
     if(targetMember.uid === guild.ownerId && targetMember.roleName === "Lider" && statusToSet === 'Inativo') {
-        toast({ title: "Acao Invalida", description: "O Lider da guilda nao pode definir seu proprio status como Inativo diretamente aqui.", variant: "destructive" });
-        closeActionDialog(); 
+        toast({ title: "Ação Inválida", description: "O Líder da guilda não pode definir seu próprio status como Inativo diretamente aqui.", variant: "destructive" });
+        closeActionDialog();
         return;
     }
     const oldStatus = targetMember.status;
@@ -413,14 +413,14 @@ function MembersPageContent() {
     try {
         const guildRef = doc(db, "guilds", guildId);
         const existingRoleInfo = guild.roles?.[targetMember.uid] || { roleName: targetMember.roleName, status: 'Ativo', dkpBalance: 0 };
-        
-        let updatedRoleInfoPayload: GuildMemberRoleInfo = { 
-          ...existingRoleInfo, 
-          status: statusToSet 
+
+        let updatedRoleInfoPayload: GuildMemberRoleInfo = {
+          ...existingRoleInfo,
+          status: statusToSet
         };
 
         await updateDoc(guildRef, { [`roles.${targetMember.uid}`]: updatedRoleInfoPayload });
-        
+
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_STATUS_CHANGED, {
             targetUserId: targetMember.uid,
             targetUserDisplayName: targetMember.characterNickname || targetMember.displayName || "",
@@ -430,7 +430,7 @@ function MembersPageContent() {
         });
 
         toast({ title: "Status Atualizado!", description: `O status de ${targetMember.characterNickname || targetMember.displayName} foi alterado para ${displayMemberStatus(statusToSet)}.` });
-        fetchGuildAndMembers(); 
+        fetchGuildAndMembers();
         closeActionDialog();
     } catch (error) {
         console.error("Erro ao mudar status:", error);
@@ -442,9 +442,9 @@ function MembersPageContent() {
 
   const handleKickMember = async () => {
     if (!actionUser || !guild || !guildId || !currentUser || !canKickMembers) return;
-    
+
     if (actionUser.uid === guild.ownerId) {
-         toast({ title: "Acao Invalida", description: "O Lider (fundador) nao pode ser expulso.", variant: "destructive" });
+         toast({ title: "Ação Inválida", description: "O Líder (fundador) não pode ser expulso.", variant: "destructive" });
         return;
     }
     const kickedUserRoleName = actionUser.roleName;
@@ -458,9 +458,9 @@ function MembersPageContent() {
         [`roles.${actionUser.uid}`]: deleteField()
       });
       await batch.commit();
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_KICKED, { 
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_KICKED, {
         targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName || "",
-        kickedUserRoleName: kickedUserRoleName 
+        kickedUserRoleName: kickedUserRoleName
       });
       toast({ title: "Membro Removido", description: `${actionUser.characterNickname || actionUser.displayName} foi removido.` });
       fetchGuildAndMembers();
@@ -475,7 +475,7 @@ function MembersPageContent() {
 
   const handleOpenNotesDialog = (member: GuildMember) => {
     if (!canManageMemberNotes) {
-        toast({title: "Permissao Negada", description: "Voce nao tem permissao para gerenciar notas.", variant: "destructive"});
+        toast({title: "Permissão Negada", description: "Você não tem permissão para gerenciar notas.", variant: "destructive"});
         return;
     }
     setMemberForNotes(member);
@@ -490,13 +490,13 @@ function MembersPageContent() {
       const guildRef = doc(db, "guilds", guildId);
       const existingRoleInfo = guild.roles?.[memberForNotes.uid] || { roleName: memberForNotes.roleName, status: 'Ativo', dkpBalance: 0 };
 
-      let updatedRoleInfoPayload: GuildMemberRoleInfo = { 
-        ...existingRoleInfo, 
-        notes: currentNote 
+      let updatedRoleInfoPayload: GuildMemberRoleInfo = {
+        ...existingRoleInfo,
+        notes: currentNote
       };
 
       await updateDoc(guildRef, { [`roles.${memberForNotes.uid}`]: updatedRoleInfoPayload });
-      
+
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_NOTE_UPDATED, {
         targetUserId: memberForNotes.uid,
         targetUserDisplayName: memberForNotes.characterNickname || memberForNotes.displayName || "",
@@ -505,7 +505,7 @@ function MembersPageContent() {
       });
 
       toast({ title: "Nota Salva!", description: `Nota para ${memberForNotes.characterNickname || memberForNotes.displayName} foi salva.` });
-      fetchGuildAndMembers(); 
+      fetchGuildAndMembers();
       setShowNotesDialog(false);
       setMemberForNotes(null);
     } catch (error) {
@@ -515,7 +515,7 @@ function MembersPageContent() {
       setIsSavingNote(false);
     }
   };
-  
+
   const handleViewMemberDetails = (member: GuildMember) => {
     if (canViewDetailedMemberInfo) {
       setSelectedMemberForDetails(member);
@@ -540,7 +540,7 @@ function MembersPageContent() {
       default: return "";
     }
   };
-  
+
   const getTLRoleIcon = (role?: TLRole) => {
     if (!role) return null;
     switch (role) {
@@ -575,7 +575,7 @@ function MembersPageContent() {
   const handleSelectAllRows = (checked: boolean) => {
     const newSelectedRows: Record<string, boolean> = {};
     if (checked) {
-      paginatedMembers.forEach(member => newSelectedRows[member.uid] = true); 
+      paginatedMembers.forEach(member => newSelectedRows[member.uid] = true);
     }
     setSelectedRows(newSelectedRows);
   };
@@ -588,7 +588,7 @@ function MembersPageContent() {
     let tempMembers = [...members];
 
     if (usernameFilter) {
-        tempMembers = tempMembers.filter(member => 
+        tempMembers = tempMembers.filter(member =>
             (member.characterNickname || member.displayName || member.email || "").toLowerCase().includes(usernameFilter.toLowerCase())
         );
     }
@@ -616,7 +616,7 @@ function MembersPageContent() {
             return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - dkpA;
         });
     }
-    
+
     return tempMembers;
   }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game]);
 
@@ -633,35 +633,34 @@ function MembersPageContent() {
   if (loadingGuildData || authLoading) {
     return (
       <div className="space-y-4 p-4 md:p-6">
-        <Skeleton className="h-10 w-1/3 mb-6" /> 
-        <Skeleton className="h-28 w-full" /> 
-        <Skeleton className="h-16 w-full" /> 
-        <Skeleton className="h-12 w-full" /> 
-        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)} 
+        <Skeleton className="h-10 w-1/3 mb-6" />
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-12 w-full" />
+        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
       </div>
     );
   }
-  
-  if (!guild) {
-    return <div className="p-6 text-center">Guilda nao carregada ou nao encontrada.</div>;
-  }
-  
-  const isTLGuild = guild.game === "Throne and Liberty";
 
+  if (!guild) {
+    return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
+  }
+
+  const isTLGuild = guild.game === "Throne and Liberty";
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <PageTitle title={`Membros de ${guild.name}`} icon={<Users className="h-8 w-8 text-primary" />} />
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-card rounded-lg shadow items-end">
         <div className="xl:col-span-2">
-          <Label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuario</Label>
+          <Label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</Label>
           <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} className="form-input"/>
         </div>
 
         {isTLGuild && (
           <div>
-            <Label htmlFor="tlRoleFilter" className="block text-sm font-medium text-muted-foreground mb-1">Funcao (TL)</Label>
+            <Label htmlFor="tlRoleFilter" className="block text-sm font-medium text-muted-foreground mb-1">Função (TL)</Label>
             <Select value={tlRoleFilter} onValueChange={(value) => { setTlRoleFilter(value as TLRole | "all"); setCurrentPage(1); }}>
               <SelectTrigger id="tlRoleFilter" className="form-input"><SelectValue placeholder="Todas" /></SelectTrigger>
               <SelectContent>
@@ -675,9 +674,9 @@ function MembersPageContent() {
         <div>
           <Label htmlFor="gearSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Gear</Label>
           <Select value={gearSortOrder} onValueChange={(value) => { setGearSortOrder(value as GearSortOrder); setCurrentPage(1); }}>
-            <SelectTrigger id="gearSortOrder" className="form-input"><SelectValue placeholder="Padrao" /></SelectTrigger>
+            <SelectTrigger id="gearSortOrder" className="form-input"><SelectValue placeholder="Padrão" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Padrao</SelectItem>
+              <SelectItem value="default">Padrão</SelectItem>
               <SelectItem value="asc">Menor para Maior</SelectItem>
               <SelectItem value="desc">Maior para Menor</SelectItem>
             </SelectContent>
@@ -694,13 +693,13 @@ function MembersPageContent() {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div>
-          <Label htmlFor="dkpSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Balanco DKP</Label>
+          <Label htmlFor="dkpSortOrder" className="block text-sm font-medium text-muted-foreground mb-1">Balanço DKP</Label>
           <Select value={dkpSortOrder} onValueChange={(value) => { setDkpSortOrder(value as DkpSortOrder); setCurrentPage(1); }}>
-            <SelectTrigger id="dkpSortOrder" className="form-input"><SelectValue placeholder="Padrao" /></SelectTrigger>
+            <SelectTrigger id="dkpSortOrder" className="form-input"><SelectValue placeholder="Padrão" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Padrao</SelectItem>
+              <SelectItem value="default">Padrão</SelectItem>
               <SelectItem value="asc">Menor para Maior</SelectItem>
               <SelectItem value="desc">Maior para Menor</SelectItem>
             </SelectContent>
@@ -713,13 +712,13 @@ function MembersPageContent() {
             <SelectTrigger id="statusFilter" className="form-input"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).map(statusVal => 
+              {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).map(statusVal =>
                 <SelectItem key={statusVal} value={statusVal}>{displayMemberStatus(statusVal)}</SelectItem>
               )}
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="xl:col-span-3">
           <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
           <Popover>
@@ -740,7 +739,7 @@ function MembersPageContent() {
               <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => { setTimeFromFilter(e.target.value); setCurrentPage(1); }} className="form-input" />
             </div>
             <div>
-              <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Ate</Label>
+              <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label>
               <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => { setTimeToFilter(e.target.value); setCurrentPage(1);}} className="form-input" />
             </div>
         </div>
@@ -753,19 +752,19 @@ function MembersPageContent() {
 
       <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow">
         <div className="flex items-center gap-2">
-          <Checkbox 
-            id="selectAllRows" 
-            aria-label="Selecionar todas as linhas visiveis"
+          <Checkbox
+            id="selectAllRows"
+            aria-label="Selecionar todas as linhas visíveis"
             checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length}
             onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))}
             disabled={paginatedMembers.length === 0}
           />
-          {numSelectedRows > 0 && <span className="text-sm text-muted-foreground">{numSelectedRows} de {paginatedMembers.length} linha(s) visiveis selecionada(s)</span>}
+          {numSelectedRows > 0 && <span className="text-sm text-muted-foreground">{numSelectedRows} de {paginatedMembers.length} linha(s) visíveis selecionada(s)</span>}
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={numSelectedRows === 0}>Acoes <MoreVertical className="ml-2 h-4 w-4" /></Button>
+              <Button variant="outline" disabled={numSelectedRows === 0}>Ações <MoreVertical className="ml-2 h-4 w-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled>Promover Selecionados</DropdownMenuItem>
@@ -775,32 +774,32 @@ function MembersPageContent() {
               <DropdownMenuItem className="text-destructive focus:text-destructive" disabled>Remover Selecionados</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" disabled><SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros Avancados</Button>
+          <Button variant="outline" disabled><SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros Avançados</Button>
           <Button variant="outline" disabled><Download className="mr-2 h-4 w-4" /> Exportar</Button>
         </div>
       </div>
-      
+
       <div className="overflow-x-auto bg-card p-2 rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
-                <Checkbox 
+                <Checkbox
                     checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length}
                     onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))}
-                    aria-label="Selecionar todas as linhas visiveis"
+                    aria-label="Selecionar todas as linhas visíveis"
                     disabled={paginatedMembers.length === 0}
                 />
               </TableHead>
-              <TableHead>Usuario <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              {isTLGuild && <TableHead>Funcao <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}
+              <TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
+              {isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}
               <TableHead>Armas</TableHead>
               <TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               <TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              <TableHead>Balanco DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
+              <TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
               {canManageMemberNotes && <TableHead>Nota</TableHead>}
               <TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>
-              <TableHead className="text-right w-[120px]">Acoes</TableHead>
+              <TableHead className="text-right w-[120px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -823,9 +822,9 @@ function MembersPageContent() {
                       <Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${displayName}`}/>
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
-                    <div 
+                    <div
                       className={cn("flex items-center gap-2 font-medium", canViewDetailedMemberInfo && "cursor-pointer hover:text-primary transition-colors")}
                       onClick={() => handleViewMemberDetails(member)}
                       title={canViewDetailedMemberInfo ? "Ver detalhes do membro" : ""}
@@ -850,28 +849,28 @@ function MembersPageContent() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
-                      {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundaria"} width={24} height={24} data-ai-hint="weapon shield"/>}
+                      {member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}
                     </div>
                   </TableCell>
 
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {member.gearScore}
-                      {member.gearScoreScreenshotUrl && 
+                      {member.gearScoreScreenshotUrl &&
                         <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" title="Ver screenshot do gearscore">
                           <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
                         </a>
                       }
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {getRoleIcon(member.roleName)}
                       {member.roleName}
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {member.dkpBalance ?? 0} <Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" />
@@ -904,14 +903,14 @@ function MembersPageContent() {
                         <Search className="h-4 w-4" />
                         <span className="sr-only">Ver Detalhes</span>
                       </Button>
-                      {!isCurrentUserTarget && ( 
+                      {!isCurrentUserTarget && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" 
-                              disabled={isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus} 
+                            <Button variant="ghost" size="icon" className="h-8 w-8"
+                              disabled={isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus}
                             >
                               <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">Acoes do membro</span>
+                              <span className="sr-only">Ações do membro</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -939,13 +938,13 @@ function MembersPageContent() {
                                     </DropdownMenuPortal>
                                 </DropdownMenuSub>
                             )}
-                            {canKickMembers && !isGuildOwnerTarget && ( 
+                            {canKickMembers && !isGuildOwnerTarget && (
                               <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}>
                                 <UserX className="mr-2 h-4 w-4" /> Remover da Guilda
                               </DropdownMenuItem>
                             )}
                             {isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus && !canManageMemberRoles && !canKickMembers && (
-                               <DropdownMenuItem disabled>Nenhuma acao disponivel</DropdownMenuItem>
+                               <DropdownMenuItem disabled>Nenhuma ação disponível</DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -961,11 +960,11 @@ function MembersPageContent() {
 
       <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow mt-4">
         <div className="text-sm text-muted-foreground">
-            {numSelectedRows > 0 ? `${numSelectedRows} de ${paginatedMembers.length} linha(s) visiveis selecionada(s).` : `${totalFilteredMembers} membro(s) no total.`}
+            {numSelectedRows > 0 ? `${numSelectedRows} de ${paginatedMembers.length} linha(s) visíveis selecionada(s).` : `${totalFilteredMembers} membro(s) no total.`}
         </div>
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Linhas/pag:</span>
+                <span className="text-sm text-muted-foreground">Linhas/pág:</span>
                 <Select value={rowsPerPage.toString()} onValueChange={(value) => { setRowsPerPage(Number(value)); setCurrentPage(1);}}>
                     <SelectTrigger className="w-[70px] h-8 text-xs form-input">
                         <SelectValue placeholder={rowsPerPage.toString()} />
@@ -975,7 +974,7 @@ function MembersPageContent() {
                     </SelectContent>
                 </Select>
             </div>
-            <span className="text-sm text-muted-foreground">Pagina {totalPages > 0 ? currentPage : 0} de {totalPages}</span>
+            <span className="text-sm text-muted-foreground">Página {totalPages > 0 ? currentPage : 0} de {totalPages}</span>
             <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(1)} disabled={currentPage === 1 || totalPages === 0}><ChevronsLeft className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || totalPages === 0}><ChevronLeft className="h-4 w-4" /></Button>
@@ -991,7 +990,7 @@ function MembersPageContent() {
             <NotesDialogHeader>
               <NotesDialogTitle>Nota para {memberForNotes.characterNickname || memberForNotes.displayName}</NotesDialogTitle>
               <NotesDialogDescription>
-                Adicione ou edite uma nota sobre este membro. Visivel apenas para quem tem permissao.
+                Adicione ou edite uma nota sobre este membro. Visível apenas para quem tem permissão.
               </NotesDialogDescription>
             </NotesDialogHeader>
             <div className="py-4">
@@ -1051,7 +1050,7 @@ function MembersPageContent() {
                             <div className="flex items-center gap-2">
                                 <strong>Armas (TL):</strong>
                                 {selectedMemberForDetails.weapons?.mainHandIconUrl && <Image src={selectedMemberForDetails.weapons.mainHandIconUrl} alt={selectedMemberForDetails.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}
-                                {selectedMemberForDetails.weapons?.offHandIconUrl && <Image src={selectedMemberForDetails.weapons.offHandIconUrl} alt={selectedMemberForDetails.tlSecondaryWeapon || "Arma Secundaria"} width={24} height={24} data-ai-hint="weapon shield"/>}
+                                {selectedMemberForDetails.weapons?.offHandIconUrl && <Image src={selectedMemberForDetails.weapons.offHandIconUrl} alt={selectedMemberForDetails.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}
                                 {!selectedMemberForDetails.weapons?.mainHandIconUrl && !selectedMemberForDetails.weapons?.offHandIconUrl && "N/A"}
                             </div>
                             {selectedMemberForDetails.tlPrimaryWeapon && <p className="text-sm text-muted-foreground ml-4">- {selectedMemberForDetails.tlPrimaryWeapon}</p>}
@@ -1091,7 +1090,7 @@ function MembersPageContent() {
             <AlertDialogCancel onClick={closeActionDialog} disabled={isProcessingAction}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleChangeRole} disabled={isProcessingAction || !selectedNewRoleName}>
               {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Confirmar Mudanca
+              Confirmar Mudança
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1102,7 +1101,7 @@ function MembersPageContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remover {actionUser?.characterNickname || actionUser?.displayName} da Guilda?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acao e irreversivel. O membro sera removido da guilda e perdera seu cargo.
+              Esta ação é irreversível. O membro será removido da guilda e perderá seu cargo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1113,7 +1112,7 @@ function MembersPageContent() {
               disabled={isProcessingAction}
             >
               {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Confirmar Remocao
+              Confirmar Remoção
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

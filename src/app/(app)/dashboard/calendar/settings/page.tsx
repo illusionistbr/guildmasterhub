@@ -40,7 +40,7 @@ function CalendarSettingsPageContent() {
   const [visiblePinCodes, setVisiblePinCodes] = useState<Record<string, boolean>>({});
 
   const guildId = searchParams.get('guildId');
-  
+
   const currentUserRoleInfo = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return null;
     return guild.roles[currentUser.uid];
@@ -75,14 +75,14 @@ function CalendarSettingsPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) {
-          toast({ title: "Guilda nao encontrada", variant: "destructive" });
+          toast({ title: "Guilda não encontrada", variant: "destructive" });
           router.push('/guild-selection');
           setLoadingData(false);
           return;
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
-        setHeaderTitle(`Config. Calendario: ${guildData.name}`);
+        setHeaderTitle(`Config. Calendário: ${guildData.name}`);
 
         const userRoleData = guildData.roles?.[currentUser.uid];
         if (!userRoleData || !hasPermission(userRoleData.roleName, guildData.customRoles, GuildPermission.MANAGE_EVENTS_VIEW_PIN)) {
@@ -97,7 +97,7 @@ function CalendarSettingsPageContent() {
       }
     };
     fetchGuildDetails();
-    
+
     return () => {
         setHeaderTitle(null);
     }
@@ -110,9 +110,9 @@ function CalendarSettingsPageContent() {
           setLoadingData(false);
           setEvents([]);
       }
-      return; 
+      return;
     }
-    
+
     setLoadingData(true);
     const eventsRef = collection(db, `guilds/${guildId}/events`);
     const q = query(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"));
@@ -128,9 +128,9 @@ function CalendarSettingsPageContent() {
       setLoadingData(false);
     });
 
-    return () => unsubscribe(); 
+    return () => unsubscribe();
 
-  }, [guildId, currentUser, authLoading, accessDenied, guild, toast, canViewPins]); 
+  }, [guildId, currentUser, authLoading, accessDenied, guild, toast, canViewPins]);
 
   const formatEventDateTime = (dateStr: string, timeStr: string): string => {
     try {
@@ -139,7 +139,7 @@ function CalendarSettingsPageContent() {
         date.setHours(hours, minutes);
         return format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (e) {
-        return "Data/Hora invalida";
+        return "Data/Hora inválida";
     }
   };
 
@@ -150,7 +150,7 @@ function CalendarSettingsPageContent() {
   if (authLoading || loadingData) {
     return (
         <div className="space-y-4 p-4 md:p-6">
-            <PageTitle title="Configuracoes do Calendario" icon={<Settings className="h-8 w-8 text-primary" />} />
+            <PageTitle title="Configurações do Calendário" icon={<Settings className="h-8 w-8 text-primary" />} />
             <Skeleton className="h-12 w-full" />
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
         </div>
@@ -163,31 +163,31 @@ function CalendarSettingsPageContent() {
         <ShieldAlert className="h-24 w-24 text-destructive animate-pulse" />
         <h2 className="text-3xl font-headline text-destructive">Acesso Negado</h2>
         <p className="text-lg text-muted-foreground max-w-md">
-          Voce nao tem permissao para visualizar as configuracoes do calendario desta guilda.
+          Você não tem permissão para visualizar as configurações do calendário desta guilda.
         </p>
         <Button onClick={() => router.back()} variant="outline">Voltar</Button>
       </div>
     );
   }
-  
+
   if (!guild && !loadingData) {
-     return <div className="p-6 text-center">Guilda nao carregada ou nao encontrada.</div>;
+     return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <PageTitle 
-        title={`Configuracoes do Calendario de ${guild?.name || 'Guilda'}`} 
-        description="Visualize e gerencie os codigos PIN dos eventos criados."
+      <PageTitle
+        title={`Configurações do Calendário de ${guild?.name || 'Guilda'}`}
+        description="Visualize e gerencie os códigos PIN dos eventos criados."
         icon={<Settings className="h-8 w-8 text-primary" />}
       />
-      
+
       {events.length === 0 && !loadingData && (
         <div className="text-center py-10 bg-card rounded-lg shadow">
             <KeyRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">Nenhum Evento com PIN Criado</p>
             <p className="text-muted-foreground mt-2">
-                Ainda nao ha eventos com codigos PIN para esta guilda ou nenhum evento foi criado.
+                Ainda não há eventos com códigos PIN para esta guilda ou nenhum evento foi criado.
             </p>
         </div>
       )}
@@ -201,7 +201,7 @@ function CalendarSettingsPageContent() {
                 <TableHead>Data/Hora</TableHead>
                 <TableHead>DKP</TableHead>
                 <TableHead className="text-center">PIN Ativo</TableHead>
-                <TableHead className="text-center">Codigo PIN</TableHead>
+                <TableHead className="text-center">Código PIN</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -214,7 +214,7 @@ function CalendarSettingsPageContent() {
                   <TableCell>{event.dkpValue || "-"}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant={event.requiresPin ? "default" : "outline"} className={event.requiresPin ? "bg-green-500/20 text-green-500 border-green-500/50" : ""}>
-                      {event.requiresPin ? "Sim" : "Nao"}
+                      {event.requiresPin ? "Sim" : "Não"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
@@ -246,3 +246,4 @@ export default function CalendarSettingsPage() {
     </Suspense>
   );
 }
+

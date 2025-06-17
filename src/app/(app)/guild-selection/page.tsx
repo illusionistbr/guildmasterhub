@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageTitle } from '@/components/shared/PageTitle';
-import { ShieldPlus, Users, Home, Eye, Settings as SettingsIcon } from 'lucide-react'; 
+import { ShieldPlus, Users, Home, Eye, Settings as SettingsIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, where, getDocs } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -46,8 +46,8 @@ export default function GuildSelectionPage() {
         }
       };
       fetchGuilds();
-    } else if (!authLoading && !user) { 
-        setLoadingGuilds(false); 
+    } else if (!authLoading && !user) {
+        setLoadingGuilds(false);
     }
   }, [user, authLoading]);
 
@@ -58,7 +58,7 @@ export default function GuildSelectionPage() {
       <div className="space-y-8">
         <PageTitle title="Bem-vindo ao GuildMasterHub!" description="Escolha sua guilda ou crie uma nova para começar." icon={<Home className="h-8 w-8 text-primary" />} />
         <div className="grid md:grid-cols-2 gap-6">
-          <Skeleton className="h-40 w-full" /> 
+          <Skeleton className="h-40 w-full" />
           <Skeleton className="h-40 w-full" />
         </div>
         <div>
@@ -80,14 +80,14 @@ export default function GuildSelectionPage() {
         </div>
       )
   }
-  
+
   const allUserGuilds = [...ownedGuilds, ...memberGuilds].sort((a,b) => (a.name || "").localeCompare(b.name || ""));
 
 
   return (
     <div className="space-y-10">
-      <PageTitle 
-        title={`Olá, ${user.displayName || 'Aventureiro'}!`} 
+      <PageTitle
+        title={`Olá, ${user.displayName || 'Aventureiro'}!`}
         description="Pronto para sua próxima jornada? Escolha uma guilda existente ou crie uma nova."
         icon={<Home className="h-8 w-8 text-primary" />}
       />
@@ -161,3 +161,4 @@ export default function GuildSelectionPage() {
     </div>
   );
 }
+

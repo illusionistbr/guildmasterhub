@@ -37,9 +37,9 @@ export default function SignupPage() {
     setLoading(true);
     try {
       if (signup) {
-        const redirectPath = await signup(nickname, email, password); 
+        const redirectPath = await signup(nickname, email, password);
         toast({ title: "Conta criada com sucesso!", description: "Redirecionando..." });
-        router.push(redirectPath); 
+        router.push(redirectPath);
       } else {
         setError("Funcionalidade de cadastro não implementada.");
         toast({ title: "Erro", description: "Funcionalidade de cadastro não implementada.", variant: "destructive" });
@@ -47,7 +47,7 @@ export default function SignupPage() {
     } catch (err: any) {
       let errorMessage = "Falha ao criar conta. Verifique os dados e tente novamente.";
       if (err.code === 'auth/email-already-in-use') {
-        errorMessage = "Este email já está em uso. Tente outro.";
+        errorMessage = "Este e-mail já está em uso. Tente outro.";
       } else if (err.code === 'auth/weak-password') {
         errorMessage = "A senha é muito fraca. Use pelo menos 6 caracteres.";
       }
@@ -71,28 +71,28 @@ export default function SignupPage() {
             <Label htmlFor="nickname">Nickname</Label>
             <div className="relative flex items-center">
               <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="nickname" 
-                type="text" 
-                placeholder="SeuApelidoNoJogo" 
+              <Input
+                id="nickname"
+                type="text"
+                placeholder="SeuApelidoNoJogo"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-mail</Label>
             <div className="relative flex items-center">
               <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="seuemail@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="seuemail@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
@@ -101,13 +101,13 @@ export default function SignupPage() {
             <Label htmlFor="password">Senha</Label>
              <div className="relative flex items-center">
               <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="********" 
+              <Input
+                id="password"
+                type="password"
+                placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
@@ -116,13 +116,13 @@ export default function SignupPage() {
             <Label htmlFor="confirmPassword">Confirmar Senha</Label>
             <div className="relative flex items-center">
               <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                id="confirmPassword" 
-                type="password" 
-                placeholder="********" 
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="********"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                required 
+                required
                 className="form-input pl-10"
               />
             </div>
@@ -144,3 +144,4 @@ export default function SignupPage() {
     </>
   );
 }
+

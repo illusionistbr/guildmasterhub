@@ -2,14 +2,14 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import { useSearchParams, useRouter } 
+import { useSearchParams, useRouter }
 from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
 import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart, CalendarDays } from "lucide-react";
-import type { Guild, AuditActionType, Application, GuildMemberRoleInfo, Event as GuildEventType } from '@/types/guildmaster'; 
+import type { Guild, AuditActionType, Application, GuildMemberRoleInfo, Event as GuildEventType } from '@/types/guildmaster';
 import { TLRole } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,8 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit, onSnapshot } from "firebase/firestore"; 
-import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from "@/lib/firebase"; 
+import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit, onSnapshot } from "firebase/firestore";
+import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from "@/lib/firebase";
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
 import { logGuildActivity } from '@/lib/auditLogService';
@@ -36,16 +36,16 @@ const parseDateTime = (dateStr: string, timeStr: string): Date => {
 function DashboardPageContent() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
-  const router = useRouter(); 
+  const router = useRouter();
   const { setHeaderTitle } = useHeader();
-  
+
   const [currentGuild, setCurrentGuild] = useState<Guild | null>(null);
   const [loadingGuild, setLoadingGuild] = useState(true);
   const [isSavingImage, setIsSavingImage] = useState(false);
   const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
   const [roleCounts, setRoleCounts] = useState({ tank: 0, dps: 0, healer: 0 });
-  
+
   const { toast } = useToast();
 
   const [isOwner, setIsOwner] = useState(false);
@@ -78,10 +78,10 @@ function DashboardPageContent() {
             const isUserMember = guildData.memberIds?.includes(user.uid);
 
             if (isUserOwner || isUserMember) {
-                const guildToSet = { 
-                    ...guildData, 
+                const guildToSet = {
+                    ...guildData,
                     id: guildDocSnap.id,
-                    createdAt: guildData.createdAt?.toDate ? guildData.createdAt.toDate() : undefined 
+                    createdAt: guildData.createdAt?.toDate ? guildData.createdAt.toDate() : undefined
                 };
                 setCurrentGuild(guildToSet);
                 setHeaderTitle(guildToSet.name);
@@ -107,7 +107,7 @@ function DashboardPageContent() {
 
             } else {
                 toast({title: "Acesso Negado", description: `Você não tem permissão para visualizar a guilda.`, variant: "destructive"});
-                router.push('/guild-selection'); 
+                router.push('/guild-selection');
                 setHeaderTitle(null);
             }
         } else {
@@ -118,7 +118,7 @@ function DashboardPageContent() {
     } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro de Carregamento", description: "Não foi possível carregar os dados da guilda.", variant: "destructive" });
-        router.push('/guild-selection'); 
+        router.push('/guild-selection');
         setHeaderTitle(null);
     } finally {
         setLoadingGuild(false);
@@ -127,7 +127,7 @@ function DashboardPageContent() {
 
   useEffect(() => {
     setLoadingGuild(true);
-    setHeaderTitle(null); 
+    setHeaderTitle(null);
 
     if (authLoading) return;
     if (!user) {
@@ -165,7 +165,7 @@ function DashboardPageContent() {
         };
         findUserGuild();
     }
-    
+
     return () => {
       setHeaderTitle(null);
     };
@@ -229,7 +229,7 @@ function DashboardPageContent() {
         toast({ title: "Erro", description: "Guilda atual ou usuário não identificado.", variant: "destructive" });
         return;
     }
-    if (!isOwner) { 
+    if (!isOwner) {
         toast({ title: "Permissão Negada", description: "Você não tem permissão para editar esta guilda.", variant: "destructive" });
         return;
     }
@@ -245,7 +245,7 @@ function DashboardPageContent() {
             const fileName = `${type}_${new Date().getTime()}.${fileExtension}`;
             const filePath = `guilds/${currentGuild.id}/${type}/${fileName}`;
             const imageStorageRef = storageFirebaseRef(storage, filePath);
-            
+
             const uploadResult = await uploadBytes(imageStorageRef, imageFile);
             finalUrlToSave = await getDownloadURL(uploadResult.ref);
             toast({ toastId, title: `${type.charAt(0).toUpperCase() + type.slice(1)} Enviado!`, description: "Salvando na guilda..." });
@@ -253,7 +253,7 @@ function DashboardPageContent() {
             console.error(`Erro no upload do ${type}:`, uploadError);
             toast({ toastId, title: `Erro no Upload do ${type}`, description: uploadError.message || "Não foi possível enviar o arquivo. Tente novamente.", variant: "destructive" });
             setIsSavingImage(false);
-            return; 
+            return;
         }
     }
 
@@ -335,9 +335,9 @@ function DashboardPageContent() {
   const handleBannerFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-       if (file.size > 5 * 1024 * 1024) { 
+       if (file.size > 5 * 1024 * 1024) {
           toast({ title: "Arquivo Muito Grande", description: "O banner deve ter no máximo 5MB.", variant: "destructive"});
-          event.target.value = ""; 
+          event.target.value = "";
           setBannerFile(null);
           return;
       }
@@ -391,7 +391,7 @@ function DashboardPageContent() {
   const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      if (file.size > 2 * 1024 * 1024) { 
+      if (file.size > 2 * 1024 * 1024) {
           toast({ title: "Arquivo Muito Grande", description: "O logo deve ter no máximo 2MB.", variant: "destructive"});
           event.target.value = "";
           setLogoFile(null);
@@ -412,10 +412,10 @@ function DashboardPageContent() {
   const pageLoading = authLoading || loadingGuild;
 
   if (pageLoading) {
-    return <DashboardPageSkeleton />; 
+    return <DashboardPageSkeleton />;
   }
 
-  if (!user) { 
+  if (!user) {
     return (
       <div className="p-6 text-center text-lg">
         <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
@@ -428,7 +428,7 @@ function DashboardPageContent() {
     )
   }
 
-  if (!currentGuild) { 
+  if (!currentGuild) {
     return (
         <div className="p-6 text-center text-lg">
             <ShieldX className="mx-auto h-12 w-12 text-destructive mb-4" />
@@ -535,9 +535,9 @@ function DashboardPageContent() {
           </Dialog>
         )}
       </div>
-        
+
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-16 relative z-10 px-4">
-        <div className="md:col-span-2 flex justify-center md:block"> 
+        <div className="md:col-span-2 flex justify-center md:block">
           <div className="relative w-24 h-24 md:w-32 md:h-32 group">
             <Avatar className="w-full h-full border-4 border-background shadow-lg">
               <AvatarImage src={currentLogoUrl} alt={`${currentGuild.name} logo`} data-ai-hint="guild logo emblem" onError={() => setCurrentLogoUrl("https://placehold.co/150x150.png?text=Error")}/>
@@ -623,11 +623,11 @@ function DashboardPageContent() {
             )}
           </div>
         </div>
-        <div className="md:col-span-10 md:pt-4 text-center md:text-left"> 
+        <div className="md:col-span-10 md:pt-4 text-center md:text-left">
           <h1 className="text-3xl md:text-4xl font-headline text-primary">Bem-vindo(a), {welcomeName}!</h1>
         </div>
       </div>
-      
+
       {isTLGuild && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 px-4 mb-8">
           <StatCard
@@ -662,7 +662,7 @@ function DashboardPageContent() {
           actionHref={`/dashboard/members?guildId=${guildIdForLinks}`}
           actionLabel="Gerenciar Membros"
         />
-        
+
         <StatCard
           title="Próximos Eventos"
           value={upcomingEventsCount.toString()}
@@ -675,22 +675,22 @@ function DashboardPageContent() {
           title="Candidaturas Pendentes"
           value={pendingApplicationsCount.toString()}
           icon={<UserPlus className="h-8 w-8 text-primary" />}
-          actionHref={`/dashboard/recruitment/applications?guildId=${guildIdForLinks}`}
+          actionHref={`/dashboard/recruitment?guildId=${guildIdForLinks}&tab=applications`}
           actionLabel="Revisar Candidaturas"
         />
       </div>
-      
+
     </div>
   );
 }
 
-function DashboardPageSkeleton() { 
+function DashboardPageSkeleton() {
  return (
       <div className="space-y-8">
-        <Skeleton className="h-48 md:h-60 w-full rounded-lg" /> 
+        <Skeleton className="h-48 md:h-60 w-full rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start -mt-16 md:-mt-20 mb-16 relative z-10 px-4">
           <div className="md:col-span-2 flex justify-center md:justify-start">
-            <Skeleton className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-background shadow-lg" /> 
+            <Skeleton className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-background shadow-lg" />
           </div>
           <div className="md:col-span-10 md:pt-4 space-y-2 text-center md:text-left">
             <Skeleton className="h-10 w-3/4 mx-auto md:mx-0" />

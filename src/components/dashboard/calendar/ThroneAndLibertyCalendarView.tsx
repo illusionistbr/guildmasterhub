@@ -241,7 +241,7 @@ const parseLocalDateFromString = (dateString: string): Date => {
   const parts = dateString.split('-');
   if (parts.length === 3) {
     const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; 
+    const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
     const date = new Date(Date.UTC(year, month, day));
     return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
@@ -322,13 +322,9 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
   const daysInWeek = eachDayOfInterval({ start: currentWeekStart, end: currentWeekEnd });
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  const currentUserRoleInGuild = useMemo(() => {
+  const currentUserRoleInfo = useMemo(() => {
     if (!user || !guild || !guild.roles) return null;
-    const roleInfo = guild.roles[user.uid];
-    if (typeof roleInfo === 'object' && roleInfo !== null && 'generalRole' in roleInfo) {
-      return (roleInfo as GuildMemberRoleInfo).generalRole;
-    }
-    return roleInfo as GuildRole | null;
+    return guild.roles[user.uid] as GuildMemberRoleInfo | null;
   }, [user, guild]);
 
   useEffect(() => {
@@ -391,7 +387,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
 
       const localWeekStartNormalized = new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth(), currentWeekStart.getDate());
       const localWeekEndNormalized = new Date(currentWeekEnd.getFullYear(), currentWeekEnd.getMonth(), currentWeekEnd.getDate());
-      
+
       return event.guildId === guildId &&
              eventDateLocal >= localWeekStartNormalized &&
              eventDateLocal <= localWeekEndNormalized;
@@ -463,7 +459,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
       toast({ title: "Erro", description: "Campos obrigatórios não preenchidos para salvar a atividade.", variant: "destructive" });
       return;
     }
-    
+
     const activityDataToSave: { [key: string]: any } = {
         guildId: guildId,
         title: activityTitleToSave,
@@ -476,7 +472,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
 
     if (selectedCategory) activityDataToSave.category = selectedCategory;
     if (selectedSubcategory) activityDataToSave.subCategory = selectedSubcategory;
-    
+
     const trimmedDescription = activityDescription.trim();
     if (trimmedDescription) activityDataToSave.description = trimmedDescription;
 
@@ -484,20 +480,20 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
         activityDataToSave.endDate = selectedEndDate.toISOString().split('T')[0];
         activityDataToSave.endTime = selectedEndTime;
     }
-    
+
     if (dkpValueForEvent > 0) {
         activityDataToSave.dkpValue = dkpValueForEvent;
     }
-    
+
     if (generatePinCode) {
         activityDataToSave.pinCode = generateNumericPin(6);
     }
-    
+
     try {
       const eventsCollectionRef = collection(db, `guilds/${guildId}/events`);
       const docRef = await addDoc(eventsCollectionRef, activityDataToSave);
       toast({ title: "Atividade Salva!", description: `"${activityTitleToSave}" foi adicionado ao calendário.` });
-      
+
       if (isMandatory && activityTitleToSave && selectedStartDate && guildId && user) {
         const activityDateFormatted = formatDateTimeForDisplay(selectedStartDate, selectedStartTime);
         const notificationMessage = `Nova atividade obrigatória: "${activityTitleToSave}" em ${activityDateFormatted}.`;
@@ -880,7 +876,7 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="top" className="bg-popover text-popover-foreground max-w-xs">
-                                            <p>A quantidade de DKP que serão concedidos aos membros que participarem desta atividade.</p>
+                                            <p>A quantidade de DKP que será concedida aos membros que participarem desta atividade.</p>
                                         </TooltipContent>
                                         </Tooltip>
                                     </div>
@@ -1014,9 +1010,10 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
 
       <EventPinDialog
         event={selectedEventForPinDialog}
+        guild={guild}
         isOpen={isPinDialogOpen}
         onClose={() => setIsPinDialogOpen(false)}
-        currentUserRole={currentUserRoleInGuild}
+        currentUserRole={currentUserRoleInfo}
         guildId={guildId}
       />
     </div>

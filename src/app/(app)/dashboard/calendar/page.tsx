@@ -33,7 +33,7 @@ function CalendarPageContent() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { 
+    if (!user) {
       router.push('/login');
       return;
     }
@@ -50,13 +50,13 @@ function CalendarPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) {
-          toast({ title: "Guilda nao encontrada", variant: "destructive" });
+          toast({ title: "Guilda não encontrada", variant: "destructive" });
           router.push('/guild-selection');
           return;
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
-        setHeaderTitle(`Calendario: ${guildData.name}`);
+        setHeaderTitle(`Calendário: ${guildData.name}`);
         if (guildData.game === "Throne and Liberty") {
           setIsThroneAndLibertyGuild(true);
         } else {
@@ -71,11 +71,11 @@ function CalendarPageContent() {
     };
 
     fetchGuildData();
-    
+
     return () => {
       setHeaderTitle(null);
     }
-  }, [guildId, user, authLoading, router, toast, setHeaderTitle]); 
+  }, [guildId, user, authLoading, router, toast, setHeaderTitle]);
 
   if (authLoading || loadingGuildData) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -83,8 +83,8 @@ function CalendarPageContent() {
 
   if (!guild) {
     return (
-      <PageTitle title="Calendario" icon={<CalendarDays className="h-8 w-8 text-primary" />}>
-        <div className="text-center py-10">Guilda nao encontrada ou nao carregada.</div>
+      <PageTitle title="Calendário" icon={<CalendarDays className="h-8 w-8 text-primary" />}>
+        <div className="text-center py-10">Guilda não encontrada ou não carregada.</div>
       </PageTitle>
     );
   }
@@ -94,7 +94,7 @@ function CalendarPageContent() {
     return <ThroneAndLibertyCalendarView guildId={guildId} guildName={guild.name} guild={guild} />;
   }
 
-  return <ComingSoon pageName={`Calendario de ${guild.name}`} icon={<CalendarDays className="h-8 w-8 text-primary"/>} />;
+  return <ComingSoon pageName={`Calendário de ${guild.name}`} icon={<CalendarDays className="h-8 w-8 text-primary"/>} />;
 }
 
 
@@ -105,3 +105,4 @@ export default function CalendarPage() {
     </Suspense>
   );
 }
+

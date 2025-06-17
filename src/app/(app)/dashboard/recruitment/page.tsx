@@ -141,7 +141,7 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
       setIsSaving(false);
     }
   };
-  
+
   if (!guild || !guildId) {
     return <div className="text-center py-10">Carregando configurações do questionário...</div>;
   }
@@ -212,7 +212,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
   if (!guild || !guildId) {
     return <div className="text-center py-10">Carregando informações da guilda...</div>;
   }
-  
+
   const currentUserRoleInfo = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return null;
     return guild.roles[currentUser.uid];
@@ -223,7 +223,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
     return hasPermission(
       currentUserRoleInfo.roleName,
       guild.customRoles,
-      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS 
+      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
 
@@ -359,9 +359,9 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
                 roleName: "Membro",
-                characterNickname: application.applicantName, 
+                characterNickname: application.applicantName,
                 gearScore: application.gearScore,
-                gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || null, 
+                gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || null,
                 // No gearBuildLink or skillBuildLink from application form when accepting
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
@@ -376,21 +376,21 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                 [`roles.${application.applicantId}`]: memberRoleInfo
             });
             batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
-            
-            await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.MEMBER_JOINED, { 
+
+            await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.MEMBER_JOINED, {
                 targetUserId: application.applicantId, targetUserDisplayName: application.applicantName, details: {joinMethod: "application_approved"} as any
             });
         }
-        
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_ACCEPTED, { 
-            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName 
+
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_ACCEPTED, {
+            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName
         });
         toast({ title: "Candidatura Aceita!", description: `${application.applicantName} agora é membro da guilda.` });
 
       } else { // Reject
         batch.update(applicationRef, { status: 'rejected', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_REJECTED, { 
-            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName 
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_REJECTED, {
+            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName
         });
         toast({ title: "Candidatura Rejeitada.", description: `A candidatura de ${application.applicantName} foi rejeitada.` });
       }
@@ -592,7 +592,7 @@ function RecruitmentPage() {
   const [guild, setGuild] = useState<Guild | null>(null);
   const [loadingGuildData, setLoadingGuildData] = useState(true);
   const [recruitmentLink, setRecruitmentLink] = useState<string | null>(null);
-  
+
   const initialTab = searchParams.get('tab') || "recruitment";
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -604,9 +604,9 @@ function RecruitmentPage() {
       setActiveTab(currentTab);
     } else {
       const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.set('tab', 'recruitment'); 
+      newSearchParams.set('tab', 'recruitment');
       router.replace(`${window.location.pathname}?${newSearchParams.toString()}`, { scroll: false });
-      setActiveTab("recruitment"); 
+      setActiveTab("recruitment");
     }
   }, [searchParams, router]);
 
@@ -667,7 +667,7 @@ function RecruitmentPage() {
         });
     }
   };
-  
+
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
     const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -723,3 +723,4 @@ export default function RecruitmentPageWrapper() {
     </Suspense>
   );
 }
+

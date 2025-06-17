@@ -3,12 +3,12 @@
 
 import type { UserProfile } from '@/types/guildmaster';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { auth as firebaseAuth, firebaseUpdateProfile, db, collection, query, where, limit, getDocs, setDoc, serverTimestamp, doc, getDoc as getFirestoreDoc } from '@/lib/firebase'; 
-import { 
-  User as FirebaseUser, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import { auth as firebaseAuth, firebaseUpdateProfile, db, collection, query, where, limit, getDocs, setDoc, serverTimestamp, doc, getDoc as getFirestoreDoc } from '@/lib/firebase';
+import {
+  User as FirebaseUser,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 
@@ -31,14 +31,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (currentFirebaseUser) {
         const userDocRef = doc(db, "users", currentFirebaseUser.uid);
         const userDocSnap = await getFirestoreDoc(userDocRef);
-        
+
         let profileData: UserProfile = {
           uid: currentFirebaseUser.uid,
           email: currentFirebaseUser.email,
           displayName: currentFirebaseUser.displayName,
           photoURL: currentFirebaseUser.photoURL,
           // Initialize potentially missing fields to ensure type consistency
-          guilds: [], 
+          guilds: [],
           lastNotificationsCheckedTimestamp: {},
         };
 
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email?: string, password?: string) => {
     if (!email || !password) {
-      throw new Error("Email e senha são obrigatórios para o login.");
+      throw new Error("E-mail e senha são obrigatórios para o login.");
     }
     setLoading(true);
     try {
@@ -71,13 +71,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (userCredential.user) {
         // User profile will be updated by onAuthStateChanged listener
         setLoading(false);
-        return '/guild-selection'; 
+        return '/guild-selection';
       }
       throw new Error("Login failed, user not found in credential.");
     } catch (error) {
       console.error("Erro no login:", error);
       setLoading(false);
-      throw error; 
+      throw error;
     }
   };
 
@@ -93,10 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false); // Ensure loading is set to false in logout
     }
   };
-  
+
   const signup = async (nickname: string, email?: string, password?: string) => {
     if (!nickname || !email || !password) {
-      throw new Error("Nickname, email e senha são obrigatórios para o cadastro.");
+      throw new Error("Nickname, e-mail e senha são obrigatórios para o cadastro.");
     }
     setLoading(true);
     try {
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           lastNotificationsCheckedTimestamp: {},
         };
         await setDoc(userDocRef, newUserProfile);
-        
+
         // setUser state will be updated by onAuthStateChanged listener with this new data
         setLoading(false);
         return '/guild-selection';
@@ -145,3 +145,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

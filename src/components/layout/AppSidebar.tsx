@@ -15,12 +15,12 @@ import {
   SidebarSeparator // Import SidebarSeparator
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Users, 
-  CalendarDays, 
-  UserPlus, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  CalendarDays,
+  UserPlus,
+  Settings,
   ShieldEllipsis,
   LogOut,
   ClipboardList,
@@ -32,31 +32,31 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const guildManagementNavItems = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { 
-    label: "Membros", 
+  {
+    label: "Membros",
     icon: Users,
     baseHref: "/dashboard/members",
     subItems: [
       { baseHref: "/dashboard/members/groups", label: "Grupos", icon: UsersRound },
     ]
   },
-  { 
-    label: "Calendário", 
+  {
+    label: "Calendário",
     icon: CalendarDays,
     baseHref: "/dashboard/calendar",
     subItems: [
       { baseHref: "/dashboard/calendar/settings", label: "Config. Calendário", icon: ListFilter },
     ]
   },
-  { 
-    label: "Recrutamento", 
+  {
+    label: "Recrutamento",
     icon: UserPlus,
     baseHref: "/dashboard/recruitment",
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
-  { 
-    baseHref: "/dashboard/settings", 
-    label: "Config. da Guilda", 
+  {
+    baseHref: "/dashboard/settings",
+    label: "Config. da Guilda",
     icon: Settings,
   },
 ];
@@ -76,7 +76,7 @@ export function AppSidebar() {
   const guildId = searchParams.get('guildId');
 
   const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href) && href.length > "/dashboard".length);
-  
+
   const generateHref = (baseHref: string) => {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
   };
@@ -86,7 +86,7 @@ export function AppSidebar() {
       const currentHref = generateHref(item.baseHref);
       const itemIsActive = isActive(currentHref);
       const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
-      
+
       return item.subItems ? (
         <SidebarGroup key={item.label} className="p-0">
           <SidebarMenuButton
@@ -155,8 +155,8 @@ export function AppSidebar() {
       <SidebarContent className="flex-grow p-2">
         <SidebarMenu>
           {renderNavItems(guildManagementNavItems)}
-          
-          <SidebarSeparator className="my-2" /> 
+
+          <SidebarSeparator className="my-2" />
 
           <SidebarMenuItem key={userGuildSettingsNavItem.baseHref}>
             <SidebarMenuButton
@@ -185,3 +185,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

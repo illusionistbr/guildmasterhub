@@ -96,7 +96,7 @@ function GuildSettingsPageContent() {
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
-  
+
   const guildId = searchParams.get('guildId');
 
   const nameForm = useForm<GuildNameFormValues>({
@@ -108,7 +108,7 @@ function GuildSettingsPageContent() {
     resolver: zodResolver(guildPasswordSchema),
     defaultValues: { password: "" },
   });
-  
+
   const currentUserRoleInfo = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return null;
     return guild.roles[currentUser.uid];
@@ -131,7 +131,7 @@ function GuildSettingsPageContent() {
       GuildPermission.MANAGE_ROLES_PERMISSIONS
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
-  
+
   const canDeleteGuild = useMemo(() => currentUser?.uid === guild?.ownerId, [currentUser, guild]);
 
   useEffect(() => {
@@ -161,17 +161,17 @@ function GuildSettingsPageContent() {
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
         setHeaderTitle(`Configurações: ${guildData.name}`);
-        
+
         if (!guildData.memberIds?.includes(currentUser.uid)) {
             toast({title: "Acesso Negado", description: "Você não é membro desta guilda.", variant: "destructive"});
             setAccessDenied(true);
             setLoadingData(false);
             return;
         }
-        
+
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
-        
+
         const initialRoles = guildData.customRoles || {};
         if (!initialRoles["Lider"]) {
           initialRoles["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
@@ -193,9 +193,9 @@ function GuildSettingsPageContent() {
       }
     };
     fetchData();
-    
+
     return () => {
-      setHeaderTitle(null); 
+      setHeaderTitle(null);
     };
   }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, setHeaderTitle]);
 
@@ -217,8 +217,8 @@ function GuildSettingsPageContent() {
       });
 
       setGuild(prev => prev ? { ...prev, name: data.name } : null);
-      nameForm.reset({ name: data.name }); 
-      setHeaderTitle(`Configurações: ${data.name}`); 
+      nameForm.reset({ name: data.name });
+      setHeaderTitle(`Configurações: ${data.name}`);
       toast({ title: "Nome da Guilda Atualizado!", description: `O nome da guilda foi alterado para ${data.name}.` });
     } catch (error) {
       console.error("Erro ao atualizar nome da guilda:", error);
@@ -239,11 +239,11 @@ function GuildSettingsPageContent() {
 
     try {
       const guildRef = doc(db, "guilds", guild.id);
-      await updateDoc(guildRef, { 
-        password: data.password || null, 
-        isOpen: !data.password 
+      await updateDoc(guildRef, {
+        password: data.password || null,
+        isOpen: !data.password
       });
-      
+
       let logMessageToast = "";
       if (oldPasswordExists && newPasswordExists && guild.password !== data.password) {
         logMessageToast = "Senha da guilda alterada.";
@@ -292,17 +292,17 @@ function GuildSettingsPageContent() {
               await subBatch.commit();
           }
       }
-      
+
       const guildRef = doc(db, "guilds", guild.id);
       await deleteDoc(guildRef);
-      
+
       toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
-      router.push('/guild-selection'); 
+      router.push('/guild-selection');
     } catch (error) {
       console.error("Erro ao excluir guilda:", error);
       toast({ title: "Erro ao Excluir Guilda", description: "Não foi possível excluir a guilda. Verifique o console para mais detalhes.", variant: "destructive" });
-      setIsDeleting(false); 
+      setIsDeleting(false);
     }
   };
 
@@ -312,8 +312,8 @@ function GuildSettingsPageContent() {
       if (!role) return prevRoles;
 
       const newPermissions = checked
-        ? [...new Set([...role.permissions, permission])] 
-        : role.permissions.filter(p => p !== permission); 
+        ? [...new Set([...role.permissions, permission])]
+        : role.permissions.filter(p => p !== permission);
 
       return {
         ...prevRoles,
@@ -321,7 +321,7 @@ function GuildSettingsPageContent() {
       };
     });
   };
-  
+
   const handleCreateNewRole = () => {
     if (!canManageRolesAndPermissionsPage) {
         toast({ title: "Permissão Negada", description: "Você não tem permissão para criar cargos.", variant: "destructive"});
@@ -352,7 +352,7 @@ function GuildSettingsPageContent() {
     setNewRoleName("");
     toast({ title: "Cargo Criado Localmente", description: `Cargo "${trimmedRoleName}" adicionado. Configure suas permissões e clique em "Salvar Alterações" para persistir.` });
   };
-  
+
   const handleDeleteRole = async (roleName: string) => {
     if (!roleName || !guildId || !currentUser || !canManageRolesAndPermissionsPage) {
         toast({ title: "Permissão Negada", description: "Você não tem permissão para excluir cargos.", variant: "destructive"});
@@ -360,7 +360,7 @@ function GuildSettingsPageContent() {
         return;
     }
     if (roleName === "Lider" || roleName === "Membro") {
-      toast({ title: "Ação Não Permitida", description: "Os cargos 'Lider' e 'Membro' não podem ser excluídos.", variant: "destructive" });
+      toast({ title: "Ação Não Permitida", description: "Os cargos 'Líder' e 'Membro' não podem ser excluídos.", variant: "destructive" });
       setRoleToDelete(null);
       return;
     }
@@ -372,7 +372,7 @@ function GuildSettingsPageContent() {
     });
 
     toast({ title: "Cargo Marcado para Exclusão", description: `O cargo "${roleName}" será removido ao salvar as alterações.` });
-    setRoleToDelete(null); 
+    setRoleToDelete(null);
   };
 
   const handleSaveChangesPermissions = async () => {
@@ -384,7 +384,7 @@ function GuildSettingsPageContent() {
     try {
       const guildRef = doc(db, "guilds", guildId);
       const rolesToSave = { ...customRoles };
-      
+
       // Ensure Lider always has all permissions
       if (!rolesToSave["Lider"]) {
         rolesToSave["Lider"] = { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."};
@@ -405,8 +405,8 @@ function GuildSettingsPageContent() {
       setCustomRoles(rolesToSave);
 
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
-         details: { changedField: 'customRoles' } as any, 
-         roleName: "Todos os Cargos", 
+         details: { changedField: 'customRoles' } as any,
+         roleName: "Todos os Cargos",
       });
 
       toast({ title: "Permissões Salvas!", description: "As permissões dos cargos foram atualizadas com sucesso." });
@@ -458,7 +458,7 @@ function GuildSettingsPageContent() {
       </div>
     );
   }
-  
+
   if (!guild) {
      return (
         <div className="flex flex-col items-center justify-center text-center space-y-6 p-8 rounded-lg bg-card shadow-xl mt-10">
@@ -474,7 +474,7 @@ function GuildSettingsPageContent() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
-      <PageTitle 
+      <PageTitle
         title={`Configurações de ${guild.name}`}
         description="Gerencie as informações e permissões da sua guilda."
         icon={<SettingsIcon className="h-8 w-8 text-primary" />}
@@ -552,14 +552,14 @@ function GuildSettingsPageContent() {
               </form>
             </Form>
           </Card>
-          
+
           <Card className="static-card-container border-destructive/50">
             <CardHeader>
               <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription className="mb-4">
-                A exclusão da guilda é uma ação permanente e não pode ser desfeita. 
+                A exclusão da guilda é uma ação permanente e não pode ser desfeita.
                 Todos os dados associados, incluindo membros (de suas listas na guilda, não contas de usuário), eventos e logs, serão perdidos. Apenas o fundador original pode excluir a guilda.
               </CardDescription>
               <AlertDialog>
@@ -627,9 +627,9 @@ function GuildSettingsPageContent() {
                       disabled={!canManageRolesAndPermissionsPage || isSavingPermissions}
                     />
                   </div>
-                  <Button 
-                    onClick={handleCreateNewRole} 
-                    className="w-full sm:w-auto btn-gradient btn-style-secondary" 
+                  <Button
+                    onClick={handleCreateNewRole}
+                    className="w-full sm:w-auto btn-gradient btn-style-secondary"
                     disabled={!canManageRolesAndPermissionsPage || isSavingPermissions || !newRoleName.trim()}
                   >
                     <PlusCircle className="mr-2 h-5 w-5" /> Criar Cargo
@@ -723,7 +723,7 @@ function GuildSettingsPageContent() {
                   );
                 })}
               </Accordion>
-              
+
               <div className="flex justify-end mt-8">
                 <Button onClick={handleSaveChangesPermissions} className="btn-gradient btn-style-primary" disabled={isSavingPermissions || !canManageRolesAndPermissionsPage}>
                   {isSavingPermissions ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
@@ -746,5 +746,3 @@ export default function GuildSettingsPage() {
   );
 }
 
-
-    

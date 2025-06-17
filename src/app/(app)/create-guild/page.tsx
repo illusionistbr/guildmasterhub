@@ -83,7 +83,7 @@ export default function CreateGuildPage() {
       status: 'Ativo'
     };
     if (data.game === "Throne and Liberty") {
-        ownerRoleInfo.tlRole = undefined; 
+        ownerRoleInfo.tlRole = undefined;
         ownerRoleInfo.tlPrimaryWeapon = undefined;
         ownerRoleInfo.tlSecondaryWeapon = undefined;
     }
@@ -187,7 +187,7 @@ export default function CreateGuildPage() {
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Ex: Os Guardioes Alados"
+                        placeholder="Ex: Os Guardiões Alados"
                         className={`mt-1 form-input ${errors.name ? 'border-destructive focus:border-destructive' : ''}`}
                       />
                     </FormControl>
@@ -228,7 +228,7 @@ export default function CreateGuildPage() {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Ex: Uma guilda focada em exploracao e desafios epicos."
+                        placeholder="Ex: Uma guilda focada em exploração e desafios épicos."
                         rows={3}
                         className={`mt-1 form-input ${errors.description ? 'border-destructive focus:border-destructive' : ''}`}
                       />
