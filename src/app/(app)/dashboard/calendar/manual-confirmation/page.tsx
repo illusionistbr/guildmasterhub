@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import { useSearchParams, useRouter }_from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -361,3 +361,4 @@ export default function ManualConfirmationPage() {
     </Suspense>
   );
 }
+
