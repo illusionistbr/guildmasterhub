@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc } from '@/lib/firebase';
 import type { Guild, CustomRole, GuildPermission as PermissionEnum } from '@/types/guildmaster';
-import { GuildPermission } from '@/types/guildmaster';
+import { GuildPermission, AuditActionType } from '@/types/guildmaster'; // Corrected import for AuditActionType
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Settings, Loader2, ShieldAlert, PlusCircle, Save, Trash2, ListChecks } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
-import { logGuildActivity, AuditActionType } from '@/lib/auditLogService';
+import { logGuildActivity } from '@/lib/auditLogService'; // logGuildActivity is imported correctly
 import {
   AlertDialog,
   AlertDialogAction,
@@ -375,3 +375,4 @@ export default function PermissionsPage() {
     </Suspense>
   );
 }
+
