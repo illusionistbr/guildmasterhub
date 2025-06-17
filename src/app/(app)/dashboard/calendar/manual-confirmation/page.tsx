@@ -1,0 +1,363 @@
+
+"use client";
+
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import { useSearchParams, useRouter }_from 'next/navigation';
+import Image from 'next/image';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '@/contexts/AuthContext';
+import { db, storage, doc, getDoc, setDoc, serverTimestamp, Timestamp, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from '@/lib/firebase';
+import type { Guild, Event as GuildEvent, ManualConfirmation, AuditActionType as AuditActionTypeEnum, UserProfile } from '@/types/guildmaster';
+import { AuditActionType } from '@/types/guildmaster';
+import { PageTitle } from '@/components/shared/PageTitle';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Edit, UploadCloud, Link2 as LinkIcon, AlertTriangle, CheckCircle, ShieldAlert, Image as ImageIcon } from 'lucide-react';
+import { logGuildActivity } from '@/lib/auditLogService';
+import { useHeader } from '@/contexts/HeaderContext';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+const manualConfirmationSchema = z.object({
+  screenshotUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida (ex: Imgur)." }).optional(),
+  screenshotFile: z.instanceof(File).optional(),
+  notes: z.string().max(500, "Notas podem ter no máximo 500 caracteres.").optional(),
+}).refine(data => data.screenshotUrl || data.screenshotFile, {
+  message: "Forneça uma URL ou faça upload de um arquivo de screenshot.",
+  path: ["screenshotUrl"], // or screenshotFile, error will appear on one
+});
+
+type ManualConfirmationFormValues = z.infer<typeof manualConfirmationSchema>;
+
+function ManualConfirmationPageContent() {
+  const { user: currentUser, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { setHeaderTitle } = useHeader();
+
+  const [guild, setGuild] = useState<Guild | null>(null);
+  const [event, setEvent] = useState<GuildEvent | null>(null);
+  const [existingConfirmation, setExistingConfirmation] = useState<ManualConfirmation | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pinUsed, setPinUsed] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+
+  const guildId = searchParams.get('guildId');
+  const eventId = searchParams.get('eventId');
+
+  const form = useForm<ManualConfirmationFormValues>({
+    resolver: zodResolver(manualConfirmationSchema),
+    defaultValues: {
+      screenshotUrl: "",
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    setHeaderTitle("Confirmação Manual");
+    return () => setHeaderTitle(null);
+  }, [setHeaderTitle]);
+
+  const fetchEventAndConfirmationData = useCallback(async () => {
+    if (!currentUser || !guildId || !eventId) {
+      setLoadingData(false);
+      return;
+    }
+    setLoadingData(true);
+    try {
+      const guildDocRef = doc(db, "guilds", guildId);
+      const eventDocRef = doc(db, `guilds/${guildId}/events`, eventId);
+      const manualConfirmationDocRef = doc(db, `guilds/${guildId}/events/${eventId}/manualConfirmations`, currentUser.uid);
+
+      const [guildSnap, eventSnap, confirmationSnap] = await Promise.all([
+        getDoc(guildDocRef),
+        getDoc(eventDocRef),
+        getDoc(manualConfirmationDocRef)
+      ]);
+
+      if (!guildSnap.exists()) {
+        toast({ title: "Guilda não encontrada", variant: "destructive" });
+        router.push('/guild-selection'); return;
+      }
+      setGuild(guildSnap.data() as Guild);
+
+      if (!eventSnap.exists()) {
+        toast({ title: "Evento não encontrado", variant: "destructive" });
+        router.push(`/dashboard/calendar?guildId=${guildId}`); return;
+      }
+      const eventData = eventSnap.data() as GuildEvent;
+      setEvent(eventData);
+
+      if (eventData.attendeesWithPin?.includes(currentUser.uid)) {
+        setPinUsed(true);
+      }
+
+      if (confirmationSnap.exists()) {
+        setExistingConfirmation(confirmationSnap.data() as ManualConfirmation);
+      }
+
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      toast({ title: "Erro ao Carregar Dados", variant: "destructive" });
+    } finally {
+      setLoadingData(false);
+    }
+  }, [currentUser, guildId, eventId, router, toast]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!currentUser) { router.push(`/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildId}&eventId=${eventId}`); return; }
+    if (!guildId || !eventId) { toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido.", variant: "destructive" }); router.push('/dashboard'); return; }
+    fetchEventAndConfirmationData();
+  }, [authLoading, currentUser, guildId, eventId, router, toast, fetchEventAndConfirmationData]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
+        form.setValue("screenshotFile", undefined);
+        setPreviewImage(null);
+        e.target.value = ""; // Clear the input
+        return;
+      }
+      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+        toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
+        form.setValue("screenshotFile", undefined);
+        setPreviewImage(null);
+        e.target.value = ""; // Clear the input
+        return;
+      }
+      form.setValue("screenshotFile", file);
+      form.setValue("screenshotUrl", ""); // Clear URL if file is chosen
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      form.setValue("screenshotFile", undefined);
+      setPreviewImage(null);
+    }
+  };
+
+  const onSubmit: SubmitHandler<ManualConfirmationFormValues> = async (data) => {
+    if (!currentUser || !guildId || !eventId || !event) {
+      toast({ title: "Erro", description: "Dados essenciais ausentes.", variant: "destructive" });
+      return;
+    }
+    if (pinUsed || existingConfirmation) {
+      toast({ title: "Ação não permitida", description: "Confirmação já realizada ou PIN utilizado.", variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    let imageUrl = data.screenshotUrl || "";
+
+    try {
+      if (data.screenshotFile) {
+        const file = data.screenshotFile;
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${currentUser.uid}.${fileExtension}`;
+        const filePath = `guilds/${guildId}/event_confirmations/${eventId}/${currentUser.uid}/${fileName}`;
+        const imageStorageRef = storageFirebaseRef(storage, filePath);
+
+        const uploadResult = await uploadBytes(imageStorageRef, file);
+        imageUrl = await getDownloadURL(uploadResult.ref);
+      }
+
+      if (!imageUrl) {
+        toast({ title: "Erro de Imagem", description: "Nenhuma imagem fornecida ou falha no upload.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const confirmationData: ManualConfirmation = {
+        userId: currentUser.uid,
+        userDisplayName: currentUser.displayName || currentUser.email,
+        eventId: eventId,
+        eventTitle: event.title,
+        screenshotUrl: imageUrl,
+        notes: data.notes || "",
+        submittedAt: serverTimestamp() as Timestamp,
+        status: 'pending',
+      };
+
+      const confirmationDocRef = doc(db, `guilds/${guildId}/events/${eventId}/manualConfirmations`, currentUser.uid);
+      await setDoc(confirmationDocRef, confirmationData);
+
+      await logGuildActivity(
+        guildId,
+        currentUser.uid,
+        currentUser.displayName,
+        AuditActionType.MANUAL_CONFIRMATION_SUBMITTED,
+        { eventId: eventId, eventName: event.title, targetUserId: currentUser.uid, screenshotUrl: imageUrl }
+      );
+
+      toast({ title: "Confirmação Enviada!", description: "Sua submissão manual foi enviada para aprovação." });
+      fetchEventAndConfirmationData(); // Refresh data to show status
+      form.reset();
+      setPreviewImage(null);
+
+    } catch (error) {
+      console.error("Erro ao enviar confirmação:", error);
+      toast({ title: "Erro ao Enviar", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
+  if (loadingData || authLoading) {
+    return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  }
+
+  if (!guild || !event) {
+    return <div className="text-center py-10 text-destructive">Não foi possível carregar os dados da guilda ou do evento.</div>;
+  }
+  
+  const eventDateTime = format(new Date(`${event.date}T${event.time}`), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+
+  return (
+    <div className="space-y-8 max-w-2xl mx-auto">
+      <PageTitle
+        title="Confirmação Manual de Presença"
+        description={`Evento: ${event.title} (${eventDateTime})`}
+        icon={<Edit className="h-8 w-8 text-primary" />}
+      />
+
+      {pinUsed ? (
+        <Alert variant="default" className="bg-green-500/10 border-green-500/30 text-green-700">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <AlertTitle className="font-semibold">PIN Utilizado</AlertTitle>
+          <AlertDescription>
+            Sua presença para este evento já foi confirmada utilizando o código PIN. Nenhuma ação adicional é necessária.
+          </AlertDescription>
+        </Alert>
+      ) : existingConfirmation ? (
+        <Card className="static-card-container">
+          <CardHeader>
+            <CardTitle>Sua Confirmação Manual</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p><strong>Status:</strong> <span className={`font-semibold ${existingConfirmation.status === 'pending' ? 'text-yellow-500' : existingConfirmation.status === 'approved' ? 'text-green-500' : 'text-red-500'}`}>{existingConfirmation.status.charAt(0).toUpperCase() + existingConfirmation.status.slice(1)}</span></p>
+            <p><strong>Enviado em:</strong> {format(existingConfirmation.submittedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+            {existingConfirmation.screenshotUrl && (
+              <div>
+                <strong>Screenshot:</strong>
+                <div className="mt-2 rounded-md overflow-hidden border max-w-xs">
+                  <Image src={existingConfirmation.screenshotUrl} alt="Screenshot Enviado" width={300} height={200} objectFit="contain" data-ai-hint="event screenshot"/>
+                </div>
+              </div>
+            )}
+            {existingConfirmation.notes && <p><strong>Suas Notas:</strong> {existingConfirmation.notes}</p>}
+            {existingConfirmation.status === 'rejected' && existingConfirmation.rejectionReason && <p className="text-destructive"><strong>Motivo da Rejeição:</strong> {existingConfirmation.rejectionReason}</p>}
+             {existingConfirmation.status === 'approved' && <p className="text-green-600 font-semibold">DKP ({existingConfirmation.dkpAwarded || event.dkpValue || 0}) creditado!</p>}
+          </CardContent>
+        </Card>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <Card className="static-card-container">
+              <CardHeader>
+                <CardTitle>Enviar Prova de Participação</CardTitle>
+                <CardDescription>
+                  Use este formulário para enviar uma prova de sua participação no evento.
+                  Você pode colar uma URL de imagem (Imgur, etc.) ou fazer upload do arquivo.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="screenshotUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL da Screenshot</FormLabel>
+                      <FormControl>
+                        <div className="relative flex items-center">
+                          <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                          <Input {...field} placeholder="https://i.imgur.com/..." className="form-input pl-10" disabled={!!form.watch("screenshotFile")} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="text-center text-sm text-muted-foreground my-2">OU</div>
+                <FormField
+                  control={form.control}
+                  name="screenshotFile"
+                  render={({ field: { onChange, value, ...rest } }) => ( // Destructure field to manually handle onChange
+                    <FormItem>
+                      <FormLabel>Upload da Screenshot (Máx 2MB: PNG, JPG, GIF, WEBP)</FormLabel>
+                      <FormControl>
+                        <div className="relative flex items-center">
+                          <UploadCloud className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type="file"
+                            accept="image/png, image/jpeg, image/gif, image/webp"
+                            onChange={handleFileChange} // Use custom handler
+                            className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                            disabled={!!form.watch("screenshotUrl")}
+                            {...rest}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 {previewImage && (
+                    <div className="mt-4">
+                        <FormLabel>Prévia da Imagem:</FormLabel>
+                        <div className="mt-2 border rounded-md p-2 inline-block bg-muted/30">
+                            <Image src={previewImage} alt="Prévia da Screenshot" width={200} height={150} objectFit="contain" data-ai-hint="submission preview"/>
+                        </div>
+                    </div>
+                )}
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notas Adicionais (Opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Alguma observação sobre sua participação ou prova..." rows={3} className="form-input" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" className="btn-gradient btn-style-primary ml-auto" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ImageIcon className="mr-2 h-5 w-5" />}
+                  Enviar Confirmação
+                </Button>
+              </CardFooter>
+            </Card>
+          </form>
+        </Form>
+      )}
+    </div>
+  );
+}
+
+
+export default function ManualConfirmationPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+      <ManualConfirmationPageContent />
+    </Suspense>
+  );
+}

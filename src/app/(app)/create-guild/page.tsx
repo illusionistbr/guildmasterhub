@@ -193,7 +193,7 @@ export default function CreateGuildPage() {
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
       "Lider": {
-        permissions: [...new Set([...Object.values(GuildPermission), GuildPermission.MANAGE_EVENTS_VIEW_PIN])], // Leader gets all permissions, explicitly including view pin
+        permissions: [...new Set([...Object.values(GuildPermission), GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE])],
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
@@ -541,4 +541,3 @@ export default function CreateGuildPage() {
     </div>
   );
 }
-

@@ -24,11 +24,9 @@ import {
   ShieldEllipsis,
   LogOut,
   ClipboardList,
-  ListFilter, // Keep for potential other settings
   UserCog,
-  KeyRound, // New Icon for PIN Codes
-  Film,
-  Image as ImageIconLucide
+  KeyRound,
+  Edit, // New icon for Manual Confirmation
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -44,7 +42,8 @@ const guildManagementNavItemsBase = [
     icon: CalendarDays,
     baseHref: "/dashboard/calendar",
     subItems: [
-      { baseHref: "/dashboard/calendar/settings", label: "PIN Codes", icon: KeyRound }, // Changed Label and Icon
+      { baseHref: "/dashboard/calendar/settings", label: "PIN Codes", icon: KeyRound },
+      { baseHref: "/dashboard/calendar/manual-confirmation", label: "Confirmação manual", icon: Edit },
     ]
   },
   {
@@ -75,7 +74,7 @@ export function AppSidebar() {
   const guildId = searchParams.get('guildId');
 
   const isActive = (href: string) => {
-    const baseHref = href.split('?')[0]; // Compare only base path for active state
+    const baseHref = href.split('?')[0]; 
     return pathname === baseHref || (baseHref !== "/dashboard" && pathname.startsWith(baseHref) && baseHref.length > "/dashboard".length);
   };
 

@@ -2,13 +2,14 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster';
 import { GuildPermission, AuditActionType } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle, Clock } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle, Clock, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, updateDoc, arrayUnion, increment, writeBatch, Timestamp } from '@/lib/firebase';
@@ -32,20 +33,11 @@ const parseEventDateTimeString = (dateStr: string, timeStr: string): Date => {
 };
 
 export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole: currentUserRoleInfo, guildId }: EventPinDialogProps) {
-  // === ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP ===
   const { user: currentUser } = useAuth();
   const [pinInputs, setPinInputs] = useState<string[]>(Array(6).fill(""));
   const [showPin, setShowPin] = useState(false);
   const [isSubmittingPin, setIsSubmittingPin] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (isOpen) {
-      setPinInputs(Array(6).fill(""));
-      setShowPin(false);
-      setIsSubmittingPin(false);
-    }
-  }, [isOpen, event]);
 
   const canCurrentUserRevealPin = useMemo(() => {
     if (!currentUserRoleInfo || !guild || !guild.customRoles) {
@@ -57,14 +49,19 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       GuildPermission.MANAGE_EVENTS_VIEW_PIN
     );
   }, [currentUserRoleInfo, guild]);
-  // === END OF HOOKS ===
 
-  // === EARLY RETURNS (GUARD CLAUSES) - AFTER ALL HOOKS ===
+  useEffect(() => {
+    if (isOpen) {
+      setPinInputs(Array(6).fill(""));
+      setShowPin(false);
+      setIsSubmittingPin(false);
+    }
+  }, [isOpen, event]);
+
   if (!event || !guildId || !currentUser || !guild) {
     return null;
   }
 
-  // Other conditional returns based on component logic (these are fine here)
   if (!guild.dkpSystemEnabled && event.requiresPin) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -105,9 +102,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       </Dialog>
     );
   }
-  // === END OF EARLY RETURNS ===
 
-  // === COMPONENT LOGIC AND HANDLERS ===
   const handleInputChange = (index: number, value: string) => {
     if (/^[0-9]?$/.test(value)) {
       const newPinInputs = [...pinInputs];
@@ -153,8 +148,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
             </Button>
           )
         });
-        onClose();
-        return;
+        return; // Keep dialog open for manual confirmation link
       }
     }
 
@@ -177,8 +171,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
         }
         if (isAfter(new Date(), redemptionDeadline)) {
             toast({ title: "Janela de Resgate Expirada", description: "O tempo para resgatar DKP para este evento expirou.", variant: "destructive" });
-            onClose();
-            return;
+            return; // Keep dialog open for manual confirmation link
         }
     }
 
@@ -256,7 +249,6 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   };
 
-  // === MAIN JSX RETURN ===
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
@@ -311,6 +303,13 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
                     )}
                 </div>
             )}
+            <div className="text-center pt-2">
+              <Link href={`/dashboard/calendar/manual-confirmation?guildId=${guildId}&eventId=${event.id}`} passHref>
+                <Button variant="link" className="text-sm text-primary hover:underline p-0" onClick={onClose}>
+                  <Edit className="mr-1.5 h-4 w-4" /> Problemas? Confirme manualmente sua participação
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
 

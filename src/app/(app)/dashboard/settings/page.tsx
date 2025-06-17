@@ -7,7 +7,7 @@ import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment, deleteField } from '@/lib/firebase'; // Added deleteField
+import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment, deleteField } from '@/lib/firebase'; 
 import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum, DkpDecayLogEntry } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -120,6 +120,7 @@ const permissionDescriptions: Record<PermissionEnum, { title: string; descriptio
   [GuildPermission.VIEW_MEMBER_DETAILED_INFO]: { title: "Ver Informações Detalhadas de Membros", description: "Permite visualizar gearscore, links de build e outras informações detalhadas dos membros." },
   [GuildPermission.MANAGE_DKP_SETTINGS]: { title: "Gerenciar Configurações DKP", description: "Permite habilitar/desabilitar o sistema DKP, definir janela de resgate e valores padrão por evento." },
   [GuildPermission.MANAGE_DKP_DECAY_SETTINGS]: { title: "Gerenciar Decaimento DKP", description: "Permite configurar o decaimento automático de DKP, incluindo porcentagem, intervalo e data inicial." },
+  [GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE]: { title: "Aprovar Confirmações Manuais", description: "Permite aprovar ou rejeitar submissões manuais de participação em eventos." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -278,10 +279,12 @@ function GuildSettingsPageContent() {
 
         const initialRoles = guildData.customRoles || {};
         const allCurrentPermissions = Object.values(GuildPermission);
+        const liderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE])];
+
         if (!initialRoles["Lider"]) {
-          initialRoles["Lider"] = { permissions: [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN])], description: "Fundador e administrador principal da guilda."};
+          initialRoles["Lider"] = { permissions: liderPermissions, description: "Fundador e administrador principal da guilda."};
         } else {
-           initialRoles["Lider"].permissions = [...new Set([...initialRoles["Lider"].permissions, ...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN])];
+           initialRoles["Lider"].permissions = [...new Set([...initialRoles["Lider"].permissions, ...liderPermissions])];
         }
         if (!initialRoles["Membro"]) {
           initialRoles["Membro"] = { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO], description: "Membro padrão da guilda."};
@@ -636,7 +639,7 @@ function GuildSettingsPageContent() {
       const rolesToSave = { ...customRoles };
 
       const allCurrentPermissions = Object.values(GuildPermission);
-      const defaultLiderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN])];
+      const defaultLiderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE])];
       const defaultMembroPermissions = [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO];
 
       if (!rolesToSave["Lider"]) {
@@ -954,9 +957,12 @@ function GuildSettingsPageContent() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {allPermissionsList.map(permission => {
                             const permInfo = permissionDescriptions[permission];
-                            const isLiderManagingOwnPermissions = roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS;
-                            const isLiderManagingDKPPermissions = roleName === "Lider" && (permission === GuildPermission.MANAGE_DKP_SETTINGS || permission === GuildPermission.MANAGE_DKP_DECAY_SETTINGS);
-                            const isLiderManagingViewPin = roleName === "Lider" && permission === GuildPermission.MANAGE_EVENTS_VIEW_PIN;
+                            const isLiderManagingCriticalPermissions = roleName === "Lider" && 
+                                (permission === GuildPermission.MANAGE_ROLES_PERMISSIONS ||
+                                 permission === GuildPermission.MANAGE_DKP_SETTINGS ||
+                                 permission === GuildPermission.MANAGE_DKP_DECAY_SETTINGS ||
+                                 permission === GuildPermission.MANAGE_EVENTS_VIEW_PIN ||
+                                 permission === GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE);
 
 
                             return (
@@ -965,13 +971,13 @@ function GuildSettingsPageContent() {
                                     id={`${roleName}-${permission}`}
                                     checked={roleData.permissions.includes(permission)}
                                     onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || isLiderManagingViewPin || (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS && permission !== GuildPermission.MANAGE_EVENTS_VIEW_PIN) }
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingCriticalPermissions || (roleName === "Lider" && !isLiderManagingCriticalPermissions)}
                                     aria-label={`${permInfo.title} para ${roleName}`}
                                 />
                                 <div className="grid gap-1.5 leading-none">
                                     <label
                                     htmlFor={`${roleName}-${permission}`}
-                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", (roleName === "Lider" && permission !== GuildPermission.MANAGE_ROLES_PERMISSIONS && permission !== GuildPermission.MANAGE_DKP_SETTINGS && permission !== GuildPermission.MANAGE_DKP_DECAY_SETTINGS && permission !== GuildPermission.MANAGE_EVENTS_VIEW_PIN) || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || isLiderManagingViewPin) ? "peer-disabled:opacity-70" : "")}
+                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", (roleName === "Lider" && !isLiderManagingCriticalPermissions) || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingCriticalPermissions) ? "peer-disabled:opacity-70" : "")}
                                     >
                                     {permInfo.title}
                                     </label>
@@ -1346,4 +1352,3 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
-

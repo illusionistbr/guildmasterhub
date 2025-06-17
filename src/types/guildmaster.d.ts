@@ -23,6 +23,7 @@ export enum GuildPermission {
   VIEW_MEMBER_DETAILED_INFO = "VIEW_MEMBER_DETAILED_INFO",
   MANAGE_DKP_SETTINGS = "MANAGE_DKP_SETTINGS",
   MANAGE_DKP_DECAY_SETTINGS = "MANAGE_DKP_DECAY_SETTINGS",
+  MANAGE_MANUAL_CONFIRMATIONS_APPROVE = "MANAGE_MANUAL_CONFIRMATIONS_APPROVE", // New permission
 }
 
 export enum TLRole {
@@ -117,10 +118,10 @@ export interface Event {
   guildId: string;
   title: string;
   description?: string;
-  date: string;
-  time: string;
-  endDate?: string;
-  endTime?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  endDate?: string; // YYYY-MM-DD
+  endTime?: string; // HH:MM
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
@@ -131,6 +132,23 @@ export interface Event {
   category?: string;
   subCategory?: string;
 }
+
+export interface ManualConfirmation {
+  id?: string; // Firestore document ID, if needed standalone
+  userId: string;
+  userDisplayName: string | null;
+  eventId: string;
+  eventTitle: string;
+  screenshotUrl: string;
+  notes?: string;
+  submittedAt: Timestamp;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string | null; // UID of admin
+  reviewedAt?: Timestamp | null;
+  rejectionReason?: string | null;
+  dkpAwarded?: number; // DKP awarded upon approval
+}
+
 
 export interface Achievement {
   id: string;
@@ -248,6 +266,9 @@ export enum AuditActionType {
   CUSTOM_ROLE_UPDATED = "CUSTOM_ROLE_UPDATED",
   CUSTOM_ROLE_DELETED = "CUSTOM_ROLE_DELETED",
   PERMISSIONS_UPDATED_FOR_ROLE = "PERMISSIONS_UPDATED_FOR_ROLE",
+  MANUAL_CONFIRMATION_SUBMITTED = "MANUAL_CONFIRMATION_SUBMITTED",
+  MANUAL_CONFIRMATION_APPROVED = "MANUAL_CONFIRMATION_APPROVED",
+  MANUAL_CONFIRMATION_REJECTED = "MANUAL_CONFIRMATION_REJECTED",
 }
 
 export interface AuditLogDetails {
@@ -271,6 +292,8 @@ export interface AuditLogDetails {
   groupName?: string;
   roleName?: string;
   permissions?: GuildPermission[];
+  manualConfirmationId?: string;
+  screenshotUrl?: string;
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
