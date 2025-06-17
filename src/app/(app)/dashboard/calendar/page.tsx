@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react'; // Added useMemo
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc } from '@/lib/firebase';
-import type { Guild } from '@/types/guildmaster';
+import type { Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added GuildMemberRoleInfo
 import { PageTitle } from '@/components/shared/PageTitle';
 import { ComingSoon } from "@/components/shared/ComingSoon";
 import { ThroneAndLibertyCalendarView } from '@/components/dashboard/calendar/ThroneAndLibertyCalendarView';
@@ -26,6 +26,11 @@ function CalendarPageContent() {
 
   const guildId = searchParams.get('guildId');
 
+  const currentUserRoleInfo = useMemo(() => { // Added for EventPinDialog
+    if (!user || !guild || !guild.roles) return null;
+    return guild.roles[user.uid];
+  }, [user, guild]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) { 
@@ -45,13 +50,13 @@ function CalendarPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) {
-          toast({ title: "Guilda não encontrada", variant: "destructive" });
+          toast({ title: "Guilda nao encontrada", variant: "destructive" });
           router.push('/guild-selection');
           return;
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
-        setHeaderTitle(`Calendário: ${guildData.name}`);
+        setHeaderTitle(`Calendario: ${guildData.name}`);
         if (guildData.game === "Throne and Liberty") {
           setIsThroneAndLibertyGuild(true);
         } else {
@@ -78,17 +83,18 @@ function CalendarPageContent() {
 
   if (!guild) {
     return (
-      <PageTitle title="Calendário" icon={<CalendarDays className="h-8 w-8 text-primary" />}>
-        <div className="text-center py-10">Guilda não encontrada ou não carregada.</div>
+      <PageTitle title="Calendario" icon={<CalendarDays className="h-8 w-8 text-primary" />}>
+        <div className="text-center py-10">Guilda nao encontrada ou nao carregada.</div>
       </PageTitle>
     );
   }
 
   if (isThroneAndLibertyGuild && guildId) {
+    // Pass guild and currentUserRoleInfo to ThroneAndLibertyCalendarView
     return <ThroneAndLibertyCalendarView guildId={guildId} guildName={guild.name} guild={guild} />;
   }
 
-  return <ComingSoon pageName={`Calendário de ${guild.name}`} icon={<CalendarDays className="h-8 w-8 text-primary"/>} />;
+  return <ComingSoon pageName={`Calendario de ${guild.name}`} icon={<CalendarDays className="h-8 w-8 text-primary"/>} />;
 }
 
 
@@ -99,4 +105,3 @@ export default function CalendarPage() {
     </Suspense>
   );
 }
-

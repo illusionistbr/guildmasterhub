@@ -1,13 +1,28 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
-export enum GuildRole {
-  Leader = "Lider",
-  ViceLeader = "ViceLider",
-  Counselor = "Conselheiro",
-  Officer = "Oficial",
-  Member = "Membro",
+export enum GuildPermission {
+  MANAGE_MEMBERS_VIEW = "MANAGE_MEMBERS_VIEW",
+  MANAGE_MEMBERS_EDIT_ROLE = "MANAGE_MEMBERS_EDIT_ROLE",
+  MANAGE_MEMBERS_EDIT_STATUS = "MANAGE_MEMBERS_EDIT_STATUS",
+  MANAGE_MEMBERS_EDIT_NOTES = "MANAGE_MEMBERS_EDIT_NOTES",
+  MANAGE_MEMBERS_KICK = "MANAGE_MEMBERS_KICK",
+  MANAGE_EVENTS_CREATE = "MANAGE_EVENTS_CREATE",
+  MANAGE_EVENTS_EDIT = "MANAGE_EVENTS_EDIT",
+  MANAGE_EVENTS_DELETE = "MANAGE_EVENTS_DELETE",
+  MANAGE_EVENTS_VIEW_PIN = "MANAGE_EVENTS_VIEW_PIN",
+  MANAGE_GUILD_SETTINGS_GENERAL = "MANAGE_GUILD_SETTINGS_GENERAL",
+  MANAGE_GUILD_SETTINGS_APPEARANCE = "MANAGE_GUILD_SETTINGS_APPEARANCE",
+  MANAGE_ROLES_PERMISSIONS = "MANAGE_ROLES_PERMISSIONS",
+  MANAGE_GROUPS_CREATE = "MANAGE_GROUPS_CREATE",
+  MANAGE_GROUPS_EDIT = "MANAGE_GROUPS_EDIT",
+  MANAGE_GROUPS_DELETE = "MANAGE_GROUPS_DELETE",
+  VIEW_AUDIT_LOG = "VIEW_AUDIT_LOG",
+  MANAGE_RECRUITMENT_VIEW_APPLICATIONS = "MANAGE_RECRUITMENT_VIEW_APPLICATIONS",
+  MANAGE_RECRUITMENT_PROCESS_APPLICATIONS = "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS",
 }
+
+// GuildRole enum is removed. We will use string identifiers like "Lider", "Membro", and custom ones.
 
 export enum TLRole {
   Tank = "Tank",
@@ -16,26 +31,31 @@ export enum TLRole {
 }
 
 export enum TLWeapon {
-  SwordAndShield = "Sword and Shield",
-  Greatsword = "Greatsword",
-  Daggers = "Daggers",
-  Crossbow = "Crossbow",
-  Bow = "Bow",
-  Staff = "Staff",
-  WandAndTome = "Wand and Tome",
-  Spear = "Spear",
+  SwordAndShield = "Espada e Escudo",
+  Greatsword = "Montante",
+  Daggers = "Adagas",
+  Crossbow = "Besta",
+  Bow = "Arco Longo",
+  Staff = "Cajado",
+  WandAndTome = "Varinha e Tomo",
+  Spear = "Lanca", // ASCII for compatibility
 }
 
-export type MemberStatus = 'Ativo' | 'Inativo' | 'Licença';
+export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca'; // ASCII for "Licença"
 
 export interface GuildMemberRoleInfo {
-  generalRole: GuildRole;
+  roleName: string; // e.g., "Lider", "Membro", "Chefe Raide"
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
   notes?: string;
   status?: MemberStatus;
   dkpBalance?: number;
+}
+
+export interface CustomRole {
+  permissions: GuildPermission[];
+  description?: string; // Optional: a description for the role
 }
 
 export interface Guild {
@@ -59,7 +79,8 @@ export interface Guild {
     youtube?: string;
     discord?: string;
   };
-  roles?: { [userId: string]: GuildMemberRoleInfo | GuildRole };
+  roles?: { [userId: string]: GuildMemberRoleInfo };
+  customRoles?: { [roleName: string]: CustomRole }; // Maps roleName to its permissions
 }
 
 export interface Event {
@@ -67,10 +88,10 @@ export interface Event {
   guildId: string;
   title: string;
   description?: string;
-  date: string; 
-  time: string; 
-  endDate?: string; 
-  endTime?: string; 
+  date: string;
+  time: string;
+  endDate?: string;
+  endTime?: string;
   location?: string;
   organizerId: string;
   attendeeIds?: string[];
@@ -78,8 +99,8 @@ export interface Event {
   requiresPin?: boolean;
   pinCode?: string;
   attendeesWithPin?: string[];
-  category?: string; 
-  subCategory?: string; 
+  category?: string;
+  subCategory?: string;
 }
 
 export interface Achievement {
@@ -124,7 +145,7 @@ export interface UserProfile {
 }
 
 export interface GuildMember extends UserProfile {
-  role: GuildRole;
+  roleName: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -148,10 +169,10 @@ export interface GuildGroup {
   id: string;
   name: string;
   icon: GroupIconType;
-  headerColor: string; 
+  headerColor: string;
   members: GuildGroupMember[];
   createdAt: Timestamp;
-  createdBy: string; 
+  createdBy: string;
   guildId: string;
 }
 
@@ -184,25 +205,31 @@ export enum AuditActionType {
   GROUP_CREATED = "GROUP_CREATED",
   GROUP_UPDATED = "GROUP_UPDATED",
   GROUP_DELETED = "GROUP_DELETED",
+  CUSTOM_ROLE_CREATED = "CUSTOM_ROLE_CREATED",
+  CUSTOM_ROLE_UPDATED = "CUSTOM_ROLE_UPDATED",
+  CUSTOM_ROLE_DELETED = "CUSTOM_ROLE_DELETED",
+  PERMISSIONS_UPDATED_FOR_ROLE = "PERMISSIONS_UPDATED_FOR_ROLE",
 }
 
 export interface AuditLogDetails {
   targetUserId?: string;
   targetUserDisplayName?: string;
-  oldValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus;
-  newValue?: string | GuildRole | boolean | TLRole | TLWeapon | MemberStatus;
+  oldValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
+  newValue?: string | boolean | TLRole | TLWeapon | MemberStatus | GuildPermission[];
   fieldName?: string;
-  kickedUserRole?: GuildRole;
+  kickedUserRoleName?: string; // Changed from kickedUserRole
   eventName?: string;
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
   groupId?: string;
   groupName?: string;
+  roleName?: string; // For role related audit logs
+  permissions?: GuildPermission[]; // For permission changes
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
   };

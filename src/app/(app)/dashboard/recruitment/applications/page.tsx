@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp } from '@/lib/firebase';
 import type { Guild, Application, GuildMemberRoleInfo, UserProfile } from '@/types/guildmaster';
-import { GuildRole, AuditActionType, TLRole, TLWeapon } from '@/types/guildmaster';
+import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { hasPermission } from '@/lib/permissions'; // Import the helper
 
 const getWeaponIconPath = (weapon?: TLWeapon): string => {
   if (!weapon) return "https://placehold.co/24x24.png?text=N/A";
@@ -76,18 +77,19 @@ function ApplicationsPageContent() {
 
   const guildId = searchParams.get('guildId');
 
-  const canManageApplications = useMemo(() => {
-    if (!currentUser || !guild || !guild.roles) return false;
-    const roleInfoSource = guild.roles[currentUser.uid];
-    let userGeneralRole: GuildRole | null = null;
-
-    if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
-      userGeneralRole = (roleInfoSource as GuildMemberRoleInfo).generalRole;
-    } else if (typeof roleInfoSource === 'string') {
-      userGeneralRole = roleInfoSource as GuildRole;
-    }
-    return userGeneralRole === GuildRole.Leader || userGeneralRole === GuildRole.ViceLeader;
+  const currentUserRoleInfo = useMemo(() => {
+    if (!currentUser || !guild || !guild.roles) return null;
+    return guild.roles[currentUser.uid];
   }, [currentUser, guild]);
+
+  const canUserProcessApplications = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(
+      currentUserRoleInfo.roleName,
+      guild.customRoles,
+      GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS
+    );
+  }, [currentUserRoleInfo, guild?.customRoles]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -103,7 +105,7 @@ function ApplicationsPageContent() {
 
     const fetchGuildDetails = async () => {
       setLoadingData(true);
-      setAccessDenied(false); // Reset access denied state on new fetch
+      setAccessDenied(false); 
       try {
         const guildDocRef = doc(db, "guilds", guildId);
         const guildSnap = await getDoc(guildDocRef);
@@ -112,34 +114,21 @@ function ApplicationsPageContent() {
           setGuild(guildData);
           setHeaderTitle(`Candidaturas: ${guildData.name}`);
           
-          const roleInfoSource = guildData.roles?.[currentUser.uid];
-          let userGeneralRole: GuildRole | null = null;
-
-          if (typeof roleInfoSource === 'object' && roleInfoSource !== null && 'generalRole' in roleInfoSource) {
-            userGeneralRole = (roleInfoSource as GuildMemberRoleInfo).generalRole;
-          } else if (typeof roleInfoSource === 'string') {
-            userGeneralRole = roleInfoSource as GuildRole;
-          }
-
-          if (userGeneralRole !== GuildRole.Leader && userGeneralRole !== GuildRole.ViceLeader) {
+          const userRoleInfo = guildData.roles?.[currentUser.uid];
+          if (!userRoleInfo || !hasPermission(userRoleInfo.roleName, guildData.customRoles, GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS)) {
             setAccessDenied(true);
             setLoadingData(false);
             return;
           }
-          // Access granted, proceed to fetch applications if needed (handled in next useEffect)
-
         } else {
-          toast({ title: "Guilda não encontrada", variant: "destructive" });
+          toast({ title: "Guilda nao encontrada", variant: "destructive" });
           router.push('/guild-selection');
-          setLoadingData(false); // Ensure loading is false if guild not found
+          setLoadingData(false); 
           return;
         }
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro ao carregar dados da guilda", variant: "destructive" });
-      } finally {
-        // setLoadingData(false) will be handled by the applications useEffect if access is granted
-        // or already handled if access denied/guild not found
       }
     };
     fetchGuildDetails();
@@ -151,23 +140,24 @@ function ApplicationsPageContent() {
 
 
   useEffect(() => {
-    // This effect runs after guild details (and access rights) are determined
     if (!guildId || !currentUser || authLoading || accessDenied || !guild) {
-      if (!authLoading && (accessDenied || !guild)) { // If finished loading and access is denied or no guild
-          setLoadingData(false); // Ensure loading spinner stops
-          setApplications([]); // Clear applications
+      if (!authLoading && (accessDenied || !guild)) { 
+          setLoadingData(false); 
+          setApplications([]); 
       }
       return;
     }
-
-    // Only fetch applications if user can manage them
-    if (!canManageApplications) {
-      setLoadingData(false); // Not allowed to see, so stop loading
+    
+    // Check for view permission before fetching
+    const userRoleInfo = guild.roles?.[currentUser.uid];
+    if (!userRoleInfo || !hasPermission(userRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS)) {
+      setAccessDenied(true);
+      setLoadingData(false);
       setApplications([]);
       return;
     }
     
-    setLoadingData(true); // Start loading applications
+    setLoadingData(true); 
     const applicationsRef = collection(db, `guilds/${guildId}/applications`);
     const q = query(applicationsRef, orderBy("submittedAt", "desc"));
 
@@ -184,11 +174,14 @@ function ApplicationsPageContent() {
 
     return () => unsubscribe();
 
-  }, [guildId, currentUser, authLoading, accessDenied, guild, canManageApplications, toast]);
+  }, [guildId, currentUser, authLoading, accessDenied, guild, toast]);
 
 
   const handleProcessApplication = async (application: Application, action: 'accept' | 'reject') => {
-    if (!currentUser || !guild || !guildId || !canManageApplications) return;
+    if (!currentUser || !guild || !guildId || !canUserProcessApplications) {
+       toast({ title: "Permissao Negada", description: "Voce nao tem permissao para processar candidaturas.", variant: "destructive"});
+       return;
+    }
 
     setProcessingApplicationId(application.id);
     try {
@@ -200,22 +193,23 @@ function ApplicationsPageContent() {
         const applicantProfileRef = doc(db, "users", application.applicantId);
         const applicantProfileSnap = await getDoc(applicantProfileRef);
         if (!applicantProfileSnap.exists()) {
-            toast({title: "Erro ao Aceitar", description: "Perfil do candidato não encontrado no sistema.", variant: "destructive"});
+            toast({title: "Erro ao Aceitar", description: "Perfil do candidato nao encontrado no sistema.", variant: "destructive"});
             setProcessingApplicationId(null);
             return;
         }
 
         if (guild.memberIds?.includes(application.applicantId)) {
-           toast({ title: "Já é Membro", description: `${application.applicantName} já faz parte da guilda. Marcando como aprovada.`, variant: "default" });
+           toast({ title: "Ja e Membro", description: `${application.applicantName} ja faz parte da guilda. Marcando como aprovada.`, variant: "default" });
            batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
-                generalRole: GuildRole.Member,
+                roleName: "Membro", // Default role for new members
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
                 tlSecondaryWeapon: application.tlSecondaryWeapon,
-                dkpBalance: 0, // Initialize DKP
+                dkpBalance: 0,
+                status: 'Ativo',
             };
             batch.update(guildRef, {
                 memberIds: arrayUnion(application.applicantId),
@@ -232,7 +226,7 @@ function ApplicationsPageContent() {
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.APPLICATION_ACCEPTED, { 
             applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName 
         });
-        toast({ title: "Candidatura Aceita!", description: `${application.applicantName} agora é membro da guilda.` });
+        toast({ title: "Candidatura Aceita!", description: `${application.applicantName} agora e membro da guilda.` });
 
       } else { // Reject
         batch.update(applicationRef, { status: 'rejected', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
@@ -257,7 +251,7 @@ function ApplicationsPageContent() {
     setConfirmationAction(action);
   };
 
-  if (authLoading || loadingData) { // Simplified loading check
+  if (authLoading || loadingData) { 
     return (
         <div className="space-y-4 p-4 md:p-6">
             <PageTitle title="Candidaturas" icon={<FileText className="h-8 w-8 text-primary" />} />
@@ -281,16 +275,15 @@ function ApplicationsPageContent() {
         <ShieldAlert className="h-24 w-24 text-destructive animate-pulse" />
         <h2 className="text-3xl font-headline text-destructive">Acesso Negado</h2>
         <p className="text-lg text-muted-foreground max-w-md">
-          Você não tem permissão para visualizar as candidaturas desta guilda.
-          Apenas Líderes e Vice-Líderes podem acessar esta página.
+          Voce nao tem permissao para visualizar as candidaturas desta guilda.
         </p>
         <Button onClick={() => router.back()} variant="outline">Voltar</Button>
       </div>
     );
   }
   
-  if (!guild && !loadingData) { // This case should ideally be covered by the loading check or guildId check
-     return <div className="p-6 text-center">Guilda não carregada ou não encontrada.</div>;
+  if (!guild && !loadingData) { 
+     return <div className="p-6 text-center">Guilda nao carregada ou nao encontrada.</div>;
   }
 
   const pendingApplications = applications.filter(app => app.status === 'pending');
@@ -312,7 +305,7 @@ function ApplicationsPageContent() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Ainda não há candidaturas para esta guilda. Compartilhe o <Link href={`/dashboard/recruitment?guildId=${guildId}`} className="text-primary hover:underline">link de recrutamento</Link>!
+              Ainda nao ha candidaturas para esta guilda. Compartilhe o <Link href={`/dashboard/recruitment?guildId=${guildId}`} className="text-primary hover:underline">link de recrutamento</Link>!
             </p>
           </CardContent>
         </Card>
@@ -332,7 +325,7 @@ function ApplicationsPageContent() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">{app.applicantName}</CardTitle>
-                      <CardDescription>Enviado {app.submittedAt ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : "Data indisponível"}</CardDescription>
+                      <CardDescription>Enviado {app.submittedAt ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : "Data indisponivel"}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -343,7 +336,7 @@ function ApplicationsPageContent() {
                   </p>
                   {guild?.game === "Throne and Liberty" && (
                     <>
-                        <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
+                        <p className="text-sm flex items-center gap-1"><strong>Funcao:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
                         <div className="text-sm"><strong>Armas:</strong>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon" />}
@@ -356,10 +349,10 @@ function ApplicationsPageContent() {
                   <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => openConfirmationDialog(app, 'reject')} disabled={processingApplicationId === app.id}>
+                  <Button variant="outline" onClick={() => openConfirmationDialog(app, 'reject')} disabled={processingApplicationId === app.id || !canUserProcessApplications}>
                     {processingApplicationId === app.id && confirmationAction === 'reject' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <XCircle className="mr-2 h-4 w-4" />} Rejeitar
                   </Button>
-                  <Button onClick={() => openConfirmationDialog(app, 'accept')} disabled={processingApplicationId === app.id} className="btn-gradient btn-style-primary">
+                  <Button onClick={() => openConfirmationDialog(app, 'accept')} disabled={processingApplicationId === app.id || !canUserProcessApplications} className="btn-gradient btn-style-primary">
                     {processingApplicationId === app.id && confirmationAction === 'accept' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4" />} Aceitar
                   </Button>
                 </CardFooter>
@@ -383,7 +376,7 @@ function ApplicationsPageContent() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">{app.applicantName}</CardTitle>
-                       <CardDescription>Revisado {app.reviewedAt ? formatDistanceToNowStrict(app.reviewedAt.toDate(), { addSuffix: true, locale: ptBR }) : (app.status === 'auto_approved' ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : 'N/A')}</CardDescription>
+                       <CardDescription>Revisado {app.reviewedAt ? formatDistanceToNowStrict(app.reviewedAt.toDate(), { addSuffix: true, locale: ptBR }) : (app.status === 'auto_approved' && app.submittedAt ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : 'N/A')}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -394,7 +387,7 @@ function ApplicationsPageContent() {
                   </p>
                   {guild?.game === "Throne and Liberty" && (
                      <>
-                        <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
+                        <p className="text-sm flex items-center gap-1"><strong>Funcao:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
                         <div className="text-sm"><strong>Armas:</strong>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
@@ -406,7 +399,7 @@ function ApplicationsPageContent() {
                   )}
                   <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
                    <Badge variant={app.status === 'approved' || app.status === 'auto_approved' ? 'default' : 'destructive'} className={app.status === 'approved' || app.status === 'auto_approved' ? 'bg-green-600/80' : 'bg-red-600/80'}>
-                    {app.status === 'approved' ? 'Aprovado' : (app.status === 'auto_approved' ? 'Entrada Automática' : 'Rejeitado')}
+                    {app.status === 'approved' ? 'Aprovado' : (app.status === 'auto_approved' ? 'Entrada Automatica' : 'Rejeitado')}
                   </Badge>
                 </CardContent>
               </Card>
@@ -419,10 +412,10 @@ function ApplicationsPageContent() {
         <AlertDialog open={!!applicationToConfirm} onOpenChange={() => { setApplicationToConfirm(null); setConfirmationAction(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar {confirmationAction === 'accept' ? 'Aceitação' : 'Rejeição'}</AlertDialogTitle>
+              <AlertDialogTitle>Confirmar {confirmationAction === 'accept' ? 'Aceitacao' : 'Rejeicao'}</AlertDialogTitle>
               <AlertDialogDescription>
-                Você tem certeza que deseja {confirmationAction === 'accept' ? 'aceitar' : 'rejeitar'} a candidatura de {applicationToConfirm.applicantName}?
-                {confirmationAction === 'accept' && ` Isso o(a) adicionará à guilda (se já não for membro).`}
+                Voce tem certeza que deseja {confirmationAction === 'accept' ? 'aceitar' : 'rejeitar'} a candidatura de {applicationToConfirm.applicantName}?
+                {confirmationAction === 'accept' && ` Isso o(a) adicionara a guilda (se ja nao for membro).`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

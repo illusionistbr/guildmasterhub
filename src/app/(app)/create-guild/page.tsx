@@ -17,8 +17,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
-import type { Guild, GuildMemberRoleInfo } from '@/types/guildmaster';
-import { GuildRole } from '@/types/guildmaster';
+import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
+import { GuildPermission } from '@/types/guildmaster'; // Import GuildPermission
 import { useToast } from '@/hooks/use-toast';
 
 const guildSchema = z.object({
@@ -76,8 +76,19 @@ export default function CreateGuildPage() {
     if (data.socialYoutube && data.socialYoutube.trim() !== "") socialLinks.youtube = data.socialYoutube.trim();
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
-    const guildRoles: { [key: string]: GuildMemberRoleInfo } = {
-      [user.uid]: { generalRole: GuildRole.Leader, dkpBalance: 0 } // Initial DKP for owner
+    const guildMemberRoles: { [key: string]: GuildMemberRoleInfo } = {
+      [user.uid]: { roleName: "Lider", dkpBalance: 0 } 
+    };
+
+    const initialCustomRoles: { [roleName: string]: CustomRole } = {
+      "Lider": {
+        permissions: Object.values(GuildPermission), // Lider gets all permissions by default
+        description: "Fundador e administrador principal da guilda."
+      },
+      "Membro": {
+        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], // Basic view permission for members
+        description: "Membro padrão da guilda."
+      }
     };
 
     const guildData: Omit<Guild, 'id' | 'createdAt'> & { createdAt: any } = {
@@ -92,7 +103,8 @@ export default function CreateGuildPage() {
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png`,
         logoUrl: `https://placehold.co/150x150.png`,
-        roles: guildRoles,
+        roles: guildMemberRoles,
+        customRoles: initialCustomRoles, // Add initial custom roles
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
     };
@@ -163,7 +175,7 @@ export default function CreateGuildPage() {
                     <FormControl>
                       <Input 
                         {...field} 
-                        placeholder="Ex: Os Guardiões Alados"
+                        placeholder="Ex: Os Guardioes Alados"
                         className={`mt-1 form-input ${errors.name ? 'border-destructive focus:border-destructive' : ''}`}
                       />
                     </FormControl>
@@ -204,7 +216,7 @@ export default function CreateGuildPage() {
                     <FormControl>
                       <Textarea 
                         {...field} 
-                        placeholder="Ex: Uma guilda focada em exploração e desafios épicos."
+                        placeholder="Ex: Uma guilda focada em exploracao e desafios epicos."
                         rows={3}
                         className={`mt-1 form-input ${errors.description ? 'border-destructive focus:border-destructive' : ''}`}
                       />

@@ -25,9 +25,14 @@ import {
   ClipboardList,
   FileText,
   ListFilter,
-  UsersRound // Icon for Groups
+  UsersRound,
+  KeyRound // Icon for Permissions
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+// We will need to fetch guild data or user's role to conditionally show permissions link
+// This might be complex for a sidebar. A simpler approach is to always show
+// and let the target page handle access control.
+// For now, no direct guild data fetching here to keep it simpler.
 
 // Main navigation items
 const mainNavItems = [
@@ -35,17 +40,17 @@ const mainNavItems = [
   { 
     label: "Membros", 
     icon: Users,
-    baseHref: "/dashboard/members", // Main link for members page
+    baseHref: "/dashboard/members",
     subItems: [
-      { baseHref: "/dashboard/members/groups", label: "Grupos", icon: UsersRound }, // New sub-item
+      { baseHref: "/dashboard/members/groups", label: "Grupos", icon: UsersRound },
     ]
   },
   { 
-    label: "Calendário", 
+    label: "Calendario", 
     icon: CalendarDays,
     baseHref: "/dashboard/calendar",
     subItems: [
-      { baseHref: "/dashboard/calendar/settings", label: "Config. Calendário", icon: ListFilter },
+      { baseHref: "/dashboard/calendar/settings", label: "Config. Calendario", icon: ListFilter },
     ]
   },
   { 
@@ -57,7 +62,14 @@ const mainNavItems = [
     ]
   },
   { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
-  { baseHref: "/dashboard/settings", label: "Config. da guilda", icon: Settings },
+  { 
+    baseHref: "/dashboard/settings", 
+    label: "Config. da Guilda", 
+    icon: Settings,
+    subItems: [
+      { baseHref: "/dashboard/settings/permissions", label: "Cargos e Permissoes", icon: KeyRound },
+    ]
+  },
 ];
 
 export function AppSidebar() {
@@ -72,6 +84,9 @@ export function AppSidebar() {
   const generateHref = (baseHref: string) => {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
   };
+
+  // Conditional rendering of "Permissões" link might require fetching guild data
+  // or user's role here. For simplicity now, always render and let page handle denial.
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r border-sidebar-border">
@@ -90,16 +105,14 @@ export function AppSidebar() {
             const currentHref = generateHref(item.baseHref);
             const itemIsActive = isActive(currentHref);
             const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
-            // showSubItems is used for styling the parent button, not for rendering the submenu div directly
-            const showSubItems = itemIsActive || !!subItemsActive; 
-
+            
             return item.subItems ? (
               <SidebarGroup key={item.label} className="p-0">
                 <SidebarMenuButton
                   asChild={!!item.baseHref}
                   href={item.baseHref ? currentHref : undefined}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  isActive={itemIsActive || !!subItemsActive} // Parent is active if it or any subitem is active
+                  isActive={itemIsActive || !!subItemsActive}
                   className="w-full justify-start"
                 >
                   {item.baseHref ? (
@@ -114,8 +127,6 @@ export function AppSidebar() {
                     </>
                   )}
                 </SidebarMenuButton>
-                {/* Sub-items container: Always render if item.subItems exists. 
-                    Visibility when collapsed is handled by group-data-[collapsible=icon]:hidden */}
                 <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
                   {item.subItems.map(subItem => {
                     const subItemHref = generateHref(subItem.baseHref);
