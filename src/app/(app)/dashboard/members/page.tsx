@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs } from '@/lib/firebase';
 import type { Guild, GuildMember, UserProfile, AuditActionType, TLRole, TLWeapon, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
-import { GuildPermission } from '@/types/guildmaster';
+import { GuildPermission, TLWeapon as TLWeaponEnum } from '@/types/guildmaster'; // TLWeaponEnum is used to avoid conflict with local type
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -133,14 +133,14 @@ const availableHeaderColors = [
 const getWeaponIconPath = (weapon?: TLWeapon): string => {
   if (!weapon) return "https://placehold.co/32x32.png?text=N/A";
   switch (weapon) {
-    case TLWeapon.SwordAndShield: return "https://i.imgur.com/jPEqyNb.png";
-    case TLWeapon.Greatsword: return "https://i.imgur.com/Tf1LymG.png";
-    case TLWeapon.Daggers: return "https://i.imgur.com/CEM1Oij.png";
-    case TLWeapon.Crossbow: return "https://i.imgur.com/u7pqt5H.png";
-    case TLWeapon.Longbow: return "https://i.imgur.com/73c5Rl4.png";
-    case TLWeapon.Staff: return "https://i.imgur.com/wgjWVvI.png";
-    case TLWeapon.WandAndTome: return "https://i.imgur.com/BdYPLee.png";
-    case TLWeapon.Spear: return "https://i.imgur.com/l2oHYwY.png";
+    case TLWeaponEnum.SwordAndShield: return "https://i.imgur.com/jPEqyNb.png";
+    case TLWeaponEnum.Greatsword: return "https://i.imgur.com/Tf1LymG.png";
+    case TLWeaponEnum.Daggers: return "https://i.imgur.com/CEM1Oij.png";
+    case TLWeaponEnum.Crossbow: return "https://i.imgur.com/u7pqt5H.png";
+    case TLWeaponEnum.Longbow: return "https://i.imgur.com/73c5Rl4.png";
+    case TLWeaponEnum.Staff: return "https://i.imgur.com/wgjWVvI.png";
+    case TLWeaponEnum.WandAndTome: return "https://i.imgur.com/BdYPLee.png";
+    case TLWeaponEnum.Spear: return "https://i.imgur.com/l2oHYwY.png";
     default: return "https://placehold.co/32x32.png?text=WPN";
   }
 };
@@ -796,5 +796,3 @@ export default function MembersPage() {
     </Suspense>
   );
 }
-
-    
