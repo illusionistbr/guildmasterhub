@@ -28,16 +28,16 @@ const tlWeaponsList = Object.values(TLWeapon);
 const getBaseApplicationSchema = (isTLGuild: boolean) => {
   let schema = z.object({
     characterNickname: z.string().min(2, "Nickname do personagem deve ter pelo menos 2 caracteres.").max(50),
-    gearScore: z.coerce.number().min(0, "Gearscore deve ser um numero positivo.").max(10000, "Gearscore improvavel."),
-    gearScoreScreenshotUrl: z.string().url("Por favor, insira uma URL valida para a screenshot.").min(10, "URL da screenshot muito curta."),
+    gearScore: z.coerce.number().min(0, "Gearscore deve ser um número positivo.").max(10000, "Gearscore improvável."),
+    gearScoreScreenshotUrl: z.string().url("Por favor, insira uma URL válida para a screenshot.").min(10, "URL da screenshot muito curta."),
     discordNick: z.string().min(2, "Nick do Discord deve ter pelo menos 2 caracteres.").max(50),
   });
 
   if (isTLGuild) {
     schema = schema.extend({
-      tlRole: z.nativeEnum(TLRole, { required_error: "Funcao (Tank/Healer/DPS) e obrigatoria." }),
-      tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primaria e obrigatoria." }),
-      tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundaria e obrigatoria." }),
+      tlRole: z.nativeEnum(TLRole, { required_error: "Função (Tank/Healer/DPS) é obrigatória." }),
+      tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
+      tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
     });
   } else {
      schema = schema.extend({
@@ -108,14 +108,14 @@ function ApplyPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) { 
-          toast({ title: "Guilda Nao Encontrada", description: "Esta guilda nao pode receber aplicacoes ou nao existe.", variant: "destructive" });
+          toast({ title: "Guilda Não Encontrada", description: "Esta guilda não pode receber aplicações ou não existe.", variant: "destructive" });
           router.push('/guilds');
           return;
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
 
         if(guildData.memberIds?.includes(currentUser.uid)){
-            toast({title: "Voce ja e membro!", description: `Voce ja faz parte da guilda ${guildData.name}.`, variant: "default"});
+            toast({title: "Você já é membro!", description: `Você já faz parte da guilda ${guildData.name}.`, variant: "default"});
             router.push(`/dashboard?guildId=${guildId}`);
             return;
         }
@@ -142,20 +142,20 @@ function ApplyPageContent() {
 
   const onSubmit: SubmitHandler<ApplicationFormValues> = async (data) => {
     if (!currentUser || !guild || !guildId) {
-      toast({ title: "Erro na Operacao", description: "Informacoes do usuario ou guilda ausentes.", variant: "destructive" });
+      toast({ title: "Erro na Operação", description: "Informações do usuário ou guilda ausentes.", variant: "destructive" });
       return;
     }
 
     const guildDocRef = doc(db, "guilds", guildId);
     const freshGuildSnap = await getDoc(guildDocRef);
     if (!freshGuildSnap.exists()) {
-        toast({ title: "Erro", description: "Guilda nao encontrada.", variant: "destructive" });
+        toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
         setIsSubmitting(false);
         return;
     }
     const freshGuildData = freshGuildSnap.data() as Guild;
     if (freshGuildData.memberIds?.includes(currentUser.uid)) {
-        toast({ title: "Ja e Membro", description: `Voce ja faz parte da guilda ${guild.name}.`, variant: "default" });
+        toast({ title: "Já é Membro", description: `Você já faz parte da guilda ${guild.name}.`, variant: "default" });
         router.push(`/dashboard?guildId=${guildId}`);
         setIsSubmitting(false);
         return;
@@ -187,9 +187,10 @@ function ApplyPageContent() {
         const guildRef = doc(db, "guilds", guildId);
         
         let memberRoleInfo: GuildMemberRoleInfo = {
-          roleName: "Membro",
-          notes: `Entrou via formulario publico. Discord: ${data.discordNick}`,
+          roleName: "Membro", 
+          notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0, 
+          status: 'Ativo',
         };
 
         if (isTLGuild) {
@@ -223,9 +224,9 @@ function ApplyPageContent() {
             details: { joinMethod: 'public_form_join' } as any,
         });
 
-        setSuccessMessage(`Voce entrou na guilda ${guild.name}! Bem-vindo(a)!`);
+        setSuccessMessage(`Você entrou na guilda ${guild.name}! Bem-vindo(a)!`);
         setSubmissionStatus('success');
-        toast({ title: "Bem-vindo(a) a Guilda!", description: `Voce entrou na guilda ${guild.name}.` });
+        toast({ title: "Bem-vindo(a) à Guilda!", description: `Você entrou na guilda ${guild.name}.` });
         form.reset();
 
       } else { 
@@ -251,7 +252,7 @@ function ApplyPageContent() {
       if (error.message && error.message.includes("undefined")) {
           toast({ title: "Erro de Dados", description: "Um valor inesperado (undefined) foi encontrado. Verifique os dados do formulário ou contate o suporte.", variant: "destructive" });
       } else {
-        toast({ title: "Erro ao Enviar/Entrar", description: "Nao foi possivel processar sua solicitacao. Tente novamente.", variant: "destructive" });
+        toast({ title: "Erro ao Enviar/Entrar", description: "Não foi possível processar sua solicitação. Tente novamente.", variant: "destructive" });
       }
       setSubmissionStatus('error');
     } finally {
@@ -271,7 +272,7 @@ function ApplyPageContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-landing-gradient text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <p className="text-xl text-foreground mb-4">Voce precisa estar logado para se candidatar.</p>
+        <p className="text-xl text-foreground mb-4">Você precisa estar logado para se candidatar.</p>
         <Button asChild><Link href={`/login?redirect=/apply?guildId=${guildId}`}>Fazer Login</Link></Button>
       </div>
     );
@@ -281,7 +282,7 @@ function ApplyPageContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-landing-gradient text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <p className="text-xl text-foreground">Nao foi possivel carregar informacoes da guilda.</p>
+        <p className="text-xl text-foreground">Não foi possível carregar informações da guilda.</p>
       </div>
     );
   }
@@ -300,8 +301,8 @@ function ApplyPageContent() {
             <p className="text-lg text-foreground">{successMessage}</p>
             <p className="text-muted-foreground mt-2">
               {guild.isOpen || !guild.password 
-                ? "Voce ja pode acessar o dashboard da guilda." 
-                : "A lideranca da guilda revisara sua aplicacao em breve. Voce pode verificar o status em suas notificacoes ou na pagina da guilda se for aceito."}
+                ? "Você já pode acessar o dashboard da guilda." 
+                : "A liderança da guilda revisará sua aplicação em breve. Você pode verificar o status em suas notificações ou na página da guilda se for aceito."}
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
@@ -341,8 +342,8 @@ function ApplyPageContent() {
             </div>
           <CardDescription>
             {guild.isOpen || !guild.password 
-                ? `Preencha o formulario abaixo para entrar na guilda ${guild.name}.`
-                : `Preencha o formulario abaixo para enviar sua candidatura para ${guild.name}.`}
+                ? `Preencha o formulário abaixo para entrar na guilda ${guild.name}.`
+                : `Preencha o formulário abaixo para enviar sua candidatura para ${guild.name}.`}
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -424,11 +425,11 @@ function ApplyPageContent() {
                     name="tlRole"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Sua Funcao (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel>
+                        <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ""} >
                           <FormControl>
                             <SelectTrigger className="form-input">
-                              <SelectValue placeholder="Selecione sua funcao principal..." />
+                              <SelectValue placeholder="Selecione sua função principal..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -447,9 +448,9 @@ function ApplyPageContent() {
                         name="tlPrimaryWeapon"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Arma Primaria <span className="text-destructive">*</span></FormLabel>
+                            <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""} >
-                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma primaria..." /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma primária..." /></SelectTrigger></FormControl>
                             <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
                             </Select>
                             <FormMessage />
@@ -461,9 +462,9 @@ function ApplyPageContent() {
                         name="tlSecondaryWeapon"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Arma Secundaria <span className="text-destructive">*</span></FormLabel>
+                            <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""} >
-                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma secundaria..." /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma secundária..." /></SelectTrigger></FormControl>
                             <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
                             </Select>
                             <FormMessage />

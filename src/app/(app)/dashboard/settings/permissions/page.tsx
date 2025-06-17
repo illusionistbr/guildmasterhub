@@ -31,26 +31,25 @@ import {
 import { hasPermission } from '@/lib/permissions';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Helper for permission descriptions
-const permissionDescriptions: Record<PermissionEnum, string> = {
-  [GuildPermission.MANAGE_MEMBERS_VIEW]: "Ver lista de membros e seus perfis básicos.",
-  [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: "Alterar o cargo de outros membros.",
-  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: "Modificar o status (ativo, inativo, licença) de membros.",
-  [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: "Adicionar ou editar notas administrativas sobre membros.",
-  [GuildPermission.MANAGE_MEMBERS_KICK]: "Expulsar membros da guilda.",
-  [GuildPermission.MANAGE_EVENTS_CREATE]: "Criar novos eventos e atividades no calendário.",
-  [GuildPermission.MANAGE_EVENTS_EDIT]: "Editar eventos existentes no calendário.",
-  [GuildPermission.MANAGE_EVENTS_DELETE]: "Excluir eventos do calendário.",
-  [GuildPermission.MANAGE_EVENTS_VIEW_PIN]: "Visualizar códigos PIN de eventos (se aplicável).",
-  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: "Alterar configurações gerais da guilda (nome, senha, jogo).",
-  [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: "Modificar a aparência da guilda (logo, banner).",
-  [GuildPermission.MANAGE_ROLES_PERMISSIONS]: "Gerenciar cargos e suas permissões (acesso a esta tela).",
-  [GuildPermission.MANAGE_GROUPS_CREATE]: "Criar novos grupos/parties para membros.",
-  [GuildPermission.MANAGE_GROUPS_EDIT]: "Editar grupos/parties existentes.",
-  [GuildPermission.MANAGE_GROUPS_DELETE]: "Excluir grupos/parties.",
-  [GuildPermission.VIEW_AUDIT_LOG]: "Acessar o log de auditoria da guilda.",
-  [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: "Visualizar candidaturas enviadas à guilda.",
-  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: "Aprovar ou rejeitar candidaturas."
+const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
+  [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Visualizar a lista de membros e seus perfis básicos." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: { title: "Gerenciar Cargos de Membros", description: "Alterar o cargo de outros membros da guilda." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Modificar o status (ativo, inativo, licença) de membros." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: { title: "Gerenciar Notas de Membros", description: "Adicionar ou editar notas administrativas sobre membros." },
+  [GuildPermission.MANAGE_MEMBERS_KICK]: { title: "Expulsar Membros", description: "Remover membros da guilda." },
+  [GuildPermission.MANAGE_EVENTS_CREATE]: { title: "Criar Eventos/Atividades", description: "Criar novos eventos e atividades no calendário da guilda." },
+  [GuildPermission.MANAGE_EVENTS_EDIT]: { title: "Editar Eventos/Atividades", description: "Editar eventos e atividades existentes no calendário." },
+  [GuildPermission.MANAGE_EVENTS_DELETE]: { title: "Excluir Eventos/Atividades", description: "Remover eventos e atividades do calendário." },
+  [GuildPermission.MANAGE_EVENTS_VIEW_PIN]: { title: "Visualizar PIN de Eventos", description: "Visualizar os códigos PIN dos eventos criados (se aplicável)." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Gerenciar Config. Gerais", description: "Alterar configurações gerais da guilda, como nome e senha." },
+  [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: { title: "Gerenciar Aparência", description: "Modificar a aparência da guilda, como logo e banner." },
+  [GuildPermission.MANAGE_ROLES_PERMISSIONS]: { title: "Gerenciar Cargos e Permissões", description: "Acessar e modificar os cargos da guilda e suas respectivas permissões (esta tela)." },
+  [GuildPermission.MANAGE_GROUPS_CREATE]: { title: "Criar Grupos/Parties", description: "Criar novos grupos (parties) para os membros da guilda." },
+  [GuildPermission.MANAGE_GROUPS_EDIT]: { title: "Editar Grupos/Parties", description: "Editar grupos (parties) existentes na guilda." },
+  [GuildPermission.MANAGE_GROUPS_DELETE]: { title: "Excluir Grupos/Parties", description: "Remover grupos (parties) da guilda." },
+  [GuildPermission.VIEW_AUDIT_LOG]: { title: "Ver Log de Auditoria", description: "Acessar o log de todas as atividades importantes ocorridas na guilda." },
+  [GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS]: { title: "Ver Candidaturas", description: "Visualizar as candidaturas enviadas para entrar na guilda." },
+  [GuildPermission.MANAGE_RECRUITMENT_PROCESS_APPLICATIONS]: { title: "Processar Candidaturas", description: "Aprovar ou rejeitar as candidaturas enviadas à guilda." }
 };
 
 
@@ -107,13 +106,13 @@ function PermissionsPageContent() {
         const guildSnap = await getDoc(guildDocRef);
 
         if (!guildSnap.exists()) {
-          toast({ title: "Guilda nao encontrada", variant: "destructive" });
+          toast({ title: "Guilda não encontrada", variant: "destructive" });
           router.push('/guild-selection');
           return;
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
-        setHeaderTitle(`Permissoes: ${guildData.name}`);
+        setHeaderTitle(`Permissões: ${guildData.name}`);
         setCustomRoles(guildData.customRoles || {});
 
         const userRoleInfo = guildData.roles?.[currentUser.uid];
@@ -141,8 +140,8 @@ function PermissionsPageContent() {
       if (!role) return prevRoles;
 
       const newPermissions = checked
-        ? [...new Set([...role.permissions, permission])] // Add permission, ensure uniqueness
-        : role.permissions.filter(p => p !== permission); // Remove permission
+        ? [...new Set([...role.permissions, permission])] 
+        : role.permissions.filter(p => p !== permission); 
 
       return {
         ...prevRoles,
@@ -162,15 +161,15 @@ function PermissionsPageContent() {
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmedRoleName)) {
-      toast({ title: "Nome Inválido", description: "O nome do cargo deve conter apenas letras (sem acentos), números e underscores.", variant: "destructive" });
+      toast({ title: "Nome Inválido", description: "O nome do cargo deve conter apenas letras (sem acentos ou ç), números e underscores (_).", variant: "destructive" });
       return;
     }
     if (trimmedRoleName.length > 30) {
       toast({ title: "Nome Muito Longo", description: "O nome do cargo não pode exceder 30 caracteres.", variant: "destructive" });
       return;
     }
-    if (customRoles[trimmedRoleName]) {
-      toast({ title: "Cargo Já Existe", description: `O cargo "${trimmedRoleName}" já existe.`, variant: "destructive" });
+    if (customRoles[trimmedRoleName] || trimmedRoleName === "Lider" || trimmedRoleName === "Membro") {
+      toast({ title: "Cargo Já Existe", description: `O cargo "${trimmedRoleName}" já existe ou é reservado.`, variant: "destructive" });
       return;
     }
 
@@ -211,7 +210,7 @@ function PermissionsPageContent() {
     } catch (error) {
       console.error("Erro ao excluir cargo:", error);
       toast({ title: "Erro ao Excluir Cargo", variant: "destructive" });
-      setCustomRoles(customRoles); // Revert UI change if save fails
+      setCustomRoles(customRoles); 
     } finally {
       setIsSaving(false);
       setRoleToDelete(null);
@@ -283,7 +282,7 @@ function PermissionsPageContent() {
       <Card className="card-bg">
         <CardHeader>
           <CardTitle>Criar Novo Cargo</CardTitle>
-          <CardDescription>Defina um nome para o novo cargo (sem acentos, apenas letras, números e underscore). As permissões podem ser configuradas abaixo.</CardDescription>
+          <CardDescription>Defina um nome para o novo cargo (sem acentos ou ç, apenas letras, números e underscore). As permissões podem ser configuradas abaixo.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-2 items-end">
           <div className="flex-grow">
@@ -318,7 +317,7 @@ function PermissionsPageContent() {
           <CardHeader className="flex flex-row justify-between items-center">
             <div>
               <CardTitle>{roleName}</CardTitle>
-              <CardDescription>{roleData.description || "Cargo personalizado."}</CardDescription>
+              <CardDescription>{roleData.description || `Permissões para o cargo ${roleName}.`}</CardDescription>
             </div>
             {(roleName !== "Lider" && roleName !== "Membro") && (
               <AlertDialog>
@@ -332,7 +331,7 @@ function PermissionsPageContent() {
                         <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                         <AlertDialogDescription>
                             Tem certeza que deseja excluir o cargo "{roleName}"? Esta ação não pode ser desfeita.
-                            Membros com este cargo serão revertidos para "Membro" (ou outro cargo padrão se necessário).
+                            Membros com este cargo serão revertidos para "Membro".
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -346,27 +345,30 @@ function PermissionsPageContent() {
             )}
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allPermissions.map(permission => (
-              <div key={permission} className="flex items-start space-x-3 p-3 bg-input/30 rounded-md">
-                <Checkbox
-                  id={`${roleName}-${permission}`}
-                  checked={roleData.permissions.includes(permission)}
-                  onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                  disabled={isSaving || !canManagePermissionsPage || (roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS)}
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor={`${roleName}-${permission}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
-                  >
-                    {permissionDescriptions[permission].substring(0, permissionDescriptions[permission].indexOf(':') > 0 ? permissionDescriptions[permission].indexOf(':') : permissionDescriptions[permission].length) || permission.replace(/_/g, ' ').toLocaleLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    {permissionDescriptions[permission].substring(permissionDescriptions[permission].indexOf(':') + 1).trim() || "Gerencia esta permissão."}
-                  </p>
+            {allPermissions.map(permission => {
+              const permInfo = permissionDescriptions[permission];
+              return (
+                <div key={permission} className="flex items-start space-x-3 p-3 bg-input/30 rounded-md">
+                  <Checkbox
+                    id={`${roleName}-${permission}`}
+                    checked={roleData.permissions.includes(permission)}
+                    onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
+                    disabled={isSaving || !canManagePermissionsPage || (roleName === "Lider" && permission === GuildPermission.MANAGE_ROLES_PERMISSIONS)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor={`${roleName}-${permission}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
+                    >
+                      {permInfo.title}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {permInfo.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       ))}
@@ -388,4 +390,3 @@ export default function PermissionsPage() {
     </Suspense>
   );
 }
-
