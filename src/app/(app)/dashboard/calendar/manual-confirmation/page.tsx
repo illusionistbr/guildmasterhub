@@ -65,7 +65,7 @@ function ManualConfirmationPageContent() {
   }, [setHeaderTitle]);
 
   const fetchEventAndConfirmationData = useCallback(async (currentGuildId: string, currentEventId: string) => {
-    if (!currentUser) { // currentUser check is already in useEffect, but good for safety
+    if (!currentUser) { 
       setLoadingData(false);
       return;
     }
@@ -87,7 +87,6 @@ function ManualConfirmationPageContent() {
       }
       const guildData = guildSnap.data() as Guild;
       setGuild(guildData);
-      // Set header title here once guild data is fetched
       setHeaderTitle(`Conf. Manual: ${guildData.name}`);
 
 
@@ -112,24 +111,28 @@ function ManualConfirmationPageContent() {
     } finally {
       setLoadingData(false);
     }
-  }, [currentUser, router, toast, setHeaderTitle]); // Removed guildId, eventId from here as they are passed as params
+  }, [currentUser, router, toast, setHeaderTitle]); 
 
   const guildIdFromParams = searchParams.get('guildId');
   const eventIdFromParams = searchParams.get('eventId');
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading) {
+      // setLoadingData(true) is already default, or set by fetch function
+      return;
+    }
 
     if (!currentUser) {
       const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdFromParams || ''}&eventId=${eventIdFromParams || ''}`;
       router.push(redirectPath);
+      setLoadingData(false); // Ensure loading stops if redirecting
       return;
     }
 
-    // Check parameters after auth loading is complete and user is confirmed
     if (!guildIdFromParams || !eventIdFromParams) {
-      // Only show toast and redirect if params are definitively missing client-side post-auth
-      if (typeof window !== 'undefined') { // Ensures this runs client-side
+      setLoadingData(false); // Stop loading if params are missing
+      // Only show toast and redirect client-side after initial checks
+      if (typeof window !== 'undefined') { 
         toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
         if (!guildIdFromParams) {
           router.push('/guild-selection');
@@ -137,7 +140,6 @@ function ManualConfirmationPageContent() {
           router.push(`/dashboard/calendar?guildId=${guildIdFromParams}`);
         }
       }
-      setLoadingData(false); // Stop loading if redirecting or params missing
       return;
     }
     
@@ -166,7 +168,12 @@ function ManualConfirmationPageContent() {
       form.setValue("screenshotUrl", ""); 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImage(reader.result as string);
+        if (typeof reader.result === 'string') {
+          setPreviewImage(reader.result);
+        } else {
+          setPreviewImage(null);
+          toast({title: "Erro na Prévia", description: "Não foi possível gerar a prévia da imagem.", variant: "destructive"});
+        }
       };
       reader.readAsDataURL(file);
     } else {
@@ -229,7 +236,7 @@ function ManualConfirmationPageContent() {
       );
 
       toast({ title: "Confirmação Enviada!", description: "Sua submissão manual foi enviada para aprovação." });
-      if (guildIdFromParams && eventIdFromParams) { // Ensure IDs are valid before fetching again
+      if (guildIdFromParams && eventIdFromParams) { 
         fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams);
       }
       form.reset();
@@ -277,7 +284,7 @@ function ManualConfirmationPageContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p><strong>Status:</strong> <span className={`font-semibold ${existingConfirmation.status === 'pending' ? 'text-yellow-500' : existingConfirmation.status === 'approved' ? 'text-green-500' : 'text-red-500'}`}>{existingConfirmation.status.charAt(0).toUpperCase() + existingConfirmation.status.slice(1)}</span></p>
-            <p><strong>Enviado em:</strong> {format(existingConfirmation.submittedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+            <p><strong>Enviado em:</strong> {existingConfirmation.submittedAt ? format(existingConfirmation.submittedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Data indisponível'}</p>
             {existingConfirmation.screenshotUrl && (
               <div>
                 <strong>Screenshot:</strong>
