@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Loader2, ShieldAlert, KeyRound, Eye } from 'lucide-react';
+import { Settings, Loader2, ShieldAlert, KeyRound, Eye, VenetianMask } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useHeader } from '@/contexts/HeaderContext';
@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { hasPermission } from '@/lib/permissions';
 
-function CalendarSettingsPageContent() {
+function CalendarPinCodesPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -82,7 +82,7 @@ function CalendarSettingsPageContent() {
         }
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
-        setHeaderTitle(`Config. Calendário: ${guildData.name}`);
+        setHeaderTitle(`PIN Codes: ${guildData.name}`);
 
         const userRoleData = guildData.roles?.[currentUser.uid];
         if (!userRoleData || !hasPermission(userRoleData.roleName, guildData.customRoles, GuildPermission.MANAGE_EVENTS_VIEW_PIN)) {
@@ -115,6 +115,7 @@ function CalendarSettingsPageContent() {
 
     setLoadingData(true);
     const eventsRef = collection(db, `guilds/${guildId}/events`);
+    // Order by date descending, then time descending to see most recent/upcoming first
     const q = query(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -134,11 +135,13 @@ function CalendarSettingsPageContent() {
 
   const formatEventDateTime = (dateStr: string, timeStr: string): string => {
     try {
+        // Assuming dateStr is in "YYYY-MM-DD" format and timeStr is "HH:MM"
         const date = new Date(dateStr);
         const [hours, minutes] = timeStr.split(':').map(Number);
-        date.setHours(hours, minutes);
+        date.setUTCHours(hours, minutes); // Use UTC to avoid timezone shifts from just date string
         return format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (e) {
+        console.error("Error formatting date/time", e, dateStr, timeStr);
         return "Data/Hora inválida";
     }
   };
@@ -150,7 +153,7 @@ function CalendarSettingsPageContent() {
   if (authLoading || loadingData) {
     return (
         <div className="space-y-4 p-4 md:p-6">
-            <PageTitle title="Configurações do Calendário" icon={<Settings className="h-8 w-8 text-primary" />} />
+            <PageTitle title="PIN Codes dos Eventos" icon={<KeyRound className="h-8 w-8 text-primary" />} />
             <Skeleton className="h-12 w-full" />
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
         </div>
@@ -163,7 +166,7 @@ function CalendarSettingsPageContent() {
         <ShieldAlert className="h-24 w-24 text-destructive animate-pulse" />
         <h2 className="text-3xl font-headline text-destructive">Acesso Negado</h2>
         <p className="text-lg text-muted-foreground max-w-md">
-          Você não tem permissão para visualizar as configurações do calendário desta guilda.
+          Você não tem permissão para visualizar os PIN codes dos eventos desta guilda.
         </p>
         <Button onClick={() => router.back()} variant="outline">Voltar</Button>
       </div>
@@ -177,17 +180,17 @@ function CalendarSettingsPageContent() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <PageTitle
-        title={`Configurações do Calendário de ${guild?.name || 'Guilda'}`}
-        description="Visualize e gerencie os códigos PIN dos eventos criados."
-        icon={<Settings className="h-8 w-8 text-primary" />}
+        title={`PIN Codes de ${guild?.name || 'Guilda'}`}
+        description="Visualize os códigos PIN dos eventos criados. Apenas usuários com permissão podem ver os códigos."
+        icon={<KeyRound className="h-8 w-8 text-primary" />}
       />
 
       {events.length === 0 && !loadingData && (
         <div className="text-center py-10 bg-card rounded-lg shadow">
-            <KeyRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+            <VenetianMask className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-foreground">Nenhum Evento com PIN Criado</p>
             <p className="text-muted-foreground mt-2">
-                Ainda não há eventos com códigos PIN para esta guilda ou nenhum evento foi criado.
+                Ainda não há eventos com códigos PIN para esta guilda, ou nenhum evento foi criado que requeira um.
             </p>
         </div>
       )}
@@ -198,7 +201,7 @@ function CalendarSettingsPageContent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Evento</TableHead>
-                <TableHead>Data/Hora</TableHead>
+                <TableHead>Data/Hora Início</TableHead>
                 <TableHead>DKP</TableHead>
                 <TableHead className="text-center">PIN Ativo</TableHead>
                 <TableHead className="text-center">Código PIN</TableHead>
@@ -239,11 +242,10 @@ function CalendarSettingsPageContent() {
   );
 }
 
-export default function CalendarSettingsPage() {
+export default function CalendarPinCodesPage() {
   return (
     <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
-      <CalendarSettingsPageContent />
+      <CalendarPinCodesPageContent />
     </Suspense>
   );
 }
-

@@ -24,8 +24,9 @@ import {
   ShieldEllipsis,
   LogOut,
   ClipboardList,
-  ListFilter,
+  ListFilter, // Keep for potential other settings
   UserCog,
+  KeyRound, // New Icon for PIN Codes
   Film,
   Image as ImageIconLucide
 } from "lucide-react";
@@ -36,15 +37,14 @@ const guildManagementNavItemsBase = [
   {
     label: "Membros",
     icon: Users,
-    baseHref: "/dashboard/members", // Link to the main members page with tabs
-    // Submenu for groups is removed as it's now a tab
+    baseHref: "/dashboard/members",
   },
   {
     label: "Calendário",
     icon: CalendarDays,
     baseHref: "/dashboard/calendar",
     subItems: [
-      { baseHref: "/dashboard/calendar/settings", label: "Config. Calendário", icon: ListFilter },
+      { baseHref: "/dashboard/calendar/settings", label: "PIN Codes", icon: KeyRound }, // Changed Label and Icon
     ]
   },
   {
@@ -188,5 +188,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
     
