@@ -89,7 +89,7 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
     case TLWeapon.Greatsword: return "https://i.imgur.com/Tf1LymG.png";
     case TLWeapon.Daggers: return "https://i.imgur.com/CEM1Oij.png";
     case TLWeapon.Crossbow: return "https://i.imgur.com/u7pqt5H.png";
-    case TLWeapon.Bow: return "https://i.imgur.com/73c5Rl4.png";
+    case TLWeapon.Longbow: return "https://i.imgur.com/73c5Rl4.png";
     case TLWeapon.Staff: return "https://i.imgur.com/wgjWVvI.png";
     case TLWeapon.WandAndTome: return "https://i.imgur.com/BdYPLee.png";
     case TLWeapon.Spear: return "https://i.imgur.com/l2oHYwY.png";
@@ -382,8 +382,8 @@ function MembersPageContent() {
       };
 
       await updateDoc(guildRef, { [`roles.${actionUser.uid}`]: newRoleInfoPayload });
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_ROLE_CHANGED, { 
-        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName,
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ROLE_CHANGED, { 
+        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName || "",
         oldValue: oldRoleName, newValue: selectedNewRoleName, changedField: 'roleName'
       });
       toast({ title: "Cargo Atualizado!", description: `${actionUser.characterNickname || actionUser.displayName} agora e ${selectedNewRoleName}.` });
@@ -421,9 +421,9 @@ function MembersPageContent() {
 
         await updateDoc(guildRef, { [`roles.${targetMember.uid}`]: updatedRoleInfoPayload });
         
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_STATUS_CHANGED, {
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_STATUS_CHANGED, {
             targetUserId: targetMember.uid,
-            targetUserDisplayName: targetMember.characterNickname || targetMember.displayName,
+            targetUserDisplayName: targetMember.characterNickname || targetMember.displayName || "",
             oldValue: oldStatus,
             newValue: statusToSet,
             changedField: 'status'
@@ -458,8 +458,8 @@ function MembersPageContent() {
         [`roles.${actionUser.uid}`]: deleteField()
       });
       await batch.commit();
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_KICKED, { 
-        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName,
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_KICKED, { 
+        targetUserId: actionUser.uid, targetUserDisplayName: actionUser.characterNickname || actionUser.displayName || "",
         kickedUserRoleName: kickedUserRoleName 
       });
       toast({ title: "Membro Removido", description: `${actionUser.characterNickname || actionUser.displayName} foi removido.` });
@@ -497,9 +497,9 @@ function MembersPageContent() {
 
       await updateDoc(guildRef, { [`roles.${memberForNotes.uid}`]: updatedRoleInfoPayload });
       
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_NOTE_UPDATED, {
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_NOTE_UPDATED, {
         targetUserId: memberForNotes.uid,
-        targetUserDisplayName: memberForNotes.characterNickname || memberForNotes.displayName,
+        targetUserDisplayName: memberForNotes.characterNickname || memberForNotes.displayName || "",
         noteSummary: currentNote ? "Nota atualizada" : "Nota removida",
         changedField: 'notes'
       });
@@ -1017,7 +1017,7 @@ function MembersPageContent() {
       )}
 
       {selectedMemberForDetails && (
-        <MemberDetailsDialog open={showMemberDetailsDialog} onOpenChange={setShowMemberDetailsDialog}>
+        <Dialog open={showMemberDetailsDialog} onOpenChange={setShowMemberDetailsDialog}>
             <MemberDetailsDialogContent className="sm:max-w-lg">
                 <MemberDetailsDialogHeader>
                     <MemberDetailsDialogTitle className="flex items-center">
@@ -1063,7 +1063,7 @@ function MembersPageContent() {
                     <Button variant="outline" onClick={() => setShowMemberDetailsDialog(false)}>Fechar</Button>
                 </MemberDetailsDialogFooter>
             </MemberDetailsDialogContent>
-        </MemberDetailsDialog>
+        </Dialog>
       )}
 
 
