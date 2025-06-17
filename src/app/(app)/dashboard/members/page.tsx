@@ -231,7 +231,7 @@ function MembersPageContent() {
         const processedMembers: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
           const uid = memberIdsToFetch[i];
-          const userProfileSnap = userProfilesSnaps[i];
+          const userProfileSnap = userProfileSnaps[i];
           let baseProfile: UserProfile;
 
           if (userProfileSnap && userProfileSnap.exists()) {
@@ -1053,3 +1053,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
