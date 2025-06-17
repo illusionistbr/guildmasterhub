@@ -80,7 +80,12 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
     { value: "Emerald", label: "Emerald" },
     { value: "Conviction", label: "Conviction" },
   ],
-  "South America": [],
+  "South America": [
+    { value: "Starlight", label: "Starlight" },
+    { value: "Resistance", label: "Resistance" },
+    { value: "Eldritch", label: "Eldritch" },
+    { value: "Chamir", label: "Chamir" },
+  ],
   "Asia Pacific": [],
 };
 
