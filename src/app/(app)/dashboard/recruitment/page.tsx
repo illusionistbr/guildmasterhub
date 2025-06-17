@@ -67,7 +67,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
   }
   return (
     <div className="space-y-6 pt-6">
-      <Card className="card-bg">
+      <Card className="static-card-container">
         <CardHeader>
           <CardTitle className="flex items-center"><LinkIcon className="mr-2 h-5 w-5 text-primary" />Link de Recrutamento Único</CardTitle>
           <CardDescription>Compartilhe este link com potenciais recrutas para que eles possam se candidatar à sua guilda. Guildas públicas permitirão entrada imediata após o preenchimento do formulário.</CardDescription>
@@ -209,19 +209,19 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
             });
             batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
             
-            await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MEMBER_JOINED, { 
+            await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.MEMBER_JOINED, { 
                 targetUserId: application.applicantId, targetUserDisplayName: application.applicantName, details: {joinMethod: "application_approved"} as any
             });
         }
         
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.APPLICATION_ACCEPTED, { 
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_ACCEPTED, { 
             applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName 
         });
         toast({ title: "Candidatura Aceita!", description: `${application.applicantName} agora é membro da guilda.` });
 
       } else { // Reject
         batch.update(applicationRef, { status: 'rejected', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.APPLICATION_REJECTED, { 
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_REJECTED, { 
             applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName 
         });
         toast({ title: "Candidatura Rejeitada.", description: `A candidatura de ${application.applicantName} foi rejeitada.` });
@@ -246,7 +246,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
     return (
       <div className="space-y-4 pt-6">
         {[...Array(3)].map((_, i) => (
-          <Card key={i} className="card-bg">
+          <Card key={i} className="static-card-container">
             <CardHeader><div className="h-6 w-1/2 bg-muted rounded animate-pulse"></div></CardHeader>
             <CardContent className="space-y-2">
               <div className="h-4 w-3/4 bg-muted rounded animate-pulse"></div>
@@ -278,7 +278,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
   return (
     <div className="space-y-8 pt-6">
       {applications.length === 0 && !loadingApplications && (
-        <Card className="card-bg text-center py-10">
+        <Card className="static-card-container text-center py-10">
           <CardHeader>
             <Users className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <CardTitle className="text-2xl">Nenhuma Candidatura Recebida</CardTitle>
@@ -296,7 +296,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
           <h3 className="text-xl font-headline text-primary mb-4">Candidaturas Pendentes ({pendingApplications.length})</h3>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {pendingApplications.map(app => (
-              <Card key={app.id} className="card-bg flex flex-col">
+              <Card key={app.id} className="static-card-container flex flex-col">
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
@@ -347,7 +347,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
           <h3 className="text-xl font-headline text-muted-foreground mt-10 mb-4">Candidaturas Revisadas ({reviewedApplications.length})</h3>
            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {reviewedApplications.map(app => (
-              <Card key={app.id} className={`card-bg flex flex-col opacity-70 ${app.status === 'approved' || app.status === 'auto_approved' ? 'border-green-500/30' : 'border-red-500/30'}`}>
+              <Card key={app.id} className={`static-card-container flex flex-col opacity-70 ${app.status === 'approved' || app.status === 'auto_approved' ? 'border-green-500/30' : 'border-red-500/30'}`}>
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
@@ -424,9 +424,20 @@ function RecruitmentPage() {
   const [guild, setGuild] = useState<Guild | null>(null);
   const [loadingGuildData, setLoadingGuildData] = useState(true);
   const [recruitmentLink, setRecruitmentLink] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("recruitment");
+  
+  const initialTab = searchParams.get('tab') || "recruitment";
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const guildId = searchParams.get('guildId');
+
+  useEffect(() => {
+    const currentTab = searchParams.get('tab');
+    if (currentTab && (currentTab === "recruitment" || currentTab === "applications")) {
+      setActiveTab(currentTab);
+    } else {
+      setActiveTab("recruitment"); 
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (authLoading) return;
