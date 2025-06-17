@@ -45,7 +45,6 @@ const tlRegions = [
 
 const tlServers: Record<string, Array<{ value: string; label: string }>> = {
   "Korea": [
-    { value: "Unknown", label: "Unknown" },
     { value: "Belluatan", label: "Belluatan" },
     { value: "Greedal", label: "Greedal" },
     { value: "Kallis", label: "Kallis" },
@@ -78,6 +77,8 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
     { value: "Fortune", label: "Fortune" },
     { value: "Destiny", label: "Destiny" },
     { value: "Arcane", label: "Arcane" },
+    { value: "Emerald", label: "Emerald" },
+    { value: "Conviction", label: "Conviction" },
   ],
   "South America": [],
   "Asia Pacific": [],
@@ -163,7 +164,7 @@ export default function CreateGuildPage() {
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
     const ownerRoleInfo: GuildMemberRoleInfo = {
-      roleName: "Líder",
+      roleName: "Lider",
       characterNickname: user.displayName || user.email || "Líder da Guilda",
       dkpBalance: 0,
       status: 'Ativo'
