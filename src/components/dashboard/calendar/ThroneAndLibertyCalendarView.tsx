@@ -74,102 +74,102 @@ export const TL_EVENT_CATEGORIES = [
 ];
 
 const TL_SUB_CATEGORIES: Record<string, string[]> = {
-  world_event: ['Paz', 'Conflito', 'Guilda'],
-  world_boss: ['Paz', 'Conflito', 'Guilda'],
-  arch_boss: ['Paz', 'Conflito', 'Guilda'],
+  world_event: ['Peace', 'Conflict', 'Guild'],
+  world_boss: ['Peace', 'Conflict', 'Guild'],
+  arch_boss: ['Peace', 'Conflict', 'Guild'],
 };
 
 const TL_ACTIVITIES: Record<string, string[]> = {
   world_event: [
-    'Melhor Forma de Prevenir o Pior',
-    'Coleta de Cogumelos Sangrentos',
-    'Destruidores Sombrios',
-    'Caravana do Deserto',
-    'Festival do Fogo',
-    'Mica Marrom Escondida',
-    'Festival da Semente Lanterna',
-    'Levantar o Feitiço Lunar',
-    'Operação: Entrega de Talismã',
-    'Réquiem da Luz',
-    'Ritual das Pedras da Luz Estrelar',
-    'Impedir o Frenesi de Mana',
-    'Para Curar uma Besta Divina',
-    'Concurso de Caça ao Lobo',
+    'Best Way to Prevent the Worst',
+    'Blood Mushroom Gathering',
+    'Dark Destroyers',
+    'Desert Caravan',
+    'Festival of Fire',
+    'Hidden Brown Mica',
+    'Lantern Seed Festival',
+    'Lift the Moonlight Spell',
+    'Operation: Talisman Delivery',
+    'Requiem of Light',
+    'Starlight Stones Ritual',
+    'Stop the Mana Frenzy',
+    'To Heal a Divine Beast',
+    'Wolf Hunting Contest',
   ],
   world_dungeon: [
-    'Ninho de Formigas', 'Santuário do Desejo', 'Ilha Saurodoma', 'Cripta Sombria',
-    'Abismo de Syleus', 'Templo de Sylaveth', 'Templo da Verdade',
-    'Propriedade Bercant', 'Mansão Carmesim',
+    'Ant Nest', 'Sanctum of Desire', 'Saurodoma Island', 'Dark Crypt',
+    'Syleus Abyss', 'Temple of Sylaveth', 'Temple of Truth',
+    'Bercant Estate', 'Crimson Manor',
   ],
   world_boss: [
     'Adentus', 'Ahzreil', 'Aridus', 'Bellandir', 'Chernobog', 'Cornelius', 'Daigon',
-    'Exodus', 'Grande Aelon', 'Grimturg', 'Junobote', 'Kowazan', 'Leviatã', 'Malakar',
-    'Irmãos Manticus', 'Minezerok', 'Morokai', 'Nirma', 'Pakilo Naru', 'Talus', 'Tevent',
+    'Exodus', 'Grand Aelon', 'Grimturg', 'Junobote', 'Kowazan', 'Leviathan', 'Malakar',
+    'Manticus Brothers', 'Minezerok', 'Morokai', 'Nirma', 'Pakilo Naru', 'Talus', 'Tevent',
   ],
   arch_boss: [
-    'Rainha Bellandir', "Espectro de Courte Tevent", 'Deluzhnoa', 'Cordy Gigante',
+    'Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy',
   ],
   boonstone: [
-    'Pedreiro Abandonado', 'Vale Akidu', 'Planícies Uivonegro', 'Floresta Carmesim',
-    'Costa da Alvorada', 'Bacia de Fonos', 'Pastos de Centeio Dourado',
-    'Floresta Garra Cinzenta', 'Baldios de Mana', 'Deserto Lunar', 'Baldios do Monólito',
-    'Território de Ninhada', 'Colinas da Luz Pura', 'Selva Furiosa', 'Ruínas de Turayne',
-    'Covil do Verme da Areia', 'Templo Estilhaçado', 'Campos de Urstella',
-    'Costas do Vento Sibilante', "Domínio de Quietis",
-    'Floresta da Grande Árvore', 'Pântano do Silêncio', 'Forja da Bigorna Negra',
-    'Propriedade Bercant', 'Mansão Carmesim',
+    'Abandoned Mason', 'Akidu Valley', 'Blackhowl Plains', 'Crimson Forest',
+    'Dawncoast', 'Fonos Basin', 'Golden Rye Pastures',
+    'Greytalon Forest', 'Mana Wastelands', 'Moonlit Desert', 'Monolith Wastelands',
+    'Nesting Grounds', 'Purelight Hills', 'Raging Wilds', 'Ruins of Turayne',
+    'Sandworm Lair', 'Shattered Temple', 'Urstella Fields',
+    'Whistling Coasts', "Quietus's Domain",
+    'Great Tree Forest', 'Silence Marsh', 'Black Anvil Forge',
+    'Bercant Estate', 'Crimson Manor',
   ],
   riftstone: [
-    'Pedra de Fenda de Adentus', 'Pedra de Fenda de Azhreil', 'Pedra de Fenda de Chernobog',
-    'Pedra de Fenda do Escavador', 'Pedra de Fenda do Grande Aelon', 'Pedra de Fenda de Kowazan',
-    'Pedra de Fenda de Malakar', 'Pedra de Fenda de Morokai', 'Pedra de Fenda de Talus',
-    'Pedra de Fenda de Daigon', 'Pedra de Fenda do Leviatã', 'Pedra de Fenda de Pakilo Naru',
-    'Pedra de Fenda dos Irmãos Manticus',
+    'Adentus Riftstone', 'Azhreil Riftstone', 'Chernobog Riftstone',
+    'Excavator Riftstone', 'Grand Aelon Riftstone', 'Kowazan Riftstone',
+    'Malakar Riftstone', 'Morokai Riftstone', 'Talus Riftstone',
+    'Daigon Riftstone', 'Leviathan Riftstone', 'Pakilo Naru Riftstone',
+    'Manticus Brothers Riftstone',
   ],
   war: [
-    'Ilha Nebulosa', 'Guerra da Pedra de Fenda', 'Guerra da Pedra de Oferenda',
-    'Guerra da Pedra de Fenda/Oferenda', 'Pedra de Fenda Inter-Servidor', 'Pedra de Oferenda Inter-Servidor',
+    'Nebula Island', 'Riftstone War', 'Offering Stone War',
+    'Riftstone/Offering Stone War', 'Inter-Server Riftstone', 'Inter-Server Offering Stone',
   ],
   siege: [
-    'Castelo Guardapedra',
+    'Stonegard Castle',
   ],
   guild_contract: [
-    'Uma Lâmina para o Criador', 'Contra os Princípios da Natureza', 'Mais um Dia Sobrevivido',
-    'Limpeza do Ninho de Formigas', 'Ataque dos Retornados', 'Equilíbrio da Vida',
-    'Antes que a Lua Cheia Surja', 'Entre a Vida e a Morte', 'Bênçãos e Maldições',
-    'Coletar Areia Dourada', 'Coletar Caudas de Lagarto', 'Vida Criada', 'Ciclo da Vida',
-    'Monstros Perigosos', 'Conluio Sombrio', 'Mal Profundamente Enraizado', 'Conspiração Demoníaca',
-    'Demônios e Criações', 'Demônios e Descendentes de Deus', "Fúria dos Demônios",
-    "Equilíbrio do Ecossistema", 'Eliminar Esporos Perigosos', 'Fim do Abismo',
-    'Acabar com o Frenesi de Mana', 'Seres Enfurecidos', 'Seres Mal-Intencionados',
-    'Guardiões do Portão de Diabólica', 'Pedras Monumentais para Modelar Gemas', "Criações de Deus",
-    'Superpopulação de Insetos', 'Meio do Abismo', 'Semente da Flor Lanterna Lunar',
-    "Invasão da Natureza", "Retaliação Impiedosa da Natureza",
-    'Noite dos Cadáveres e Pedras Andantes', 'Talento Órquico', 'Protetor de Solisium',
-    'Protetor das Planícies', 'Inimigo Público', 'Invadir Santuário',
-    'Resolver Depleção de Mana', 'Bestas Ressuscitadas', 'Vingança das Variantes',
-    'Selar a Fenda Sombria', 'Cintilante e Brilhante', 'Início do Abismo',
-    'Firme Seus Nervos', 'Aço, Aço e Mais Aço!', 'Paz Roubada',
-    'Impedir o Crescimento Anormal', 'Impedir a Facção Maligna', 'Oferta e Demanda',
-    'Varredura do Santuário', "Filhos de Sylaveth", 'Equipe de Varredura do Templo',
-    'O Perigo dos Orcs de Fogo', 'A Malícia que Nunca Dorme',
-    'A Pedra de Mana Está Carregando', 'A Roda Fiandeira Gira', 'Expedição à Tumba',
-    'Guerra no Reino Intermediário', 'O Que as Bestas Deixam Para Trás', 'Madeira Necessária',
-    'Erradicação de Zumbis e Bandidos',
+    'A Blade for the Maker', 'Against Nature\'s Principles', 'Another Day Survived',
+    'Ant Nest Cleanup', 'Attack of the Returned', 'Balance of Life',
+    'Before the Full Moon Rises', 'Between Life and Death', 'Blessings and Curses',
+    'Collect Golden Sand', 'Collect Lizard Tails', 'Created Life', 'Cycle of Life',
+    'Dangerous Monsters', 'Dark Collusion', 'Deeply Rooted Evil', 'Demonic Conspiracy',
+    'Demons and Creations', 'Demons and God\'s Descendants', "Demons' Fury",
+    "Ecosystem Balance", 'Eliminate Dangerous Spores', 'End of the Abyss',
+    'End the Mana Frenzy', 'Enraged Beings', 'Evil-Intentioned Beings',
+    'Guardians of Diabolica\'s Gate', 'Monument Stones for Gem Shaping', "God's Creations",
+    'Insect Overpopulation', 'Middle of the Abyss', 'Moon Lantern Flower Seed',
+    "Nature's Invasion", "Nature's Ruthless Retaliation",
+    'Night of Corpses and Walking Stones', 'Orcish Talent', 'Protector of Solisium',
+    'Protector of the Plains', 'Public Enemy', 'Raid Sanctuary',
+    'Resolve Mana Depletion', 'Resurrected Beasts', 'Revenge of the Variants',
+    'Seal the Dark Rift', 'Shimmering and Bright', 'Start of the Abyss',
+    'Steel Your Nerves', 'Steel, Steel, and More Steel!', 'Stolen Peace',
+    'Stop Abnormal Growth', 'Stop the Evil Faction', 'Supply and Demand',
+    'Sanctuary Sweep', "Sylaveth's Children", 'Temple Sweep Team',
+    'The Danger of Fire Orcs', 'The Malice That Never Sleeps',
+    'The Mana Stone is Charging', 'The Spinning Wheel Turns', 'Tomb Expedition',
+    'War in the Middle Realm', 'What Beasts Leave Behind', 'Wood Needed',
+    'Zombie and Bandit Eradication',
   ],
   raid: [
-    'Morokai', 'Escavador-9', 'Chernobog', 'Talus', 'Malakar', 'Cornelius',
-    'Ahzreil', 'Minezerok', 'Kowazan', 'Adentus', 'Junobote', 'Grande Aelon',
+    'Morokai', 'Excavator-9', 'Chernobog', 'Talus', 'Malakar', 'Cornelius',
+    'Ahzreil', 'Minezerok', 'Kowazan', 'Adentus', 'Junobote', 'Grand Aelon',
     'Nirma', 'Aridus',
   ],
   tax_delivery: [
-    'Vila Vienta',
+    'Vienta Village',
   ],
   war_games: [
     'War Games',
   ],
   lawless_wilds: [
-    'Ilha Nebulosa',
+    'Nebula Island',
   ],
 };
 
@@ -214,7 +214,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Giant Cordy': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WB_WB_GiantBroork_On_Sprite.webp",
   'Deluzhnoa': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_DelugeNoah_On_Sprite.webp",
   'Excavator-9': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_KingmineBoom_Target.webp",
-  'Vienta village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
+  'Vienta Village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
   'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
   ...Object.fromEntries(TL_ACTIVITIES.boonstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
   ...Object.fromEntries(TL_ACTIVITIES.riftstone.map(act => [act, "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_GuildOccupation_Portal_Sprite1.webp"])),
@@ -231,9 +231,9 @@ const ACTIVITY_ICONS: Record<string, string> = {
 };
 
 const SUBCATEGORY_ICONS: Record<string, string> = {
-  'Paz': 'https://i.imgur.com/1Q5gZK0.png',
-  'Guilda': 'https://i.imgur.com/I34gDeO.png',
-  'Conflito': 'https://i.imgur.com/UdzIUPx.png',
+  'Peace': 'https://i.imgur.com/1Q5gZK0.png',
+  'Guild': 'https://i.imgur.com/I34gDeO.png',
+  'Conflict': 'https://i.imgur.com/UdzIUPx.png',
 };
 
 const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -261,18 +261,18 @@ const getEventColorClass = (event: GuildEvent): string => {
   const baseClasses = "text-white";
 
   if (category === 'world_event') {
-    if (subCategory === 'Paz') return `bg-sky-500/70 hover:bg-sky-600 ${baseClasses}`;
-    if (subCategory === 'Conflito') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
-    if (subCategory === 'Guilda') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
+    if (subCategory === 'Peace') return `bg-sky-500/70 hover:bg-sky-600 ${baseClasses}`;
+    if (subCategory === 'Conflict') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+    if (subCategory === 'Guild') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
   }
   if (category === 'world_dungeon') return `bg-yellow-600/70 hover:bg-yellow-700 ${baseClasses}`;
   if (category === 'world_boss' || category === 'arch_boss') {
-    if (subCategory === 'Paz') return `bg-blue-500/70 hover:bg-blue-600 ${baseClasses}`;
-    if (subCategory === 'Conflito') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
-    if (subCategory === 'Guilda') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
+    if (subCategory === 'Peace') return `bg-blue-500/70 hover:bg-blue-600 ${baseClasses}`;
+    if (subCategory === 'Conflict') return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
+    if (subCategory === 'Guild') return `bg-green-500/70 hover:bg-green-600 ${baseClasses}`;
   }
   if (category === 'boonstone' || category === 'riftstone') return `bg-gray-500/70 hover:bg-gray-600 ${baseClasses}`;
-  if (category === 'war' || title === 'Ilha Nebulosa' || category === 'lawless_wilds' || category === 'war_games' || category === 'raid') {
+  if (category === 'war' || title === 'Nebula Island' || category === 'lawless_wilds' || category === 'war_games' || category === 'raid') {
      return `bg-red-500/70 hover:bg-red-600 ${baseClasses}`;
   }
   if (category === 'siege' || category === 'tax_delivery') return `bg-orange-500/70 hover:bg-orange-600 ${baseClasses}`;
