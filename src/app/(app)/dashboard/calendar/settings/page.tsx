@@ -135,13 +135,15 @@ function CalendarPinCodesPageContent() {
 
   const formatEventDateTime = (dateStr: string, timeStr: string): string => {
     try {
-        // Assuming dateStr is in "YYYY-MM-DD" format and timeStr is "HH:MM"
-        const date = new Date(dateStr);
+        // dateStr is "YYYY-MM-DD", timeStr is "HH:MM"
+        const [year, month, day] = dateStr.split('-').map(Number);
         const [hours, minutes] = timeStr.split(':').map(Number);
-        date.setUTCHours(hours, minutes); // Use UTC to avoid timezone shifts from just date string
-        return format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
+        // Construct Date object using local time components
+        // Month is 0-indexed for Date constructor (0 = January, 1 = February, etc.)
+        const localDate = new Date(year, month - 1, day, hours, minutes);
+        return format(localDate, "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (e) {
-        console.error("Error formatting date/time", e, dateStr, timeStr);
+        console.error("Error formatting date/time", e, "Input:", dateStr, timeStr);
         return "Data/Hora inválida";
     }
   };
@@ -249,3 +251,4 @@ export default function CalendarPinCodesPage() {
     </Suspense>
   );
 }
+
