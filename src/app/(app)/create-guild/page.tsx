@@ -18,7 +18,7 @@ import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Lin
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
-import { GuildPermission } from '@/types/guildmaster'; // Import GuildPermission
+import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 
 const guildSchema = z.object({
@@ -77,16 +77,16 @@ export default function CreateGuildPage() {
     if (data.socialDiscord && data.socialDiscord.trim() !== "") socialLinks.discord = data.socialDiscord.trim();
 
     const guildMemberRoles: { [key: string]: GuildMemberRoleInfo } = {
-      [user.uid]: { roleName: "Lider", dkpBalance: 0 } 
+      [user.uid]: { roleName: "Lider", dkpBalance: 0, status: 'Ativo' } 
     };
 
     const initialCustomRoles: { [roleName: string]: CustomRole } = {
       "Lider": {
-        permissions: Object.values(GuildPermission), // Lider gets all permissions by default
+        permissions: Object.values(GuildPermission), 
         description: "Fundador e administrador principal da guilda."
       },
       "Membro": {
-        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], // Basic view permission for members
+        permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], 
         description: "Membro padrão da guilda."
       }
     };
@@ -104,7 +104,7 @@ export default function CreateGuildPage() {
         bannerUrl: `https://placehold.co/1200x300.png`,
         logoUrl: `https://placehold.co/150x150.png`,
         roles: guildMemberRoles,
-        customRoles: initialCustomRoles, // Add initial custom roles
+        customRoles: initialCustomRoles, 
         socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         password: data.password || undefined,
     };

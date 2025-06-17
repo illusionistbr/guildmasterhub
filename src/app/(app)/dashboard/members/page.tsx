@@ -93,11 +93,10 @@ const getWeaponIconPath = (weapon?: TLWeapon): string => {
 
 const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildMemberRoleInfo | undefined, guildData: Guild): GuildMember => {
   const isTLGuild = guildData.game === "Throne and Liberty";
-  const statuses: MemberStatus[] = ['Ativo', 'Inativo', 'Licenca'];
   
   let specificRoleInfo: Partial<GuildMemberRoleInfo> & { roleName: string } = {
     roleName: guildRoleInfo?.roleName || "Membro", 
-    status: statuses[Math.floor(Math.random() * statuses.length)], 
+    status: guildRoleInfo?.status || 'Ativo', 
     dkpBalance: 0, 
     notes: "", 
   };
@@ -109,7 +108,7 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       tlPrimaryWeapon: isTLGuild ? guildRoleInfo.tlPrimaryWeapon : undefined,
       tlSecondaryWeapon: isTLGuild ? guildRoleInfo.tlSecondaryWeapon : undefined,
       notes: guildRoleInfo.notes || "",
-      status: guildRoleInfo.status || specificRoleInfo.status,
+      status: guildRoleInfo.status || 'Ativo',
       dkpBalance: guildRoleInfo.dkpBalance ?? 0,
     };
   }
@@ -129,6 +128,11 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
     },
     gearScore: memberBaseProfile.gearScore ?? Math.floor(3800 + Math.random() * 500),
   };
+};
+
+const displayMemberStatus = (status?: MemberStatus): string => {
+  if (status === 'Licenca') return 'Licença';
+  return status || 'Desconhecido';
 };
 
 
@@ -153,7 +157,7 @@ function MembersPageContent() {
   const [usernameFilter, setUsernameFilter] = useState("");
   const [tlRoleFilter, setTlRoleFilter] = useState<TLRole | "all">("all");
   const [gearSortOrder, setGearSortOrder] = useState<GearSortOrder>("default");
-  const [rankFilter, setRankFilter] = useState<string | "all">("all"); // Now string for roleName
+  const [rankFilter, setRankFilter] = useState<string | "all">("all"); 
   const [dkpSortOrder, setDkpSortOrder] = useState<DkpSortOrder>("default");
   const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all");
 
@@ -193,7 +197,7 @@ function MembersPageContent() {
     }
 
     const initialRank = searchParams.get('rankFilter') as string | "all" | null;
-     if (initialRank) { // Any string is potentially valid now
+     if (initialRank) { 
       setRankFilter(initialRank);
     }
 
@@ -304,7 +308,6 @@ function MembersPageContent() {
 
   const availableRoleNamesForChange = useMemo(() => {
     if (!guild || !guild.customRoles) return [];
-    // "Lider" cannot be assigned through this dropdown. It's special.
     return ["Membro", ...Object.keys(guild.customRoles).filter(roleName => roleName !== "Lider")].sort();
   }, [guild]);
 
@@ -325,12 +328,10 @@ function MembersPageContent() {
   const handleChangeRole = async () => {
     if (!actionUser || !guild || selectedNewRoleName === '' || !guildId || !currentUser || !canManageMemberRoles) return;
     
-    // Prevent changing the Lider's role via this UI if they are the guild owner.
     if (actionUser.uid === guild.ownerId && selectedNewRoleName !== "Lider") {
         toast({ title: "Acao Invalida", description: "O cargo do fundador da guilda (Lider) nao pode ser alterado aqui.", variant: "destructive" });
         return;
     }
-    // Prevent assigning "Lider" to someone else via this UI.
     if (selectedNewRoleName === "Lider" && actionUser.uid !== guild.ownerId) {
         toast({ title: "Acao Invalida", description: "Para transferir a lideranca, use uma funcionalidade especifica (a ser implementada).", variant: "destructive" });
         return;
@@ -379,11 +380,9 @@ function MembersPageContent() {
 
     if (!targetMember || !guild || statusToSet === '' || !guildId || !currentUser || !canManageMemberStatus) return;
     
-    // Prevent Lider (owner) from setting themselves to Inativo via this direct change.
-    // They would need a separate mechanism or another Lider to do it.
     if(targetMember.uid === guild.ownerId && targetMember.roleName === "Lider" && statusToSet === 'Inativo') {
         toast({ title: "Acao Invalida", description: "O Lider da guilda nao pode definir seu proprio status como Inativo diretamente aqui.", variant: "destructive" });
-        closeActionDialog(); // Ensure dialog closes if opened for this action
+        closeActionDialog(); 
         return;
     }
     const oldStatus = targetMember.status;
@@ -396,7 +395,6 @@ function MembersPageContent() {
         if (existingRoleInfo) {
             updatedRoleInfoPayload = { ...existingRoleInfo, status: statusToSet };
         } else { 
-             // This case should ideally not happen if member exists, but as a fallback:
             updatedRoleInfoPayload = {
                 roleName: targetMember.roleName, 
                 status: statusToSet,
@@ -415,7 +413,7 @@ function MembersPageContent() {
             changedField: 'status'
         });
 
-        toast({ title: "Status Atualizado!", description: `O status de ${targetMember.displayName} foi alterado para ${statusToSet}.` });
+        toast({ title: "Status Atualizado!", description: `O status de ${targetMember.displayName} foi alterado para ${displayMemberStatus(statusToSet)}.` });
         fetchGuildAndMembers(); 
         closeActionDialog();
     } catch (error) {
@@ -513,8 +511,6 @@ function MembersPageContent() {
   };
 
   const getRoleIcon = (roleName: string) => {
-    // For now, "Lider" gets a special icon. Others are generic.
-    // This could be expanded if roles have their own configurable icons in the future.
     if (roleName === "Lider") return <Crown className="h-5 w-5 text-yellow-400" />;
     return <User className="h-5 w-5 text-muted-foreground" />;
   };
@@ -701,7 +697,9 @@ function MembersPageContent() {
             <SelectTrigger id="statusFilter" className="form-input"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+              {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).map(statusVal => 
+                <SelectItem key={statusVal} value={statusVal}>{displayMemberStatus(statusVal)}</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -869,7 +867,7 @@ function MembersPageContent() {
                      <Badge variant="outline" className={cn("text-xs", getStatusBadgeClass(member.status))}>
                        <div className="flex items-center gap-1">
                         {getStatusIcon(member.status)}
-                        {member.status}
+                        {displayMemberStatus(member.status)}
                        </div>
                     </Badge>
                   </TableCell>
@@ -877,11 +875,11 @@ function MembersPageContent() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Search className="h-4 w-4" /></Button>
-                      {!isCurrentUserTarget && ( // Prevent actions on self directly in dropdown
+                      {!isCurrentUserTarget && ( 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8" 
-                              disabled={isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus} // Disable entirely for owner Lider if only status change is possible
+                              disabled={isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus} 
                             >
                               <MoreVertical className="h-4 w-4" />
                               <span className="sr-only">Acoes do membro</span>
@@ -905,19 +903,18 @@ function MembersPageContent() {
                                         {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => (
                                             <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }}
                                                 disabled={isGuildOwnerTarget && member.roleName === "Lider" && statusOption === 'Inativo'}>
-                                                {getStatusIcon(statusOption)} {statusOption}
+                                                {getStatusIcon(statusOption)} {displayMemberStatus(statusOption)}
                                             </DropdownMenuItem>
                                         ))}
                                     </DropdownMenuSubContent>
                                     </DropdownMenuPortal>
                                 </DropdownMenuSub>
                             )}
-                            {canKickMembers && !isGuildOwnerTarget && ( // Prevent kicking the owner
+                            {canKickMembers && !isGuildOwnerTarget && ( 
                               <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}>
                                 <UserX className="mr-2 h-4 w-4" /> Remover da Guilda
                               </DropdownMenuItem>
                             )}
-                            {/* If no actions are available for owner Lider besides status, dropdown might be empty or only show status */}
                             {isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus && !canManageMemberRoles && !canKickMembers && (
                                <DropdownMenuItem disabled>Nenhuma acao disponivel</DropdownMenuItem>
                             )}
@@ -1053,4 +1050,3 @@ export default function MembersPage() {
     </Suspense>
   );
 }
-

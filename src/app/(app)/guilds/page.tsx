@@ -15,7 +15,7 @@ import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, A
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy, writeBatch, serverTimestamp } from '@/lib/firebase';
 import type { Guild, AuditActionType, GuildMemberRoleInfo } from '@/types/guildmaster';
-import { TLRole, TLWeapon } from '@/types/guildmaster'; // GuildRole removed
+import { TLRole, TLWeapon } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -29,8 +29,6 @@ const GUILDS_PER_PAGE = 15;
 
 const tlWeaponsList = Object.values(TLWeapon);
 
-// This schema is only used if we decide to keep TL selection dialog on this page for non-TL public guilds,
-// but current logic redirects TL guilds to /apply page. Kept for potential future adjustments.
 const tlRoleWeaponSchema = z.object({
   tlRole: z.nativeEnum(TLRole, { required_error: "Função é obrigatória." }),
   tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
@@ -44,7 +42,7 @@ function ExploreGuildsContent() {
   const { toast } = useToast();
   const router = useNavigationRouter();
 
-  const [allGuilds, setAllGuilds] = useState<Guild[]>([]); // Renamed from allPublicGuilds
+  const [allGuilds, setAllGuilds] = useState<Guild[]>([]);
   const [loadingGuilds, setLoadingGuilds] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,15 +52,13 @@ function ExploreGuildsContent() {
   const [passwordError, setPasswordError] = useState("");
   const [isJoining, setIsJoining] = useState<string | null>(null);
 
-  // TL Selection Dialog state is removed as TL guilds redirect to /apply
-
   useEffect(() => {
     const fetchGuilds = async () => {
       setLoadingGuilds(true);
       try {
         const guildsQuery = query(collection(db, "guilds"), orderBy("name"));
         const querySnapshot = await getFirestoreDocs(guildsQuery);
-        const guildsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Guild));
+        const guildsData = querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Guild));
         setAllGuilds(guildsData);
       } catch (error) {
         console.error("Error fetching guilds:", error);
@@ -87,7 +83,6 @@ function ExploreGuildsContent() {
 
   const totalPages = Math.ceil(filteredGuilds.length / GUILDS_PER_PAGE);
 
-  // This function is now only for public, non-TL guilds.
   const processGuildJoin = async (guildToJoin: Guild) => {
     if (!user) return; 
     setIsJoining(guildToJoin.id);
@@ -97,9 +92,10 @@ function ExploreGuildsContent() {
       const batch = writeBatch(db);
       
       const memberRoleInfo: GuildMemberRoleInfo = {
-        roleName: "Membro", // Changed from generalRole: GuildRole.Member
+        roleName: "Membro", 
         notes: "Entrou diretamente (guilda pública, não-TL).", 
-        dkpBalance: 0, // Explicitly set dkpBalance
+        dkpBalance: 0, 
+        status: 'Ativo',
       };
       
       batch.update(guildRef, {
@@ -128,10 +124,9 @@ function ExploreGuildsContent() {
         action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guildToJoin.id}`)}>Ver Dashboard</Button>
       });
 
-      setSelectedGuildForPassword(null); // Clear password dialog state
+      setSelectedGuildForPassword(null); 
       setPasswordInput("");
 
-      // Update local state for immediate UI feedback
       setAllGuilds(prevGuilds => 
         prevGuilds.map(g => 
           g.id === guildToJoin.id 
@@ -159,23 +154,18 @@ function ExploreGuildsContent() {
     setIsJoining(guild.id);
     setPasswordError("");
 
-    // This part is for private, non-TL guilds after password validation
     if (guild.password && !guild.isOpen) {
         if (guild.password !== guildPassword) {
             setPasswordError("Senha incorreta.");
             setIsJoining(null);
             return;
         }
-        // If password is correct for private, non-TL guild, redirect to apply page
         router.push(`/apply?guildId=${guild.id}`);
         setIsJoining(null);
-        setSelectedGuildForPassword(null); // Close password dialog
+        setSelectedGuildForPassword(null); 
         return;
     }
     
-    // Should not be reached if logic in handleApplyToGuild is correct for TL or private guilds
-    // This would only be for public, non-TL that somehow skipped the direct processGuildJoin
-    // For safety, if it's TL, redirect. Otherwise, process join.
     if (guild.game === "Throne and Liberty") {
       router.push(`/apply?guildId=${guild.id}`);
     } else {
@@ -196,21 +186,16 @@ function ExploreGuildsContent() {
         return;
     }
 
-    // If TL guild (public or private), or if private non-TL guild, redirect to apply page
     if (guild.game === "Throne and Liberty" || (guild.password && !guild.isOpen)) {
       router.push(`/apply?guildId=${guild.id}`);
     } 
-    // Else (Public, Non-TL guild) -> immediate join
     else { 
       processGuildJoin(guild); 
     }
   };
   
-  // This is called when password dialog is submitted
   const handlePasswordDialogSubmit = () => {
     if (selectedGuildForPassword) {
-      // For private non-TL guilds, correct password now redirects to /apply
-      // For private TL guilds, /apply is already the destination
       if (selectedGuildForPassword.password === passwordInput) {
         router.push(`/apply?guildId=${selectedGuildForPassword.id}`);
         setSelectedGuildForPassword(null);
@@ -221,9 +206,6 @@ function ExploreGuildsContent() {
       }
     }
   };
-
-  const getTLRoleIcon = (role?: TLRole) => { /* Not used on this page anymore */ return null; };
-  const getTLWeaponIcon = (weapon?: TLWeapon) => { /* Not used on this page anymore */ return null; };
 
   const renderGuildCard = (guild: Guild) => {
     const isUserMember = guild.memberIds?.includes(user?.uid || "");
@@ -371,8 +353,6 @@ function ExploreGuildsContent() {
           </DialogContent>
         </Dialog>
       )}
-
-      {/* TL Selection Dialog is removed from this page as TL guilds redirect to /apply */}
     </div>
   );
 }
@@ -404,6 +384,3 @@ export default function GuildsPage() {
     </div>
   );
 }
-
-
-    

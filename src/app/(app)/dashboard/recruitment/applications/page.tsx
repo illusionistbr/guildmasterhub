@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { hasPermission } from '@/lib/permissions'; // Import the helper
+import { hasPermission } from '@/lib/permissions'; 
 
 const getWeaponIconPath = (weapon?: TLWeapon): string => {
   if (!weapon) return "https://placehold.co/24x24.png?text=N/A";
@@ -148,7 +148,6 @@ function ApplicationsPageContent() {
       return;
     }
     
-    // Check for view permission before fetching
     const userRoleInfo = guild.roles?.[currentUser.uid];
     if (!userRoleInfo || !hasPermission(userRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_RECRUITMENT_VIEW_APPLICATIONS)) {
       setAccessDenied(true);
@@ -162,7 +161,7 @@ function ApplicationsPageContent() {
     const q = query(applicationsRef, orderBy("submittedAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedApplications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Application));
+      const fetchedApplications = querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Application));
       setApplications(fetchedApplications);
       setLoadingData(false);
     }, (error) => {
@@ -203,7 +202,7 @@ function ApplicationsPageContent() {
            batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
-                roleName: "Membro", // Default role for new members
+                roleName: "Membro",
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
