@@ -30,14 +30,14 @@ export enum TLRole {
 }
 
 export enum TLWeapon {
-  SwordAndShield = "Espada e Escudo",
-  Greatsword = "Montante",
-  Daggers = "Adagas",
-  Crossbow = "Besta",
-  Bow = "Arco Longo",
-  Staff = "Cajado",
-  WandAndTome = "Varinha e Tomo",
-  Spear = "Lanca",
+  SwordAndShield = "Sword and Shield",
+  Greatsword = "Greatsword",
+  Daggers = "Daggers",
+  Crossbow = "Crossbow",
+  Longbow = "Longbow",
+  Staff = "Staff",
+  WandAndTome = "Wand and Tome",
+  Spear = "Spear",
 }
 
 export type MemberStatus = 'Ativo' | 'Inativo' | 'Licenca';
