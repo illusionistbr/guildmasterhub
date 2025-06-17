@@ -6,7 +6,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Link from 'next/link'; // Keep Link if other parts need it
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum } from '@/types/guildmaster';
@@ -58,7 +57,7 @@ type GuildPasswordFormValues = z.infer<typeof guildPasswordSchema>;
 const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
   [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Permite visualizar a lista de membros e seus perfis básicos." },
   [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: { title: "Gerenciar Cargos de Membros", description: "Permite modificar o cargo de outros membros." },
-  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Permite alterar o status de atividade dos membros (Ativo, Inativo, etc.)." },
+  [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Permite alterar o status de atividade dos membros (Ativo, Inativo, Licença)." },
   [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: { title: "Gerenciar Notas de Membros", description: "Permite adicionar ou editar notas administrativas sobre membros." },
   [GuildPermission.MANAGE_MEMBERS_KICK]: { title: "Expulsar Membros", description: "Permite remover membros da guilda." },
   [GuildPermission.MANAGE_EVENTS_CREATE]: { title: "Criar Eventos/Atividades", description: "Permite adicionar novos eventos ao calendário da guilda." },
@@ -92,7 +91,6 @@ function GuildSettingsPageContent() {
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // State for Permissions Tab
   const [customRoles, setCustomRoles] = useState<Record<string, CustomRole>>({});
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
@@ -124,7 +122,7 @@ function GuildSettingsPageContent() {
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
 
-  const canManageRolesAndPermissions = useMemo(() => {
+  const canManageRolesAndPermissionsPage = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
     return hasPermission(
       currentUserRoleInfo.roleName,
@@ -172,7 +170,10 @@ function GuildSettingsPageContent() {
         
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
-        setCustomRoles(guildData.customRoles || {});
+        setCustomRoles(guildData.customRoles || {
+          "Lider": { permissions: Object.values(GuildPermission), description: "Fundador e administrador principal da guilda."},
+          "Membro": { permissions: [GuildPermission.MANAGE_MEMBERS_VIEW], description: "Membro padrão da guilda."}
+        });
 
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
@@ -295,7 +296,6 @@ function GuildSettingsPageContent() {
     }
   };
 
-  // Permissions Tab Logic
   const handlePermissionChange = (roleName: string, permission: PermissionEnum, checked: boolean) => {
     setCustomRoles(prevRoles => {
       const role = prevRoles[roleName];
@@ -313,7 +313,7 @@ function GuildSettingsPageContent() {
   };
   
   const handleCreateNewRole = () => {
-    if (!canManageRolesAndPermissions) {
+    if (!canManageRolesAndPermissionsPage) {
         toast({ title: "Permissão Negada", description: "Você não tem permissão para criar cargos.", variant: "destructive"});
         return;
     }
@@ -344,7 +344,7 @@ function GuildSettingsPageContent() {
   };
   
   const handleDeleteRole = async (roleName: string) => {
-    if (!roleName || !guildId || !currentUser || !canManageRolesAndPermissions) {
+    if (!roleName || !guildId || !currentUser || !canManageRolesAndPermissionsPage) {
         toast({ title: "Permissão Negada", description: "Você não tem permissão para excluir cargos.", variant: "destructive"});
         setRoleToDelete(null);
         return;
@@ -366,7 +366,7 @@ function GuildSettingsPageContent() {
   };
 
   const handleSaveChangesPermissions = async () => {
-    if (!guildId || !currentUser || !canManageRolesAndPermissions || !guild) {
+    if (!guildId || !currentUser || !canManageRolesAndPermissionsPage || !guild) {
         toast({title: "Permissão Negada", description: "Você não tem permissão para salvar estas alterações.", variant: "destructive"});
         return;
     }
@@ -414,8 +414,17 @@ function GuildSettingsPageContent() {
     return (
       <div className="space-y-8 p-4 md:p-6">
         <PageTitle title="Configurações da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
-        <Skeleton className="h-12 w-full" /> 
-        <Skeleton className="h-64 w-full" />
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="general">Geral</TabsTrigger>
+            <TabsTrigger value="permissions" disabled>Cargos e Permissões</TabsTrigger>
+          </TabsList>
+          <TabsContent value="general" className="mt-6">
+            <Skeleton className="h-48 w-full mb-6" />
+            <Skeleton className="h-48 w-full mb-6" />
+            <Skeleton className="h-48 w-full" />
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
@@ -457,7 +466,7 @@ function GuildSettingsPageContent() {
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="general">Geral</TabsTrigger>
-          <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissions}>Cargos e Permissões</TabsTrigger>
+          <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissionsPage}>Cargos e Permissões</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-8">
@@ -483,7 +492,7 @@ function GuildSettingsPageContent() {
                   />
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingName}>
+                  <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingName || nameForm.getValues("name") === guild.name}>
                     {isSubmittingName ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Salvar Nome
                   </Button>
@@ -518,7 +527,7 @@ function GuildSettingsPageContent() {
                   />
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingPassword}>
+                  <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingPassword || passwordForm.getValues("password") === guild.password}>
                     {isSubmittingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Salvar Senha
                   </Button>
@@ -573,7 +582,7 @@ function GuildSettingsPageContent() {
         </TabsContent>
 
         <TabsContent value="permissions" className="mt-6 space-y-6">
-          {!canManageRolesAndPermissions ? (
+          {!canManageRolesAndPermissionsPage ? (
             <Card className="static-card-container">
               <CardHeader>
                 <CardTitle className="text-destructive">Acesso Negado</CardTitle>
@@ -598,49 +607,48 @@ function GuildSettingsPageContent() {
                       onChange={(e) => setNewRoleName(e.target.value)}
                       placeholder="Ex: Veterano, RecrutaChefe"
                       className="form-input mt-1"
-                      disabled={!canManageRolesAndPermissions || isSavingPermissions}
+                      disabled={!canManageRolesAndPermissionsPage || isSavingPermissions}
                     />
                   </div>
                   <Button 
                     onClick={handleCreateNewRole} 
                     className="w-full sm:w-auto btn-gradient btn-style-secondary" 
-                    disabled={!canManageRolesAndPermissions || isSavingPermissions || !newRoleName.trim()}
+                    disabled={!canManageRolesAndPermissionsPage || isSavingPermissions || !newRoleName.trim()}
                   >
                     <PlusCircle className="mr-2 h-5 w-5" /> Criar Cargo
                   </Button>
                 </CardContent>
               </Card>
 
-              <Accordion type="multiple" defaultValue={["Lider", "Membro"]} className="w-full space-y-6">
+              <Accordion type="multiple" defaultValue={["Lider", "Membro"]} className="w-full space-y-2">
                 {sortedRoleNames.map((roleName) => {
                   const roleData = customRoles[roleName];
                   if (!roleData) return null;
                   return (
-                    <AccordionItem 
-                        value={roleName} 
-                        key={roleName} 
-                        className="static-card-container rounded-xl overflow-hidden"
-                    >
-                        <AccordionPrimitive.Header className="flex">
-                        <AccordionTrigger className="flex w-full items-start justify-between p-3 sm:px-4 sm:py-3 hover:no-underline text-left">
-                            <div className="flex-grow space-y-1">
-                            <CardTitle className="text-xl sm:text-2xl">{roleName}</CardTitle>
-                            <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                    <AccordionItem value={roleName} key={roleName} className="static-card-container rounded-lg overflow-hidden border">
+                       <AccordionPrimitive.Header className="flex">
+                        <AccordionTrigger className="flex w-full items-center justify-between p-3 sm:px-4 sm:py-3 hover:no-underline text-left">
+                           <div className="flex-grow space-y-1">
+                            <h3 className="text-lg font-semibold text-foreground">{roleName}</h3>
+                            <p className="text-xs text-muted-foreground">
                                 {roleData.description || `Permissões para o cargo ${roleName}.`}
-                            </CardDescription>
+                            </p>
                             </div>
                             {(roleName !== "Lider" && roleName !== "Membro") && (
                             <AlertDialog onOpenChange={(open) => { if (open) { setRoleToDelete(roleName); } else if (!isSavingPermissions) { setRoleToDelete(null); } }}>
                                 <AlertDialogTrigger asChild>
-                                <Button
+                                  <Button
+                                    asChild
                                     variant="ghost"
                                     size="icon"
-                                    className="text-destructive hover:bg-destructive/10 h-7 w-7 shrink-0 ml-2 mt-1"
-                                    disabled={isSavingPermissions || !canManageRolesAndPermissions}
+                                    className="text-destructive hover:bg-destructive/10 h-7 w-7 shrink-0 ml-2"
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage}
                                     onClick={(e) => e.stopPropagation()}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                  >
+                                    <span>
+                                      <Trash2 className="h-4 w-4" />
+                                    </span>
+                                  </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -675,13 +683,13 @@ function GuildSettingsPageContent() {
                                     id={`${roleName}-${permission}`}
                                     checked={roleData.permissions.includes(permission)}
                                     onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                                    disabled={isSavingPermissions || !canManageRolesAndPermissions || isLiderManagingOwnPermissions}
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions || roleName === "Lider"}
                                     aria-label={`${permInfo.title} para ${roleName}`}
                                 />
                                 <div className="grid gap-1.5 leading-none">
                                     <label
                                     htmlFor={`${roleName}-${permission}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground cursor-pointer"
+                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", roleName === "Lider" || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingOwnPermissions) ? "peer-disabled:opacity-70" : "")}
                                     >
                                     {permInfo.title}
                                     </label>
@@ -700,9 +708,9 @@ function GuildSettingsPageContent() {
               </Accordion>
               
               <div className="flex justify-end mt-8">
-                <Button onClick={handleSaveChangesPermissions} className="btn-gradient btn-style-primary" disabled={isSavingPermissions || !canManageRolesAndPermissions}>
+                <Button onClick={handleSaveChangesPermissions} className="btn-gradient btn-style-primary" disabled={isSavingPermissions || !canManageRolesAndPermissionsPage}>
                   {isSavingPermissions ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                  Salvar Permissões
+                  Salvar Alterações de Permissão
                 </Button>
               </div>
             </>
@@ -720,3 +728,6 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
+
+    
