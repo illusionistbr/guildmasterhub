@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'; // Added useEffect and useMemo
 import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // Added Guild and GuildMemberRoleInfo
-import { GuildPermission } from '@/types/guildmaster'; // Added GuildPermission
+import { GuildPermission, AuditActionType } from '@/types/guildmaster'; // Added GuildPermission and corrected AuditActionType import
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, updateDoc, arrayUnion, increment, writeBatch } from '@/lib/firebase';
-import { logGuildActivity, AuditActionType } from '@/lib/auditLogService'; // Corrected import
+import { logGuildActivity } from '@/lib/auditLogService';
 import { hasPermission } from '@/lib/permissions'; // Import hasPermission
 
 interface EventPinDialogProps {
@@ -206,4 +206,3 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     </Dialog>
   );
 }
-
