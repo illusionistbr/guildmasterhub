@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarGroup,
-  SidebarSeparator // Import SidebarSeparator
+  SidebarSeparator
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,20 +25,19 @@ import {
   LogOut,
   ClipboardList,
   ListFilter,
-  UsersRound,
-  UserCog // Icon for User Settings
+  UserCog,
+  Film,
+  Image as ImageIconLucide
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const guildManagementNavItems = [
+const guildManagementNavItemsBase = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   {
     label: "Membros",
     icon: Users,
-    baseHref: "/dashboard/members",
-    subItems: [
-      { baseHref: "/dashboard/members/groups", label: "Grupos", icon: UsersRound },
-    ]
+    baseHref: "/dashboard/members", // Link to the main members page with tabs
+    // Submenu for groups is removed as it's now a tab
   },
   {
     label: "Calendário",
@@ -75,13 +74,17 @@ export function AppSidebar() {
 
   const guildId = searchParams.get('guildId');
 
-  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href) && href.length > "/dashboard".length);
+  const isActive = (href: string) => {
+    const baseHref = href.split('?')[0]; // Compare only base path for active state
+    return pathname === baseHref || (baseHref !== "/dashboard" && pathname.startsWith(baseHref) && baseHref.length > "/dashboard".length);
+  };
+
 
   const generateHref = (baseHref: string) => {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
   };
 
-  const renderNavItems = (items: typeof guildManagementNavItems) => {
+  const renderNavItems = (items: typeof guildManagementNavItemsBase) => {
     return items.map((item) => {
       const currentHref = generateHref(item.baseHref);
       const itemIsActive = isActive(currentHref);
@@ -154,7 +157,7 @@ export function AppSidebar() {
 
       <SidebarContent className="flex-grow p-2">
         <SidebarMenu>
-          {renderNavItems(guildManagementNavItems)}
+          {renderNavItems(guildManagementNavItemsBase)}
 
           <SidebarSeparator className="my-2" />
 
@@ -186,3 +189,4 @@ export function AppSidebar() {
   );
 }
 
+    
