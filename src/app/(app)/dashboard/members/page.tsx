@@ -7,8 +7,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile, AuditActionType, TLWeapon, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
-import { GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster'; // TLWeaponEnum is used to avoid conflict with local type, TLRole imported
+import type { Guild, GuildMember, UserProfile, AuditActionType, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
+import { GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -130,7 +130,7 @@ const availableHeaderColors = [
 
 
 // --- HELPER FUNCTIONS (SHARED OR SPECIFIC) ---
-const getWeaponIconPath = (weapon?: TLWeapon): string => {
+const getWeaponIconPath = (weapon?: TLWeaponEnum): string => {
   if (!weapon) return "https://placehold.co/32x32.png?text=N/A";
   switch (weapon) {
     case TLWeaponEnum.SwordAndShield: return "https://i.imgur.com/jPEqyNb.png";
@@ -444,7 +444,7 @@ function MembersListTabContent(
           </Select>
         </div>
         <div className="xl:col-span-3"> <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
-          <Popover> <PopoverTrigger asChild> <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input",!activityDateRange?.from && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {activityDateRange?.from ? (activityDateRange.to ? (<>{format(activityDateRange.from, "dd/MM/yy", {locale:ptBR})} - {format(activityDateRange.to, "dd/MM/yy", {locale:ptBR})}</>) : format(activityDateRange.from, "dd/MM/yy", {locale:ptBR})) : (<span>Escolha um intervalo</span>)} </Button> </PopoverTrigger> <PopoverContent className="w-auto p-0 bg-card" align="start"> <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={(range) => { setActivityDateRange(range); setCurrentPage(1); }} numberOfMonths={2} locale={ptBR}/> </PopoverContent> </Popover>
+          <Popover> <PopoverTrigger asChild> <Button id="activityDateRange" variant="outline" className={cn("w-full justify-start text-left font-normal form-input",!activityDateRange?.from && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {activityDateRange?.from ? (activityDateRange.to ? (<>{format(new Date(activityDateRange.from), "dd/MM/yy", {locale:ptBR})} - {format(new Date(activityDateRange.to), "dd/MM/yy", {locale:ptBR})}</>) : format(new Date(activityDateRange.from), "dd/MM/yy", {locale:ptBR})) : (<span>Escolha um intervalo</span>)} </Button> </PopoverTrigger> <PopoverContent className="w-auto p-0 bg-card" align="start"> <Calendar initialFocus mode="range" defaultMonth={activityDateRange?.from} selected={activityDateRange} onSelect={(range) => { setActivityDateRange(range); setCurrentPage(1); }} numberOfMonths={2} locale={ptBR}/> </PopoverContent> </Popover>
         </div>
         <div className="grid grid-cols-2 gap-2 xl:col-span-2"> <div> <Label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</Label> <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => { setTimeFromFilter(e.target.value); setCurrentPage(1); }} className="form-input" /> </div> <div> <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label> <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => { setTimeToFilter(e.target.value); setCurrentPage(1);}} className="form-input" /> </div> </div>
         <div className="xl:col-span-1 flex justify-end items-end gap-2"> <Button variant="outline" disabled className="w-full"><Filter className="mr-2 h-4 w-4" /> Aplicar</Button> </div>
@@ -628,6 +628,52 @@ function GroupsTabContent(
     </div>
   );
 }
+
+function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; }) {
+  const IconComponent = iconMap[group.icon] || ShieldIconLucide;
+  return (
+    <Card className="static-card-container flex flex-col">
+      <CardHeader className={cn("p-4 rounded-t-lg text-card-foreground", group.headerColor)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IconComponent className="h-6 w-6" />
+            <CardTitle className="text-lg font-headline truncate">{group.name}</CardTitle>
+          </div>
+          {canManage && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-current hover:bg-white/20">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {hasPermission(useAuth().user && useAuth().user!.uid && group.guildId ? (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.roles?.[useAuth().user!.uid]) as unknown as GuildMemberRoleInfo) : null, (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.customRoles) as unknown as Record<string, CustomRole>), GuildPermission.MANAGE_GROUPS_EDIT) && <DropdownMenuItem onClick={() => onEdit(group)}><Edit2 className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
+                {hasPermission(useAuth().user && useAuth().user!.uid && group.guildId ? (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.roles?.[useAuth().user!.uid]) as unknown as GuildMemberRoleInfo) : null, (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.customRoles) as unknown as Record<string, CustomRole>), GuildPermission.MANAGE_GROUPS_DELETE) && <DropdownMenuItem onClick={() => onDelete(group)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 space-y-2 flex-grow">
+        {group.members.length > 0 ? (
+          group.members.map(member => (
+            <div key={member.memberId} className="flex items-center gap-2 text-sm">
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={member.photoURL || undefined} alt={member.displayName || "Membro"} data-ai-hint="user avatar"/>
+                <AvatarFallback>{member.displayName?.substring(0,1).toUpperCase() || 'M'}</AvatarFallback>
+              </Avatar>
+              <span className="text-foreground truncate flex-1">{member.displayName}</span>
+              {member.note && <span className="text-xs text-muted-foreground truncate italic">({member.note})</span>}
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-2">Nenhum membro neste grupo.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 // --- MAIN PAGE COMPONENT ---
 function MembersPageContainer() {
