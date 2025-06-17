@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc } from '@/lib/firebase';
 import type { Guild, CustomRole, GuildPermission as PermissionEnum } from '@/types/guildmaster';
-import { GuildPermission, AuditActionType } from '@/types/guildmaster'; // Corrected import for AuditActionType
+import { GuildPermission, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Settings, Loader2, ShieldAlert, PlusCircle, Save, Trash2, ListChecks } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
-import { logGuildActivity } from '@/lib/auditLogService'; // logGuildActivity is imported correctly
+import { logGuildActivity } from '@/lib/auditLogService';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { hasPermission } from '@/lib/permissions';
+import { Skeleton } from '@/components/ui/skeleton'; // Added Skeleton import
 
 // Helper for permission descriptions
 const permissionDescriptions: Record<PermissionEnum, string> = {
@@ -193,7 +194,7 @@ function PermissionsPageContent() {
       const guildRef = doc(db, "guilds", guildId);
       await updateDoc(guildRef, { customRoles: updatedRoles });
       
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.CUSTOM_ROLE_DELETED, {
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.CUSTOM_ROLE_DELETED, {
         roleName: roleToDelete
       });
 
@@ -220,7 +221,7 @@ function PermissionsPageContent() {
       const guildRef = doc(db, "guilds", guildId);
       await updateDoc(guildRef, { customRoles });
 
-      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
          details: { changedField: 'customRoles' } as any, // General log for permission update
       });
 
