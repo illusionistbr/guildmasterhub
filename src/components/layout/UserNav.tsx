@@ -42,7 +42,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary hover:border-accent transition-colors">
-            <AvatarImage src={user.photoURL || `https://placehold.co/100x100.png?text=${getInitials(user.displayName)}`} alt={user.displayName || "User"} />
+            <AvatarImage src={user.photoURL || `https://placehold.co/100x100.png?text=${getInitials(user.displayName)}`} alt={user.displayName || "User"} data-ai-hint="user avatar" />
             <AvatarFallback className="bg-muted text-muted-foreground">
               {getInitials(user.displayName)}
             </AvatarFallback>
@@ -61,12 +61,6 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings"> 
-              <UserCircle className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <Link href="/guild-selection">
               <ShieldCheck className="mr-2 h-4 w-4" />
               <span>Minhas Guildas</span>
@@ -79,6 +73,15 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator /> {/* Novo separador adicionado */}
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/settings"> 
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>Perfil</span>
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>
           <LogOut className="mr-2 h-4 w-4" />
@@ -88,3 +91,4 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
+
