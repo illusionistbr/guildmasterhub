@@ -407,7 +407,13 @@ function GuildSettingsPageContent() {
           }
         } catch (subError: any) {
           console.error(`[GuildDelete] Erro ao excluir documentos da subcoleção ${subcoll}:`, subError);
-          // Re-lançar o erro para ser pego pelo catch principal e impedir a exclusão do documento da guilda
+          // Enhanced toast message
+          toast({
+            title: "Erro de Permissão na Subcoleção",
+            description: `Falha ao excluir a subcoleção "${subcoll}": ${subError.message}. Verifique suas regras do Firestore para esta subcoleção.`,
+            variant: "destructive",
+            duration: 15000
+          });
           throw new Error(`Falha ao excluir a subcoleção ${subcoll}: ${subError.message}`);
         }
       }
@@ -417,20 +423,16 @@ function GuildSettingsPageContent() {
       await deleteDoc(guildRef);
       console.log(`[GuildDelete] Documento principal da guilda ${guild.id} excluído com sucesso.`);
 
-      // Não há necessidade de logar a atividade da guilda, pois a guilda e seus logs serão excluídos.
-      // Se fosse necessário, seria aqui, mas a subcoleção de logs já foi (ou deveria ter sido) removida.
-
       toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
       router.push('/guild-selection');
-    } catch (error: any) { // Especificar o tipo de erro como 'any' ou um tipo mais específico
+    } catch (error: any) { 
       console.error("[GuildDelete] Erro durante o processo de exclusão da guilda:", error);
-      toast({ title: "Erro ao Excluir Guilda", description: `Não foi possível excluir a guilda. Detalhes: ${error.message}. Verifique o console para mais informações.`, variant: "destructive", duration: 10000 });
-      // Não definir setIsDeleting(false) aqui se o erro for crítico e a operação deva ser retentada
-      // No entanto, para o usuário, a operação falhou, então pode ser útil resetar o estado.
+      // General error toast if not caught by specific subcollection error
+      if (!error.message.startsWith("Falha ao excluir a subcoleção")) {
+        toast({ title: "Erro ao Excluir Guilda", description: `Não foi possível excluir a guilda. Detalhes: ${error.message}. Verifique o console para mais informações e suas regras do Firestore.`, variant: "destructive", duration: 10000 });
+      }
     } finally {
-      // setIsDeleting(false) é crucial para reabilitar o botão se a exclusão falhar e o usuário quiser tentar novamente
-      // ou se a navegação não ocorrer devido ao erro.
       setIsDeleting(false);
     }
   };
@@ -484,7 +486,7 @@ function GuildSettingsPageContent() {
     setIsSubmittingDkpDecay(true);
     try {
       const guildRef = doc(db, "guilds", guild.id);
-      const updatePayload: { [key: string]: any } = { // Use a more flexible type for payload
+      const updatePayload: { [key: string]: any } = { 
         dkpDecayEnabled: data.dkpDecayEnabled,
       };
 
@@ -502,7 +504,6 @@ function GuildSettingsPageContent() {
       setGuild(prev => {
         if (!prev) return null;
         const newGuildState = { ...prev, ...updatePayload };
-        // If fields were deleted, ensure they are removed from local state too
         if (!data.dkpDecayEnabled) {
             delete newGuildState.dkpDecayPercentage;
             delete newGuildState.dkpDecayIntervalDays;
@@ -1374,3 +1375,6 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
+
+    
