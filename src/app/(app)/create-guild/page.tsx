@@ -180,9 +180,6 @@ export default function CreateGuildPage() {
       status: 'Ativo'
     };
 
-    // Removed the block that explicitly set ownerRoleInfo.tlRole etc. to undefined
-    // as these fields are optional and should be omitted if not set.
-
     const guildMemberRoles: { [key: string]: GuildMemberRoleInfo } = {
       [user.uid]: ownerRoleInfo
     };
@@ -198,12 +195,10 @@ export default function CreateGuildPage() {
       }
     };
 
-    const guildData: Omit<Guild, 'id' | 'createdAt'> & { createdAt: any } = {
+    const guildData: Partial<Guild> & { createdAt: any } = {
         name: data.name,
         description: data.description || "",
         game: data.game,
-        ...(data.game === "Throne and Liberty" && data.region && { region: data.region }),
-        ...(data.game === "Throne and Liberty" && data.region && data.server && { server: data.server }),
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
@@ -214,25 +209,26 @@ export default function CreateGuildPage() {
         logoUrl: `https://placehold.co/150x150.png`,
         roles: guildMemberRoles,
         customRoles: initialCustomRoles,
-        socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
-        password: data.password || undefined,
         dkpSystemEnabled: false,
         dkpRedemptionWindow: { value: 24, unit: 'hours' },
         dkpDefaultsPerCategory: {},
-        dkpDecayEnabled: false, 
-        dkpDecayPercentage: 10,
-        dkpDecayIntervalDays: 30,
-        dkpDecayInitialDate: undefined,
+        dkpDecayEnabled: false,
+        // dkpDecayPercentage, dkpDecayIntervalDays, dkpDecayInitialDate are omitted
+        // as dkpDecayEnabled is false. They will be set in settings.
     };
 
-    if (!guildData.socialLinks) delete guildData.socialLinks;
-    if (!guildData.password) delete guildData.password;
-    if (!guildData.description) guildData.description = ""; // Ensure description is an empty string if not provided
-    if (guildData.game !== "Throne and Liberty" || !guildData.region) {
-        delete guildData.region;
+    if (data.game === "Throne and Liberty" && data.region) {
+        guildData.region = data.region;
+        if (data.server) {
+            guildData.server = data.server;
+        }
     }
-    if (guildData.game !== "Throne and Liberty" || !guildData.server) {
-        delete guildData.server;
+
+    if (Object.keys(socialLinks).length > 0) {
+        guildData.socialLinks = socialLinks;
+    }
+    if (data.password) {
+        guildData.password = data.password;
     }
 
 
