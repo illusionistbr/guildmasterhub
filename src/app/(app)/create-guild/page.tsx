@@ -180,12 +180,8 @@ export default function CreateGuildPage() {
       status: 'Ativo'
     };
 
-    if (data.game === "Throne and Liberty") {
-        ownerRoleInfo.tlRole = undefined;
-        ownerRoleInfo.tlPrimaryWeapon = undefined;
-        ownerRoleInfo.tlSecondaryWeapon = undefined;
-    }
-
+    // Removed the block that explicitly set ownerRoleInfo.tlRole etc. to undefined
+    // as these fields are optional and should be omitted if not set.
 
     const guildMemberRoles: { [key: string]: GuildMemberRoleInfo } = {
       [user.uid]: ownerRoleInfo
@@ -231,7 +227,7 @@ export default function CreateGuildPage() {
 
     if (!guildData.socialLinks) delete guildData.socialLinks;
     if (!guildData.password) delete guildData.password;
-    if (!guildData.description) guildData.description = "";
+    if (!guildData.description) guildData.description = ""; // Ensure description is an empty string if not provided
     if (guildData.game !== "Throne and Liberty" || !guildData.region) {
         delete guildData.region;
     }
@@ -541,3 +537,4 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
