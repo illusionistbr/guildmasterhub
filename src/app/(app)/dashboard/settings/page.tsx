@@ -407,12 +407,11 @@ function GuildSettingsPageContent() {
           }
         } catch (subError: any) {
           console.error(`[GuildDelete] Erro ao excluir documentos da subcoleção ${subcoll}:`, subError);
-          // Enhanced toast message
           toast({
-            title: "Erro de Permissão na Subcoleção",
-            description: `Falha ao excluir a subcoleção "${subcoll}": ${subError.message}. Verifique suas regras do Firestore para esta subcoleção.`,
+            title: `Erro de Permissão na Subcoleção "${subcoll}"`,
+            description: `Falha ao excluir a subcoleção "${subcoll}". Detalhes: ${subError.message}. Verifique suas REGRAS DE SEGURANÇA DO FIRESTORE para o caminho "guilds/${guild.id}/${subcoll}". O proprietário da guilda precisa ter permissão de exclusão para esta subcoleção.`,
             variant: "destructive",
-            duration: 15000
+            duration: 20000 
           });
           throw new Error(`Falha ao excluir a subcoleção ${subcoll}: ${subError.message}`);
         }
@@ -428,7 +427,6 @@ function GuildSettingsPageContent() {
       router.push('/guild-selection');
     } catch (error: any) { 
       console.error("[GuildDelete] Erro durante o processo de exclusão da guilda:", error);
-      // General error toast if not caught by specific subcollection error
       if (!error.message.startsWith("Falha ao excluir a subcoleção")) {
         toast({ title: "Erro ao Excluir Guilda", description: `Não foi possível excluir a guilda. Detalhes: ${error.message}. Verifique o console para mais informações e suas regras do Firestore.`, variant: "destructive", duration: 10000 });
       }
