@@ -4,132 +4,91 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to get guild data (reusable)
-    function getGuildData(guildId) {
-      return get(/databases/$(database)/documents/guilds/$(guildId)).data;
+    // Helper function to check if a user has a specific permission for a guild
+    function hasGuildPermission(guildId, permissionKey) {
+      let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
+      let userRoleName = guildData.roles[request.auth.uid].roleName;
+      let rolePermissions = guildData.customRoles[userRoleName].permissions;
+      // Check if the permissionKey exists and is true in the rolePermissions map
+      return permissionKey in rolePermissions && rolePermissions[permissionKey] == true;
     }
 
-    // Helper function to check if a user has a specific permission for their role
-    // Assumes permissions are stored as a map: e.g., { "MANAGE_MEMBERS_KICK": true }
-    function hasGuildPermission(userId, permission, guildId) {
-      return getGuildData(guildId).roles != null &&
-             getGuildData(guildId).roles[userId] != null &&
-             getGuildData(guildId).customRoles != null &&
-             (getGuildData(guildId).roles[userId].roleName in getGuildData(guildId).customRoles) &&
-             getGuildData(guildId).customRoles[getGuildData(guildId).roles[userId].roleName].permissions != null &&
-             (permission in getGuildData(guildId).customRoles[getGuildData(guildId).roles[userId].roleName].permissions) &&
-             // If permission exists in the map, its value should be true
-             getGuildData(guildId).customRoles[getGuildData(guildId).roles[userId].roleName].permissions[permission];
+    // Helper function to check if the user is an admin (Lider) of the guild
+    function isAdmin(guildId) {
+      let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
+      let userRoleName = guildData.roles[request.auth.uid].roleName;
+      return userRoleName == 'Lider';
     }
 
-    // User profiles
+    // Users collection
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId; // User creates their own profile
-      allow update: if request.auth != null && request.auth.uid == userId; // User updates their own profile
-      allow delete: if false; // Typically restricted, handle via Cloud Function or special admin role
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      // No delete rule for users from client, manage through Firebase console or admin SDK
     }
 
-    // Guilds
+    // Guilds collection
     match /guilds/{guildId} {
-      // Guild Document specific rules
-      allow get: if request.auth != null && (
-                   resource.data.ownerId == request.auth.uid ||
-                   (resource.data.memberIds != null && request.auth.uid in resource.data.memberIds) ||
-                   resource.data.isOpen == true // Allow reading open guilds
-                 );
-      allow list: if request.auth != null; // Allow listing for guild exploration page
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid; // User must be owner of new guild
+      allow read: if request.auth != null; // Anyone authenticated can read basic guild info for listings
+      allow create: if request.auth != null; // Any authenticated user can create a guild
       allow update: if request.auth != null && (
-                      (resource.data.ownerId == request.auth.uid) || // Owner can update
-                      hasGuildPermission(request.auth.uid, "MANAGE_GUILD_SETTINGS_GENERAL", guildId) ||
-                      hasGuildPermission(request.auth.uid, "MANAGE_GUILD_SETTINGS_APPEARANCE", guildId) ||
-                      hasGuildPermission(request.auth.uid, "MANAGE_ROLES_PERMISSIONS", guildId) ||
-                      hasGuildPermission(request.auth.uid, "MANAGE_DKP_SETTINGS", guildId) ||
-                      hasGuildPermission(request.auth.uid, "MANAGE_DKP_DECAY_SETTINGS", guildId)
+                      (hasGuildPermission(guildId, 'MANAGE_GUILD_SETTINGS_GENERAL')) ||
+                      (hasGuildPermission(guildId, 'MANAGE_GUILD_SETTINGS_APPEARANCE')) ||
+                      (hasGuildPermission(guildId, 'MANAGE_ROLES_PERMISSIONS')) ||
+                      (hasGuildPermission(guildId, 'MANAGE_DKP_SETTINGS')) ||
+                      (hasGuildPermission(guildId, 'MANAGE_DKP_DECAY_SETTINGS'))
                     );
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid; // Only owner can delete the guild document
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
 
-      // Subcollections for Guilds
-
+      // Subcollections of Guilds
       match /auditLogs/{logId} {
-        allow read: if request.auth != null && hasGuildPermission(request.auth.uid, "VIEW_AUDIT_LOG", guildId);
-        // Audit logs are created by trusted client/server logic when actions occur.
-        // Allow create if user is authenticated and part of the guild or owner.
-        allow create: if request.auth != null && (
-                        getGuildData(guildId).ownerId == request.auth.uid ||
-                        (getGuildData(guildId).memberIds != null && request.auth.uid in getGuildData(guildId).memberIds)
-                      );
-        // Deletion of audit logs is critical, only guild owner for full guild cleanup.
-        allow update: if false; // Audit logs should be immutable
-        allow delete: if request.auth != null && getGuildData(guildId).ownerId == request.auth.uid;
-      }
-
-      match /events/{eventId} {
-        allow read: if request.auth != null && ( // Members can read events
-                      getGuildData(guildId).memberIds != null &&
-                      request.auth.uid in getGuildData(guildId).memberIds
-                    );
-        allow create: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_EVENTS_CREATE", guildId);
-        allow update: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_EVENTS_EDIT", guildId);
-        allow delete: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_EVENTS_DELETE", guildId);
-
-        match /manualConfirmations/{userIdConfirmation} { // Use a different variable name from outer scope {userId}
-            allow read: if request.auth != null && (
-                            request.auth.uid == userIdConfirmation || // User can read their own submission
-                            hasGuildPermission(request.auth.uid, "MANAGE_MANUAL_CONFIRMATIONS_APPROVE", guildId) // Admin can read all
-                        );
-            // User can create their own submission if they are not already PIN confirmed and haven't submitted before
-            allow create: if request.auth != null && request.auth.uid == userIdConfirmation &&
-                             request.resource.data.userId == userIdConfirmation &&
-                             request.resource.data.eventId == eventId &&
-                             (get(/databases/$(database)/documents/guilds/$(guildId)/events/$(eventId)).data.attendeesWithPin == null || !(request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)/events/$(eventId)).data.attendeesWithPin)) &&
-                             !exists(/databases/$(database)/documents/guilds/$(guildId)/events/$(eventId)/manualConfirmations/$(userIdConfirmation));
-            allow update: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_MANUAL_CONFIRMATIONS_APPROVE", guildId); // Admin can approve/reject
-            allow delete: if false; // Manage via status, do not allow direct deletion
-        }
+        allow read: if request.auth != null && hasGuildPermission(guildId, 'VIEW_AUDIT_LOG');
+        allow create: if request.auth != null && get(/databases/$(database)/documents/guilds/$(guildId)).data.roles[request.auth.uid] != null; // Any guild member (or admin via helper) can trigger actions that create logs
+        allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId; // Only owner can delete (for guild cleanup)
       }
 
       match /applications/{applicationId} {
-        allow read: if request.auth != null && (
-                      hasGuildPermission(request.auth.uid, "MANAGE_RECRUITMENT_VIEW_APPLICATIONS", guildId) ||
-                      request.auth.uid == resource.data.applicantId // Applicant can read their own application
-                    );
-        allow create: if request.auth != null; // Anyone authenticated can submit an application
-        allow update: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS", guildId); // For approve/reject
-        allow delete: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS", guildId); // Admin can delete old/spam applications
+        allow read: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_RECRUITMENT_VIEW_APPLICATIONS');
+        allow create: if request.auth != null; // Anyone can apply
+        allow update: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_RECRUITMENT_PROCESS_APPLICATIONS'); // For approve/reject
+        // No direct delete from client for applications, they are archived by status change
+      }
+
+      match /events/{eventId} {
+        allow read: if request.auth != null; // Any authenticated user can read events (e.g., for public calendar view)
+        allow create: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_EVENTS_CREATE');
+        allow update: if request.auth != null && (hasGuildPermission(guildId, 'MANAGE_EVENTS_EDIT') || request.auth.uid == resource.data.organizerId);
+        allow delete: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_EVENTS_DELETE');
+
+        // Subcollection for manual event confirmations
+        match /manualConfirmations/{userId} {
+          allow read: if request.auth != null && (request.auth.uid == userId || hasGuildPermission(guildId, 'MANAGE_MANUAL_CONFIRMATIONS_APPROVE'));
+          allow create: if request.auth != null && request.auth.uid == userId; // User can create their own confirmation
+          allow update: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_MANUAL_CONFIRMATIONS_APPROVE'); // Admin can approve/reject
+          // No direct delete from client for these
+        }
       }
 
       match /groups/{groupId} {
-        allow read: if request.auth != null && ( // Members can read groups
-                        getGuildData(guildId).memberIds != null &&
-                        request.auth.uid in getGuildData(guildId).memberIds
-                      );
-        allow create: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_GROUPS_CREATE", guildId);
-        allow update: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_GROUPS_EDIT", guildId);
-        allow delete: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_GROUPS_DELETE", guildId);
+        allow read: if request.auth != null && get(/databases/$(database)/documents/guilds/$(guildId)).data.memberIds[request.auth.uid] != null; // Members can view groups
+        allow create: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_GROUPS_CREATE');
+        allow update: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_GROUPS_EDIT');
+        allow delete: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_GROUPS_DELETE');
       }
-
+      
       match /notifications/{notificationId} {
-        allow read: if request.auth != null && ( // Allow members to read notifications
-                      getGuildData(guildId).memberIds != null &&
-                      request.auth.uid in getGuildData(guildId).memberIds
-                    );
-        // Notifications are typically system-generated or by privileged actions
-        allow create: if request.auth != null && (
-                        getGuildData(guildId).ownerId == request.auth.uid || // Owner can create
-                        hasGuildPermission(request.auth.uid, "MANAGE_EVENTS_CREATE", guildId) // Example: Event creators can trigger notifications
-                      );
-        allow update, delete: if false; // Notifications are typically immutable by clients
+        allow read: if request.auth != null && get(/databases/$(database)/documents/guilds/$(guildId)).data.memberIds[request.auth.uid] != null; // Members can read notifications for their guild
+        allow create: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_EVENTS_CREATE'); // Example: Only those who can create events can create certain notifications
+        // Update/delete might be admin-only or system-driven
       }
 
       match /dkpDecayLogs/{logId} {
-        allow read: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_DKP_DECAY_SETTINGS", guildId);
-        allow create: if request.auth != null && hasGuildPermission(request.auth.uid, "MANAGE_DKP_DECAY_SETTINGS", guildId);
-        allow update, delete: if false; // Logs should be immutable
+        allow read: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_DKP_DECAY_SETTINGS'); // Admins can read DKP decay logs
+        allow create: if request.auth != null && hasGuildPermission(guildId, 'MANAGE_DKP_DECAY_SETTINGS'); // Admins can trigger on-demand decay which creates a log
+        // Deletion typically managed by system or higher-level admin
+        allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId; // Owner for cleanup
       }
     }
   }
 }
-
-    
