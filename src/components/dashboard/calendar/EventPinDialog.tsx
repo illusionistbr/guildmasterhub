@@ -3,16 +3,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import type { Event as GuildEvent, Guild, GuildMemberRoleInfo } from '@/types/guildmaster';
+import type { Event as GuildEvent, Guild, GuildMemberRoleInfo, ManualConfirmation } from '@/types/guildmaster';
 import { GuildPermission, AuditActionType } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle, Clock, Edit } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, Loader2, AlertTriangle, Clock, Edit, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, updateDoc, arrayUnion, increment, writeBatch, Timestamp } from '@/lib/firebase';
+import { db, doc, updateDoc, arrayUnion, increment, writeBatch, Timestamp, getDoc } from '@/lib/firebase';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { hasPermission } from '@/lib/permissions';
 import { add, isAfter, isBefore } from 'date-fns';
@@ -38,6 +38,8 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
   const [showPin, setShowPin] = useState(false);
   const [isSubmittingPin, setIsSubmittingPin] = useState(false);
   const { toast } = useToast();
+  const [userManualConfirmation, setUserManualConfirmation] = useState<ManualConfirmation | null>(null);
+  const [loadingManualConfirmation, setLoadingManualConfirmation] = useState(false);
 
   const canCurrentUserRevealPin = useMemo(() => {
     if (!currentUserRoleInfo || !guild || !guild.customRoles) {
@@ -55,8 +57,30 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       setPinInputs(Array(6).fill(""));
       setShowPin(false);
       setIsSubmittingPin(false);
+      setUserManualConfirmation(null); // Reset manual confirmation state
+
+      if (event && currentUser && guildId && event.requiresPin) {
+        setLoadingManualConfirmation(true);
+        const fetchManualConfirmation = async () => {
+          try {
+            const manualConfirmationDocRef = doc(db, `guilds/${guildId}/events/${event.id}/manualConfirmations`, currentUser.uid);
+            const confirmationSnap = await getDoc(manualConfirmationDocRef);
+            if (confirmationSnap.exists()) {
+              setUserManualConfirmation(confirmationSnap.data() as ManualConfirmation);
+            }
+          } catch (error) {
+            console.error("Error fetching user manual confirmation:", error);
+            // Optionally toast an error, but for now, just log it
+          } finally {
+            setLoadingManualConfirmation(false);
+          }
+        };
+        fetchManualConfirmation();
+      } else {
+        setLoadingManualConfirmation(false);
+      }
     }
-  }, [isOpen, event]);
+  }, [isOpen, event, currentUser, guildId]);
 
   if (!event || !guildId || !currentUser || !guild) {
     return null;
@@ -84,7 +108,7 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
   }
 
   if (!guild.dkpSystemEnabled && !event.requiresPin) {
-    return (
+     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
@@ -102,6 +126,8 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       </Dialog>
     );
   }
+
+  const hasActiveManualConfirmation = userManualConfirmation && (userManualConfirmation.status === 'pending' || userManualConfirmation.status === 'approved');
 
   const handleInputChange = (index: number, value: string) => {
     if (/^[0-9]?$/.test(value)) {
@@ -132,6 +158,11 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
       onClose();
       return;
     }
+    
+    if (hasActiveManualConfirmation) {
+      toast({ title: "Confirmação Manual Existente", description: "Você já enviou uma confirmação manual para este evento. O resgate via PIN não está disponível.", variant: "default" });
+      return;
+    }
 
     if (event.endDate && event.endTime) {
       const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
@@ -142,13 +173,8 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
           description: "O PIN só pode ser resgatado após o término do evento.",
           variant: "default",
           duration: 7000,
-          action: (
-            <Button variant="outline" size="sm" onClick={() => {}}>
-              <Clock className="mr-2 h-4 w-4" /> OK
-            </Button>
-          )
         });
-        return; // Keep dialog open for manual confirmation link
+        return; 
       }
     }
 
@@ -156,27 +182,19 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
         const eventEndDateTime = parseEventDateTimeString(event.endDate, event.endTime);
         let redemptionDeadline: Date;
         switch (guild.dkpRedemptionWindow.unit) {
-            case 'minutes':
-                redemptionDeadline = add(eventEndDateTime, { minutes: guild.dkpRedemptionWindow.value });
-                break;
-            case 'hours':
-                redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
-                break;
-            case 'days':
-                redemptionDeadline = add(eventEndDateTime, { days: guild.dkpRedemptionWindow.value });
-                break;
-            default:
-                redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value });
-                break;
+            case 'minutes': redemptionDeadline = add(eventEndDateTime, { minutes: guild.dkpRedemptionWindow.value }); break;
+            case 'hours': redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value }); break;
+            case 'days': redemptionDeadline = add(eventEndDateTime, { days: guild.dkpRedemptionWindow.value }); break;
+            default: redemptionDeadline = add(eventEndDateTime, { hours: guild.dkpRedemptionWindow.value }); break;
         }
         if (isAfter(new Date(), redemptionDeadline)) {
             toast({ title: "Janela de Resgate Expirada", description: "O tempo para resgatar DKP para este evento expirou.", variant: "destructive" });
-            return; // Keep dialog open for manual confirmation link
+            return;
         }
     }
 
     if (!event.dkpValue || event.dkpValue <= 0) {
-      toast({ title: "Sem DKP", description: "Este evento não concede DKP ou o valor é zero.", variant: "default" });
+      // No DKP for this event, but still register presence
     }
 
     const enteredPin = pinInputs.join("");
@@ -249,6 +267,27 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
     }
   };
 
+  if (loadingManualConfirmation) {
+    return (
+       <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-primary flex items-center">
+              <KeyRound className="mr-2 h-6 w-6" /> {event.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="mt-2 text-muted-foreground">Verificando confirmações...</p>
+          </div>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
@@ -258,12 +297,14 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
           </DialogTitle>
           <DialogDescription>
             {event.requiresPin
-              ? "Insira o código PIN de 6 dígitos para registrar presença e resgatar seus pontos DKP (se aplicável)."
+              ? (hasActiveManualConfirmation 
+                  ? "Você já enviou uma confirmação manual para este evento. O resgate via PIN não está disponível." 
+                  : "Insira o código PIN de 6 dígitos para registrar presença e resgatar seus pontos DKP (se aplicável).")
               : "Este evento não requer um código PIN."}
           </DialogDescription>
         </DialogHeader>
 
-        {event.requiresPin && (
+        {event.requiresPin && !hasActiveManualConfirmation && (
           <div className="py-4 space-y-4">
             <div>
               <Label htmlFor="pin-input-0" className="text-foreground">Código PIN do Evento</Label>
@@ -289,20 +330,24 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
               {isSubmittingPin ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Registrar Presença
             </Button>
+          </div>
+        )}
 
-            {canCurrentUserRevealPin && (
-                <div className="space-y-2">
-                    <Button variant="outline" onClick={handleRevealPin} className="w-full" disabled={isSubmittingPin}>
-                        {showPin ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                        {showPin ? "Ocultar Código PIN" : "Revelar Código PIN"}
-                    </Button>
-                    {showPin && (
-                        <div className="p-3 bg-muted rounded-md text-center">
-                            <p className="text-2xl font-bold tracking-widest text-primary">{event.pinCode || "PIN não disponível"}</p>
-                        </div>
-                    )}
-                </div>
-            )}
+        {event.requiresPin && canCurrentUserRevealPin && !hasActiveManualConfirmation && (
+            <div className="space-y-2 pt-2">
+                <Button variant="outline" onClick={handleRevealPin} className="w-full" disabled={isSubmittingPin}>
+                    {showPin ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                    {showPin ? "Ocultar Código PIN" : "Revelar Código PIN"}
+                </Button>
+                {showPin && (
+                    <div className="p-3 bg-muted rounded-md text-center">
+                        <p className="text-2xl font-bold tracking-widest text-primary">{event.pinCode || "PIN não disponível"}</p>
+                    </div>
+                )}
+            </div>
+        )}
+
+        {event.requiresPin && !hasActiveManualConfirmation && (
             <div className="text-center pt-2">
               <Link href={`/dashboard/calendar/manual-confirmation?guildId=${guildId}&eventId=${event.id}`} passHref>
                 <Button variant="link" className="text-sm text-primary hover:underline p-0" onClick={onClose}>
@@ -310,7 +355,16 @@ export function EventPinDialog({ event, guild, isOpen, onClose, currentUserRole:
                 </Button>
               </Link>
             </div>
-          </div>
+        )}
+
+         {hasActiveManualConfirmation && (
+            <div className="py-4">
+                <ShieldAlert className="h-10 w-10 text-yellow-500 mx-auto mb-2" />
+                <p className="text-center text-muted-foreground">
+                    Sua confirmação manual para este evento está <span className="font-semibold">{userManualConfirmation?.status === 'pending' ? 'pendente' : 'aprovada'}</span>.
+                    Portanto, o resgate de DKP via PIN não está disponível.
+                </p>
+            </div>
         )}
 
         <DialogFooter className="mt-2">

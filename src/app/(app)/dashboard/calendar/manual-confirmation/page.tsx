@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, UploadCloud, Link2 as LinkIcon, AlertTriangle, CheckCircle, ShieldAlert, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Edit, UploadCloud, Link2 as LinkIcon, AlertTriangle, CheckCircle, ShieldAlert, Image as ImageIcon, Ban, HelpCircle } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { format } from 'date-fns';
@@ -31,7 +31,7 @@ const manualConfirmationSchema = z.object({
   notes: z.string().max(500, "Notas podem ter no máximo 500 caracteres.").optional(),
 }).refine(data => data.screenshotUrl || data.screenshotFile, {
   message: "Forneça uma URL ou faça upload de um arquivo de screenshot.",
-  path: ["screenshotUrl"], 
+  path: ["screenshotUrl"],
 });
 
 type ManualConfirmationFormValues = z.infer<typeof manualConfirmationSchema>;
@@ -59,13 +59,8 @@ function ManualConfirmationPageContent() {
     },
   });
 
-  useEffect(() => {
-    setHeaderTitle("Confirmação Manual");
-    return () => setHeaderTitle(null);
-  }, [setHeaderTitle]);
-
   const fetchEventAndConfirmationData = useCallback(async (currentGuildId: string, currentEventId: string) => {
-    if (!currentUser) { 
+    if (!currentUser || !currentGuildId || !currentEventId) {
       setLoadingData(false);
       return;
     }
@@ -85,24 +80,27 @@ function ManualConfirmationPageContent() {
         toast({ title: "Guilda não encontrada", variant: "destructive" });
         router.push('/guild-selection'); return;
       }
-      const guildData = guildSnap.data() as Guild;
+      const guildData = {id: guildSnap.id, ...guildSnap.data()} as Guild;
       setGuild(guildData);
-      setHeaderTitle(`Conf. Manual: ${guildData.name}`);
-
+      
 
       if (!eventSnap.exists()) {
         toast({ title: "Evento não encontrado", variant: "destructive" });
         router.push(`/dashboard/calendar?guildId=${currentGuildId}`); return;
       }
-      const eventData = eventSnap.data() as GuildEvent;
+      const eventData = {id: eventSnap.id, ...eventSnap.data()} as GuildEvent;
       setEvent(eventData);
+      setHeaderTitle(`Conf. Manual: ${eventData.title} (${guildData.name})`);
+
 
       if (eventData.attendeesWithPin?.includes(currentUser.uid)) {
         setPinUsed(true);
       }
 
       if (confirmationSnap.exists()) {
-        setExistingConfirmation(confirmationSnap.data() as ManualConfirmation);
+        setExistingConfirmation({id: confirmationSnap.id, ...confirmationSnap.data()} as ManualConfirmation);
+      } else {
+        setExistingConfirmation(null); // Ensure it's null if not found
       }
 
     } catch (error) {
@@ -111,68 +109,60 @@ function ManualConfirmationPageContent() {
     } finally {
       setLoadingData(false);
     }
-  }, [currentUser, router, toast, setHeaderTitle]); 
+  }, [currentUser, router, toast, setHeaderTitle]);
 
 
   useEffect(() => {
-    // Get fresh parameter values inside the effect that depends on searchParams
     const guildIdParam = searchParams.get('guildId');
     const eventIdParam = searchParams.get('eventId');
 
-    if (authLoading) {
-      return;
-    }
+    if (authLoading) return;
 
     if (!currentUser) {
       const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdParam || ''}&eventId=${eventIdParam || ''}`;
       router.push(redirectPath);
-      setLoadingData(false); 
+      setLoadingData(false);
       return;
     }
 
-    const isValidGuildId = typeof guildIdParam === 'string' && guildIdParam.trim() !== "" && guildIdParam !== "null" && guildIdParam !== "undefined";
-    const isValidEventId = typeof eventIdParam === 'string' && eventIdParam.trim() !== "" && eventIdParam !== "null" && eventIdParam !== "undefined";
-
-    if (isValidGuildId && isValidEventId) {
+    if (guildIdParam && eventIdParam) {
       fetchEventAndConfirmationData(guildIdParam, eventIdParam);
     } else {
-      setLoadingData(false); 
       toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
-      if (!isValidGuildId) {
-        router.push('/guild-selection');
-      } else {
-        router.push(`/dashboard/calendar?guildId=${guildIdParam}`);
-      }
+      if (!guildIdParam) router.push('/guild-selection');
+      else router.push(`/dashboard/calendar?guildId=${guildIdParam}`);
+      setLoadingData(false);
     }
+     return () => setHeaderTitle(null);
   }, [authLoading, currentUser, searchParams, router, toast, fetchEventAndConfirmationData]);
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { 
+      if (file.size > 2 * 1024 * 1024) {
         toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
         form.setValue("screenshotFile", undefined);
         setPreviewImage(null);
-        e.target.value = ""; 
+        e.target.value = "";
         return;
       }
       if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
         toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
         form.setValue("screenshotFile", undefined);
         setPreviewImage(null);
-        e.target.value = ""; 
+        e.target.value = "";
         return;
       }
       form.setValue("screenshotFile", file);
-      form.setValue("screenshotUrl", ""); 
+      form.setValue("screenshotUrl", "");
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
-          setPreviewImage(reader.result);
+            setPreviewImage(reader.result);
         } else {
-          setPreviewImage(null);
-          toast({title: "Erro na Prévia", description: "Não foi possível gerar a prévia da imagem.", variant: "destructive"});
+            setPreviewImage(null);
+            toast({title: "Erro na Prévia", description: "Não foi possível gerar a prévia da imagem.", variant: "destructive"});
         }
       };
       reader.readAsDataURL(file);
@@ -183,7 +173,7 @@ function ManualConfirmationPageContent() {
   };
 
   const onSubmit: SubmitHandler<ManualConfirmationFormValues> = async (data) => {
-    const guildIdFromParams = searchParams.get('guildId'); // Re-fetch for safety, though should be stable
+    const guildIdFromParams = searchParams.get('guildId');
     const eventIdFromParams = searchParams.get('eventId');
 
     if (!currentUser || !guildIdFromParams || !eventIdFromParams || !event) {
@@ -239,8 +229,8 @@ function ManualConfirmationPageContent() {
       );
 
       toast({ title: "Confirmação Enviada!", description: "Sua submissão manual foi enviada para aprovação." });
-      if (guildIdFromParams && eventIdFromParams) { 
-        fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams);
+      if (guildIdFromParams && eventIdFromParams) {
+        fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams); // Refresh data
       }
       form.reset();
       setPreviewImage(null);
@@ -261,8 +251,17 @@ function ManualConfirmationPageContent() {
   if (!guild || !event) {
     return <div className="text-center py-10 text-destructive">Não foi possível carregar os dados da guilda ou do evento.</div>;
   }
-  
+
   const eventDateTime = format(new Date(`${event.date}T${event.time}`), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+
+  const getStatusBadge = (status: ManualConfirmation['status']) => {
+    switch (status) {
+      case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-yellow-600 border border-yellow-500/50">Pendente</span>;
+      case 'approved': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-600 border border-green-500/50">Aprovada</span>;
+      case 'rejected': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-600 border border-red-500/50">Rejeitada</span>;
+      default: return null;
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
@@ -275,7 +274,7 @@ function ManualConfirmationPageContent() {
       {pinUsed ? (
         <Alert variant="default" className="bg-green-500/10 border-green-500/30 text-green-700">
           <CheckCircle className="h-5 w-5 text-green-600" />
-          <AlertTitle className="font-semibold">PIN Utilizado</AlertTitle>
+          <AlertTitle className="font-semibold">PIN Utilizado com Sucesso</AlertTitle>
           <AlertDescription>
             Sua presença para este evento já foi confirmada utilizando o código PIN. Nenhuma ação adicional é necessária.
           </AlertDescription>
@@ -283,22 +282,53 @@ function ManualConfirmationPageContent() {
       ) : existingConfirmation ? (
         <Card className="static-card-container">
           <CardHeader>
-            <CardTitle>Sua Confirmação Manual</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+                <span>Sua Confirmação Manual</span>
+                {getStatusBadge(existingConfirmation.status)}
+            </CardTitle>
+             <CardDescription>
+                Detalhes da sua submissão para o evento <span className="font-semibold text-foreground">{event.title}</span>.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p><strong>Status:</strong> <span className={`font-semibold ${existingConfirmation.status === 'pending' ? 'text-yellow-500' : existingConfirmation.status === 'approved' ? 'text-green-500' : 'text-red-500'}`}>{existingConfirmation.status.charAt(0).toUpperCase() + existingConfirmation.status.slice(1)}</span></p>
             <p><strong>Enviado em:</strong> {existingConfirmation.submittedAt ? format(existingConfirmation.submittedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Data indisponível'}</p>
             {existingConfirmation.screenshotUrl && (
               <div>
-                <strong>Screenshot:</strong>
-                <div className="mt-2 rounded-md overflow-hidden border max-w-xs">
-                  <Image src={existingConfirmation.screenshotUrl} alt="Screenshot Enviado" width={300} height={200} objectFit="contain" data-ai-hint="event screenshot"/>
+                <strong className="block mb-1">Screenshot Enviado:</strong>
+                <div className="mt-1 rounded-md overflow-hidden border max-w-xs shadow-md bg-muted/20 p-1">
+                  <Image src={existingConfirmation.screenshotUrl} alt="Screenshot Enviado" width={300} height={200} className="rounded" objectFit="contain" data-ai-hint="event screenshot"/>
                 </div>
               </div>
             )}
-            {existingConfirmation.notes && <p><strong>Suas Notas:</strong> {existingConfirmation.notes}</p>}
-            {existingConfirmation.status === 'rejected' && existingConfirmation.rejectionReason && <p className="text-destructive"><strong>Motivo da Rejeição:</strong> {existingConfirmation.rejectionReason}</p>}
-             {existingConfirmation.status === 'approved' && <p className="text-green-600 font-semibold">DKP ({existingConfirmation.dkpAwarded || event.dkpValue || 0}) creditado!</p>}
+            {existingConfirmation.notes && <p><strong>Suas Notas:</strong> <span className="text-muted-foreground italic">{existingConfirmation.notes}</span></p>}
+            {existingConfirmation.status === 'rejected' && existingConfirmation.rejectionReason && (
+                <Alert variant="destructive" className="mt-3">
+                    <Ban className="h-4 w-4" />
+                    <AlertTitle>Motivo da Rejeição</AlertTitle>
+                    <AlertDescription>{existingConfirmation.rejectionReason}</AlertDescription>
+                </Alert>
+            )}
+            {existingConfirmation.status === 'approved' && (
+                 <Alert variant="default" className="mt-3 bg-green-500/10 border-green-500/30 text-green-700">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <AlertTitle>Confirmação Aprovada!</AlertTitle>
+                    <AlertDescription>
+                        Sua participação foi aprovada.
+                        {existingConfirmation.dkpAwarded && existingConfirmation.dkpAwarded > 0
+                        ? ` ${existingConfirmation.dkpAwarded} DKP foram creditados.`
+                        : guild.dkpSystemEnabled && event.dkpValue && event.dkpValue > 0
+                            ? ` ${event.dkpValue} DKP foram creditados.`
+                            : ' Nenhum DKP foi concedido para este evento.'}
+                    </AlertDescription>
+                </Alert>
+            )}
+             {existingConfirmation.status === 'pending' && (
+                <Alert variant="default" className="mt-3 bg-yellow-500/10 border-yellow-500/30 text-yellow-700">
+                    <HelpCircle className="h-5 w-5 text-yellow-600" />
+                    <AlertTitle>Confirmação Pendente</AlertTitle>
+                    <AlertDescription>Sua submissão está aguardando aprovação de um administrador da guilda.</AlertDescription>
+                </Alert>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -333,7 +363,7 @@ function ManualConfirmationPageContent() {
                 <FormField
                   control={form.control}
                   name="screenshotFile"
-                  render={({ field: { onChange, value, ...rest } }) => ( 
+                  render={({ field: { onChange, value, ...rest } }) => (
                     <FormItem>
                       <FormLabel>Upload da Screenshot (Máx 2MB: PNG, JPG, GIF, WEBP)</FormLabel>
                       <FormControl>
@@ -342,7 +372,7 @@ function ManualConfirmationPageContent() {
                           <Input
                             type="file"
                             accept="image/png, image/jpeg, image/gif, image/webp"
-                            onChange={handleFileChange} 
+                            onChange={handleFileChange}
                             className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                             disabled={!!form.watch("screenshotUrl")}
                             {...rest}
@@ -356,8 +386,8 @@ function ManualConfirmationPageContent() {
                  {previewImage && (
                     <div className="mt-4">
                         <FormLabel>Prévia da Imagem:</FormLabel>
-                        <div className="mt-2 border rounded-md p-2 inline-block bg-muted/30">
-                            <Image src={previewImage} alt="Prévia da Screenshot" width={200} height={150} objectFit="contain" data-ai-hint="submission preview"/>
+                        <div className="mt-2 border rounded-md p-2 inline-block bg-muted/30 shadow-sm">
+                            <Image src={previewImage} alt="Prévia da Screenshot" width={200} height={150} className="rounded" objectFit="contain" data-ai-hint="submission preview"/>
                         </div>
                     </div>
                 )}
