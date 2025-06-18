@@ -388,27 +388,49 @@ function GuildSettingsPageContent() {
         return;
     }
     setIsDeleting(true);
+    console.log(`[GuildDelete] Iniciando exclusão da guilda: ${guild.id} por ${currentUser.uid}`);
     try {
       const subcollections = ['auditLogs', 'applications', 'events', 'groups', 'notifications', 'dkpDecayLogs'];
       for (const subcoll of subcollections) {
+        console.log(`[GuildDelete] Verificando subcoleção: ${subcoll}`);
+        try {
           const subcollRef = collection(db, `guilds/${guild.id}/${subcoll}`);
           const subcollSnap = await getFirestoreDocs(subcollRef);
           if (!subcollSnap.empty) {
-              const subBatch = writeBatch(db);
-              subcollSnap.docs.forEach(docToDelete => subBatch.delete(docToDelete.ref));
-              await subBatch.commit();
+            const subBatch = writeBatch(db);
+            subcollSnap.docs.forEach(docToDelete => subBatch.delete(docToDelete.ref));
+            console.log(`[GuildDelete] Tentando commitar o batch de exclusão para a subcoleção: ${subcoll} (${subcollSnap.size} documentos)`);
+            await subBatch.commit();
+            console.log(`[GuildDelete] Documentos da subcoleção ${subcoll} excluídos com sucesso.`);
+          } else {
+            console.log(`[GuildDelete] Subcoleção ${subcoll} está vazia. Pulando exclusão.`);
           }
+        } catch (subError: any) {
+          console.error(`[GuildDelete] Erro ao excluir documentos da subcoleção ${subcoll}:`, subError);
+          // Re-lançar o erro para ser pego pelo catch principal e impedir a exclusão do documento da guilda
+          throw new Error(`Falha ao excluir a subcoleção ${subcoll}: ${subError.message}`);
+        }
       }
 
+      console.log(`[GuildDelete] Tentando excluir o documento principal da guilda: ${guild.id}`);
       const guildRef = doc(db, "guilds", guild.id);
       await deleteDoc(guildRef);
+      console.log(`[GuildDelete] Documento principal da guilda ${guild.id} excluído com sucesso.`);
+
+      // Não há necessidade de logar a atividade da guilda, pois a guilda e seus logs serão excluídos.
+      // Se fosse necessário, seria aqui, mas a subcoleção de logs já foi (ou deveria ter sido) removida.
 
       toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
       router.push('/guild-selection');
-    } catch (error) {
-      console.error("Erro ao excluir guilda:", error);
-      toast({ title: "Erro ao Excluir Guilda", description: "Não foi possível excluir a guilda. Verifique o console para mais detalhes.", variant: "destructive" });
+    } catch (error: any) { // Especificar o tipo de erro como 'any' ou um tipo mais específico
+      console.error("[GuildDelete] Erro durante o processo de exclusão da guilda:", error);
+      toast({ title: "Erro ao Excluir Guilda", description: `Não foi possível excluir a guilda. Detalhes: ${error.message}. Verifique o console para mais informações.`, variant: "destructive", duration: 10000 });
+      // Não definir setIsDeleting(false) aqui se o erro for crítico e a operação deva ser retentada
+      // No entanto, para o usuário, a operação falhou, então pode ser útil resetar o estado.
+    } finally {
+      // setIsDeleting(false) é crucial para reabilitar o botão se a exclusão falhar e o usuário quiser tentar novamente
+      // ou se a navegação não ocorrer devido ao erro.
       setIsDeleting(false);
     }
   };
