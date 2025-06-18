@@ -113,38 +113,38 @@ function ManualConfirmationPageContent() {
     }
   }, [currentUser, router, toast, setHeaderTitle]); 
 
-  const guildIdFromParams = searchParams.get('guildId');
-  const eventIdFromParams = searchParams.get('eventId');
 
   useEffect(() => {
+    // Get fresh parameter values inside the effect that depends on searchParams
+    const guildIdParam = searchParams.get('guildId');
+    const eventIdParam = searchParams.get('eventId');
+
     if (authLoading) {
-      // setLoadingData(true) is already default, or set by fetch function
       return;
     }
 
     if (!currentUser) {
-      const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdFromParams || ''}&eventId=${eventIdFromParams || ''}`;
+      const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdParam || ''}&eventId=${eventIdParam || ''}`;
       router.push(redirectPath);
-      setLoadingData(false); // Ensure loading stops if redirecting
+      setLoadingData(false); 
       return;
     }
 
-    if (!guildIdFromParams || !eventIdFromParams) {
-      setLoadingData(false); // Stop loading if params are missing
-      // Only show toast and redirect client-side after initial checks
-      if (typeof window !== 'undefined') { 
-        toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
-        if (!guildIdFromParams) {
-          router.push('/guild-selection');
-        } else {
-          router.push(`/dashboard/calendar?guildId=${guildIdFromParams}`);
-        }
+    const isValidGuildId = typeof guildIdParam === 'string' && guildIdParam.trim() !== "" && guildIdParam !== "null" && guildIdParam !== "undefined";
+    const isValidEventId = typeof eventIdParam === 'string' && eventIdParam.trim() !== "" && eventIdParam !== "null" && eventIdParam !== "undefined";
+
+    if (isValidGuildId && isValidEventId) {
+      fetchEventAndConfirmationData(guildIdParam, eventIdParam);
+    } else {
+      setLoadingData(false); 
+      toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
+      if (!isValidGuildId) {
+        router.push('/guild-selection');
+      } else {
+        router.push(`/dashboard/calendar?guildId=${guildIdParam}`);
       }
-      return;
     }
-    
-    fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams);
-  }, [authLoading, currentUser, guildIdFromParams, eventIdFromParams, router, toast, fetchEventAndConfirmationData]);
+  }, [authLoading, currentUser, searchParams, router, toast, fetchEventAndConfirmationData]);
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,6 +183,9 @@ function ManualConfirmationPageContent() {
   };
 
   const onSubmit: SubmitHandler<ManualConfirmationFormValues> = async (data) => {
+    const guildIdFromParams = searchParams.get('guildId'); // Re-fetch for safety, though should be stable
+    const eventIdFromParams = searchParams.get('eventId');
+
     if (!currentUser || !guildIdFromParams || !eventIdFromParams || !event) {
       toast({ title: "Erro", description: "Dados essenciais ausentes.", variant: "destructive" });
       return;
