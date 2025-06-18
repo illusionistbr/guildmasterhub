@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback, useRef } from 'react'; // Added useRef
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -51,6 +51,8 @@ function ManualConfirmationPageContent() {
   const [pinUsed, setPinUsed] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  const isMountedRef = useRef(true); // Ref to track mounted state
+
   const form = useForm<ManualConfirmationFormValues>({
     resolver: zodResolver(manualConfirmationSchema),
     defaultValues: {
@@ -61,10 +63,10 @@ function ManualConfirmationPageContent() {
 
   const fetchEventAndConfirmationData = useCallback(async (currentGuildId: string, currentEventId: string) => {
     if (!currentUser || !currentGuildId || !currentEventId) {
-      setLoadingData(false);
+      if (isMountedRef.current) setLoadingData(false);
       return;
     }
-    setLoadingData(true);
+    if (isMountedRef.current) setLoadingData(true);
     try {
       const guildDocRef = doc(db, "guilds", currentGuildId);
       const eventDocRef = doc(db, `guilds/${currentGuildId}/events`, currentEventId);
@@ -75,6 +77,8 @@ function ManualConfirmationPageContent() {
         getDoc(eventDocRef),
         getDoc(manualConfirmationDocRef)
       ]);
+
+      if (!isMountedRef.current) return;
 
       if (!guildSnap.exists()) {
         toast({ title: "Guilda não encontrada", variant: "destructive" });
@@ -100,57 +104,69 @@ function ManualConfirmationPageContent() {
       if (confirmationSnap.exists()) {
         setExistingConfirmation({id: confirmationSnap.id, ...confirmationSnap.data()} as ManualConfirmation);
       } else {
-        setExistingConfirmation(null); // Ensure it's null if not found
+        setExistingConfirmation(null); 
       }
 
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
-      toast({ title: "Erro ao Carregar Dados", variant: "destructive" });
+      if (isMountedRef.current) toast({ title: "Erro ao Carregar Dados", variant: "destructive" });
     } finally {
-      setLoadingData(false);
+      if (isMountedRef.current) setLoadingData(false);
     }
   }, [currentUser, router, toast, setHeaderTitle]);
 
 
   useEffect(() => {
+    isMountedRef.current = true; // Set mounted ref to true when component mounts
+
     const guildIdParam = searchParams.get('guildId');
     const eventIdParam = searchParams.get('eventId');
 
-    if (authLoading) return;
+    if (authLoading) {
+        // Do not set loadingData to false here if auth is still loading.
+        // Let the subsequent checks handle it.
+        return;
+    }
 
     if (!currentUser) {
       const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdParam || ''}&eventId=${eventIdParam || ''}`;
       router.push(redirectPath);
-      setLoadingData(false);
+      if (isMountedRef.current) setLoadingData(false);
       return;
     }
 
     if (guildIdParam && eventIdParam) {
       fetchEventAndConfirmationData(guildIdParam, eventIdParam);
     } else {
-      toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
+      if (isMountedRef.current) {
+        toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
+        setLoadingData(false);
+      }
       if (!guildIdParam) router.push('/guild-selection');
       else router.push(`/dashboard/calendar?guildId=${guildIdParam}`);
-      setLoadingData(false);
     }
-     return () => setHeaderTitle(null);
-  }, [authLoading, currentUser, searchParams, router, toast, fetchEventAndConfirmationData]);
+    
+    return () => {
+      isMountedRef.current = false; // Set to false on unmount
+      setHeaderTitle(null);
+    };
+  }, [authLoading, currentUser, searchParams, router, toast, fetchEventAndConfirmationData, setHeaderTitle]); // Added searchParams
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
+        if(isMountedRef.current) toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
         form.setValue("screenshotFile", undefined);
-        setPreviewImage(null);
+        if(isMountedRef.current) setPreviewImage(null);
         e.target.value = "";
         return;
       }
       if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
-        toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
+        if(isMountedRef.current) toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
         form.setValue("screenshotFile", undefined);
-        setPreviewImage(null);
+        if(isMountedRef.current) setPreviewImage(null);
         e.target.value = "";
         return;
       }
@@ -158,6 +174,7 @@ function ManualConfirmationPageContent() {
       form.setValue("screenshotUrl", "");
       const reader = new FileReader();
       reader.onloadend = () => {
+        if (!isMountedRef.current) return;
         if (typeof reader.result === 'string') {
             setPreviewImage(reader.result);
         } else {
@@ -168,7 +185,7 @@ function ManualConfirmationPageContent() {
       reader.readAsDataURL(file);
     } else {
       form.setValue("screenshotFile", undefined);
-      setPreviewImage(null);
+      if(isMountedRef.current) setPreviewImage(null);
     }
   };
 
@@ -177,15 +194,15 @@ function ManualConfirmationPageContent() {
     const eventIdFromParams = searchParams.get('eventId');
 
     if (!currentUser || !guildIdFromParams || !eventIdFromParams || !event) {
-      toast({ title: "Erro", description: "Dados essenciais ausentes.", variant: "destructive" });
+      if(isMountedRef.current) toast({ title: "Erro", description: "Dados essenciais ausentes.", variant: "destructive" });
       return;
     }
     if (pinUsed || existingConfirmation) {
-      toast({ title: "Ação não permitida", description: "Confirmação já realizada ou PIN utilizado.", variant: "destructive" });
+      if(isMountedRef.current) toast({ title: "Ação não permitida", description: "Confirmação já realizada ou PIN utilizado.", variant: "destructive" });
       return;
     }
 
-    setIsSubmitting(true);
+    if(isMountedRef.current) setIsSubmitting(true);
     let imageUrl = data.screenshotUrl || "";
 
     try {
@@ -201,8 +218,10 @@ function ManualConfirmationPageContent() {
       }
 
       if (!imageUrl) {
-        toast({ title: "Erro de Imagem", description: "Nenhuma imagem fornecida ou falha no upload.", variant: "destructive" });
-        setIsSubmitting(false);
+        if(isMountedRef.current) {
+          toast({ title: "Erro de Imagem", description: "Nenhuma imagem fornecida ou falha no upload.", variant: "destructive" });
+          setIsSubmitting(false);
+        }
         return;
       }
 
@@ -228,18 +247,20 @@ function ManualConfirmationPageContent() {
         { eventId: eventIdFromParams, eventName: event.title, targetUserId: currentUser.uid, screenshotUrl: imageUrl }
       );
 
-      toast({ title: "Confirmação Enviada!", description: "Sua submissão manual foi enviada para aprovação." });
-      if (guildIdFromParams && eventIdFromParams) {
-        fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams); // Refresh data
+      if (isMountedRef.current) {
+        toast({ title: "Confirmação Enviada!", description: "Sua submissão manual foi enviada para aprovação." });
+        if (guildIdFromParams && eventIdFromParams) {
+          fetchEventAndConfirmationData(guildIdFromParams, eventIdFromParams); 
+        }
+        form.reset();
+        setPreviewImage(null);
       }
-      form.reset();
-      setPreviewImage(null);
 
     } catch (error) {
       console.error("Erro ao enviar confirmação:", error);
-      toast({ title: "Erro ao Enviar", variant: "destructive" });
+      if (isMountedRef.current) toast({ title: "Erro ao Enviar", variant: "destructive" });
     } finally {
-      setIsSubmitting(false);
+      if (isMountedRef.current) setIsSubmitting(false);
     }
   };
 
@@ -428,3 +449,4 @@ export default function ManualConfirmationPage() {
   );
 }
 
+    
