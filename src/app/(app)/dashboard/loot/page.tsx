@@ -30,7 +30,7 @@ import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, 
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'; // Added CardFooter
 import { Badge } from '@/components/ui/badge';
 
 interface TLItem {
@@ -230,14 +230,30 @@ function LootPageContent() {
   const onSubmit: SubmitHandler<LootFormValues> = async (data) => {
     setIsSubmitting(true);
 
+    let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
+    let rarityToUse: TLItem['rarity'] = 'common';
+
+    if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && data.itemName) {
+        const swordItem = TL_SWORD_ITEMS.find(s => s.name === data.itemName);
+        if (swordItem) {
+            imageUrlToUse = swordItem.imageUrl;
+            rarityToUse = swordItem.rarity;
+        }
+    }
+    // Placeholder for other weapon types, armor, accessories
+    // else if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) { ... }
+    // else if (data.itemCategory === 'armor') { ... }
+    // else if (data.itemCategory === 'accessory') { ... }
+
+
     const newItem: BankItem = {
-      id: Date.now().toString(), // Simple ID for now
+      id: Date.now().toString(),
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
       trait: data.trait,
-      imageUrl: selectedItemForPreview?.imageUrl || `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`,
-      rarity: selectedItemForPreview?.rarity || 'common',
+      imageUrl: imageUrlToUse,
+      rarity: rarityToUse,
       status: 'Disponível',
     };
 
@@ -352,7 +368,7 @@ function LootPageContent() {
                               <FormItem>
                                 <FormLabel>
                                   Trait da Arma (Específico para {watchedWeaponType})
-                                  {watchedWeaponType === 'Sword' && <span className="text-destructive">*</span>}
+                                  <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -467,3 +483,4 @@ export default function LootPageWrapper() {
   );
 }
     
+
