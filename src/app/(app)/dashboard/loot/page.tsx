@@ -331,23 +331,6 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Forgotten Tricorne', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003.webp', rarity: 'common' },
   { name: 'Leather Tricorne', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00013.webp', rarity: 'common' },
   { name: 'Mystic Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00003.webp', rarity: 'common' },
-  { name: 'Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00002.webp', rarity: 'common' },
-  { name: 'Reforged Cuirass', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00002B.webp', rarity: 'common' },
-  { name: 'Manasteel Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006.webp', rarity: 'common' },
-  { name: 'Reinforced Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00003.webp', rarity: 'common' },
-  { name: 'Studded Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00005.webp', rarity: 'common' },
-  { name: 'Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00014.webp', rarity: 'common' },
-  { name: 'Lamellar Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00001.webp', rarity: 'common' },
-  { name: 'Reinforced Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00003.webp', rarity: 'common' },
-  { name: 'Cloth Vestment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00007.webp', rarity: 'common' },
-  { name: 'Silk Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00005B.webp', rarity: 'common' },
-  { name: 'Magithread Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00001.webp', rarity: 'common' },
-  { name: 'Reinforced Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00014.webp', rarity: 'common' },
-  { name: 'Iron Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006C.webp', rarity: 'common' },
-  { name: 'Infiltrator Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00017.webp', rarity: 'common' },
-  { name: 'Scouting Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015B.webp', rarity: 'common' },
-  { name: 'Sentinel Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05001.webp', rarity: 'common' },
-  { name: 'Canvas Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00016.webp', rarity: 'common' },
   { name: 'Blackened Plate Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00010.webp', rarity: 'uncommon' },
   { name: 'Ironclad Plate Visor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00013.webp', rarity: 'uncommon' },
   { name: 'Ornate Battle Helm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00009.webp', rarity: 'uncommon' },
@@ -422,6 +405,27 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Auric Vanguard\'s Barbute', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00014A.webp', rarity: 'epic' },
 ];
 
+const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
+  { name: 'Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00002.webp', rarity: 'common' },
+  { name: 'Reforged Cuirass', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00002B.webp', rarity: 'common' },
+  { name: 'Manasteel Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006.webp', rarity: 'common' },
+  { name: 'Reinforced Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00003.webp', rarity: 'common' },
+  { name: 'Studded Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00005.webp', rarity: 'common' },
+  { name: 'Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00014.webp', rarity: 'common' },
+  { name: 'Lamellar Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00001.webp', rarity: 'common' },
+  { name: 'Reinforced Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00003.webp', rarity: 'common' },
+  { name: 'Cloth Vestment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00007.webp', rarity: 'common' },
+  { name: 'Silk Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00005B.webp', rarity: 'common' },
+  { name: 'Magithread Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00001.webp', rarity: 'common' },
+  { name: 'Reinforced Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00014.webp', rarity: 'common' },
+  { name: 'Iron Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006C.webp', rarity: 'common' },
+  { name: 'Infiltrator Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00017.webp', rarity: 'common' },
+  { name: 'Scouting Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015B.webp', rarity: 'common' },
+  { name: 'Sentinel Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05001.webp', rarity: 'common' },
+  { name: 'Canvas Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00016.webp', rarity: 'common' },
+];
+
+
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
@@ -435,13 +439,15 @@ const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
 
 const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
   "Head": TL_HEAD_ARMOR_ITEMS,
+  "Chest": TL_CHEST_ARMOR_ITEMS,
 };
 
 const itemCategoryOptions = [
-  { value: "weapon", label: "Arma" },
-  { value: "armor", label: "Armadura" },
-  { value: "accessory", label: "Acessório" },
+  { value: "weapon", label: "Arma", icon: Axe },
+  { value: "armor", label: "Armadura", icon: Shirt },
+  { value: "accessory", label: "Acessório", icon: Diamond },
 ];
+
 
 const weaponTypeOptions = [
   { value: "Sword", label: "Sword" },
@@ -456,6 +462,7 @@ const weaponTypeOptions = [
 
 const armorTypeOptions = [
   { value: "Head", label: "Cabeça" },
+  { value: "Chest", label: "Peitoral" },
 ];
 
 const traitOptions = [
@@ -505,7 +512,8 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head"];
+const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest"];
+
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -756,8 +764,9 @@ function LootPageContent() {
 
   const subTypeLabel =
     watchedItemCategory === 'weapon' && watchedWeaponType ? watchedWeaponType :
-    watchedItemCategory === 'armor' && watchedArmorType ? watchedArmorType :
+    watchedItemCategory === 'armor' && watchedArmorType ? (armorTypeOptions.find(opt => opt.value === watchedArmorType)?.label || watchedArmorType) :
     'item';
+
 
   return (
     <div className="space-y-8">
@@ -795,12 +804,30 @@ function LootPageContent() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione a categoria do item" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              {itemCategoryOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger className="form-input">
+                                        {field.value ? (
+                                            <div className="flex items-center">
+                                                {React.createElement(itemCategoryOptions.find(opt => opt.value === field.value)?.icon || Tag, { className: "mr-2 h-5 w-5 text-muted-foreground"})}
+                                                <SelectValue placeholder="Selecione a categoria do item" />
+                                            </div>
+                                        ) : (
+                                            <SelectValue placeholder="Selecione a categoria do item" />
+                                        )}
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {itemCategoryOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                        <div className="flex items-center">
+                                            {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})}
+                                            {opt.label}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -857,7 +884,7 @@ function LootPageContent() {
                                 <span className="text-destructive">*</span>
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -880,7 +907,7 @@ function LootPageContent() {
                             <div className="relative flex items-center">
                               <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                               <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                                 <SelectContent>
                                   {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                 </SelectContent>
@@ -973,7 +1000,7 @@ function LootPageContent() {
                 <Card key={item.id} className="static-card-container flex flex-col">
                   <CardHeader className="pb-2">
                      <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.armorType || item.itemCategory}>
-                        {item.itemName || item.weaponType || item.armorType || "Item Genérico"}
+                        {item.itemName || item.weaponType || (armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType) || "Item Genérico"}
                      </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
@@ -992,7 +1019,7 @@ function LootPageContent() {
                     <div className="text-xs text-muted-foreground space-y-0.5 text-center">
                       <p><strong>Tipo:</strong> {item.itemCategory}</p>
                       {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
-                      {item.armorType && <p><strong>Armadura:</strong> {item.armorType}</p>}
+                      {item.armorType && <p><strong>Armadura:</strong> {armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType}</p>}
                       {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
                       {item.droppedByMemberName && <p><strong>Dropado por:</strong> {item.droppedByMemberName}</p>}
                     </div>
@@ -1032,6 +1059,7 @@ export default function LootPageWrapper() {
     
 
     
+
 
 
 
