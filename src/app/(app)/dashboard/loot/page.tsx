@@ -108,6 +108,8 @@ const traitOptions = [
   { value: "Max Mana", label: "Max Mana" },
   { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
   { value: "Buff Duration", label: "Buff Duration" },
+  { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
+  { value: "Debuff Duration", label: "Debuff Duration" },
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
@@ -175,8 +177,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    // Only reset trait if the new weaponType is not 'Sword'
-    if (watchedWeaponType !== 'Sword') {
+    if (watchedWeaponType !== 'Sword') { // Only reset trait if new weaponType is not 'Sword'
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
