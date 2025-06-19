@@ -26,7 +26,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -98,6 +98,15 @@ const weaponTypeOptions = [
   { value: "Spear", label: "Spear" },
 ];
 
+const traitOptions = [
+  { value: "Max Health", label: "Max Health" },
+  { value: "Hit Chance", label: "Hit Chance" },
+  { value: "Heavy Attack Chance", label: "Heavy Attack Chance" },
+  { value: "Critical Hit Chance", label: "Critical Hit Chance" },
+  { value: "Collision Chance", label: "Collision Chance" },
+  { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
+];
+
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
   common: 'bg-slate-700',
   uncommon: 'bg-emerald-600',
@@ -110,6 +119,7 @@ const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
   itemName: z.string().optional(),
+  trait: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.itemCategory === 'weapon' && !data.weaponType) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
@@ -143,6 +153,7 @@ function LootPageContent() {
       itemCategory: "",
       weaponType: undefined,
       itemName: undefined,
+      trait: undefined,
     },
   });
 
@@ -154,6 +165,7 @@ function LootPageContent() {
     if (watchedItemCategory !== 'weapon') {
       form.setValue('weaponType', undefined);
       form.setValue('itemName', undefined);
+      form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
   }, [watchedItemCategory, form]);
@@ -161,8 +173,9 @@ function LootPageContent() {
   useEffect(() => {
     if (watchedWeaponType) {
       form.setValue('itemName', undefined);
-      setSelectedItemForPreview(null);
+      form.setValue('trait', undefined); // Reset trait if weapon type changes
     }
+    setSelectedItemForPreview(null);
   }, [watchedWeaponType, form]);
 
   useEffect(() => {
@@ -202,7 +215,7 @@ function LootPageContent() {
     console.log("Dados do Item:", data);
     // TODO: Implement saving logic to Firestore
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    toast({ title: "Item Registrado (Simulado)", description: `Item ${data.itemName || data.weaponType || data.itemCategory} foi registrado.` });
+    toast({ title: "Item Registrado (Simulado)", description: `Item ${data.itemName || data.weaponType || data.itemCategory} com trait ${data.trait || 'N/A'} foi registrado.` });
     setIsSubmitting(false);
     setShowAddItemDialog(false);
     form.reset();
@@ -266,22 +279,43 @@ function LootPageContent() {
                     />
 
                     {watchedItemCategory === 'weapon' && (
-                      <FormField
-                        control={form.control}
-                        name="weaponType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="weaponType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                         <FormField
+                          control={form.control}
+                          name="trait"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Trait da Arma</FormLabel>
+                               <div className="relative flex items-center">
+                                <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                  <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione o trait da arma (opcional)" /></SelectTrigger></FormControl>
+                                  <SelectContent>
+                                    {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
                     )}
                     
                     {watchedItemCategory === 'weapon' && watchedWeaponType && currentWeaponNameOptions.length > 0 && (
@@ -292,7 +326,7 @@ function LootPageContent() {
                           <FormItem>
                             <FormLabel>Nome do Item ({watchedWeaponType}) <span className="text-destructive">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${watchedWeaponType.toLowerCase().endsWith('a') || ['staff', 'spear'].includes(watchedWeaponType.toLowerCase()) ? 'a' : 'o'} ${watchedWeaponType.toLowerCase()}`} /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${watchedWeaponType && (watchedWeaponType.toLowerCase().endsWith('a') || ['staff', 'spear'].includes(watchedWeaponType.toLowerCase())) ? 'a' : 'o'} ${watchedWeaponType ? watchedWeaponType.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentWeaponNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -361,5 +395,4 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
-
     
