@@ -479,12 +479,13 @@ function ApplyPageContent() {
                                     <Checkbox
                                       checked={field.value?.includes(option.id)}
                                       onCheckedChange={(checked) => {
-                                        const currentValues = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...currentValues, option.id]);
-                                        } else {
-                                          field.onChange(currentValues.filter((value) => value !== option.id));
-                                        }
+                                        return checked
+                                          ? field.onChange([...(field.value || []), option.id])
+                                          : field.onChange(
+                                              (field.value || []).filter(
+                                                (value: string) => value !== option.id
+                                              )
+                                            );
                                       }}
                                     />
                                   </FormControl>
@@ -555,3 +556,6 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
+
+    
