@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react'; // Added Suspense
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -157,12 +157,46 @@ const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Leviathan\'s Bladed Tendrils', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00051.webp', rarity: 'epic' },
 ];
 
+const TL_BOW_ITEMS: TLItem[] = [
+  { name: 'Mystwood Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00001.webp', rarity: 'common' },
+  { name: 'Petrified Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00001A.webp', rarity: 'common' },
+  { name: 'Wooden Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00002A.webp', rarity: 'common' },
+  { name: 'Driftwood Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00002.webp', rarity: 'common' },
+  { name: 'Forgotten Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00002.webp', rarity: 'common' },
+  { name: 'Sniper Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00003.webp', rarity: 'uncommon' },
+  { name: 'Hunter Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00008.webp', rarity: 'uncommon' },
+  { name: 'Standard Issue Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00003A.webp', rarity: 'uncommon' },
+  { name: 'Birchwood Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00006.webp', rarity: 'uncommon' },
+  { name: 'Golem Impaler Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00006A.webp', rarity: 'rare' },
+  { name: 'Longbow of Undead Skewering', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00014.webp', rarity: 'rare' },
+  { name: 'Longbow of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00007.webp', rarity: 'rare' },
+  { name: 'Farshot Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00005A.webp', rarity: 'rare' },
+  { name: 'First Blood Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00012.webp', rarity: 'rare' },
+  { name: 'Blood Talon Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00012B.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00007B.webp', rarity: 'rare' },
+  { name: 'Bound Resistance Vanguard Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00007B.webp', rarity: 'rare' },
+  { name: 'Shaikal\'s Deepmind Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00009.webp', rarity: 'epic' },
+  { name: 'Toublek\'s Deathmark Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00033.webp', rarity: 'epic' },
+  { name: 'Aelon\'s Rejuvenating Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00034.webp', rarity: 'epic' },
+  { name: 'Karnix\'s Netherbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00032.webp', rarity: 'epic' },
+  { name: 'Heroic Longbow of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00030.webp', rarity: 'epic' },
+  { name: 'Tevent\'s Arc of Wailing Death', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00018.webp', rarity: 'epic' },
+  { name: 'Longbow of the World Tree', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00020.webp', rarity: 'epic' },
+  { name: 'Titanspine Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00011.webp', rarity: 'epic' },
+  { name: 'Arc of Lunar Radiance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00007A.webp', rarity: 'epic' },
+  { name: 'Bercant\'s Steelstring Bow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00028.webp', rarity: 'epic' },
+  { name: 'Deluzhnoa\'s Arc of Frozen Death', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00017.webp', rarity: 'epic' },
+  { name: 'Mystic Truestrike Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00010.webp', rarity: 'epic' },
+  { name: 'Longbow of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00049.webp', rarity: 'epic' },
+  { name: 'Leviathan\'s Bloodstorm Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00051.webp', rarity: 'epic' },
+];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
   "Dagger": TL_DAGGER_ITEMS,
-  "Bow": [],
+  "Bow": TL_BOW_ITEMS,
   "Crossbow": [],
   "Wand": [],
   "Staff": [],
@@ -194,6 +228,8 @@ const traitOptions = [
   { value: "Cooldown Speed", label: "Cooldown Speed"},
   { value: "Critical Hit Chance", label: "Critical Hit Chance" },
   { value: "Debuff Duration", label: "Debuff Duration" },
+  { value: "Demon Bonus Damage", label: "Demon Bonus Damage"},
+  { value: "Health Regen", label: "Health Regen"},
   { value: "Heavy Attack Chance", label: "Heavy Attack Chance" },
   { value: "Hit Chance", label: "Hit Chance" },
   { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
@@ -204,6 +240,7 @@ const traitOptions = [
   { value: "Silence Chance", label: "Silence Chance" },
   { value: "Stun Chance", label: "Stun Chance"},
   { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
+  { value: "Weaken Chance", label: "Weaken Chance"},
   { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
@@ -239,7 +276,7 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  if (data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger') && !data.trait) {
+  if (data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger' || data.weaponType === 'Bow') && !data.trait) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.weaponType}.`, path: ["trait"] });
   }
 });
@@ -289,7 +326,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword' && watchedWeaponType !== 'Greatsword' && watchedWeaponType !== 'Dagger') {
+    if (watchedWeaponType !== 'Sword' && watchedWeaponType !== 'Greatsword' && watchedWeaponType !== 'Dagger' && watchedWeaponType !== 'Bow') {
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
@@ -375,7 +412,7 @@ function LootPageContent() {
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
-      trait: data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger') ? data.trait : undefined,
+      trait: data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger' || data.weaponType === 'Bow') ? data.trait : undefined,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
@@ -402,7 +439,7 @@ function LootPageContent() {
   const currentWeaponNameOptions = watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
-  const isTraitMandatory = watchedItemCategory === 'weapon' && (watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger');
+  const isTraitMandatory = watchedItemCategory === 'weapon' && (watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger' || watchedWeaponType === 'Bow');
 
 
   return (
@@ -488,7 +525,7 @@ function LootPageContent() {
                             )}
                           />
                         )}
-                        {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger') && (
+                        {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger' || watchedWeaponType === 'Bow') && (
                            <FormField
                             control={form.control}
                             name="trait"
@@ -496,7 +533,7 @@ function LootPageContent() {
                               <FormItem>
                                 <FormLabel>
                                   Trait da Arma
-                                  {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger') && <span className="text-destructive">*</span>}
+                                  {isTraitMandatory && <span className="text-destructive">*</span>}
                                 </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
