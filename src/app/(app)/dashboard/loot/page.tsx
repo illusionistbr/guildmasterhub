@@ -30,7 +30,7 @@ import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, 
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface TLItem {
@@ -142,6 +142,9 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
+  if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && !data.trait) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório para Swords.", path: ["trait"] });
+  }
 });
 
 type LootFormValues = z.infer<typeof lootFormSchema>;
@@ -181,8 +184,8 @@ function LootPageContent() {
       form.setValue('weaponType', undefined);
       form.setValue('itemName', undefined);
       form.setValue('trait', undefined);
+      setSelectedItemForPreview(null);
     }
-    setSelectedItemForPreview(null);
   }, [watchedItemCategory, form]);
 
   useEffect(() => {
@@ -347,11 +350,14 @@ function LootPageContent() {
                             name="trait"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Trait da Arma (Específico para {watchedWeaponType})</FormLabel>
+                                <FormLabel>
+                                  Trait da Arma (Específico para {watchedWeaponType})
+                                  {watchedWeaponType === 'Sword' && <span className="text-destructive">*</span>}
+                                </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                                   <Select onValueChange={field.onChange} value={field.value || ""}>
-                                    <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione o trait da arma (opcional)" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione o trait da arma" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                       {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                     </SelectContent>
