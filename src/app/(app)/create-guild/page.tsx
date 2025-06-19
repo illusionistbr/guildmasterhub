@@ -50,6 +50,7 @@ const guildSchemaBase = z.object({
   socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
   region: z.string().optional(),
   server: z.string().optional(),
+  // tlGuildFocus removed from base schema as per previous request
 });
 
 const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
@@ -59,6 +60,7 @@ const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
         } else if (data.region && tlServers[data.region]?.length > 0 && !data.server) {
              ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Servidor é obrigatório para esta região em Throne and Liberty.", path: ["server"] });
         }
+        // tlGuildFocus validation removed as per previous request
     }
 });
 
@@ -83,6 +85,7 @@ export default function CreateGuildPage() {
     if (watchedGame !== "Throne and Liberty") {
       setValue("region", undefined);
       setValue("server", undefined);
+      // setValue("tlGuildFocus", []); // tlGuildFocus removed
     }
   }, [watchedGame, setValue]);
 
@@ -131,14 +134,14 @@ export default function CreateGuildPage() {
       }
     };
 
-    const guildData: Partial<Guild> & { createdAt: any } = {
+    const guildData: Omit<Guild, 'id' | 'tlGuildFocus'> & { createdAt: any } = { // tlGuildFocus removed from here
         name: data.name,
         game: data.game,
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
         memberCount: 1,
-        createdAt: serverTimestamp() as any,
+        createdAt: serverTimestamp() as any, // Cast to any to satisfy TypeScript for serverTimestamp
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png`,
         logoUrl: `https://placehold.co/150x150.png`,
@@ -153,20 +156,21 @@ export default function CreateGuildPage() {
     if (data.game === "Throne and Liberty") {
         if (data.region) guildData.region = data.region;
         if (data.server) guildData.server = data.server;
+        // tlGuildFocus is not set at creation anymore
     }
 
     if (Object.keys(socialLinks).length > 0) {
-        guildData.socialLinks = socialLinks;
+        (guildData as Guild).socialLinks = socialLinks; // Cast to Guild to include socialLinks
     }
     if (data.password) {
-        guildData.password = data.password;
+        (guildData as Guild).password = data.password; // Cast to Guild to include password
     }
 
     try {
       const newGuildRef = await addDoc(collection(db, "guilds"), guildData);
       toast({
         title: "Guilda Criada com Sucesso!",
-        description: `${data.name} está pronta para a aventura! Detalhes como logo e eventos podem ser configurados no painel de controle.`,
+        description: `${data.name} está pronta para a aventura! Detalhes como logo, foco (para TL) e eventos podem ser configurados no painel de controle.`,
         duration: 7000,
         action: (
             <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${newGuildRef.id}`)}>
@@ -237,18 +241,20 @@ export default function CreateGuildPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Jogo <span className="text-destructive">*</span></FormLabel>
-                    {/* Icon and div.relative wrapper removed for this field for testing */}
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger> {/* Removed pl-10 */}
-                          <SelectValue placeholder="Selecione um jogo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
-                        <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                       <Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger className="pl-10">
+                              <SelectValue placeholder="Selecione um jogo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
+                            <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -264,7 +270,7 @@ export default function CreateGuildPage() {
                         <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                         <div className="relative">
                           <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                          <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger className="pl-10">
                                 <SelectValue placeholder="Selecione uma região" />
@@ -290,7 +296,7 @@ export default function CreateGuildPage() {
                             <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                             <div className="relative">
                               <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                              <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
+                              <Select onValueChange={field.onChange} value={field.value || ""} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
                                 <FormControl>
                                   <SelectTrigger className="pl-10">
                                     <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
@@ -312,6 +318,7 @@ export default function CreateGuildPage() {
                         )}
                       />
                     )}
+                    {/* tlGuildFocus checkboxes removed from here */}
                 </>
               )}
 
@@ -341,6 +348,3 @@ export default function CreateGuildPage() {
     </div>
   );
 }
-
-
-    
