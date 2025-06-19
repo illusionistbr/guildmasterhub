@@ -331,6 +331,23 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Forgotten Tricorne', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003.webp', rarity: 'common' },
   { name: 'Leather Tricorne', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00013.webp', rarity: 'common' },
   { name: 'Mystic Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00003.webp', rarity: 'common' },
+  { name: 'Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00002.webp', rarity: 'common' },
+  { name: 'Reforged Cuirass', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00002B.webp', rarity: 'common' },
+  { name: 'Manasteel Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006.webp', rarity: 'common' },
+  { name: 'Reinforced Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00003.webp', rarity: 'common' },
+  { name: 'Studded Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00005.webp', rarity: 'common' },
+  { name: 'Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00014.webp', rarity: 'common' },
+  { name: 'Lamellar Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00001.webp', rarity: 'common' },
+  { name: 'Reinforced Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00003.webp', rarity: 'common' },
+  { name: 'Cloth Vestment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00007.webp', rarity: 'common' },
+  { name: 'Silk Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00005B.webp', rarity: 'common' },
+  { name: 'Magithread Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00001.webp', rarity: 'common' },
+  { name: 'Reinforced Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00014.webp', rarity: 'common' },
+  { name: 'Iron Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006C.webp', rarity: 'common' },
+  { name: 'Infiltrator Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00017.webp', rarity: 'common' },
+  { name: 'Scouting Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015B.webp', rarity: 'common' },
+  { name: 'Sentinel Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05001.webp', rarity: 'common' },
+  { name: 'Canvas Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00016.webp', rarity: 'common' },
   { name: 'Blackened Plate Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00010.webp', rarity: 'uncommon' },
   { name: 'Ironclad Plate Visor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00013.webp', rarity: 'uncommon' },
   { name: 'Ornate Battle Helm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00009.webp', rarity: 'uncommon' },
@@ -420,7 +437,6 @@ const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
   "Head": TL_HEAD_ARMOR_ITEMS,
 };
 
-
 const itemCategoryOptions = [
   { value: "weapon", label: "Arma" },
   { value: "armor", label: "Armadura" },
@@ -440,11 +456,6 @@ const weaponTypeOptions = [
 
 const armorTypeOptions = [
   { value: "Head", label: "Cabeça" },
-  // Future armor types can be added here:
-  // { value: "Chest", label: "Peito" },
-  // { value: "Legs", label: "Pernas" },
-  // { value: "Feet", label: "Pés" },
-  // { value: "Hands", label: "Mãos" },
 ];
 
 const traitOptions = [
@@ -572,7 +583,7 @@ function LootPageContent() {
       if (watchedArmorType && !itemSubTypesRequiringTrait.includes(watchedArmorType)) {
         form.setValue('trait', undefined);
       }
-    } else { 
+    } else {
       form.setValue('weaponType', undefined);
       form.setValue('armorType', undefined);
       form.setValue('trait', undefined);
@@ -581,14 +592,20 @@ function LootPageContent() {
     setSelectedItemForPreview(null);
   }, [watchedItemCategory, form, watchedWeaponType, watchedArmorType]);
 
-  useEffect(() => { 
+  useEffect(() => {
     form.setValue('itemName', undefined);
     setSelectedItemForPreview(null);
+    if (watchedWeaponType && !itemSubTypesRequiringTrait.includes(watchedWeaponType)) {
+      form.setValue('trait', undefined);
+    }
   }, [watchedWeaponType, form]);
 
-  useEffect(() => { 
+  useEffect(() => {
     form.setValue('itemName', undefined);
     setSelectedItemForPreview(null);
+    if (watchedArmorType && !itemSubTypesRequiringTrait.includes(watchedArmorType)) {
+      form.setValue('trait', undefined);
+    }
   }, [watchedArmorType, form]);
 
 
@@ -1015,6 +1032,7 @@ export default function LootPageWrapper() {
     
 
     
+
 
 
 
