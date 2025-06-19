@@ -26,15 +26,28 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface TLItem {
   name: string;
   imageUrl: string;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+}
+
+interface BankItem {
+  id: string;
+  itemCategory: string;
+  weaponType?: string;
+  itemName?: string;
+  trait?: string;
+  imageUrl: string;
+  rarity: TLItem['rarity'];
+  status: 'Disponível' | 'Distribuído';
 }
 
 const TL_SWORD_ITEMS: TLItem[] = [
@@ -99,22 +112,14 @@ const weaponTypeOptions = [
 ];
 
 const traitOptions = [
-  { value: "Max Health", label: "Max Health" },
-  { value: "Hit Chance", label: "Hit Chance" },
-  { value: "Heavy Attack Chance", label: "Heavy Attack Chance" },
-  { value: "Critical Hit Chance", label: "Critical Hit Chance" },
-  { value: "Collision Chance", label: "Collision Chance" },
-  { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
-  { value: "Max Mana", label: "Max Mana" },
-  { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
-  { value: "Buff Duration", label: "Buff Duration" },
-  { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
-  { value: "Debuff Duration", label: "Debuff Duration" },
-  { value: "Stun Chance", label: "Stun Chance"},
-  { value: "Attack Speed", label: "Attack Speed"},
-  { value: "Mana Regen", label: "Mana Regen"},
-  { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"},
-  { value: "Construct Bonus Damage", label: "Construct Bonus Damage"},
+  { value: "Max Health", label: "Max Health" }, { value: "Hit Chance", label: "Hit Chance" },
+  { value: "Heavy Attack Chance", label: "Heavy Attack Chance" }, { value: "Critical Hit Chance", label: "Critical Hit Chance" },
+  { value: "Collision Chance", label: "Collision Chance" }, { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
+  { value: "Max Mana", label: "Max Mana" }, { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
+  { value: "Buff Duration", label: "Buff Duration" }, { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
+  { value: "Debuff Duration", label: "Debuff Duration" }, { value: "Stun Chance", label: "Stun Chance"},
+  { value: "Attack Speed", label: "Attack Speed"}, { value: "Mana Regen", label: "Mana Regen"},
+  { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"}, { value: "Construct Bonus Damage", label: "Construct Bonus Damage"},
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
@@ -153,7 +158,7 @@ function LootPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [selectedItemForPreview, setSelectedItemForPreview] = useState<TLItem | null>(null);
-
+  const [bankItems, setBankItems] = useState<BankItem[]>([]);
 
   const guildId = searchParams.get('guildId');
 
@@ -182,7 +187,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword') { // Only reset trait if weapon type is not Sword
+    if (watchedWeaponType !== 'Sword') {
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
@@ -197,7 +202,6 @@ function LootPageContent() {
       setSelectedItemForPreview(null);
     }
   }, [watchedWeaponType, watchedItemName]);
-
 
   useEffect(() => {
     if (authLoading) return;
@@ -222,10 +226,21 @@ function LootPageContent() {
 
   const onSubmit: SubmitHandler<LootFormValues> = async (data) => {
     setIsSubmitting(true);
-    console.log("Dados do Item:", data);
-    // TODO: Implement saving logic to Firestore
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    toast({ title: "Item Registrado (Simulado)", description: `Item ${data.itemName || data.weaponType || data.itemCategory} com trait ${data.trait || 'N/A'} foi registrado.` });
+
+    const newItem: BankItem = {
+      id: Date.now().toString(), // Simple ID for now
+      itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
+      weaponType: data.weaponType,
+      itemName: data.itemName,
+      trait: data.trait,
+      imageUrl: selectedItemForPreview?.imageUrl || `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`,
+      rarity: selectedItemForPreview?.rarity || 'common',
+      status: 'Disponível',
+    };
+
+    setBankItems(prevItems => [...prevItems, newItem]);
+
+    toast({ title: "Item Registrado no Banco!", description: `Item ${newItem.itemName || newItem.weaponType || newItem.itemCategory} adicionado.` });
     setIsSubmitting(false);
     setShowAddItemDialog(false);
     form.reset();
@@ -241,6 +256,8 @@ function LootPageContent() {
 
   const currentWeaponNameOptions = watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : [];
 
+  const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
+
   return (
     <div className="space-y-8">
       <PageTitle title={`Gerenciamento de Loot de ${guild.name}`} icon={<Gem className="h-8 w-8 text-primary" />} />
@@ -253,7 +270,7 @@ function LootPageContent() {
         </TabsList>
 
         <TabsContent value="banco" className="mt-6">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-6">
             <Dialog open={showAddItemDialog} onOpenChange={(isOpen) => {
                 setShowAddItemDialog(isOpen);
                 if (!isOpen) {
@@ -380,9 +397,46 @@ function LootPageContent() {
               </DialogContent>
             </Dialog>
           </div>
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">Visualização do banco de itens da guilda aparecerá aqui.</p>
-          </div>
+
+          {bankItems.length === 0 ? (
+            <Card className="static-card-container text-center py-10">
+              <CardHeader><Package className="mx-auto h-16 w-16 text-muted-foreground mb-4" /></CardHeader>
+              <CardContent>
+                <CardTitle className="text-2xl">Banco da Guilda Vazio</CardTitle>
+                <CardDescription className="mt-2">Nenhum item registrado no banco ainda. Clique em "Cadastrar Item no Banco" para adicionar o primeiro.</CardDescription>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {bankItems.map(item => (
+                <Card key={item.id} className="static-card-container flex flex-col">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-base font-semibold truncate" title={item.itemName || item.weaponType || item.itemCategory}>
+                      {item.itemName || item.weaponType || "Item Genérico"}
+                    </CardTitle>
+                    <Badge variant={item.status === 'Disponível' ? 'default' : 'secondary'} className={cn(item.status === 'Disponível' ? 'bg-green-500/20 text-green-600 border-green-500/50' : 'bg-orange-500/20 text-orange-600 border-orange-500/50')}>
+                      {item.status}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
+                    <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border mb-3", rarityBackgrounds[item.rarity])}>
+                      <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint="game item icon"/>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-0.5 text-center">
+                      <p><strong>Tipo:</strong> {item.itemCategory}</p>
+                      {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
+                      {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
+                    </div>
+                  </CardContent>
+                   <CardFooter className="p-3 border-t border-border">
+                        <Button variant="outline" size="sm" className="w-full text-xs">
+                            <Eye className="mr-1.5 h-3.5 w-3.5"/> Ver Detalhes
+                        </Button>
+                    </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="leiloes" className="mt-6">
