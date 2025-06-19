@@ -88,9 +88,48 @@ const TL_SWORD_ITEMS: TLItem[] = [
   { name: 'Deluzhnoa\'s Edge of Eternal Frost', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00052.webp', rarity: 'epic' },
 ];
 
+const TL_GREATSWORD_ITEMS: TLItem[] = [
+  // Common (Cinza)
+  { name: 'Sparring Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00001.webp', rarity: 'common' },
+  { name: 'Sharpened Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00003A.webp', rarity: 'common' },
+  { name: 'Reforged Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00003.webp', rarity: 'common' },
+  { name: 'Forged Iron Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00002.webp', rarity: 'common' },
+  { name: 'Forgotten Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00037A.webp', rarity: 'common' },
+  // Uncommon (Verde)
+  { name: 'Legionnaire Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00026.webp', rarity: 'uncommon' },
+  { name: 'Guardian Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00004.webp', rarity: 'uncommon' },
+  { name: 'Standard Issue Claymore', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00023.webp', rarity: 'uncommon' },
+  { name: 'Charger Broadsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00006.webp', rarity: 'uncommon' },
+  // Rare (Azul)
+  { name: 'Golem Grinding Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00005.webp', rarity: 'rare' },
+  { name: 'Warblade of Undead Slaying', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00026C.webp', rarity: 'rare' },
+  { name: 'Broadsword of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00019.webp', rarity: 'rare' },
+  { name: 'Dead Reckoning Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00013.webp', rarity: 'rare' },
+  { name: 'Relentless Cleaver', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00012.webp', rarity: 'rare' },
+  { name: 'Greatsword of Punishing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00013A.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00019B.webp', rarity: 'rare' },
+  { name: 'Bound Resistance Vanguard Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00019B.webp', rarity: 'rare' },
+  // Epic (Roxo)
+  { name: 'Immortal Titanic Quakeblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp', rarity: 'epic' },
+  { name: 'Celestial Cyclone Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp', rarity: 'epic' },
+  { name: 'Morokai\'s Greatblade of Corruption', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp', rarity: 'epic' },
+  { name: 'Duke Magna\'s Provoking Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00022.webp', rarity: 'epic' },
+  { name: 'Adentus\'s Gargantuan Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp', rarity: 'epic' },
+  { name: 'Junobote\'s Juggernaut Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00039.webp', rarity: 'epic' },
+  { name: 'Naru\'s Frenzied Greatblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp', rarity: 'epic' },
+  { name: 'Duke Magna\'s Fury Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp', rarity: 'epic' },
+  { name: 'Heroic Broadsword of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00038.webp', rarity: 'epic' },
+  { name: 'Greatsword of the Banshee', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00018.webp', rarity: 'epic' },
+  { name: 'Tevent\'s Warblade of Despair', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp', rarity: 'epic' },
+  { name: 'Broadsword of the Juggernaught', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp', rarity: 'epic' },
+  { name: 'Greatblade of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00049.webp', rarity: 'epic' },
+  { name: 'Grayeye\'s Bloodlust Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00050.webp', rarity: 'epic' },
+  { name: 'Cordy\'s Warblade of Creeping Doom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp', rarity: 'epic' },
+];
+
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
-  "Greatsword": [],
+  "Greatsword": TL_GREATSWORD_ITEMS,
   "Dagger": [],
   "Bow": [],
   "Crossbow": [],
@@ -159,7 +198,7 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && !data.trait) { // Make Trait required for Swords
+  if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && !data.trait) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório para Swords.", path: ["trait"] });
   }
 });
@@ -209,7 +248,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword') {
+    if (watchedWeaponType !== 'Sword') { // Only swords have traits for now
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
@@ -286,7 +325,7 @@ function LootPageContent() {
         const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
         finalDroppedByMemberName = droppedByMember?.label;
     } else {
-        finalDroppedByMemberId = undefined; // Ensure it's undefined if "None" was chosen
+        finalDroppedByMemberId = undefined; 
     }
 
 
@@ -413,7 +452,7 @@ function LootPageContent() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>
-                                  Trait da Arma (Específico para {watchedWeaponType})
+                                  Trait da Arma (Específico para Sword)
                                   <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <div className="relative flex items-center">
@@ -429,6 +468,25 @@ function LootPageContent() {
                               </FormItem>
                             )}
                           />
+                        )}
+                         {selectedItemForPreview && (
+                          <div className="mt-4 space-y-2">
+                            <FormLabel>Prévia do Item</FormLabel>
+                            <div className={cn(
+                                "w-24 h-24 p-2 rounded-md flex items-center justify-center border border-border",
+                                rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted'
+                              )}
+                            >
+                              <Image
+                                src={selectedItemForPreview.imageUrl}
+                                alt={selectedItemForPreview.name}
+                                width={80}
+                                height={80}
+                                className="object-contain"
+                                data-ai-hint="game item weapon"
+                              />
+                            </div>
+                          </div>
                         )}
                       </>
                     )}
@@ -463,26 +521,6 @@ function LootPageContent() {
                         </FormItem>
                       )}
                     />
-
-                    {selectedItemForPreview && (
-                      <div className="mt-4 space-y-2">
-                        <FormLabel>Prévia do Item</FormLabel>
-                        <div className={cn(
-                            "w-24 h-24 p-2 rounded-md flex items-center justify-center border border-border",
-                            rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted'
-                          )}
-                        >
-                          <Image
-                            src={selectedItemForPreview.imageUrl}
-                            alt={selectedItemForPreview.name}
-                            width={80}
-                            height={80}
-                            className="object-contain"
-                            data-ai-hint="game item weapon"
-                          />
-                        </div>
-                      </div>
-                    )}
                     
                     <DialogFooter className="p-0 pt-6 sticky bottom-0 bg-card">
                       <Button type="button" variant="outline" onClick={() => setShowAddItemDialog(false)} disabled={isSubmitting}>Cancelar</Button>
