@@ -7,8 +7,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile, AuditActionType, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
-import { GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster';
+import type { Guild, GuildMember, UserProfile, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
+import { AuditActionType, GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger as AlertDialogTriggerUI,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -63,6 +62,11 @@ import {
   DialogTitle as GroupDialogTitle,
   DialogDescription as GroupDialogDescription,
   DialogFooter as GroupDialogFooter,
+  DialogContent as DkpDialogContent,
+  DialogHeader as DkpDialogHeader,
+  DialogTitle as DkpDialogTitle,
+  DialogDescription as DkpDialogDescription,
+  DialogFooter as DkpDialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -74,7 +78,7 @@ import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon,
-  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide
+  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format } from 'date-fns';
@@ -223,8 +227,17 @@ function MembersListTabContent(
   const [showMemberDetailsDialog, setShowMemberDetailsDialog] = useState(false);
   const [selectedMemberForDetails, setSelectedMemberForDetails] = useState<GuildMember | null>(null);
 
+  // State for DKP Adjustment Dialog
+  const [isDkpModalOpen, setIsDkpModalOpen] = useState(false);
+  const [selectedMemberForDkp, setSelectedMemberForDkp] = useState<GuildMember | null>(null);
+  const [dkpAdjustmentType, setDkpAdjustmentType] = useState<'add' | 'remove'>('add');
+  const [dkpAdjustmentAmount, setDkpAdjustmentAmount] = useState<number | string>("");
+  const [dkpAdjustmentReason, setDkpAdjustmentReason] = useState("");
+  const [isProcessingDkp, setIsProcessingDkp] = useState(false);
+
+
   useEffect(() => {
-    setMembers(initialMembers); // Update local members when prop changes
+    setMembers(initialMembers); 
   }, [initialMembers]);
 
   const canManageMemberRoles = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE), [currentUserRoleInfo, guild?.customRoles]);
@@ -232,6 +245,8 @@ function MembersListTabContent(
   const canManageMemberStatus = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS), [currentUserRoleInfo, guild?.customRoles]);
   const canManageMemberNotes = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES), [currentUserRoleInfo, guild?.customRoles]);
   const canViewDetailedMemberInfo = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO), [currentUserRoleInfo, guild?.customRoles]);
+  const canAdjustMemberDkp = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE), [currentUserRoleInfo, guild?.customRoles]);
+
 
   const availableRoleNamesForChange = useMemo(() => {
     if (!guild || !guild.customRoles) return [];
@@ -338,6 +353,63 @@ function MembersListTabContent(
     if (canViewDetailedMemberInfo) { setSelectedMemberForDetails(member); setShowMemberDetailsDialog(true); }
     else { toast({ title: "Permissão Negada", description: "Você não tem permissão para ver detalhes dos membros.", variant: "destructive" }); }
   };
+  
+  const handleOpenDkpDialog = (member: GuildMember, type: 'add' | 'remove') => {
+    if (!guild?.dkpSystemEnabled || !canAdjustMemberDkp) {
+      toast({ title: "Ação não permitida", description: "O sistema DKP está desabilitado ou você não tem permissão.", variant: "destructive" });
+      return;
+    }
+    setSelectedMemberForDkp(member);
+    setDkpAdjustmentType(type);
+    setDkpAdjustmentAmount("");
+    setDkpAdjustmentReason("");
+    setIsDkpModalOpen(true);
+  };
+
+  const handleDkpAdjustment = async () => {
+    if (!selectedMemberForDkp || !guildId || !currentUser || !guild?.dkpSystemEnabled || !canAdjustMemberDkp) return;
+    const amount = Number(dkpAdjustmentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ title: "Valor Inválido", description: "Por favor, insira um valor DKP positivo.", variant: "destructive" });
+      return;
+    }
+    const currentBalance = selectedMemberForDkp.dkpBalance || 0;
+    if (dkpAdjustmentType === 'remove' && amount > currentBalance) {
+      toast({ title: "Valor Inválido", description: "Não é possível remover mais DKP do que o membro possui.", variant: "destructive" });
+      return;
+    }
+
+    setIsProcessingDkp(true);
+    const oldDkpBalance = currentBalance;
+    const dkpChange = dkpAdjustmentType === 'add' ? amount : -amount;
+    const newDkpBalance = oldDkpBalance + dkpChange;
+
+    try {
+      const guildRef = doc(db, "guilds", guildId);
+      await updateDoc(guildRef, {
+        [`roles.${selectedMemberForDkp.uid}.dkpBalance`]: firebaseIncrement(dkpChange)
+      });
+
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_DKP_ADJUSTED, {
+        targetUserId: selectedMemberForDkp.uid,
+        targetUserDisplayName: selectedMemberForDkp.characterNickname || selectedMemberForDkp.displayName || "",
+        dkpAmountChanged: dkpChange,
+        dkpAdjustmentReason: dkpAdjustmentReason || (dkpAdjustmentType === 'add' ? 'Adição manual' : 'Remoção manual'),
+        oldDkpBalance: oldDkpBalance,
+        newDkpBalance: newDkpBalance,
+      });
+
+      toast({ title: "DKP Ajustado!", description: `O saldo DKP de ${selectedMemberForDkp.characterNickname || selectedMemberForDkp.displayName} foi atualizado para ${newDkpBalance}.` });
+      fetchGuildAndMembers();
+      setIsDkpModalOpen(false);
+    } catch (error) {
+      console.error("Erro ao ajustar DKP:", error);
+      toast({ title: "Erro ao Ajustar DKP", variant: "destructive" });
+    } finally {
+      setIsProcessingDkp(false);
+    }
+  };
+
 
   const getRoleIcon = (roleName: string) => {
     if (roleName === "Lider") return <Crown className="h-5 w-5 text-yellow-400" />;
@@ -392,9 +464,7 @@ function MembersListTabContent(
     if (statusFilter !== "all") { tempMembers = tempMembers.filter(member => member.status === statusFilter); }
     if (gearSortOrder !== "default") { tempMembers.sort((a, b) => { const gearA = a.gearScore || 0; const gearB = b.gearScore || 0; return gearSortOrder === "asc" ? gearA - gearB : gearB - gearA; }); }
     if (dkpSortOrder !== "default") { tempMembers.sort((a, b) => { const dkpA = a.dkpBalance || 0; const dkpB = b.dkpBalance || 0; return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - dkpA; }); }
-    // Activity Date Range and Time filter logic (placeholder - not fully implemented)
     if (activityDateRange?.from) {
-        // tempMembers = tempMembers.filter(member => { /* filter logic based on member.lastActivity */ });
     }
     return tempMembers;
   }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game, activityDateRange, timeFromFilter, timeToFilter]);
@@ -525,7 +595,29 @@ function MembersListTabContent(
                   <TableCell><div className="flex items-center gap-1">{member.dkpBalance ?? 0}<Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" /></div></TableCell>
                   {canManageMemberNotes && ( <TableCell><div className="flex items-center"><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenNotesDialog(member)}><FileText className="h-4 w-4" /><span className="sr-only">Ver/Editar Nota</span></Button></div></TableCell> )}
                   <TableCell><Badge variant="outline" className={cn("text-xs", getStatusBadgeClass(member.status))}><div className="flex items-center gap-1">{getStatusIcon(member.status)}{displayMemberStatus(member.status)}</div></Badge></TableCell>
-                  <TableCell className="text-right"><div className="flex items-center justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewMemberDetails(member)} disabled={!canViewDetailedMemberInfo}><Search className="h-4 w-4" /><span className="sr-only">Ver Detalhes</span></Button>{!isCurrentUserTarget && ( <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" disabled={isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus}><MoreVertical className="h-4 w-4" /><span className="sr-only">Ações do membro</span></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Gerenciar Membro</DropdownMenuLabel><DropdownMenuSeparator />{canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider") && ( <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")} disabled={isGuildOwnerTarget && member.roleName === "Lider"}><UserCog className="mr-2 h-4 w-4" /> Alterar Cargo</DropdownMenuItem> )}{canManageMemberStatus && ( <DropdownMenuSub><DropdownMenuSubTrigger disabled={isGuildOwnerTarget && member.roleName === "Lider" && member.status === "Ativo"}><UserCog className="mr-2 h-4 w-4" />Alterar Status</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent>{(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => ( <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }} disabled={isGuildOwnerTarget && member.roleName === "Lider" && statusOption === 'Inativo'}>{getStatusIcon(statusOption)}{displayMemberStatus(statusOption)}</DropdownMenuItem> ))}</DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub> )}{canKickMembers && !isGuildOwnerTarget && ( <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem> )}{isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus && !canManageMemberRoles && !canKickMembers && ( <DropdownMenuItem disabled>Nenhuma ação disponível</DropdownMenuItem> )}</DropdownMenuContent></DropdownMenu> )}</div></TableCell>
+                  <TableCell className="text-right"><div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewMemberDetails(member)} disabled={!canViewDetailedMemberInfo}><Search className="h-4 w-4" /><span className="sr-only">Ver Detalhes</span></Button>
+                    {!isCurrentUserTarget && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" disabled={(isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus && !canManageMemberRoles && !canAdjustMemberDkp)}><MoreVertical className="h-4 w-4" /><span className="sr-only">Ações do membro</span></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Gerenciar Membro</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider") && ( <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")} disabled={isGuildOwnerTarget && member.roleName === "Lider"}><UserCog className="mr-2 h-4 w-4" /> Alterar Cargo</DropdownMenuItem> )}
+                                {canManageMemberStatus && ( <DropdownMenuSub><DropdownMenuSubTrigger disabled={isGuildOwnerTarget && member.roleName === "Lider" && member.status === "Ativo"}><UserCog className="mr-2 h-4 w-4" />Alterar Status</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent>{(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => ( <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }} disabled={isGuildOwnerTarget && member.roleName === "Lider" && statusOption === 'Inativo'}>{getStatusIcon(statusOption)}{displayMemberStatus(statusOption)}</DropdownMenuItem> ))}</DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub> )}
+                                {canAdjustMemberDkp && guild.dkpSystemEnabled && !isGuildOwnerTarget && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'add')}><PlusCircleIconLucide className="mr-2 h-4 w-4 text-green-500"/> Dar DKP</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'remove')}><MinusCircle className="mr-2 h-4 w-4 text-red-500"/> Retirar DKP</DropdownMenuItem>
+                                    </>
+                                )}
+                                {canKickMembers && !isGuildOwnerTarget && ( <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem></> )}
+                                {(isGuildOwnerTarget && member.roleName === "Lider" && !canManageMemberStatus && !canManageMemberRoles && !canKickMembers && (!canAdjustMemberDkp || !guild.dkpSystemEnabled)) && ( <DropdownMenuItem disabled>Nenhuma ação disponível</DropdownMenuItem> )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                  </div></TableCell>
                 </TableRow>
               );
             })}
@@ -544,6 +636,54 @@ function MembersListTabContent(
       {selectedMemberForDetails && ( <Dialog open={showMemberDetailsDialog} onOpenChange={setShowMemberDetailsDialog}> <MemberDetailsDialogContent className="sm:max-w-lg"> <MemberDetailsDialogHeader> <MemberDetailsDialogTitle className="flex items-center"> <Avatar className="h-10 w-10 mr-3"> <AvatarImage src={selectedMemberForDetails.photoURL || `https://placehold.co/40x40.png?text=${(selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName)?.substring(0,1) || 'M'}`} alt={selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName || 'Avatar'} data-ai-hint="user avatar"/> <AvatarFallback>{(selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName)?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback> </Avatar> Detalhes de {selectedMemberForDetails.characterNickname || selectedMemberForDetails.displayName} </MemberDetailsDialogTitle> <MemberDetailsDialogDescription> Informações específicas do membro na guilda. </MemberDetailsDialogDescription> </MemberDetailsDialogHeader> <div className="py-4 space-y-3"> <p><strong>Nickname na Guilda:</strong> {selectedMemberForDetails.characterNickname || "N/A"}</p> <p><strong>Gearscore:</strong> {selectedMemberForDetails.gearScore ?? "N/A"}</p> {selectedMemberForDetails.gearScoreScreenshotUrl ? ( <p><strong>Print do Gearscore:</strong> <Link href={selectedMemberForDetails.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver Screenshot <Eye className="inline h-4 w-4 ml-1"/></Link></p> ) : <p><strong>Print do Gearscore:</strong> N/A</p>} {selectedMemberForDetails.gearBuildLink ? ( <p><strong>Gear Build Link:</strong> <Link href={selectedMemberForDetails.gearBuildLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver Build de Equipamento <LinkIcon className="inline h-4 w-4 ml-1"/></Link></p> ) : <p><strong>Gear Build Link:</strong> N/A</p>} {selectedMemberForDetails.skillBuildLink ? ( <p><strong>Skill Build Link:</strong> <Link href={selectedMemberForDetails.skillBuildLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver Build de Habilidades <LinkIcon className="inline h-4 w-4 ml-1"/></Link></p> ) : <p><strong>Skill Build Link:</strong> N/A</p>} {isTLGuild && ( <> <hr className="my-3 border-border"/> <p className="flex items-center gap-1"><strong>Função (TL):</strong> {getTLRoleIcon(selectedMemberForDetails.tlRole)} {selectedMemberForDetails.tlRole || "N/A"}</p> <div className="flex items-center gap-2"> <strong>Armas (TL):</strong> {selectedMemberForDetails.weapons?.mainHandIconUrl && <Image src={selectedMemberForDetails.weapons.mainHandIconUrl} alt={selectedMemberForDetails.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>} {selectedMemberForDetails.weapons?.offHandIconUrl && <Image src={selectedMemberForDetails.weapons.offHandIconUrl} alt={selectedMemberForDetails.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>} {!selectedMemberForDetails.weapons?.mainHandIconUrl && !selectedMemberForDetails.weapons?.offHandIconUrl && "N/A"} </div> {selectedMemberForDetails.tlPrimaryWeapon && <p className="text-sm text-muted-foreground ml-4">- {selectedMemberForDetails.tlPrimaryWeapon}</p>} {selectedMemberForDetails.tlSecondaryWeapon && <p className="text-sm text-muted-foreground ml-4">- {selectedMemberForDetails.tlSecondaryWeapon}</p>} </> )} </div> <MemberDetailsDialogFooter> <Button variant="outline" onClick={() => setShowMemberDetailsDialog(false)}>Fechar</Button> </MemberDetailsDialogFooter> </MemberDetailsDialogContent> </Dialog> )}
       <AlertDialog open={actionType === 'changeRole' && !!actionUser} onOpenChange={(isOpen) => !isOpen && closeActionDialog()}> <AlertDialogContent> <AlertDialogHeader> <AlertDialogTitle>Alterar Cargo de {actionUser?.characterNickname || actionUser?.displayName}</AlertDialogTitle> <AlertDialogDescription> Selecione o novo cargo para este membro. </AlertDialogDescription> </AlertDialogHeader> <div className="py-4"> <Select value={selectedNewRoleName} onValueChange={(value) => setSelectedNewRoleName(value as string)}> <SelectTrigger className="form-input"> <SelectValue placeholder="Selecione um novo cargo" /> </SelectTrigger> <SelectContent> {availableRoleNamesForChange.filter(roleName => roleName !== actionUser?.roleName).map(roleName => ( <SelectItem key={roleName} value={roleName}>{roleName}</SelectItem> ))} </SelectContent> </Select> </div> <AlertDialogFooter> <AlertDialogCancel onClick={closeActionDialog} disabled={isProcessingAction}>Cancelar</AlertDialogCancel> <AlertDialogAction onClick={handleChangeRole} disabled={isProcessingAction || !selectedNewRoleName}> {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Confirmar Mudança </AlertDialogAction> </AlertDialogFooter> </AlertDialogContent> </AlertDialog>
       <AlertDialog open={actionType === 'kick' && !!actionUser} onOpenChange={(isOpen) => !isOpen && closeActionDialog()}> <AlertDialogContent> <AlertDialogHeader> <AlertDialogTitle>Remover {actionUser?.characterNickname || actionUser?.displayName} da Guilda?</AlertDialogTitle> <AlertDialogDescription> Esta ação é irreversível. O membro será removido da guilda e perderá seu cargo. </AlertDialogDescription> </AlertDialogHeader> <AlertDialogFooter> <AlertDialogCancel onClick={closeActionDialog} disabled={isProcessingAction}>Cancelar</AlertDialogCancel> <AlertDialogAction onClick={handleKickMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isProcessingAction}> {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Confirmar Remoção </AlertDialogAction> </AlertDialogFooter> </AlertDialogContent> </AlertDialog>
+      
+      {/* DKP Adjustment Dialog */}
+      <Dialog open={isDkpModalOpen} onOpenChange={(isOpen) => { if (!isOpen) {setSelectedMemberForDkp(null); setDkpAdjustmentAmount(""); setDkpAdjustmentReason("");} setIsDkpModalOpen(isOpen); }}>
+        <DkpDialogContent className="sm:max-w-md">
+          <DkpDialogHeader>
+            <DkpDialogTitle className="flex items-center">
+                <Coins className="mr-2 h-6 w-6 text-primary"/>
+                Ajustar DKP de {selectedMemberForDkp?.characterNickname || selectedMemberForDkp?.displayName}
+            </DkpDialogTitle>
+            <DkpDialogDescription>
+                {dkpAdjustmentType === 'add' ? 'Adicionar DKP ao membro.' : 'Remover DKP do membro.'}
+                <br/>Saldo Atual: <span className="font-semibold text-foreground">{selectedMemberForDkp?.dkpBalance ?? 0} DKP</span>
+            </DkpDialogDescription>
+          </DkpDialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+                <Label htmlFor="dkpAmount">Valor DKP</Label>
+                <Input
+                    id="dkpAmount"
+                    type="number"
+                    value={dkpAdjustmentAmount}
+                    onChange={(e) => setDkpAdjustmentAmount(e.target.value)}
+                    placeholder="Ex: 50"
+                    className="form-input mt-1"
+                    min="1"
+                />
+            </div>
+            <div>
+                <Label htmlFor="dkpReason">Motivo (Opcional)</Label>
+                <Textarea
+                    id="dkpReason"
+                    value={dkpAdjustmentReason}
+                    onChange={(e) => setDkpAdjustmentReason(e.target.value)}
+                    placeholder="Ex: Participação em evento especial"
+                    rows={3}
+                    className="form-input mt-1"
+                />
+            </div>
+          </div>
+          <DkpDialogFooter>
+            <Button variant="outline" onClick={() => setIsDkpModalOpen(false)} disabled={isProcessingDkp}>Cancelar</Button>
+            <Button onClick={handleDkpAdjustment} disabled={isProcessingDkp || dkpAdjustmentAmount === "" || Number(dkpAdjustmentAmount) <= 0} className="btn-gradient btn-style-secondary">
+              {isProcessingDkp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (dkpAdjustmentType === 'add' ? <PlusCircleIconLucide className="mr-2 h-4 w-4"/> : <MinusCircle className="mr-2 h-4 w-4"/>)}
+              {dkpAdjustmentType === 'add' ? 'Confirmar Adição' : 'Confirmar Remoção'}
+            </Button>
+          </DkpDialogFooter>
+        </DkpDialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -743,7 +883,7 @@ function MembersPageContainer() {
     if (currentTab && ["members", "groups", "screenshots", "vod"].includes(currentTab)) {
       setActiveTab(currentTab);
     } else {
-      setActiveTab("members"); // Default to members tab
+      setActiveTab("members"); 
     }
   }, [searchParams]);
 
@@ -783,7 +923,6 @@ function MembersPageContainer() {
           const roleInfoSource = guildData.roles?.[uid];
           const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
           processedMembers.push(enhancedMember);
-          // For groups tab, we might only need simpler member data for the dropdown
           processedGuildMembersForGroups.push({ uid: baseProfile.uid, displayName: baseProfile.displayName || 'Desconhecido', photoURL: baseProfile.photoURL, email: baseProfile.email } as GuildMember);
         }
         processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid));

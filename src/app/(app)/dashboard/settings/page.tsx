@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair } from 'lucide-react'; // Added Crosshair
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair, MinusCircle, PlusCircle as PlusCircleIconLucide } from 'lucide-react'; // Added Crosshair, MinusCircle, PlusCircleIconLucide
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -134,6 +134,7 @@ const permissionDescriptions: Record<PermissionEnum, { title: string; descriptio
   [GuildPermission.MANAGE_DKP_SETTINGS]: { title: "Gerenciar Configurações DKP", description: "Permite habilitar/desabilitar o sistema DKP, definir janela de resgate e valores padrão por evento." },
   [GuildPermission.MANAGE_DKP_DECAY_SETTINGS]: { title: "Gerenciar Decaimento DKP", description: "Permite configurar o decaimento automático de DKP, incluindo porcentagem, intervalo e data inicial." },
   [GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE]: { title: "Aprovar Confirmações Manuais", description: "Permite aprovar ou rejeitar submissões manuais de participação em eventos." },
+  [GuildPermission.MANAGE_MEMBER_DKP_BALANCE]: { title: "Gerenciar Saldo DKP de Membros", description: "Permite adicionar ou remover DKP do saldo de membros individualmente." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -299,7 +300,9 @@ function GuildSettingsPageContent() {
 
         const initialRoles = guildData.customRoles || {};
         const allCurrentPermissions = Object.values(GuildPermission);
-        const liderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE])];
+        // Ensure Lider has all permissions, including new ones
+        const liderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE, GuildPermission.MANAGE_MEMBER_DKP_BALANCE])];
+
 
         if (!initialRoles["Lider"]) {
           initialRoles["Lider"] = { permissions: liderPermissions, description: "Fundador e administrador principal da guilda."};
@@ -413,8 +416,8 @@ function GuildSettingsPageContent() {
       const guildRef = doc(db, "guilds", guild.id);
       await updateDoc(guildRef, { tlGuildFocus: data.tlGuildFocus });
 
-      await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.GUILD_SETTINGS_UPDATED, { // Consider a more specific AuditActionType if needed
-        changedField: 'tlGuildFocus' as any, // Cast to any if 'tlGuildFocus' isn't in your AuditLogDetails.changedField union
+      await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.GUILD_SETTINGS_UPDATED, { 
+        changedField: 'tlGuildFocus' as any, 
         oldValue: oldFocus?.join(', ') || "Nenhum",
         newValue: data.tlGuildFocus.join(', '),
       });
@@ -459,7 +462,7 @@ function GuildSettingsPageContent() {
             title: `Erro de Permissão ao Excluir "${subcoll}"`,
             description: `Falha ao excluir a subcoleção "${subcoll}". Detalhes: ${subError.message}. Verifique suas REGRAS DE SEGURANÇA DO FIRESTORE para o caminho "guilds/${guild.id}/${subcoll}". O proprietário da guilda precisa ter permissão de exclusão explícita para esta subcoleção.`,
             variant: "destructive",
-            duration: 20000 // Longer duration for important error
+            duration: 20000 
           });
           throw new Error(`Falha ao excluir a subcoleção ${subcoll}: ${subError.message}`);
         }
@@ -473,9 +476,8 @@ function GuildSettingsPageContent() {
       toast({ title: "Guilda Excluída!", description: `A guilda ${guild.name} foi permanentemente excluída.` });
       setHeaderTitle(null);
       router.push('/guild-selection');
-    } catch (error: any) { // Catch re-thrown error or error from deleteDoc
+    } catch (error: any) { 
       console.error("[GuildDelete] Erro durante o processo de exclusão da guilda:", error);
-      // Avoid showing a generic toast if a specific subcollection toast was already shown
       if (!error.message.startsWith("Falha ao excluir a subcoleção")) {
         toast({ title: "Erro ao Excluir Guilda", description: `Não foi possível excluir a guilda. Detalhes: ${error.message}. Verifique o console para mais informações e suas regras do Firestore.`, variant: "destructive", duration: 10000 });
       }
@@ -709,7 +711,7 @@ function GuildSettingsPageContent() {
       const rolesToSave = { ...customRoles };
 
       const allCurrentPermissions = Object.values(GuildPermission);
-      const defaultLiderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE])];
+      const defaultLiderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE, GuildPermission.MANAGE_MEMBER_DKP_BALANCE])];
       const defaultMembroPermissions = [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO];
 
       if (!rolesToSave["Lider"]) {
@@ -1101,7 +1103,8 @@ function GuildSettingsPageContent() {
                                  permission === GuildPermission.MANAGE_DKP_SETTINGS ||
                                  permission === GuildPermission.MANAGE_DKP_DECAY_SETTINGS ||
                                  permission === GuildPermission.MANAGE_EVENTS_VIEW_PIN ||
-                                 permission === GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE);
+                                 permission === GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE ||
+                                 permission === GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
 
 
                             return (
@@ -1491,3 +1494,4 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+

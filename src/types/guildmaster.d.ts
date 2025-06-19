@@ -23,7 +23,8 @@ export enum GuildPermission {
   VIEW_MEMBER_DETAILED_INFO = "VIEW_MEMBER_DETAILED_INFO",
   MANAGE_DKP_SETTINGS = "MANAGE_DKP_SETTINGS",
   MANAGE_DKP_DECAY_SETTINGS = "MANAGE_DKP_DECAY_SETTINGS",
-  MANAGE_MANUAL_CONFIRMATIONS_APPROVE = "MANAGE_MANUAL_CONFIRMATIONS_APPROVE", // New permission
+  MANAGE_MANUAL_CONFIRMATIONS_APPROVE = "MANAGE_MANUAL_CONFIRMATIONS_APPROVE",
+  MANAGE_MEMBER_DKP_BALANCE = "MANAGE_MEMBER_DKP_BALANCE", // New Permission
 }
 
 export enum TLRole {
@@ -247,6 +248,7 @@ export enum AuditActionType {
   DKP_SETTINGS_UPDATED = "DKP_SETTINGS_UPDATED",
   DKP_DECAY_SETTINGS_UPDATED = "DKP_DECAY_SETTINGS_UPDATED",
   DKP_ON_DEMAND_DECAY_TRIGGERED = "DKP_ON_DEMAND_DECAY_TRIGGERED",
+  MEMBER_DKP_ADJUSTED = "MEMBER_DKP_ADJUSTED", // New Audit Action
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -291,7 +293,11 @@ export interface AuditLogDetails {
   changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory' | 'dkpDecayEnabled' | 'dkpDecayPercentage' | 'dkpDecayIntervalDays' | 'dkpDecayInitialDate' | 'tlGuildFocus';
   noteSummary?: string;
   applicationId?: string;
-  dkpValueAwarded?: number;
+  dkpValueAwarded?: number; // Existing
+  dkpAmountChanged?: number; // New for DKP adjustment
+  dkpAdjustmentReason?: string; // New for DKP adjustment
+  oldDkpBalance?: number; // New for DKP adjustment
+  newDkpBalance?: number; // New for DKP adjustment
   decayPercentage?: number;
   affectedMembersCount?: number;
   groupId?: string;
@@ -352,3 +358,4 @@ export interface AppNotification {
   targetUserId?: string;
   isRead?: boolean;
 }
+
