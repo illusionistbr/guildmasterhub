@@ -496,6 +496,13 @@ const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Auric Vanguard\'s Full Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00005A.webp', rarity: 'epic' },
 ];
 
+const TL_CLOAK_ITEMS: TLItem[] = [
+  { name: 'Cloak of Accuracy', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00007.webp', rarity: 'uncommon'},
+  { name: 'Shroud of Striking', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00005.webp', rarity: 'uncommon'},
+  { name: 'Mantle of Casting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00006.webp', rarity: 'uncommon'},
+  { name: 'Cloak of Battle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00001.webp', rarity: 'uncommon'},
+];
+
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
@@ -510,6 +517,7 @@ const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
 const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
   "Head": TL_HEAD_ARMOR_ITEMS,
   "Chest": TL_CHEST_ARMOR_ITEMS,
+  "Cloak": TL_CLOAK_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -532,12 +540,14 @@ const weaponTypeOptions = [
 const armorTypeOptions = [
   { value: "Head", label: "Cabeça" },
   { value: "Chest", label: "Peitoral" },
+  { value: "Cloak", label: "Manto" },
 ];
 
 const traitOptions = [
   { value: "Attack Speed", label: "Attack Speed" },
   { value: "Buff Duration", label: "Buff Duration" },
   { value: "Collision Chance", label: "Collision Chance" },
+  { value: "Collision Resistance", label: "Collision Resistance" },
   { value: "Construct Bonus Damage", label: "Construct Bonus Damage" },
   { value: "Cooldown Speed", label: "Cooldown Speed" },
   { value: "Critical Hit Chance", label: "Critical Hit Chance" },
@@ -552,10 +562,13 @@ const traitOptions = [
   { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency" },
   { value: "Mana Regen", label: "Mana Regen" },
   { value: "Max Health", label: "Max Health" },
+  { value: "Max Mana", label: "Max Mana" },
   { value: "Melee Endurance", label: "Melee Endurance" },
   { value: "Melee Evasion", label: "Melee Evasion" },
   { value: "Petrification Chance", label: "Petrification Chance" },
   { value: "Silence Chance", label: "Silence Chance" },
+  { value: "Silence Resistance", label: "Silence Resistance" },
+  { value: "Skill Damage Resistance", label: "Skill Damage Resistance" },
   { value: "Stun Chance", label: "Stun Chance" },
   { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
   { value: "Weaken Chance", label: "Weaken Chance" },
@@ -580,7 +593,7 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest"];
+const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest", "Cloak"];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -945,7 +958,7 @@ function LootPageContent() {
                                 <span className="text-destructive">*</span>
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -968,7 +981,7 @@ function LootPageContent() {
                             <div className="relative flex items-center">
                               <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                               <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                                 <SelectContent>
                                   {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                 </SelectContent>
@@ -993,7 +1006,7 @@ function LootPageContent() {
                             width={80}
                             height={80}
                             className="object-contain"
-                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : "game item armor"}
+                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : "game item accessory")}
                           />
                         </div>
                       </div>
@@ -1130,5 +1143,6 @@ export default function LootPageWrapper() {
 
 
     
+
 
 
