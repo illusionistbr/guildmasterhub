@@ -5,8 +5,8 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc } from '@/lib/firebase'; // Firestore imports already here
-import type { Guild, GuildMember, UserProfile } from '@/types/guildmaster'; // GuildMember for member list
+import { db, doc, getDoc } from '@/lib/firebase'; 
+import type { Guild, GuildMember, UserProfile } from '@/types/guildmaster'; 
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +32,7 @@ import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface TLItem {
   name: string;
@@ -140,10 +140,11 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Distribuído': 'bg-orange-500/20 text-orange-600 border-orange-500/50',
   'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
   'Em rolagem': 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50',
-  'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50', // Light blue for awaiting auction
-  'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50', // Light yellow for awaiting roll
+  'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50',
+  'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50',
 };
 
+const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -158,7 +159,7 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && !data.trait) {
+  if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && !data.trait) { // Make Trait required for Swords
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório para Swords.", path: ["trait"] });
   }
 });
@@ -239,7 +240,6 @@ function LootPageContent() {
         setGuild(guildData);
         setHeaderTitle(`Loot: ${guildData.name}`);
 
-        // Prepare members for dropdown
         const membersDropdownData: { value: string; label: string }[] = [];
         if (guildData.memberIds && guildData.roles) {
           for (const memberId of guildData.memberIds) {
@@ -278,11 +278,20 @@ function LootPageContent() {
             }
         }
     }
+    
+    let finalDroppedByMemberId: string | undefined = data.droppedByMemberId;
+    let finalDroppedByMemberName: string | undefined = undefined;
 
-    const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
+    if (data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID) {
+        const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
+        finalDroppedByMemberName = droppedByMember?.label;
+    } else {
+        finalDroppedByMemberId = undefined; // Ensure it's undefined if "None" was chosen
+    }
+
 
     const newItem: BankItem = {
-      id: Date.now().toString(), // Simple ID generation for now
+      id: Date.now().toString(), 
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
@@ -290,8 +299,8 @@ function LootPageContent() {
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
-      droppedByMemberId: data.droppedByMemberId,
-      droppedByMemberName: droppedByMember?.label,
+      droppedByMemberId: finalDroppedByMemberId,
+      droppedByMemberName: finalDroppedByMemberName,
     };
 
     setBankItems(prevItems => [...prevItems, newItem]);
@@ -435,7 +444,7 @@ function LootPageContent() {
                                 <Select onValueChange={field.onChange} value={field.value || ""}>
                                     <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                    <SelectItem value="">Ninguém / Não especificado</SelectItem>
+                                    <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem>
                                     {guildMembersForDropdown.map(member => (
                                         <SelectItem key={member.value} value={member.value}>
                                         <div className="flex items-center">
@@ -509,15 +518,15 @@ function LootPageContent() {
                     <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[item.rarity])}>
                       <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint="game item icon"/>
                     </div>
-                    <Badge
-                      variant={item.status === 'Disponível' ? 'default' : 'secondary'}
-                      className={cn(
-                        "mt-2 mb-2 text-xs px-2 py-0.5",
-                        statusBadgeClasses[item.status]
-                      )}
-                    >
-                      {item.status}
-                    </Badge>
+                     <Badge
+                        variant={item.status === 'Disponível' ? 'default' : 'secondary'}
+                        className={cn(
+                          "mt-2 mb-2 text-xs px-2 py-0.5",
+                          statusBadgeClasses[item.status]
+                        )}
+                      >
+                        {item.status}
+                      </Badge>
                     <div className="text-xs text-muted-foreground space-y-0.5 text-center">
                       <p><strong>Tipo:</strong> {item.itemCategory}</p>
                       {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
