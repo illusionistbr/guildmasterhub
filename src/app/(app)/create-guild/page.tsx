@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
+import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
@@ -242,7 +242,7 @@ export default function CreateGuildPage() {
         }
       />
       <Card className="card-bg">
-        <CardHeader className="relative z-10">
+        <CardHeader>
           <CardTitle>Detalhes da Guilda</CardTitle>
           <CardDescription>
             Preencha as informações abaixo para registrar sua guilda.
@@ -251,7 +251,7 @@ export default function CreateGuildPage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6 relative z-10">
+            <CardContent className="space-y-6">
               <FormField
                 control={control}
                 name="name"
@@ -287,8 +287,8 @@ export default function CreateGuildPage() {
                         />
                       </FormControl>
                     </div>
+                    <FormDescription>Guildas sem senha podem ficar abertas para qualquer usuário entrar.</FormDescription>
                     <FormMessage />
-                    <p className="text-xs text-muted-foreground mt-1">Guildas sem senha podem ficar abertas para qualquer usuário entrar.</p>
                   </FormItem>
                 )}
               />
@@ -407,7 +407,7 @@ export default function CreateGuildPage() {
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                          <p className="text-sm text-muted-foreground">Selecione um ou mais focos para sua guilda.</p>
+                          <FormDescription>Selecione um ou mais focos para sua guilda.</FormDescription>
                         </div>
                         {tlGuildFocusOptions.map((option) => (
                           <FormItem
@@ -456,7 +456,7 @@ export default function CreateGuildPage() {
                   </AlertDescription>
               </Alert>
             </CardContent>
-            <CardFooter className="flex justify-end gap-4 relative z-10">
+            <CardFooter className="flex justify-end gap-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
                 Cancelar
               </Button>
@@ -475,3 +475,5 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+    

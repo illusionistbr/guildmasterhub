@@ -5,7 +5,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
@@ -27,11 +27,11 @@ import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
 
-const tlRegions = [ 
+const tlRegions = [
   { value: "Korea", label: "Coreia" }, { value: "NA East", label: "América do Norte (Leste)" }, { value: "NA West", label: "América do Norte (Oeste)" }, { value: "Europe", label: "Europa" }, { value: "South America", label: "América do Sul" }, { value: "Asia Pacific", label: "Ásia-Pacífico" },
 ];
 
-const tlServers: Record<string, Array<{ value: string; label: string }>> = { 
+const tlServers: Record<string, Array<{ value: string; label: string }>> = {
   "Korea": [ { value: "Belluatan", label: "Belluatan" }, { value: "Greedal", label: "Greedal" }, { value: "Kallis", label: "Kallis" }, { value: "Sienna", label: "Sienna" }, { value: "Solar", label: "Solar" }, { value: "Syleus", label: "Syleus" }, ],
   "NA East": [ { value: "Snowburn", label: "Snowburn" }, { value: "Carnage", label: "Carnage" }, { value: "Adrenaline", label: "Adrenaline" }, { value: "Ivory", label: "Ivory" }, { value: "Stellarite", label: "Stellarite" }, { value: "Pippin", label: "Pippin" }, ],
   "NA West": [ { value: "Oblivion", label: "Oblivion" }, { value: "Moonstone", label: "Moonstone" }, { value: "Invoker", label: "Invoker" }, { value: "Akidu", label: "Akidu" }, ],
@@ -59,7 +59,7 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
     schemaObject.tlPrimaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." });
     schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." });
     schemaObject.applicantTlRegion = z.string({ required_error: "Região é obrigatória." }).min(1, "Região é obrigatória.");
-    schemaObject.applicantTlServer = z.string().optional(); 
+    schemaObject.applicantTlServer = z.string().optional();
     schemaObject.applicantTlGameFocus = z.array(z.string()).min(1, "Selecione pelo menos um foco de jogo.");
   } else {
      schemaObject.tlRole = z.nativeEnum(TLRole).optional();
@@ -73,7 +73,7 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
   customQuestions.forEach(q => {
     schemaObject[q.id] = z.string().max(500, "Resposta muito longa.").optional();
   });
-  
+
   const baseSchema = z.object(schemaObject);
 
   if (isTLGuild) {
@@ -107,7 +107,7 @@ function ApplyPageContent() {
 
   const guildId = searchParams.get('guildId');
   const isTLGuild = guild?.game === "Throne and Liberty";
-  
+
   const applicationSchema = getBaseApplicationSchema(isTLGuild, activeCustomQuestions);
 
   const form = useForm<ApplicationFormValues>({
@@ -121,7 +121,7 @@ function ApplyPageContent() {
       additionalNotes: "",
     },
   });
-  
+
   const watchedApplicantRegion = form.watch("applicantTlRegion");
 
   useEffect(() => {
@@ -131,7 +131,9 @@ function ApplyPageContent() {
   }, [currentUser, form]);
 
   useEffect(() => {
-    form.setValue("applicantTlServer", undefined);
+    if (watchedApplicantRegion) { // Only reset server if region changes to a valid value
+      form.setValue("applicantTlServer", undefined);
+    }
   }, [watchedApplicantRegion, form]);
 
 
@@ -172,7 +174,7 @@ function ApplyPageContent() {
         const currentIsTLGuild = guildData.game === "Throne and Liberty";
         const enabledCustomQuestions = guildData.recruitmentQuestions?.filter(q => q.isEnabled && q.type === 'custom') || [];
         setActiveCustomQuestions(enabledCustomQuestions);
-        
+
         let defaultFormValues: any = {
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
@@ -238,7 +240,7 @@ function ApplyPageContent() {
             customAnswers[q.id] = data[q.id as keyof ApplicationFormValues] as string;
         }
     });
-    
+
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
       applicantId: currentUser.uid,
@@ -249,7 +251,7 @@ function ApplyPageContent() {
       knowsSomeoneInGuild: data.knowsSomeoneInGuild || "",
       additionalNotes: data.additionalNotes || "",
       status: 'pending',
-      ...(isTLGuild && { 
+      ...(isTLGuild && {
           tlRole: data.tlRole,
           tlPrimaryWeapon: data.tlPrimaryWeapon,
           tlSecondaryWeapon: data.tlSecondaryWeapon,
@@ -461,7 +463,7 @@ function ApplyPageContent() {
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                          <p className="text-sm text-muted-foreground">Selecione um ou mais focos de jogo que te interessam.</p>
+                          <FormDescription>Selecione um ou mais focos de jogo que te interessam.</FormDescription>
                         </div>
                         {tlGameFocusOptions.map((option) => (
                           <FormItem
@@ -545,3 +547,5 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
+    
