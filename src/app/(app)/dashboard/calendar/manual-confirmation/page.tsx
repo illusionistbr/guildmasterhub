@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, Suspense, useCallback, useRef } from 'react'; 
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage, doc, getDoc, setDoc, serverTimestamp, Timestamp, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from '@/lib/firebase';
-import type { Guild, Event as GuildEvent, ManualConfirmation, AuditActionType as AuditActionTypeEnum, UserProfile } from '@/types/guildmaster';
+import type { Guild, Event as GuildEvent, ManualConfirmation, UserProfile } from '@/types/guildmaster';
 import { AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -50,8 +50,9 @@ function ManualConfirmationPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pinUsed, setPinUsed] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [invalidUrlParams, setInvalidUrlParams] = useState(false);
 
-  const isMountedRef = useRef(true); // Ref to track mounted state
+  const isMountedRef = useRef(true); 
 
   const form = useForm<ManualConfirmationFormValues>({
     resolver: zodResolver(manualConfirmationSchema),
@@ -117,40 +118,47 @@ function ManualConfirmationPageContent() {
 
 
   useEffect(() => {
-    isMountedRef.current = true; // Set mounted ref to true when component mounts
+    isMountedRef.current = true;
+    setLoadingData(true); 
+    setInvalidUrlParams(false);
 
     const guildIdParam = searchParams.get('guildId');
     const eventIdParam = searchParams.get('eventId');
 
     if (authLoading) {
-        // Do not set loadingData to false here if auth is still loading.
-        // Let the subsequent checks handle it.
-        return;
+        return; 
     }
 
     if (!currentUser) {
       const redirectPath = `/login?redirect=/dashboard/calendar/manual-confirmation?guildId=${guildIdParam || ''}&eventId=${eventIdParam || ''}`;
       router.push(redirectPath);
-      if (isMountedRef.current) setLoadingData(false);
+      setLoadingData(false);
       return;
     }
 
-    if (guildIdParam && eventIdParam) {
-      fetchEventAndConfirmationData(guildIdParam, eventIdParam);
-    } else {
-      if (isMountedRef.current) {
-        toast({ title: "Informações incompletas", description: "ID da guilda ou evento não fornecido na URL.", variant: "destructive" });
+    if (!guildIdParam) {
+        toast({ title: "ID da Guilda Ausente", description: "ID da guilda não fornecido na URL.", variant: "destructive" });
+        router.push('/guild-selection');
+        setInvalidUrlParams(true); 
         setLoadingData(false);
-      }
-      if (!guildIdParam) router.push('/guild-selection');
-      else router.push(`/dashboard/calendar?guildId=${guildIdParam}`);
+        return;
     }
     
+    if (!eventIdParam) {
+        toast({ title: "Informações incompletas", description: "ID do evento não fornecido na URL. Por favor, selecione um evento no calendário.", variant: "destructive" });
+        setInvalidUrlParams(true); 
+        setHeaderTitle("Confirmação Manual"); 
+        setLoadingData(false);
+        return;
+    }
+    
+    fetchEventAndConfirmationData(guildIdParam, eventIdParam);
+    
     return () => {
-      isMountedRef.current = false; // Set to false on unmount
+      isMountedRef.current = false;
       setHeaderTitle(null);
     };
-  }, [authLoading, currentUser, searchParams, router, toast, fetchEventAndConfirmationData, setHeaderTitle]); // Added searchParams
+  }, [authLoading, currentUser, searchParams, router, toast, fetchEventAndConfirmationData, setHeaderTitle]);
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,6 +272,37 @@ function ManualConfirmationPageContent() {
     }
   };
 
+  if (invalidUrlParams) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-center">
+        <Card className="w-full max-w-lg static-card-container">
+          <CardHeader>
+            <CardTitle className="text-3xl font-headline text-destructive flex items-center justify-center">
+              <AlertTriangle className="mr-3 h-8 w-8"/>
+              Informações Incompletas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg text-foreground">
+              Para submeter ou visualizar uma confirmação manual, um evento específico precisa ser selecionado.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              Por favor, navegue até o calendário, selecione um evento e então escolha a opção de confirmação manual.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
+            <Button asChild className="w-full btn-gradient btn-style-primary" onClick={() => {
+                const gid = searchParams.get('guildId'); 
+                if (gid) router.push(`/dashboard/calendar?guildId=${gid}`);
+                else router.push('/guild-selection');
+            }}>
+              <span>Voltar para o Calendário</span>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   if (loadingData || authLoading) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
