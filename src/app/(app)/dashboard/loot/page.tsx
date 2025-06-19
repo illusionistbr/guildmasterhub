@@ -501,7 +501,34 @@ const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Shroud of Striking', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00005.webp', rarity: 'uncommon'},
   { name: 'Mantle of Casting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00006.webp', rarity: 'uncommon'},
   { name: 'Cloak of Battle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00001.webp', rarity: 'uncommon'},
+  { name: 'Warlord\'s Shroud', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00011.webp', rarity: 'rare'},
+  { name: 'Deadeye\'s Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00009.webp', rarity: 'rare'},
+  { name: 'Sorcerer\'s Cape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00010.webp', rarity: 'rare'},
+  { name: 'Nightslayer\'s Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00004.webp', rarity: 'rare'},
+  { name: 'Berserker\'s Shroud', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00012.webp', rarity: 'rare'},
+  { name: 'Leaning Bolder Cape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00012A.webp', rarity: 'rare'},
+  { name: 'Resistance Vanguard Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00009A.webp', rarity: 'rare'},
+  { name: 'Eldritch Whispers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00008.webp', rarity: 'epic'},
+  { name: 'Bile Drenched Veil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00013.webp', rarity: 'epic'},
+  { name: 'Relentless Assault', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00014.webp', rarity: 'epic'},
+  { name: 'Blessed Templar Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00019.webp', rarity: 'epic'},
+  { name: 'Forsaken Embrace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00017.webp', rarity: 'epic'},
+  { name: 'Supreme Devotion', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00018.webp', rarity: 'epic'},
+  { name: 'Ancient Tapestry Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00016.webp', rarity: 'epic'},
+  { name: 'Immortal Reckoning', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00020.webp', rarity: 'epic'},
+  { name: 'Howling Wind Shroud', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00003.webp', rarity: 'epic'},
+  { name: 'Cloak of Victorious Destiny', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00002.webp', rarity: 'epic'},
+  { name: 'Steadfast Commander\'s Cape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00015.webp', rarity: 'epic'},
+  { name: 'Royal Spineflower Drape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00021.webp', rarity: 'epic'},
+  { name: 'Forward General\'s Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00026.webp', rarity: 'epic'},
+  { name: 'Starlight Fur Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00027.webp', rarity: 'epic'},
+  { name: 'Grieving Vengeance Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00024.webp', rarity: 'epic'},
+  { name: 'Opulent Noble\'s Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00023.webp', rarity: 'epic'},
+  { name: 'Cloak of the Frozen Expanse', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00025.webp', rarity: 'epic'},
+  { name: 'Emperor\'s Golden Wing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00033.webp', rarity: 'epic'},
+  { name: 'Iron Lord\'s Veil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00034.webp', rarity: 'epic'},
 ];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -566,10 +593,12 @@ const traitOptions = [
   { value: "Melee Endurance", label: "Melee Endurance" },
   { value: "Melee Evasion", label: "Melee Evasion" },
   { value: "Petrification Chance", label: "Petrification Chance" },
+  { value: "Petrification Resistance", label: "Petrification Resistance" },
   { value: "Silence Chance", label: "Silence Chance" },
   { value: "Silence Resistance", label: "Silence Resistance" },
   { value: "Skill Damage Resistance", label: "Skill Damage Resistance" },
   { value: "Stun Chance", label: "Stun Chance" },
+  { value: "Stun Resistance", label: "Stun Resistance" },
   { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
   { value: "Weaken Chance", label: "Weaken Chance" },
   { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
@@ -1143,6 +1172,7 @@ export default function LootPageWrapper() {
 
 
     
+
 
 
 
