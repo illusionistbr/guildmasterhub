@@ -26,7 +26,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -591,6 +591,30 @@ const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Hallowed Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010A.webp', rarity: 'epic' },
 ];
 
+const TL_FEET_ARMOR_ITEMS: TLItem[] = [
+  { name: 'Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00010.webp', rarity: 'rare' },
+  { name: 'Ruthless Enforcer Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005.webp', rarity: 'rare' },
+  { name: 'Gloom Guard Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00014.webp', rarity: 'rare' },
+  { name: 'Decorated Champion Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00006.webp', rarity: 'rare' },
+  { name: 'Resolute Crusader Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00015.webp', rarity: 'rare' },
+  { name: 'Duskblood Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00010.webp', rarity: 'rare' },
+  { name: 'Glade Stalker Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00007.webp', rarity: 'rare' },
+  { name: 'Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00009.webp', rarity: 'rare' },
+  { name: 'Feathered Drakeskin Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00004.webp', rarity: 'rare' },
+  { name: 'Soul Mirror Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022.webp', rarity: 'rare' },
+  { name: 'Shoes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00016.webp', rarity: 'rare' },
+  { name: 'Nature\'s End Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00011.webp', rarity: 'rare' },
+  { name: 'Permafrost Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00005A.webp', rarity: 'rare' },
+  { name: 'Elusive Hexweaver Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00004.webp', rarity: 'rare' },
+  { name: 'Alacritous Invoker Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010A.webp', rarity: 'rare' },
+  { name: 'Flamewraught Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005B.webp', rarity: 'rare' },
+  { name: 'Starving Shadow Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00004B.webp', rarity: 'rare' },
+  { name: 'Howling Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00005B.webp', rarity: 'rare' },
+  { name: 'Polished Composite Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00015A.webp', rarity: 'rare' },
+  { name: 'Sunshade Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022B.webp', rarity: 'rare' },
+  { name: 'Premonition Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010C.webp', rarity: 'rare' },
+];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -608,6 +632,7 @@ const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
   "Chest": TL_CHEST_ARMOR_ITEMS,
   "Cloak": TL_CLOAK_ITEMS,
   "Gloves": TL_GLOVES_ITEMS,
+  "Feet": TL_FEET_ARMOR_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -632,6 +657,7 @@ const armorTypeOptions = [
   { value: "Chest", label: "Peitoral" },
   { value: "Cloak", label: "Manto" },
   { value: "Gloves", label: "Luvas" },
+  { value: "Feet", label: "Pés" },
 ];
 
 const traitOptions = [
@@ -656,6 +682,7 @@ const traitOptions = [
   { value: "Max Mana", label: "Max Mana" },
   { value: "Melee Endurance", label: "Melee Endurance" },
   { value: "Melee Evasion", label: "Melee Evasion" },
+  { value: "Movement Speed", label: "Movement Speed" },
   { value: "Petrification Chance", label: "Petrification Chance" },
   { value: "Petrification Resistance", label: "Petrification Resistance" },
   { value: "Range", label: "Range" },
@@ -668,6 +695,7 @@ const traitOptions = [
   { value: "Weaken Chance", label: "Weaken Chance" },
   { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
 ].sort((a, b) => a.label.localeCompare(b.label));
+
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
   common: 'bg-slate-700',
@@ -687,7 +715,7 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest", "Cloak", "Gloves"];
+const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest", "Cloak", "Gloves", "Feet"];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -1052,7 +1080,7 @@ function LootPageContent() {
                                 <span className="text-destructive">*</span>
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -1075,7 +1103,7 @@ function LootPageContent() {
                             <div className="relative flex items-center">
                               <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                               <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                                 <SelectContent>
                                   {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                 </SelectContent>
@@ -1100,7 +1128,7 @@ function LootPageContent() {
                             width={80}
                             height={80}
                             className="object-contain"
-                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : "game item accessory")}
+                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : "game item")}
                           />
                         </div>
                       </div>
@@ -1237,6 +1265,7 @@ export default function LootPageWrapper() {
 
 
     
+
 
 
 
