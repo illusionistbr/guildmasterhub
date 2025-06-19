@@ -567,6 +567,28 @@ const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00005B.webp', rarity: 'epic' },
   { name: 'Divine Justiciar Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001.webp', rarity: 'epic' },
   { name: 'Gilded Raven Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00022B.webp', rarity: 'epic' },
+  { name: 'Oblivion\'s Wrath Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05004.webp', rarity: 'epic' },
+  { name: 'Void Stalker\'s Caress', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00023.webp', rarity: 'epic' },
+  { name: 'Transcendent Tempest\'s Touch', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00014.webp', rarity: 'epic' },
+  { name: 'Ardent Herald\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00022.webp', rarity: 'epic' },
+  { name: 'Immortal Legionnaire\'s Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00019A.webp', rarity: 'epic' },
+  { name: 'First Light\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00022A.webp', rarity: 'epic' },
+  { name: 'Chosen Vanquisher\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001A.webp', rarity: 'epic' },
+  { name: 'Royal Praetor\'s Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_GL_00006.webp', rarity: 'epic' },
+  { name: 'Forgotten Lotus Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00008.webp', rarity: 'epic' },
+  { name: 'Dread Admiral\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00021.webp', rarity: 'epic' },
+  { name: 'Sacred Repose Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00005B.webp', rarity: 'epic' },
+  { name: 'Eternal Warlord\'s Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00017.webp', rarity: 'epic' },
+  { name: 'Spectral Overseer\'s Handguards', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00023.webp', rarity: 'epic' },
+  { name: 'Imperial Seeker\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00015.webp', rarity: 'epic' },
+  { name: 'Feral Prophet\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00014.webp', rarity: 'epic' },
+  { name: 'Infernal Demonpact Grasp', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_GL_00026.webp', rarity: 'epic' },
+  { name: 'Deep Fathom Grasp', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00026.webp', rarity: 'epic' },
+  { name: 'Devious Hellfire Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00026.webp', rarity: 'epic' },
+  { name: 'Paramount Gauntlets of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_06002A.webp', rarity: 'epic' },
+  { name: 'Ossuary Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05002B.webp', rarity: 'epic' },
+  { name: 'Scaled Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05003A.webp', rarity: 'epic' },
+  { name: 'Hallowed Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010A.webp', rarity: 'epic' },
 ];
 
 
@@ -636,6 +658,7 @@ const traitOptions = [
   { value: "Melee Evasion", label: "Melee Evasion" },
   { value: "Petrification Chance", label: "Petrification Chance" },
   { value: "Petrification Resistance", label: "Petrification Resistance" },
+  { value: "Range", label: "Range" },
   { value: "Silence Chance", label: "Silence Chance" },
   { value: "Silence Resistance", label: "Silence Resistance" },
   { value: "Skill Damage Resistance", label: "Skill Damage Resistance" },
@@ -1214,6 +1237,7 @@ export default function LootPageWrapper() {
 
 
     
+
 
 
 
