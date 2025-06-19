@@ -306,6 +306,24 @@ function LootPageContent() {
                             </FormItem>
                           )}
                         />
+                         {watchedWeaponType && currentWeaponNameOptions.length > 0 && (
+                          <FormField
+                            control={form.control}
+                            name="itemName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nome do Item ({watchedWeaponType}) <span className="text-destructive">*</span></FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                  <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${watchedWeaponType && (watchedWeaponType.toLowerCase().endsWith('a') || ['staff', 'spear'].includes(watchedWeaponType.toLowerCase())) ? 'a' : 'o'} ${watchedWeaponType ? watchedWeaponType.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                                  <SelectContent>
+                                    {currentWeaponNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                         {watchedWeaponType === 'Sword' && (
                           <FormField
                             control={form.control}
@@ -330,25 +348,6 @@ function LootPageContent() {
                       </>
                     )}
                     
-                    {watchedItemCategory === 'weapon' && watchedWeaponType && currentWeaponNameOptions.length > 0 && (
-                      <FormField
-                        control={form.control}
-                        name="itemName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome do Item ({watchedWeaponType}) <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${watchedWeaponType && (watchedWeaponType.toLowerCase().endsWith('a') || ['staff', 'spear'].includes(watchedWeaponType.toLowerCase())) ? 'a' : 'o'} ${watchedWeaponType ? watchedWeaponType.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {currentWeaponNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
                     {selectedItemForPreview && (
                       <div className="mt-4 space-y-2">
                         <FormLabel>Prévia do Item</FormLabel>
