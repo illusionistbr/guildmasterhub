@@ -46,7 +46,7 @@ interface BankItem {
   id: string;
   itemCategory: string;
   weaponType?: string;
-  armorType?: string; // Added for armor
+  armorType?: string;
   itemName?: string;
   trait?: string;
   imageUrl: string;
@@ -343,6 +343,27 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Fortune Telling Cowl', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00008A.webp', rarity: 'uncommon' },
   { name: 'Incantation Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00003A.webp', rarity: 'uncommon' },
   { name: 'Prayer Hood', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00002.webp', rarity: 'uncommon' },
+  { name: 'Visor of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00015.webp', rarity: 'rare' },
+  { name: 'Resolute Crusader Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00010.webp', rarity: 'rare' },
+  { name: 'Ruthless Enforcer Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00015.webp', rarity: 'rare' },
+  { name: 'Gloom Guard Winged Helm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00014.webp', rarity: 'rare' },
+  { name: 'Decorated Champion Crown', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00011.webp', rarity: 'rare' },
+  { name: 'Duskblood Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00012.webp', rarity: 'rare' },
+  { name: 'Glade Stalker Circlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00009.webp', rarity: 'rare' },
+  { name: 'Mask of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00015.webp', rarity: 'rare' },
+  { name: 'Feathered Drakeskin Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00013.webp', rarity: 'rare' },
+  { name: 'Soul Mirror Turban', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00012.webp', rarity: 'rare' },
+  { name: 'Hood of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00008.webp', rarity: 'rare' },
+  { name: 'Nature\'s End Cowl', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00011.webp', rarity: 'rare' },
+  { name: 'Permafrost Hood', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00010.webp', rarity: 'rare' },
+  { name: 'Elusive Hexweaver Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00016.webp', rarity: 'rare' },
+  { name: 'Alacritous Invoker Hood', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00023.webp', rarity: 'rare' },
+  { name: 'Flamewraught Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00015A.webp', rarity: 'rare' },
+  { name: 'Starving Shadow Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00013A.webp', rarity: 'rare' },
+  { name: 'Howling Hood', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00010B.webp', rarity: 'rare' },
+  { name: 'Polished Composite Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00010A.webp', rarity: 'rare' },
+  { name: 'Sunshade Cowl', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00012B.webp', rarity: 'rare' },
+  { name: 'Premonition Hood', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00023A.webp', rarity: 'rare' },
 ];
 
 
@@ -435,12 +456,12 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head"]; // Added "Head"
+const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head"];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
-  armorType: z.string().optional(), // Added for armor
+  armorType: z.string().optional(),
   itemName: z.string().optional(),
   trait: z.string().optional(),
   droppedByMemberId: z.string().optional(),
@@ -513,7 +534,7 @@ function LootPageContent() {
       if (watchedArmorType && !itemSubTypesRequiringTrait.includes(watchedArmorType)) {
         form.setValue('trait', undefined);
       }
-    } else { // Accessory or other
+    } else { 
       form.setValue('weaponType', undefined);
       form.setValue('armorType', undefined);
       form.setValue('trait', undefined);
@@ -522,12 +543,12 @@ function LootPageContent() {
     setSelectedItemForPreview(null);
   }, [watchedItemCategory, form, watchedWeaponType, watchedArmorType]);
 
-  useEffect(() => { // Reset item name when weapon type changes
+  useEffect(() => { 
     form.setValue('itemName', undefined);
     setSelectedItemForPreview(null);
   }, [watchedWeaponType, form]);
 
-  useEffect(() => { // Reset item name when armor type changes
+  useEffect(() => { 
     form.setValue('itemName', undefined);
     setSelectedItemForPreview(null);
   }, [watchedArmorType, form]);
@@ -590,7 +611,7 @@ function LootPageContent() {
     let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
     let rarityToUse: TLItem['rarity'] = 'common';
     let itemSubType: string | undefined = undefined;
-    let itemSubTypeNameKey: 'weaponType' | 'armorType' = 'weaponType';
+    let itemSubTypeNameKey: 'weaponType' | 'armorType' | undefined = undefined;
 
 
     if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) {
@@ -679,8 +700,8 @@ function LootPageContent() {
     (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType));
 
   const subTypeLabel =
-    watchedItemCategory === 'weapon' ? watchedWeaponType :
-    watchedItemCategory === 'armor' ? watchedArmorType :
+    watchedItemCategory === 'weapon' && watchedWeaponType ? watchedWeaponType :
+    watchedItemCategory === 'armor' && watchedArmorType ? watchedArmorType :
     'item';
 
   return (
@@ -956,6 +977,7 @@ export default function LootPageWrapper() {
     
 
     
+
 
 
 
