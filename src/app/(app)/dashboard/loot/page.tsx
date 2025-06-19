@@ -105,6 +105,9 @@ const traitOptions = [
   { value: "Critical Hit Chance", label: "Critical Hit Chance" },
   { value: "Collision Chance", label: "Collision Chance" },
   { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
+  { value: "Max Mana", label: "Max Mana" },
+  { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
+  { value: "Buff Duration", label: "Buff Duration" },
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
