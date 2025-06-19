@@ -112,6 +112,8 @@ const traitOptions = [
   { value: "Debuff Duration", label: "Debuff Duration" },
   { value: "Stun Chance", label: "Stun Chance"},
   { value: "Attack Speed", label: "Attack Speed"},
+  { value: "Mana Regen", label: "Mana Regen"},
+  { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"},
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
