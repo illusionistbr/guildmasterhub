@@ -452,7 +452,7 @@ function LootPageContent() {
                               <FormItem>
                                 <FormLabel>
                                   Trait da Arma
-                                  {isTraitMandatory && <span className="text-destructive">*</span>}
+                                  {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword') && <span className="text-destructive">*</span>}
                                 </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -498,7 +498,7 @@ function LootPageContent() {
                           <FormLabel>Dropado por (Opcional)</FormLabel>
                            <div className="relative flex items-center">
                                 <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                                <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                                <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}>
                                     <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                     <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem>
