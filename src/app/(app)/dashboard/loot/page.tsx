@@ -423,6 +423,47 @@ const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Scouting Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015B.webp', rarity: 'common' },
   { name: 'Sentinel Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05001.webp', rarity: 'common' },
   { name: 'Canvas Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00016.webp', rarity: 'common' },
+  { name: 'Blackened Plate Breastplate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00005.webp', rarity: 'uncommon' },
+  { name: 'Ironclad Plate Cuirass', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00009.webp', rarity: 'uncommon' },
+  { name: 'Ornate Battle Chest Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00007.webp', rarity: 'uncommon' },
+  { name: 'Layered Iron Gambeson', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00008.webp', rarity: 'uncommon' },
+  { name: 'Intricate Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00005A.webp', rarity: 'uncommon' },
+  { name: 'Armored Suede Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00001.webp', rarity: 'uncommon' },
+  { name: 'Augmented Leather Jerkin', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00003.webp', rarity: 'uncommon' },
+  { name: 'Reinforced Buckskin Jerkin', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00022.webp', rarity: 'uncommon' },
+  { name: 'Prayer Vestments', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00003.webp', rarity: 'uncommon' },
+  { name: 'Fortune Telling Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00008A.webp', rarity: 'uncommon' },
+  { name: 'Incantation Garb', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00005.webp', rarity: 'uncommon' },
+  { name: 'Attendant Robe', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00003B.webp', rarity: 'uncommon' },
+    { name: 'Verde Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00002.webp', rarity: 'uncommon' },
+    { name: 'Verde Cuirass', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00002B.webp', rarity: 'uncommon' },
+    { name: 'Verde Manasteel Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006.webp', rarity: 'uncommon' },
+    { name: 'Verde Reinforced Chainmail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00003.webp', rarity: 'uncommon' },
+    { name: 'Verde Studded Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00005.webp', rarity: 'uncommon' },
+    { name: 'Verde Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00014.webp', rarity: 'uncommon' },
+    { name: 'Verde Lamellar Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00001.webp', rarity: 'uncommon' },
+    { name: 'Verde Reinforced Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00003.webp', rarity: 'uncommon' },
+    { name: 'Verde Cloth Vestment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00007.webp', rarity: 'uncommon' },
+    { name: 'Verde Silk Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00005B.webp', rarity: 'uncommon' },
+    { name: 'Verde Magithread Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00001.webp', rarity: 'uncommon' },
+    { name: 'Verde Reinforced Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00014.webp', rarity: 'uncommon' },
+    { name: 'Verde Iron Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00006C.webp', rarity: 'uncommon' },
+    { name: 'Verde Infiltrator Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00017.webp', rarity: 'uncommon' },
+    { name: 'Verde Scouting Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015B.webp', rarity: 'uncommon' },
+    { name: 'Verde Sentinel Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05001.webp', rarity: 'uncommon' },
+    { name: 'Verde Canvas Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00016.webp', rarity: 'uncommon' },
+    { name: 'Verde Blackened Plate Breastplate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00005.webp', rarity: 'uncommon' },
+    { name: 'Verde Ironclad Plate Cuirass', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00009.webp', rarity: 'uncommon' },
+    { name: 'Verde Ornate Battle Chest Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00007.webp', rarity: 'uncommon' },
+    { name: 'Verde Layered Iron Gambeson', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00008.webp', rarity: 'uncommon' },
+    { name: 'Verde Intricate Leather Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00005A.webp', rarity: 'uncommon' },
+    { name: 'Verde Armored Suede Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00001.webp', rarity: 'uncommon' },
+    { name: 'Verde Augmented Leather Jerkin', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00003.webp', rarity: 'uncommon' },
+    { name: 'Verde Reinforced Buckskin Jerkin', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00022.webp', rarity: 'uncommon' },
+    { name: 'Verde Prayer Vestments', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00003.webp', rarity: 'uncommon' },
+    { name: 'Verde Fortune Telling Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00008A.webp', rarity: 'uncommon' },
+    { name: 'Verde Incantation Garb', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00005.webp', rarity: 'uncommon' },
+    { name: 'Verde Attendant Robe', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00003B.webp', rarity: 'uncommon' },
 ];
 
 
@@ -539,7 +580,7 @@ const lootFormSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
     }
     if (data.armorType && itemSubTypesRequiringTrait.includes(data.armorType) && !data.trait) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.armorType}.`, path: ["trait"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${armorTypeOptions.find(opt => opt.value === data.armorType)?.label || data.armorType}.`, path: ["trait"] });
     }
   }
 });
@@ -1066,3 +1107,6 @@ export default function LootPageWrapper() {
 
 
 
+
+
+    
