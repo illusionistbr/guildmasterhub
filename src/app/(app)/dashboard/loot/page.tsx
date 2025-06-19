@@ -89,18 +89,15 @@ const TL_SWORD_ITEMS: TLItem[] = [
 ];
 
 const TL_GREATSWORD_ITEMS: TLItem[] = [
-  // Common (Cinza)
   { name: 'Sparring Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00001.webp', rarity: 'common' },
   { name: 'Sharpened Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00003A.webp', rarity: 'common' },
   { name: 'Reforged Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00003.webp', rarity: 'common' },
   { name: 'Forged Iron Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00002.webp', rarity: 'common' },
   { name: 'Forgotten Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00037A.webp', rarity: 'common' },
-  // Uncommon (Verde)
   { name: 'Legionnaire Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00026.webp', rarity: 'uncommon' },
   { name: 'Guardian Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00004.webp', rarity: 'uncommon' },
   { name: 'Standard Issue Claymore', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00023.webp', rarity: 'uncommon' },
   { name: 'Charger Broadsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00006.webp', rarity: 'uncommon' },
-  // Rare (Azul)
   { name: 'Golem Grinding Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00005.webp', rarity: 'rare' },
   { name: 'Warblade of Undead Slaying', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00026C.webp', rarity: 'rare' },
   { name: 'Broadsword of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00019.webp', rarity: 'rare' },
@@ -109,7 +106,6 @@ const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Greatsword of Punishing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00013A.webp', rarity: 'rare' },
   { name: 'Resistance Vanguard Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00019B.webp', rarity: 'rare' },
   { name: 'Bound Resistance Vanguard Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00019B.webp', rarity: 'rare' },
-  // Epic (Roxo)
   { name: 'Immortal Titanic Quakeblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp', rarity: 'epic' },
   { name: 'Celestial Cyclone Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp', rarity: 'epic' },
   { name: 'Morokai\'s Greatblade of Corruption', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp', rarity: 'epic' },
@@ -198,8 +194,8 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && !data.trait) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório para Swords.", path: ["trait"] });
+  if (data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword') && !data.trait) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.weaponType}.`, path: ["trait"] });
   }
 });
 
@@ -248,7 +244,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword') { // Only swords have traits for now
+    if (watchedWeaponType !== 'Sword' && watchedWeaponType !== 'Greatsword') {
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
@@ -334,7 +330,7 @@ function LootPageContent() {
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
-      trait: data.itemCategory === 'weapon' && data.weaponType === 'Sword' ? data.trait : undefined,
+      trait: data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword') ? data.trait : undefined,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
@@ -445,15 +441,15 @@ function LootPageContent() {
                             )}
                           />
                         )}
-                        {watchedWeaponType === 'Sword' && (
+                        {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword') && (
                            <FormField
                             control={form.control}
                             name="trait"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>
-                                  Trait da Arma (Específico para Sword)
-                                  <span className="text-destructive">*</span>
+                                  Trait da Arma
+                                  {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword') && <span className="text-destructive">*</span>}
                                 </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -607,3 +603,4 @@ export default function LootPageWrapper() {
     
 
     
+
