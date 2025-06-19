@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -317,7 +318,7 @@ function ApplyPageContent() {
   if (submissionStatus === 'success') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-landing-gradient text-center">
-        <Card className="w-full max-w-lg card-bg">
+        <Card className="w-full max-w-lg static-card-container">
           <CardHeader>
             <CardTitle className="text-3xl font-headline text-primary flex items-center justify-center">
               <CheckCircle className="mr-3 h-8 w-8 text-green-500"/>
@@ -552,4 +553,5 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
 
