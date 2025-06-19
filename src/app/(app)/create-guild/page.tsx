@@ -40,8 +40,6 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
   "Asia Pacific": [ { value: "Valkarg", label: "Valkarg" }, { value: "Sunstorm", label: "Sunstorm" }, { value: "Amethyst", label: "Amethyst" }, { value: "Titanspine", label: "Titanspine" }, ],
 };
 
-// tlGuildFocusOptions removed from here
-
 const guildSchemaBase = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
   description: z.string().max(500, "Descrição deve ter no máximo 500 caracteres.").optional(),
@@ -53,7 +51,6 @@ const guildSchemaBase = z.object({
   socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
   region: z.string().optional(),
   server: z.string().optional(),
-  // tlGuildFocus removed from base schema
 });
 
 const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
@@ -63,7 +60,6 @@ const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
         } else if (data.region && tlServers[data.region]?.length > 0 && !data.server) {
              ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Servidor é obrigatório para esta região em Throne and Liberty.", path: ["server"] });
         }
-        // Validation for tlGuildFocus removed from here
     }
 });
 
@@ -77,7 +73,6 @@ export default function CreateGuildPage() {
 
   const form = useForm<GuildFormValues>({
     resolver: zodResolver(guildSchema),
-    // tlGuildFocus removed from defaultValues
     defaultValues: { name: "", description: "", game: "", password: "", socialFacebook: "", socialX: "", socialYoutube: "", socialDiscord: "", region: undefined, server: undefined }
   });
 
@@ -89,7 +84,6 @@ export default function CreateGuildPage() {
     if (watchedGame !== "Throne and Liberty") {
       setValue("region", undefined);
       setValue("server", undefined);
-      // setValue for tlGuildFocus removed
     }
   }, [watchedGame, setValue]);
 
@@ -161,7 +155,6 @@ export default function CreateGuildPage() {
     if (data.game === "Throne and Liberty") {
         if (data.region) guildData.region = data.region;
         if (data.server) guildData.server = data.server;
-        // tlGuildFocus removed from initial guildData
     }
 
     if (Object.keys(socialLinks).length > 0) {
@@ -215,7 +208,7 @@ export default function CreateGuildPage() {
                   <FormItem>
                     <FormLabel>Nome da Guilda <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Ex: Os Guardiões Alados" className="form-input"/>
+                      <Input {...field} placeholder="Ex: Os Guardiões Alados" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,7 +224,7 @@ export default function CreateGuildPage() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                         <FormControl>
-                          <Input type="password" {...field} placeholder="Deixe em branco para guilda aberta" className="pl-10 form-input" />
+                          <Input type="password" {...field} placeholder="Deixe em branco para guilda aberta" className="pl-10" />
                         </FormControl>
                       </div>
                     <FormDescription>Guildas sem senha podem ficar abertas para qualquer usuário entrar.</FormDescription>
@@ -247,7 +240,7 @@ export default function CreateGuildPage() {
                   <FormItem>
                     <FormLabel>Descrição (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Ex: Uma guilda focada em exploração e desafios épicos." rows={3} className="form-input" />
+                      <Textarea {...field} placeholder="Ex: Uma guilda focada em exploração e desafios épicos." rows={3} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -264,7 +257,7 @@ export default function CreateGuildPage() {
                         <Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                         <FormControl>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger className="pl-10 form-input">
+                            <SelectTrigger className="pl-10">
                               <SelectValue placeholder="Selecione um jogo" />
                             </SelectTrigger>
                             <SelectContent>
@@ -291,7 +284,7 @@ export default function CreateGuildPage() {
                               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                               <FormControl>
                                 <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
-                                    <SelectTrigger className="pl-10 form-input">
+                                    <SelectTrigger className="pl-10">
                                       <SelectValue placeholder="Selecione uma região" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -317,7 +310,7 @@ export default function CreateGuildPage() {
                                   <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                                   <FormControl>
                                     <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
-                                      <SelectTrigger className="pl-10 form-input">
+                                      <SelectTrigger className="pl-10">
                                         <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -337,16 +330,15 @@ export default function CreateGuildPage() {
                         )}
                       />
                   )}
-                  {/* tlGuildFocus FormField removed from here */}
                 </>
               )}
 
               <div className="space-y-4 pt-4">
                 <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
-                <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" className="pl-10 form-input" /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel>X (Twitter)</FormLabel> <div className="relative"><Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://x.com/suaguilda" className="pl-10 form-input" /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <div className="relative"><Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://youtube.com/c/suaguilda" className="pl-10 form-input" /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel>Discord</FormLabel> <div className="relative"><LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://discord.gg/suaguilda" className="pl-10 form-input" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel>X (Twitter)</FormLabel> <div className="relative"><Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://x.com/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <div className="relative"><Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://youtube.com/c/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel>Discord</FormLabel> <div className="relative"><LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://discord.gg/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
               </div>
               <Alert variant="default" className="bg-background border-accent/30 !mt-8">
                   <AlertCircle className="h-4 w-4 text-accent" />
@@ -367,3 +359,5 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+    
