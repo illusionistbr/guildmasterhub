@@ -26,7 +26,8 @@ import {
   ClipboardList,
   UserCog,
   KeyRound,
-  Edit, 
+  Edit,
+  Gem, // Added Gem icon for Loot
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -43,9 +44,13 @@ const guildManagementNavItemsBase = [
     baseHref: "/dashboard/calendar",
     subItems: [
       { baseHref: "/dashboard/calendar/settings", label: "PIN Codes", icon: KeyRound },
-      // Updated link to point to the new approval page
       { baseHref: "/dashboard/calendar/manual-confirmation-approval", label: "Aprovar Confirmações", icon: Edit },
     ]
+  },
+  {
+    label: "Loot", // New Loot menu item
+    icon: Gem,
+    baseHref: "/dashboard/loot",
   },
   {
     label: "Recrutamento",
@@ -75,7 +80,7 @@ export function AppSidebar() {
   const guildId = searchParams.get('guildId');
 
   const isActive = (href: string) => {
-    const baseHref = href.split('?')[0]; 
+    const baseHref = href.split('?')[0];
     return pathname === baseHref || (baseHref !== "/dashboard" && pathname.startsWith(baseHref) && baseHref.length > "/dashboard".length);
   };
 
