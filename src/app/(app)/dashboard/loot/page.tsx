@@ -613,8 +613,23 @@ const TL_FEET_ARMOR_ITEMS: TLItem[] = [
   { name: 'Polished Composite Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00015A.webp', rarity: 'rare' },
   { name: 'Sunshade Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022B.webp', rarity: 'rare' },
   { name: 'Premonition Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010C.webp', rarity: 'rare' },
+  { name: 'Shock Commander Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_05002.webp', rarity: 'epic' },
+  { name: 'Ebon Roar Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00017.webp', rarity: 'epic' },
+  { name: 'Heroic Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002.webp', rarity: 'epic' },
+  { name: 'Sabatons of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00018.webp', rarity: 'epic' },
+  { name: 'Boots of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_BT_00019.webp', rarity: 'epic' },
+  { name: 'Phantom Wolf Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00005.webp', rarity: 'epic' },
+  { name: 'Heroic Footguards of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002.webp', rarity: 'epic' },
+  { name: 'Shadow Harvester Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00002.webp', rarity: 'epic' },
+  { name: 'Heroic Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003.webp', rarity: 'epic' },
+  { name: 'Boots of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00022.webp', rarity: 'epic' },
+  { name: 'Swirling Essence Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00008C.webp', rarity: 'epic' },
+  { name: 'Ascended Guardian Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00011.webp', rarity: 'epic' },
+  { name: 'Heroic Shoes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010.webp', rarity: 'epic' },
+  { name: 'Arcane Shadow Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001.webp', rarity: 'epic' },
+  { name: 'Divine Justiciar Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00014A.webp', rarity: 'epic' },
+  { name: 'Gilded Raven Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022A.webp', rarity: 'epic' },
 ];
-
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -1265,6 +1280,7 @@ export default function LootPageWrapper() {
 
 
     
+
 
 
 
