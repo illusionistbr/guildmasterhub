@@ -239,7 +239,7 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  if (data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword') && !data.trait) {
+  if (data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger') && !data.trait) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.weaponType}.`, path: ["trait"] });
   }
 });
@@ -289,7 +289,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword' && watchedWeaponType !== 'Greatsword') {
+    if (watchedWeaponType !== 'Sword' && watchedWeaponType !== 'Greatsword' && watchedWeaponType !== 'Dagger') {
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
@@ -375,7 +375,7 @@ function LootPageContent() {
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
-      trait: data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword') ? data.trait : undefined,
+      trait: data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger') ? data.trait : undefined,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
@@ -402,7 +402,7 @@ function LootPageContent() {
   const currentWeaponNameOptions = watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
-  const isTraitMandatory = watchedItemCategory === 'weapon' && (watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword');
+  const isTraitMandatory = watchedItemCategory === 'weapon' && (watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger');
 
 
   return (
@@ -488,7 +488,7 @@ function LootPageContent() {
                             )}
                           />
                         )}
-                        {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword') && (
+                        {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger') && (
                            <FormField
                             control={form.control}
                             name="trait"
@@ -496,7 +496,7 @@ function LootPageContent() {
                               <FormItem>
                                 <FormLabel>
                                   Trait da Arma
-                                  {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword') && <span className="text-destructive">*</span>}
+                                  {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger') && <span className="text-destructive">*</span>}
                                 </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
