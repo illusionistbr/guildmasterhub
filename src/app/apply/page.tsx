@@ -454,7 +454,42 @@ function ApplyPageContent() {
                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger className="form-input"><SelectValue placeholder="Arma primária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger className="form-input"><SelectValue placeholder="Arma secundária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                   </div>
-                  <FormField control={form.control} name="applicantTlGameFocus" render={() => ( <FormItem> <div className="mb-2"> <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel> <p className="text-sm text-muted-foreground">Selecione um ou mais focos de jogo que te interessam.</p> </div> {tlGameFocusOptions.map((option) => ( <FormField key={option.id} control={form.control} name="applicantTlGameFocus" render={({ field }) => { return ( <FormItem key={option.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2"> <FormControl> <Checkbox checked={field.value?.includes(option.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), option.id]) : field.onChange( (field.value || []).filter( (value) => value !== option.id ) ); }} /> </FormControl> <FormLabel className="font-normal">{option.label}</FormLabel> </FormItem> ); }} /> ))} <FormMessage /> </FormItem> )}/>
+                  <FormField
+                    control={form.control}
+                    name="applicantTlGameFocus"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="mb-2">
+                          <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                          <p className="text-sm text-muted-foreground">Selecione um ou mais focos de jogo que te interessam.</p>
+                        </div>
+                        {tlGameFocusOptions.map((option) => (
+                          <FormItem
+                            key={option.id}
+                            className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(option.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValues, option.id]);
+                                  } else {
+                                    field.onChange(currentValues.filter((value) => value !== option.id));
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {option.label}
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </>
               )}
               <FormField control={form.control} name="knowsSomeoneInGuild" render={({ field }) => ( <FormItem> <FormLabel>Conhece alguém na guilda? (Opcional)</FormLabel> <div className="relative mt-1"> <UsersIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="Nick do(s) amigo(s)" className="form-input pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>

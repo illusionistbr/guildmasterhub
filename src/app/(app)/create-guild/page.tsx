@@ -401,46 +401,36 @@ export default function CreateGuildPage() {
                       />
                   )}
                   <FormField
-                    control={control}
+                    control={form.control}
                     name="tlGuildFocus"
-                    render={() => (
+                    render={({ field }) => (
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <p className="text-sm text-muted-foreground">Selecione um ou mais focos para sua guilda.</p>
                         </div>
                         {tlGuildFocusOptions.map((option) => (
-                          <FormField
+                          <FormItem
                             key={option.id}
-                            control={control}
-                            name="tlGuildFocus"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={option.id} // Key restored here
-                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(option.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...(field.value || []), option.id])
-                                          : field.onChange(
-                                              (field.value || []).filter(
-                                                (value) => value !== option.id
-                                              )
-                                            );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {option.label}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
+                            className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(option.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValues, option.id]);
+                                  } else {
+                                    field.onChange(currentValues.filter((value) => value !== option.id));
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {option.label}
+                            </FormLabel>
+                          </FormItem>
                         ))}
                         <FormMessage />
                       </FormItem>
