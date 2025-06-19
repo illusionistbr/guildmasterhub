@@ -59,7 +59,7 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
     schemaObject.tlPrimaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." });
     schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." });
     schemaObject.applicantTlRegion = z.string({ required_error: "Região é obrigatória." }).min(1, "Região é obrigatória.");
-    schemaObject.applicantTlServer = z.string().optional();
+    schemaObject.applicantTlServer = z.string().optional(); // Optional at base, refined later
     schemaObject.applicantTlGameFocus = z.array(z.string()).min(1, "Selecione pelo menos um foco de jogo.");
   } else {
      schemaObject.tlRole = z.nativeEnum(TLRole).optional();
@@ -131,10 +131,10 @@ function ApplyPageContent() {
   }, [currentUser, form]);
 
   useEffect(() => {
-    if (watchedApplicantRegion) { 
+    if (watchedApplicantRegion && isTLGuild) { // Check isTLGuild here
       form.setValue("applicantTlServer", undefined);
     }
-  }, [watchedApplicantRegion, form]);
+  }, [watchedApplicantRegion, form, isTLGuild]);
 
 
   useEffect(() => {
@@ -208,7 +208,7 @@ function ApplyPageContent() {
       }
     };
     fetchGuildData();
-  }, [guildId, currentUser, authLoading, router, toast, form]);
+  }, [guildId, currentUser, authLoading, router, toast, form]); // form added to deps
 
   const onSubmit: SubmitHandler<ApplicationFormValues> = async (data) => {
     if (!currentUser || !guild || !guildId) {
@@ -266,7 +266,7 @@ function ApplyPageContent() {
       const applicationsRef = collection(db, `guilds/${guildId}/applications`);
       const submittedAtTimestamp = serverTimestamp() as Timestamp;
 
-      if (guild.isOpen === true || !guild.password) {
+      if (guild.isOpen === true && !guild.password) { // Simplified condition for public guild
         const batchDB = writeBatch(db);
         const currentGuildRef = doc(db, "guilds", guildId);
 
@@ -292,13 +292,13 @@ function ApplyPageContent() {
           [`roles.${currentUser.uid}`]: memberRoleInfo,
         });
 
-        const appDocForPublicJoinRef = doc(applicationsRef);
+        const appDocForPublicJoinRef = doc(applicationsRef); // Create a new doc for application record
         batchDB.set(appDocForPublicJoinRef, {
           ...applicationBaseData,
           applicantDisplayName: currentUser.displayName || currentUser.email,
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
-          status: 'auto_approved',
+          status: 'auto_approved', // Mark as auto-approved for public guilds
           reviewedBy: 'system',
           reviewedAt: submittedAtTimestamp,
         });
@@ -316,13 +316,13 @@ function ApplyPageContent() {
         toast({ title: "Bem-vindo(a) à Guilda!", description: `Você entrou na guilda ${guild.name}.` });
         form.reset();
 
-      } else {
+      } else { // For private guilds (password protected or default application process)
         const newApplicationRef = await addDoc(applicationsRef, {
           ...applicationBaseData,
           applicantDisplayName: currentUser.displayName || currentUser.email,
           applicantPhotoURL: currentUser.photoURL || null,
           submittedAt: submittedAtTimestamp,
-          status: 'pending',
+          status: 'pending', // Regular application status
         });
 
         await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.APPLICATION_SUBMITTED, {
@@ -424,11 +424,11 @@ function ApplyPageContent() {
                     <AvatarFallback>{guild.name.substring(0,1).toUpperCase()}</AvatarFallback>
                 </Avatar>
                  <CardTitle className="text-3xl font-headline text-primary">
-                   {guild.isOpen || !guild.password ? `Entrar em ${guild.name}` : `Candidatar-se para ${guild.name}`}
+                   {guild.isOpen && !guild.password ? `Entrar em ${guild.name}` : `Candidatar-se para ${guild.name}`}
                  </CardTitle>
             </div>
           <CardDescription>
-            {guild.isOpen || !guild.password
+            {guild.isOpen && !guild.password
                 ? `Preencha o formulário abaixo para entrar na guilda ${guild.name}.`
                 : `Preencha o formulário abaixo para enviar sua candidatura para ${guild.name}.`}
           </CardDescription>
@@ -465,9 +465,9 @@ function ApplyPageContent() {
                           <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos de jogo que te interessam.</FormDescription>
                         </div>
-                        {tlGameFocusOptions.map((option) => (
+                        {tlGameFocusOptions.map((item) => (
                           <FormField
-                            key={option.id}
+                            key={item.id}
                             control={form.control}
                             name="applicantTlGameFocus"
                             render={({ field }) => {
@@ -477,20 +477,20 @@ function ApplyPageContent() {
                                 >
                                   <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(option.id)}
+                                      checked={field.value?.includes(item.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...(field.value || []), option.id])
+                                          ? field.onChange([...(field.value || []), item.id])
                                           : field.onChange(
                                               (field.value || []).filter(
-                                                (value: string) => value !== option.id
+                                                (value: string) => value !== item.id
                                               )
                                             );
                                       }}
                                     />
                                   </FormControl>
                                   <FormLabel className="font-normal">
-                                    {option.label}
+                                    {item.label}
                                   </FormLabel>
                                 </FormItem>
                               );
@@ -517,9 +517,11 @@ function ApplyPageContent() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{question.text}</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Sua resposta..." className="form-input"/>
-                          </FormControl>
+                          <div className="relative mt-1">
+                             <FormControl>
+                                <Input {...field} placeholder="Sua resposta..." className="form-input"/>
+                             </FormControl>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -535,8 +537,8 @@ function ApplyPageContent() {
                 <Button type="submit" className="btn-gradient btn-style-primary w-full sm:w-auto" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UserPlusIcon className="mr-2 h-5 w-5" />}
                     {isSubmitting
-                        ? (guild.isOpen || !guild.password ? 'Entrando...' : 'Enviando...')
-                        : (guild.isOpen || !guild.password ? 'Confirmar e Entrar' : 'Enviar Candidatura')}
+                        ? (guild.isOpen && !guild.password ? 'Entrando...' : 'Enviando...')
+                        : (guild.isOpen && !guild.password ? 'Confirmar e Entrar' : 'Enviar Candidatura')}
                 </Button>
             </CardFooter>
           </form>
@@ -557,5 +559,3 @@ export default function ApplyPage() {
     );
   }
 
-
-    

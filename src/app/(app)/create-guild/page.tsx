@@ -156,7 +156,7 @@ export default function CreateGuildPage() {
         createdAt: serverTimestamp(),
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png`,
-        logoUrl: `https://placehold.co/150x150.png`,
+      logoUrl: `https://placehold.co/150x150.png`,
         roles: guildMemberRoles,
         customRoles: initialCustomRoles,
         dkpSystemEnabled: false,
@@ -213,7 +213,7 @@ export default function CreateGuildPage() {
           <CardDescription>Preencha as informações abaixo para registrar sua guilda. Detalhes como logotipo, eventos e outros ajustes finos devem ser feitos diretamente no painel de controle da guilda após a criação.</CardDescription>
         </CardHeader>
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <CardContent className="space-y-6">
               <FormField
                 control={control}
@@ -347,23 +347,23 @@ export default function CreateGuildPage() {
                   <FormField
                     control={control}
                     name="tlGuildFocus"
-                    render={() => (
-                      <FormItem>
+                    render={() => ( // Outer FormField for the array
+                      <FormItem> {/* Outer FormItem for layout of the whole group */}
                         <div className="mb-4">
                           <FormLabel>Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos para sua guilda.</FormDescription>
                         </div>
                         {tlGuildFocusOptions.map((item) => (
-                          <FormField
-                            key={item.id}
+                          <FormField // Inner FormField for each checkbox
+                            key={item.id} // Key on the FormField
                             control={control}
-                            name="tlGuildFocus"
-                            render={({ field }) => {
+                            name="tlGuildFocus" // Still points to the array field name
+                            render={({ field }) => { // field here is for the array
                               return (
-                                <FormItem
+                                <FormItem // Inner FormItem for layout of EACH checkbox + label - REMOVED KEY FROM HERE
                                   className="flex flex-row items-start space-x-3 space-y-0"
                                 >
-                                  <FormControl>
+                                  <FormControl> {/* FormControl wraps ONLY the Checkbox */}
                                     <Checkbox
                                       checked={field.value?.includes(item.id)}
                                       onCheckedChange={(checked) => {
@@ -385,7 +385,7 @@ export default function CreateGuildPage() {
                             }}
                           />
                         ))}
-                        <FormMessage />
+                        <FormMessage /> {/* For the array field as a whole */}
                       </FormItem>
                     )}
                   />
@@ -419,5 +419,3 @@ export default function CreateGuildPage() {
   );
 }
 
-
-    
