@@ -160,6 +160,7 @@ const traitOptions = [
   { value: "Debuff Duration", label: "Debuff Duration" }, { value: "Stun Chance", label: "Stun Chance"},
   { value: "Attack Speed", label: "Attack Speed"}, { value: "Mana Regen", label: "Mana Regen"},
   { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"}, { value: "Construct Bonus Damage", label: "Construct Bonus Damage"},
+  { value: "Cooldown Speed", label: "Cooldown Speed"},
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
@@ -357,6 +358,8 @@ function LootPageContent() {
   const currentWeaponNameOptions = watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
+  const isTraitMandatory = watchedItemCategory === 'weapon' && (watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword');
+
 
   return (
     <div className="space-y-8">
@@ -449,7 +452,7 @@ function LootPageContent() {
                               <FormItem>
                                 <FormLabel>
                                   Trait da Arma
-                                  {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword') && <span className="text-destructive">*</span>}
+                                  {isTraitMandatory && <span className="text-destructive">*</span>}
                                 </FormLabel>
                                 <div className="relative flex items-center">
                                   <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -495,7 +498,7 @@ function LootPageContent() {
                           <FormLabel>Dropado por (Opcional)</FormLabel>
                            <div className="relative flex items-center">
                                 <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                                     <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl>
                                     <SelectContent>
                                     <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem>
@@ -603,4 +606,3 @@ export default function LootPageWrapper() {
     
 
     
-
