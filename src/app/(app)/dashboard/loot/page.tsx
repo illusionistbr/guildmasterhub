@@ -224,6 +224,38 @@ const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Bercant\'s Spineflower Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00050.webp', rarity: 'epic' },
 ];
 
+const TL_WAND_ITEMS: TLItem[] = [
+  { name: 'Driftwood Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00005.webp', rarity: 'common' },
+  { name: 'Forgotten Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00001.webp', rarity: 'common' },
+  { name: 'Mystwood Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00004.webp', rarity: 'common' },
+  { name: 'Petrified Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00003.webp', rarity: 'common' },
+  { name: 'World Tree Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00007.webp', rarity: 'common' },
+  { name: 'Divine Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002.webp', rarity: 'uncommon' },
+  { name: 'Inquisition Rod', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00001.webp', rarity: 'uncommon' }, // Note: Same URL as Forgotten Wand, but user provided as uncommon
+  { name: 'Moonglow Rod', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008.webp', rarity: 'uncommon' },
+  { name: 'Stalwart Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00006.webp', rarity: 'uncommon' },
+  { name: 'Golem Sundering Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00004A.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00007D.webp', rarity: 'rare' },
+  { name: 'Rod of Undead Dismissal', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00003A.webp', rarity: 'rare' },
+  { name: 'Scepter of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00007A.webp', rarity: 'rare' },
+  { name: 'Treant Twig', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00003B.webp', rarity: 'rare' },
+  { name: 'Wand of Icy Truth', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002D.webp', rarity: 'rare' },
+  { name: 'Wand of Skyward Blessing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002A.webp', rarity: 'rare' },
+  { name: 'Excavator\'s Mysterious Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00012.webp', rarity: 'epic' },
+  { name: 'Heroic Scepter of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00004C.webp', rarity: 'epic' },
+  { name: 'Lequirus\'s Coveted Tome', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00013.webp', rarity: 'epic' },
+  { name: 'Sacred Manuscript', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00001C.webp', rarity: 'epic' },
+  { name: 'Shaikal\'s Mindfire Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00014.webp', rarity: 'epic' },
+  { name: 'Tevent\'s Grasp of Withering', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00011.webp', rarity: 'epic' },
+  { name: 'Tome of Proximate Remedy', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008A.webp', rarity: 'epic' },
+  { name: 'Codex of Deep Secrets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002B.webp', rarity: 'epic' },
+  { name: 'Cordy\'s Grasp of Manipulation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00015.webp', rarity: 'epic' },
+  { name: 'Deckman\'s Balefire Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00003C.webp', rarity: 'epic' },
+  { name: 'Forbidden Demonic Lexicon', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008B.webp', rarity: 'epic' },
+  { name: 'Khanzaizin\'s Valorous Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00017.webp', rarity: 'epic' },
+  { name: 'Overture of Eternal Salvation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00006A.webp', rarity: 'epic' },
+  { name: 'Rod of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00049.webp', rarity: 'epic' },
+];
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -231,7 +263,7 @@ const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Dagger": TL_DAGGER_ITEMS,
   "Bow": TL_BOW_ITEMS,
   "Crossbow": TL_CROSSBOW_ITEMS,
-  "Wand": [],
+  "Wand": TL_WAND_ITEMS,
   "Staff": [],
   "Spear": [],
 };
@@ -295,6 +327,7 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
+const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand"];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -309,7 +342,6 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
   if (data.itemCategory === 'weapon' && data.weaponType && traitMandatoryWeaponTypes.includes(data.weaponType) && !data.trait) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.weaponType}.`, path: ["trait"] });
   }
@@ -360,7 +392,6 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
     if (watchedWeaponType && !traitMandatoryWeaponTypes.includes(watchedWeaponType)) {
       form.setValue('trait', undefined);
     }
@@ -441,7 +472,6 @@ function LootPageContent() {
         finalDroppedByMemberId = undefined; 
     }
 
-    const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
     const newItem: BankItem = {
       id: Date.now().toString(), 
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
@@ -474,7 +504,6 @@ function LootPageContent() {
   const currentWeaponNameOptions = watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
-  const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
   const isTraitMandatory = watchedItemCategory === 'weapon' && watchedWeaponType && traitMandatoryWeaponTypes.includes(watchedWeaponType);
 
 
@@ -727,3 +756,4 @@ export default function LootPageWrapper() {
     
 
     
+
