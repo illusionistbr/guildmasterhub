@@ -290,6 +290,29 @@ const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Staff of Enlightened Reform', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00031.webp', rarity: 'epic' },
 ];
 
+const TL_SPEAR_ITEMS: TLItem[] = [
+  { name: 'Sparring Longspear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00002.webp', rarity: 'common' },
+  { name: 'Iron Halberd', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00003.webp', rarity: 'common' },
+  { name: 'Combat Halberd', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00001.webp', rarity: 'uncommon' },
+  { name: 'Razorsteel Pike', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00006.webp', rarity: 'rare' },
+  { name: 'Templar Trident', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00011.webp', rarity: 'rare' },
+  { name: 'Golem Shattering Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00008.webp', rarity: 'rare' },
+  { name: 'Halberd of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00005.webp', rarity: 'rare' },
+  { name: 'Head-cleaving Halberd', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00006A.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00005A.webp', rarity: 'rare' },
+  { name: 'Skull Severing Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00019.webp', rarity: 'epic' },
+  { name: 'Junobote\'s Smoldering Ranseur', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00021.webp', rarity: 'epic' },
+  { name: 'Shaikal\'s Mindveil Harpoon', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00016.webp', rarity: 'epic' },
+  { name: 'Queen Bellandir\'s Serrated Spike', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00018.webp', rarity: 'epic' },
+  { name: 'Heroic Polearm of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00015.webp', rarity: 'epic' },
+  { name: 'Ranseur of Murderous Glee', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00013.webp', rarity: 'epic' },
+  { name: 'Naru\'s Sawfang Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00030.webp', rarity: 'epic' },
+  { name: 'Spear of Unhinged Horror', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00029.webp', rarity: 'epic' },
+  { name: 'Crimson Hellskewer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00027.webp', rarity: 'epic' },
+  { name: 'Deluzhnoa\'s Serrated Shard', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00026.webp', rarity: 'epic' },
+  { name: 'Polearm of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00022.webp', rarity: 'epic' },
+  { name: 'Windsheer Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00024.webp', rarity: 'epic' },
+];
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -299,7 +322,7 @@ const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Crossbow": TL_CROSSBOW_ITEMS,
   "Wand": TL_WAND_ITEMS,
   "Staff": TL_STAFF_ITEMS,
-  "Spear": [],
+  "Spear": TL_SPEAR_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -357,12 +380,12 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Distribuído': 'bg-orange-500/20 text-orange-600 border-orange-500/50',
   'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
   'Em rolagem': 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50',
-  'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50',
-  'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50',
+  'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50', // Light blue
+  'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50', // Light yellow/amber
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff"];
+const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear"];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -428,7 +451,7 @@ function LootPageContent() {
   useEffect(() => {
     form.setValue('itemName', undefined);
     if (watchedWeaponType && !traitMandatoryWeaponTypes.includes(watchedWeaponType)) {
-      form.setValue('trait', undefined);
+      form.setValue('trait', undefined); // Reset trait if weapon type doesn't require it
     }
     setSelectedItemForPreview(null);
   }, [watchedWeaponType, form]);
@@ -791,5 +814,6 @@ export default function LootPageWrapper() {
     
 
     
+
 
 
