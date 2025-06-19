@@ -231,7 +231,7 @@ const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Petrified Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00003.webp', rarity: 'common' },
   { name: 'World Tree Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00007.webp', rarity: 'common' },
   { name: 'Divine Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002.webp', rarity: 'uncommon' },
-  { name: 'Inquisition Rod', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00001.webp', rarity: 'uncommon' }, // Note: Same URL as Forgotten Wand, but user provided as uncommon
+  { name: 'Inquisition Rod', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00001.webp', rarity: 'uncommon' },
   { name: 'Moonglow Rod', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008.webp', rarity: 'uncommon' },
   { name: 'Stalwart Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00006.webp', rarity: 'uncommon' },
   { name: 'Golem Sundering Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00004A.webp', rarity: 'rare' },
@@ -257,6 +257,40 @@ const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Rod of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00049.webp', rarity: 'epic' },
 ];
 
+const TL_STAFF_ITEMS: TLItem[] = [
+  { name: 'Apprentice Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00001.webp', rarity: 'common' },
+  { name: 'Cantrip Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00003.webp', rarity: 'common' },
+  { name: 'Forgotten Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00001.webp', rarity: 'common' },
+  { name: 'Prayer Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00004.webp', rarity: 'common' },
+  { name: 'Ritual Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00002.webp', rarity: 'common' },
+  { name: 'Acolyte Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00026.webp', rarity: 'uncommon' },
+  { name: 'Arcane Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00008.webp', rarity: 'uncommon' },
+  { name: 'Moonglow Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00025.webp', rarity: 'uncommon' },
+  { name: 'Twisted Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00012.webp', rarity: 'uncommon' },
+  { name: 'Calcified Bone Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00012B.webp', rarity: 'rare' },
+  { name: 'Dark Ritualist Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00015A.webp', rarity: 'rare' },
+  { name: 'Golem Destruction Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00024.webp', rarity: 'rare' },
+  { name: 'Malevolent Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00012A.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00021B.webp', rarity: 'rare' },
+  { name: 'Staff of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00021A.webp', rarity: 'rare' },
+  { name: 'Staff of Undead Banishment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00020.webp', rarity: 'rare' },
+  { name: 'Aridus\'s Gnarled Voidstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00033.webp', rarity: 'epic' },
+  { name: 'Heroic Staff of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00016.webp', rarity: 'epic' },
+  { name: 'Queen Bellandir\'s Hivemind Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00019.webp', rarity: 'epic' },
+  { name: 'Staff of Lucid Light', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00028.webp', rarity: 'epic' },
+  { name: 'Staff of the Umbramancer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00027.webp', rarity: 'epic' },
+  { name: 'Talus\'s Crystalline Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00032.webp', rarity: 'epic' },
+  { name: 'Toublek\'s Shattering Quarterstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00014.webp', rarity: 'epic' },
+  { name: 'Abyssal Renaissance Foci', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00009.webp', rarity: 'epic' },
+  { name: 'Archstaff of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00049.webp', rarity: 'epic' },
+  { name: 'Daigon\'s Charred Emberstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_staff_00036.webp', rarity: 'epic' },
+  { name: 'Deluzhnoa\'s Ancient Petrified Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00018A.webp', rarity: 'epic' },
+  { name: 'Ebon Soulwind Archstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00010.webp', rarity: 'epic' },
+  { name: 'Grayeye\'s Electrified Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00017A.webp', rarity: 'epic' },
+  { name: 'Staff of Enlightened Reform', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00031.webp', rarity: 'epic' },
+];
+
+
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
@@ -264,7 +298,7 @@ const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Bow": TL_BOW_ITEMS,
   "Crossbow": TL_CROSSBOW_ITEMS,
   "Wand": TL_WAND_ITEMS,
-  "Staff": [],
+  "Staff": TL_STAFF_ITEMS,
   "Spear": [],
 };
 
@@ -302,6 +336,7 @@ const traitOptions = [
   { value: "Mana Regen", label: "Mana Regen"},
   { value: "Max Health", label: "Max Health" },
   { value: "Max Mana", label: "Max Mana" },
+  { value: "Petrification Chance", label: "Petrification Chance" },
   { value: "Silence Chance", label: "Silence Chance" },
   { value: "Stun Chance", label: "Stun Chance"},
   { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
@@ -327,7 +362,7 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand"];
+const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff"];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -756,4 +791,5 @@ export default function LootPageWrapper() {
     
 
     
+
 
