@@ -417,6 +417,7 @@ export default function CreateGuildPage() {
                             render={({ field }) => {
                               return (
                                 <FormItem
+                                  key={option.id} // Key restored here
                                   className="flex flex-row items-start space-x-3 space-y-0 mb-2"
                                 >
                                   <FormControl>
