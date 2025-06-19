@@ -5,24 +5,25 @@ import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'reac
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, serverTimestamp, Timestamp, updateDoc, increment } from '@/lib/firebase';
+import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, serverTimestamp, Timestamp, updateDoc, increment, getDocs as getFirestoreDocs } from '@/lib/firebase';
 import type { Guild, Event as GuildEvent, ManualConfirmation, GuildMemberRoleInfo } from '@/types/guildmaster';
 import { GuildPermission, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/alert-dialog"; // Using AlertDialog for Accordion structure
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Loader2, ShieldAlert, CheckCircle, XCircle, Edit, ListChecks, ExternalLink, MessageSquare, Image as ImageIcon } from 'lucide-react';
 import { format, subHours, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { hasPermission } from '@/lib/permissions';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
+import { Label } from '@/components/ui/label'; // Added Label import
 
 interface ConfirmationWithRejection extends ManualConfirmation {
   rejectionReasonInput?: string;
@@ -117,12 +118,9 @@ function ManualConfirmationApprovalPageContent() {
     try {
       const twentyFourHoursAgo = subHours(new Date(), 24);
       const eventsRef = collection(db, `guilds/${guildId}/events`);
-      // Query events that started in the last 24 hours
-      // Firestore does not support querying by calculated start time directly with >, so we might fetch recent events and filter client-side or adjust query
-      // For simplicity now, let's fetch events ordered by date and filter
-      const qEvents = query(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"), limit(50)); // Fetch recent 50, then filter
+      const qEvents = firestoreQuery(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"), limit(50));
 
-      const eventsSnapshot = await onSnapshot(qEvents, async (snapshot) => {
+      const unsubscribe = onSnapshot(qEvents, async (snapshot) => {
         const fetchedEventsPromises = snapshot.docs
           .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as GuildEvent))
           .filter(event => {
@@ -131,8 +129,8 @@ function ManualConfirmationApprovalPageContent() {
           })
           .map(async (event) => {
             const confirmationsRef = collection(db, `guilds/${guildId}/events/${event.id}/manualConfirmations`);
-            const qConfirmations = query(confirmationsRef, where("status", "==", "pending"));
-            const confirmationsSnapshot = await getDoc(qConfirmations); // Using getDoc for one-time fetch inside map
+            const qConfirmations = firestoreQuery(confirmationsRef, where("status", "==", "pending"));
+            const confirmationsSnapshot = await getFirestoreDocs(qConfirmations);
             const pendingConfirmations = confirmationsSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data(), rejectionReasonInput: "" } as ConfirmationWithRejection));
             return { ...event, pendingConfirmations };
           });
@@ -145,7 +143,7 @@ function ManualConfirmationApprovalPageContent() {
         toast({ title: "Erro ao Carregar Dados", variant: "destructive" });
         setLoadingData(false);
       });
-      return () => eventsSnapshot(); // Unsubscribe
+      return unsubscribe; 
     } catch (error) {
         console.error("Erro ao buscar eventos e confirmações:", error);
         toast({ title: "Erro ao Carregar Dados", variant: "destructive" });
@@ -155,9 +153,17 @@ function ManualConfirmationApprovalPageContent() {
 
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
     if(canManageConfirmations && guild){
-        fetchEventsAndConfirmations();
+        fetchEventsAndConfirmations().then(unsub => {
+            unsubscribe = unsub;
+        });
     }
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [canManageConfirmations, guild, fetchEventsAndConfirmations]);
 
 
@@ -204,7 +210,7 @@ function ManualConfirmationApprovalPageContent() {
           dkpAwarded: dkpAwarded > 0 ? dkpAwarded : null,
         });
         await logGuildActivity(guildId,currentUser.uid, currentUser.displayName, AuditActionType.MANUAL_CONFIRMATION_APPROVED,
-          { eventId, eventName: eventData?.title, targetUserId: confirmation.userId, targetUserDisplayName: confirmation.userDisplayName }
+          { eventId, eventName: eventData?.title || 'Evento desconhecido', targetUserId: confirmation.userId, targetUserDisplayName: confirmation.userDisplayName }
         );
         toast({ title: "Confirmação Aprovada!", description: `${confirmation.userDisplayName} teve a participação aprovada.` });
       } else { // Reject
@@ -215,12 +221,12 @@ function ManualConfirmationApprovalPageContent() {
           rejectionReason: confirmation.rejectionReasonInput || "Nenhum motivo fornecido.",
         });
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.MANUAL_CONFIRMATION_REJECTED,
-          { eventId, eventName: eventData?.title, targetUserId: confirmation.userId, targetUserDisplayName: confirmation.userDisplayName, details: { rejectionReason: confirmation.rejectionReasonInput } as any }
+          { eventId, eventName: eventData?.title || 'Evento desconhecido', targetUserId: confirmation.userId, targetUserDisplayName: confirmation.userDisplayName, details: { rejectionReason: confirmation.rejectionReasonInput } as any }
         );
         toast({ title: "Confirmação Rejeitada." });
       }
       await batch.commit();
-      fetchEventsAndConfirmations(); // Refresh data
+      // No need to call fetchEventsAndConfirmations() explicitly, onSnapshot will handle it
     } catch (error) {
       console.error("Erro ao processar confirmação:", error);
       toast({ title: "Erro ao Processar", variant: "destructive" });
@@ -328,7 +334,7 @@ function ManualConfirmationApprovalPageContent() {
                         <Button
                           variant="outline"
                           onClick={() => handleProcessConfirmation(event.id, conf, 'reject')}
-                          disabled={processingConfirmationId === conf.id}
+                          disabled={processingConfirmationId === conf.id || !canManageConfirmations}
                           className="border-destructive text-destructive hover:bg-destructive/10"
                         >
                           {processingConfirmationId === conf.id && action === 'reject' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
@@ -336,7 +342,7 @@ function ManualConfirmationApprovalPageContent() {
                         </Button>
                         <Button
                           onClick={() => handleProcessConfirmation(event.id, conf, 'approve')}
-                          disabled={processingConfirmationId === conf.id}
+                          disabled={processingConfirmationId === conf.id || !canManageConfirmations}
                           className="btn-gradient btn-style-secondary"
                         >
                           {processingConfirmationId === conf.id && action === 'approve' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
