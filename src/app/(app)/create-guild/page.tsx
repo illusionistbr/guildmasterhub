@@ -65,12 +65,12 @@ const guildSchemaBase = z.object({
 const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
     if (data.game === "Throne and Liberty") {
         if (!data.region) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Região é obrigatória para Throne and Liberty.", path: ["region"], });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Região é obrigatória para Throne and Liberty.", path: ["region"] });
         } else if (data.region && tlServers[data.region]?.length > 0 && !data.server) {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Servidor é obrigatório para esta região em Throne and Liberty.", path: ["server"], });
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Servidor é obrigatório para esta região em Throne and Liberty.", path: ["server"] });
         }
         if (!data.tlGuildFocus || data.tlGuildFocus.length === 0) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione pelo menos um foco para a guilda de Throne and Liberty.", path: ["tlGuildFocus"], });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione pelo menos um foco para a guilda de Throne and Liberty.", path: ["tlGuildFocus"] });
         }
     }
 });
@@ -145,7 +145,7 @@ export default function CreateGuildPage() {
       }
     };
 
-    const guildData: Partial<Guild> & { createdAt: any } = {
+    const guildData: Partial<Guild> & { createdAt: any } = {
         name: data.name,
         description: data.description || "",
         game: data.game,
@@ -153,10 +153,10 @@ export default function CreateGuildPage() {
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
         memberCount: 1,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp() as any,
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png`,
-      logoUrl: `https://placehold.co/150x150.png`,
+        logoUrl: `https://placehold.co/150x150.png`,
         roles: guildMemberRoles,
         customRoles: initialCustomRoles,
         dkpSystemEnabled: false,
@@ -222,7 +222,7 @@ export default function CreateGuildPage() {
                   <FormItem>
                     <FormLabel>Nome da Guilda <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Ex: Os Guardiões Alados" className={`${errors.name ? 'border-destructive' : ''}`} />
+                      <Input {...field} placeholder="Ex: Os Guardiões Alados" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -238,7 +238,7 @@ export default function CreateGuildPage() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                         <FormControl>
-                          <Input type="password" {...field} placeholder="Deixe em branco para guilda aberta" className={`pl-10 ${errors.password ? 'border-destructive' : ''}`} />
+                          <Input type="password" {...field} placeholder="Deixe em branco para guilda aberta" className="pl-10" />
                         </FormControl>
                       </div>
                     <FormDescription>Guildas sem senha podem ficar abertas para qualquer usuário entrar.</FormDescription>
@@ -254,7 +254,7 @@ export default function CreateGuildPage() {
                   <FormItem>
                     <FormLabel>Descrição (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Ex: Uma guilda focada em exploração e desafios épicos." rows={3} className={`${errors.description ? 'border-destructive' : ''}`} />
+                      <Textarea {...field} placeholder="Ex: Uma guilda focada em exploração e desafios épicos." rows={3} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -271,7 +271,7 @@ export default function CreateGuildPage() {
                         <Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                         <FormControl>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger className={`pl-10 ${errors.game ? 'border-destructive' : ''}`}>
+                            <SelectTrigger className="pl-10">
                               <SelectValue placeholder="Selecione um jogo" />
                             </SelectTrigger>
                             <SelectContent>
@@ -297,8 +297,8 @@ export default function CreateGuildPage() {
                             <div className="relative">
                               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                                 <FormControl>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <SelectTrigger className={`pl-10 ${errors.region ? 'border-destructive' : ''}`}>
+                                <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                                    <SelectTrigger className="pl-10">
                                       <SelectValue placeholder="Selecione uma região" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -323,8 +323,8 @@ export default function CreateGuildPage() {
                                 <div className="relative">
                                   <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                                   <FormControl>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
-                                      <SelectTrigger className={`pl-10 ${errors.server ? 'border-destructive' : ''}`}>
+                                    <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
+                                      <SelectTrigger className="pl-10">
                                         <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -347,45 +347,45 @@ export default function CreateGuildPage() {
                   <FormField
                     control={control}
                     name="tlGuildFocus"
-                    render={() => ( // Outer FormField for the array
-                      <FormItem> {/* Outer FormItem for layout of the whole group */}
+                    render={() => (
+                      <FormItem>
                         <div className="mb-4">
-                          <FormLabel>Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                          <FormLabel className="text-base">Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos para sua guilda.</FormDescription>
                         </div>
-                        {tlGuildFocusOptions.map((item) => (
-                          <FormField // Inner FormField for each checkbox
-                            key={item.id} // Key on the FormField
+                        {tlGuildFocusOptions.map((option) => (
+                          <FormField
+                            key={option.id}
                             control={control}
-                            name="tlGuildFocus" // Still points to the array field name
-                            render={({ field }) => { // field here is for the array
+                            name="tlGuildFocus"
+                            render={({ field }) => {
                               return (
-                                <FormItem // Inner FormItem for layout of EACH checkbox + label - REMOVED KEY FROM HERE
-                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                <FormItem
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
                                 >
-                                  <FormControl> {/* FormControl wraps ONLY the Checkbox */}
+                                  <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(item.id)}
+                                      checked={field.value?.includes(option.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...(field.value || []), item.id])
+                                          ? field.onChange([...(field.value || []), option.id])
                                           : field.onChange(
                                               (field.value || []).filter(
-                                                (value: string) => value !== item.id
+                                                (value: string) => value !== option.id
                                               )
                                             );
                                       }}
                                     />
                                   </FormControl>
                                   <FormLabel className="font-normal">
-                                    {item.label}
+                                    {option.label}
                                   </FormLabel>
                                 </FormItem>
                               );
                             }}
                           />
                         ))}
-                        <FormMessage /> {/* For the array field as a whole */}
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -394,10 +394,10 @@ export default function CreateGuildPage() {
 
               <div className="space-y-4 pt-4">
                 <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
-                <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" className={`pl-10 ${errors.socialFacebook ? 'border-destructive' : ''}`} /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel>X (Twitter)</FormLabel> <div className="relative"><Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://x.com/suaguilda" className={`pl-10 ${errors.socialX ? 'border-destructive' : ''}`} /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <div className="relative"><Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://youtube.com/c/suaguilda" className={`pl-10 ${errors.socialYoutube ? 'border-destructive' : ''}`} /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel>Discord</FormLabel> <div className="relative"><LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://discord.gg/suaguilda" className={`pl-10 ${errors.socialDiscord ? 'border-destructive' : ''}`} /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel>X (Twitter)</FormLabel> <div className="relative"><Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://x.com/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <div className="relative"><Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://youtube.com/c/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel>Discord</FormLabel> <div className="relative"><LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://discord.gg/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
               </div>
               <Alert variant="default" className="bg-background border-accent/30 !mt-8">
                   <AlertCircle className="h-4 w-4 text-accent" />
@@ -407,7 +407,7 @@ export default function CreateGuildPage() {
             </CardContent>
             <CardFooter className="flex justify-end gap-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="btn-gradient btn-style-primary">
                 {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldPlus className="mr-2 h-5 w-5" />}
                 {isSubmitting ? 'Criando Guilda...' : 'Criar Guilda'}
               </Button>
@@ -419,3 +419,4 @@ export default function CreateGuildPage() {
   );
 }
 
+    
