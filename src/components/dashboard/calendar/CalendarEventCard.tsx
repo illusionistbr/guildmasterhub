@@ -22,25 +22,42 @@ interface CalendarEventCardProps {
 
 export function CalendarEventCard({ event, cellHeight, onClick, colorClass }: CalendarEventCardProps) {
   const startDateObj = parseDateTime(event.date, event.time);
-  const eventStartMinute = startDateObj.getMinutes();
+  const startMinuteInHour = startDateObj.getMinutes();
   
-  const topPosition = (eventStartMinute / 60) * cellHeight;
+  const topPosition = (startMinuteInHour / 60) * cellHeight;
 
-  let durationInMinutes: number;
-
+  // Calculate actual total duration of the event
+  let actualTotalDurationInMinutes: number;
   if (event.endDate && event.endTime) {
     const endDateObj = parseDateTime(event.endDate, event.endTime);
     if (endDateObj > startDateObj) {
-      durationInMinutes = (endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60);
+      actualTotalDurationInMinutes = (endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60);
     } else {
-      durationInMinutes = 60; // Default to 1 hour if end is before start
+      actualTotalDurationInMinutes = 60; // Default to 1 hour if end is before start or invalid
     }
   } else {
-    durationInMinutes = 60; // Default duration if no end date/time
+    actualTotalDurationInMinutes = 60; // Default duration if no end date/time
   }
 
-  const clampedDurationInMinutes = Math.max(15, durationInMinutes); // Min duration of 15 mins for visibility
-  const eventHeight = (clampedDurationInMinutes / 60) * cellHeight;
+  // Calculate minutes from event start until midnight of the start day
+  const eventStartHour = startDateObj.getHours();
+  const minutesFromDayStartToEventStart = eventStartHour * 60 + startMinuteInHour;
+  const totalMinutesInDay = 24 * 60;
+  const minutesFromEventStartToMidnight = totalMinutesInDay - minutesFromDayStartToEventStart;
+
+  // Determine display duration, capped by midnight of the start day
+  // Ensure that minutesFromEventStartToMidnight is not negative (e.g. if event starts at 23:59 and lasts 1 min, it should be 1)
+  // A value of 0 for minutesFromEventStartToMidnight means the event starts exactly at midnight, should technically show full duration for that day if it fits.
+  // If minutesFromEventStartToMidnight is 0 (event starts at 00:00), it means it has full 1440 minutes of the day.
+  const effectivelyMinutesFromEventStartToMidnight = minutesFromEventStartToMidnight > 0 ? minutesFromEventStartToMidnight : (minutesFromDayStartToEventStart === 0 ? totalMinutesInDay : 0) ;
+
+
+  const displayDurationCappedByDay = Math.min(actualTotalDurationInMinutes, effectivelyMinutesFromEventStartToMidnight);
+  
+  // Ensure a minimum duration for visibility
+  const finalDurationForHeight = Math.max(15, displayDurationCappedByDay); 
+
+  const eventHeight = (finalDurationForHeight / 60) * cellHeight;
 
   const displayEndTime = event.endDate && event.endTime ? event.endTime : null;
 
