@@ -47,6 +47,13 @@ const TL_SWORD_ITEMS: TLItem[] = [
   { name: 'Pathfinder Blade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00007.webp', rarity: 'uncommon' },
   { name: 'Standard Issue Longsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00008.webp', rarity: 'uncommon' },
   { name: 'Arena Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00021.webp', rarity: 'uncommon' },
+  { name: 'Sword of Undead Vanquishing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00011.webp', rarity: 'rare' },
+  { name: 'Blade of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00027.webp', rarity: 'rare' },
+  { name: 'Sword of Striking', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00028.webp', rarity: 'rare' },
+  { name: 'Resonance Blade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00022A.webp', rarity: 'rare' },
+  { name: 'Golem Shattering Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00022.webp', rarity: 'rare' },
+  { name: 'Hammer Forged Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00022B.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00027A.webp', rarity: 'rare' },
 ];
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
@@ -340,6 +347,5 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
-
 
     
