@@ -240,10 +240,6 @@ function LootPageContent() {
             rarityToUse = swordItem.rarity;
         }
     }
-    // Placeholder for other weapon types, armor, accessories
-    // else if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) { ... }
-    // else if (data.itemCategory === 'armor') { ... }
-    // else if (data.itemCategory === 'accessory') { ... }
 
 
     const newItem: BankItem = {
@@ -361,7 +357,7 @@ function LootPageContent() {
                           />
                         )}
                         {watchedWeaponType === 'Sword' && (
-                          <FormField
+                           <FormField
                             control={form.control}
                             name="trait"
                             render={({ field }) => (
@@ -432,18 +428,24 @@ function LootPageContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {bankItems.map(item => (
                 <Card key={item.id} className="static-card-container flex flex-col">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base font-semibold truncate" title={item.itemName || item.weaponType || item.itemCategory}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.itemCategory}>
                       {item.itemName || item.weaponType || "Item Genérico"}
                     </CardTitle>
-                    <Badge variant={item.status === 'Disponível' ? 'default' : 'secondary'} className={cn(item.status === 'Disponível' ? 'bg-green-500/20 text-green-600 border-green-500/50' : 'bg-orange-500/20 text-orange-600 border-orange-500/50')}>
-                      {item.status}
-                    </Badge>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
-                    <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border mb-3", rarityBackgrounds[item.rarity])}>
+                    <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[item.rarity])}>
                       <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint="game item icon"/>
                     </div>
+                    <Badge
+                      variant={item.status === 'Disponível' ? 'default' : 'secondary'}
+                      className={cn(
+                        "mt-2 mb-2 text-xs px-2 py-0.5",
+                        item.status === 'Disponível' ? 'bg-green-500/20 text-green-600 border-green-500/50' : 'bg-orange-500/20 text-orange-600 border-orange-500/50'
+                      )}
+                    >
+                      {item.status}
+                    </Badge>
                     <div className="text-xs text-muted-foreground space-y-0.5 text-center">
                       <p><strong>Tipo:</strong> {item.itemCategory}</p>
                       {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
@@ -484,3 +486,4 @@ export default function LootPageWrapper() {
 }
     
 
+    
