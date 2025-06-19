@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon } from 'lucide-react';
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon, Crosshair } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
@@ -40,8 +40,11 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
   "Asia Pacific": [ { value: "Valkarg", label: "Valkarg" }, { value: "Sunstorm", label: "Sunstorm" }, { value: "Amethyst", label: "Amethyst" }, { value: "Titanspine", label: "Titanspine" }, ],
 };
 
+// tlGuildFocusOptions moved to settings page, not needed here.
+
 const guildSchemaBase = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
+  // description field removed
   game: z.string().min(1, "Selecionar um jogo é obrigatório.").max(50, "Nome do jogo deve ter no máximo 50 caracteres."),
   password: z.string().max(50, "Senha deve ter no máximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
   socialFacebook: z.string().url("URL do Facebook inválida.").max(200, "Link do Facebook muito longo.").optional().or(z.literal('')),
@@ -50,7 +53,7 @@ const guildSchemaBase = z.object({
   socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
   region: z.string().optional(),
   server: z.string().optional(),
-  // tlGuildFocus removed from base schema as per previous request
+  // tlGuildFocus field removed
 });
 
 const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
@@ -60,7 +63,7 @@ const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
         } else if (data.region && tlServers[data.region]?.length > 0 && !data.server) {
              ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Servidor é obrigatório para esta região em Throne and Liberty.", path: ["server"] });
         }
-        // tlGuildFocus validation removed as per previous request
+        // tlGuildFocus validation removed
     }
 });
 
@@ -75,6 +78,7 @@ export default function CreateGuildPage() {
   const form = useForm<GuildFormValues>({
     resolver: zodResolver(guildSchema),
     defaultValues: { name: "", game: "", password: "", socialFacebook: "", socialX: "", socialYoutube: "", socialDiscord: "", region: undefined, server: undefined }
+    // description and tlGuildFocus removed from defaultValues
   });
 
   const { handleSubmit, control, formState: { errors }, watch, setValue } = form;
@@ -134,14 +138,15 @@ export default function CreateGuildPage() {
       }
     };
 
-    const guildData: Omit<Guild, 'id' | 'tlGuildFocus'> & { createdAt: any } = { // tlGuildFocus removed from here
+    const guildData: Omit<Guild, 'id' | 'description' | 'tlGuildFocus'> & { createdAt: any } = {
         name: data.name,
+        // description field removed
         game: data.game,
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
         memberIds: [user.uid],
         memberCount: 1,
-        createdAt: serverTimestamp() as any, // Cast to any to satisfy TypeScript for serverTimestamp
+        createdAt: serverTimestamp() as any,
         isOpen: !data.password,
         bannerUrl: `https://placehold.co/1200x300.png`,
         logoUrl: `https://placehold.co/150x150.png`,
@@ -151,6 +156,7 @@ export default function CreateGuildPage() {
         dkpRedemptionWindow: { value: 24, unit: 'hours' },
         dkpDefaultsPerCategory: {},
         dkpDecayEnabled: false,
+        // tlGuildFocus removed
     };
 
     if (data.game === "Throne and Liberty") {
@@ -160,10 +166,10 @@ export default function CreateGuildPage() {
     }
 
     if (Object.keys(socialLinks).length > 0) {
-        (guildData as Guild).socialLinks = socialLinks; // Cast to Guild to include socialLinks
+        (guildData as Guild).socialLinks = socialLinks;
     }
     if (data.password) {
-        (guildData as Guild).password = data.password; // Cast to Guild to include password
+        (guildData as Guild).password = data.password;
     }
 
     try {
@@ -202,7 +208,7 @@ export default function CreateGuildPage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6"> {/* Restored space-y-6 */}
               <FormField
                 control={control}
                 name="name"
@@ -216,6 +222,8 @@ export default function CreateGuildPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Description field removed */}
 
               <FormField
                 control={control}
@@ -318,7 +326,7 @@ export default function CreateGuildPage() {
                         )}
                       />
                     )}
-                    {/* tlGuildFocus checkboxes removed from here */}
+                    {/* tlGuildFocus checkboxes removed */}
                 </>
               )}
 
@@ -348,3 +356,5 @@ export default function CreateGuildPage() {
     </div>
   );
 }
+
+    
