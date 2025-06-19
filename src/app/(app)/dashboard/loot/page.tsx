@@ -551,6 +551,22 @@ const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Polished Composite Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00010A.webp', rarity: 'rare' },
   { name: 'Sunshade Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00022B.webp', rarity: 'rare' },
   { name: 'Premonition Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00016B.webp', rarity: 'rare' },
+  { name: 'Shock Commander Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05002.webp', rarity: 'epic' },
+  { name: 'Ebon Roar Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05001.webp', rarity: 'epic' },
+  { name: 'Heroic Gauntlets of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_06002.webp', rarity: 'epic' },
+  { name: 'Gauntlets of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00018.webp', rarity: 'epic' },
+  { name: 'Gauntlets of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_GL_00019.webp', rarity: 'epic' },
+  { name: 'Phantom Wolf Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00001B.webp', rarity: 'epic' },
+  { name: 'Heroic Grips of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05002.webp', rarity: 'epic' },
+  { name: 'Shadow Harvester Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00017A.webp', rarity: 'epic' },
+  { name: 'Heroic Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05003.webp', rarity: 'epic' },
+  { name: 'Grip of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00004.webp', rarity: 'epic' },
+  { name: 'Swirling Essence Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00020.webp', rarity: 'epic' },
+  { name: 'Ascended Guardian Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00011.webp', rarity: 'epic' },
+  { name: 'Heroic Mitts of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010.webp', rarity: 'epic' },
+  { name: 'Arcane Shadow Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00005B.webp', rarity: 'epic' },
+  { name: 'Divine Justiciar Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001.webp', rarity: 'epic' },
+  { name: 'Gilded Raven Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00022B.webp', rarity: 'epic' },
 ];
 
 
@@ -1198,6 +1214,7 @@ export default function LootPageWrapper() {
 
 
     
+
 
 
 
