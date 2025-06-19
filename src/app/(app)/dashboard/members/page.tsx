@@ -584,14 +584,13 @@ function MembersListTabContent(
             {paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid; const isGuildOwnerTarget = member.uid === guild?.ownerId;
               const displayName = member.characterNickname || member.displayName || member.email || member.uid;
-              const canViewDetails = canViewDetailedMemberInfo;
               const canPerformManagementActions = !isCurrentUserTarget && (
                 (canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider")) ||
                 canManageMemberStatus ||
                 (canAdjustMemberDkp && guild.dkpSystemEnabled && !isGuildOwnerTarget) ||
                 (canKickMembers && !isGuildOwnerTarget)
               );
-              const showActionsDropdown = canViewDetails || canPerformManagementActions;
+              const showActionsDropdown = canPerformManagementActions; // Dropdown only for management actions
 
               return (
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
@@ -609,24 +608,23 @@ function MembersListTabContent(
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /><span className="sr-only">Ações do membro</span></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                {canViewDetails && (
-                                  <DropdownMenuItem onSelect={() => handleViewMemberDetails(member)}>
-                                    <Search className="mr-2 h-4 w-4" /> Ver Detalhes
-                                  </DropdownMenuItem>
-                                )}
                                 {!isCurrentUserTarget && (
                                   <>
-                                  {canViewDetails && canPerformManagementActions && <DropdownMenuSeparator />}
                                     {canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider") && ( <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")} disabled={isGuildOwnerTarget && member.roleName === "Lider"}><UserCog className="mr-2 h-4 w-4" /> Alterar Cargo</DropdownMenuItem> )}
                                     {canManageMemberStatus && ( <DropdownMenuSub><DropdownMenuSubTrigger disabled={isGuildOwnerTarget && member.roleName === "Lider" && member.status === "Ativo"}><UserCog className="mr-2 h-4 w-4" />Alterar Status</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent>{(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => ( <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }} disabled={isGuildOwnerTarget && member.roleName === "Lider" && statusOption === 'Inativo'}>{getStatusIcon(statusOption)}{displayMemberStatus(statusOption)}</DropdownMenuItem> ))}</DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub> )}
                                     {canAdjustMemberDkp && guild.dkpSystemEnabled && !isGuildOwnerTarget && (
                                         <>
-                                            <DropdownMenuSeparator />
+                                            {((canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider")) || canManageMemberStatus) && <DropdownMenuSeparator />}
                                             <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'add')}><PlusCircleIconLucide className="mr-2 h-4 w-4 text-green-500"/> Dar DKP</DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'remove')}><MinusCircle className="mr-2 h-4 w-4 text-red-500"/> Retirar DKP</DropdownMenuItem>
                                         </>
                                     )}
-                                    {canKickMembers && !isGuildOwnerTarget && ( <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem></> )}
+                                    {canKickMembers && !isGuildOwnerTarget && ( 
+                                        <>
+                                          {((canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider")) || canManageMemberStatus || (canAdjustMemberDkp && guild.dkpSystemEnabled && !isGuildOwnerTarget)) && <DropdownMenuSeparator />}
+                                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem>
+                                        </> 
+                                    )}
                                   </>
                                 )}
                             </DropdownMenuContent>
