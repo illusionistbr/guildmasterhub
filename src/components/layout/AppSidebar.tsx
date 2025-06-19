@@ -26,7 +26,7 @@ import {
   ClipboardList,
   UserCog,
   KeyRound,
-  Edit, // New icon for Manual Confirmation
+  Edit, 
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -43,7 +43,8 @@ const guildManagementNavItemsBase = [
     baseHref: "/dashboard/calendar",
     subItems: [
       { baseHref: "/dashboard/calendar/settings", label: "PIN Codes", icon: KeyRound },
-      { baseHref: "/dashboard/calendar/manual-confirmation", label: "Confirmação manual", icon: Edit },
+      // Updated link to point to the new approval page
+      { baseHref: "/dashboard/calendar/manual-confirmation-approval", label: "Aprovar Confirmações", icon: Edit },
     ]
   },
   {
