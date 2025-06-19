@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc } from '@/lib/firebase'; // Firestore imports already here
-import type { Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // GuildMemberRoleInfo for member list
+import type { Guild, GuildMember, UserProfile } from '@/types/guildmaster'; // GuildMember for member list
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,7 +40,7 @@ interface TLItem {
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 }
 
-type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem';
+type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
 
 interface BankItem {
   id: string;
@@ -140,6 +140,8 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Distribuído': 'bg-orange-500/20 text-orange-600 border-orange-500/50',
   'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
   'Em rolagem': 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50',
+  'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50', // Light blue for awaiting auction
+  'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50', // Light yellow for awaiting roll
 };
 
 
