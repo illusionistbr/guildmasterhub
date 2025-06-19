@@ -123,10 +123,45 @@ const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Cordy\'s Warblade of Creeping Doom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp', rarity: 'epic' },
 ];
 
+const TL_DAGGER_ITEMS: TLItem[] = [
+  { name: 'Apprentice Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00001.webp', rarity: 'common' },
+  { name: 'Reforged Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00002.webp', rarity: 'common' },
+  { name: 'Sharpened Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00003.webp', rarity: 'common' },
+  { name: 'Twin Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00004.webp', rarity: 'common' },
+  { name: 'Forgotten Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00007.webp', rarity: 'common' },
+  { name: 'Utility Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00005.webp', rarity: 'uncommon' },
+  { name: 'Iron Dirks', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00006.webp', rarity: 'uncommon' },
+  { name: 'Parrying Stilettos', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00007.webp', rarity: 'uncommon' },
+  { name: 'Bloodletter Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00008.webp', rarity: 'uncommon' },
+  { name: 'Golem Chiseling Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00016.webp', rarity: 'rare' },
+  { name: 'Daggers of Undead Severing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00009.webp', rarity: 'rare' },
+  { name: 'Daggers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00026.webp', rarity: 'rare' },
+  { name: 'Daggers of Slaughtering', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00020.webp', rarity: 'rare' },
+  { name: 'Shadewalker Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00022.webp', rarity: 'rare' },
+  { name: 'Killing Spree Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00022B.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00026A.webp', rarity: 'rare' },
+  { name: 'Bound Resistance Vanguard Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00026A.webp', rarity: 'rare' },
+  { name: 'Lequirus\'s Wicked Thorns', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00014.webp', rarity: 'epic' },
+  { name: 'Rex Chimaerus\'s Fangs', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00038.webp', rarity: 'epic' },
+  { name: 'Minezerok\'s Daggers of Crippling', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00039.webp', rarity: 'epic' },
+  { name: 'Kowazan\'s Twilight Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00037.webp', rarity: 'epic' },
+  { name: 'Darkslayer Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00036.webp', rarity: 'epic' },
+  { name: 'Heroic Daggers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00013.webp', rarity: 'epic' },
+  { name: 'Tevent\'s Fangs of Fury', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00035.webp', rarity: 'epic' },
+  { name: 'Peerless Obsidian Razors', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00027.webp', rarity: 'epic' },
+  { name: 'Destiny Binders', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00017.webp', rarity: 'epic' },
+  { name: 'Bercant\'s Whispering Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00034.webp', rarity: 'epic' },
+  { name: 'Razorthorn Shredders', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00010.webp', rarity: 'epic' },
+  { name: 'Blades of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00049.webp', rarity: 'epic' },
+  { name: 'Deluzhnoa\'s Permafrost Razors', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00052.webp', rarity: 'epic' },
+  { name: 'Leviathan\'s Bladed Tendrils', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00051.webp', rarity: 'epic' },
+];
+
+
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
-  "Dagger": [],
+  "Dagger": TL_DAGGER_ITEMS,
   "Bow": [],
   "Crossbow": [],
   "Wand": [],
@@ -166,6 +201,7 @@ const traitOptions = [
   { value: "Mana Regen", label: "Mana Regen"},
   { value: "Max Health", label: "Max Health" },
   { value: "Max Mana", label: "Max Mana" },
+  { value: "Silence Chance", label: "Silence Chance" },
   { value: "Stun Chance", label: "Stun Chance"},
   { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
   { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
@@ -559,9 +595,9 @@ function LootPageContent() {
               {bankItems.map(item => (
                 <Card key={item.id} className="static-card-container flex flex-col">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.itemCategory}>
-                      {item.itemName || item.weaponType || "Item Genérico"}
-                    </CardTitle>
+                     <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.itemCategory}>
+                        {item.itemName || item.weaponType || "Item Genérico"}
+                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
                     <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[item.rarity])}>
@@ -618,4 +654,3 @@ export default function LootPageWrapper() {
     
 
     
-
