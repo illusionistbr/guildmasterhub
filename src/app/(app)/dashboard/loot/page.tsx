@@ -5,8 +5,8 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc } from '@/lib/firebase';
-import type { Guild } from '@/types/guildmaster';
+import { db, doc, getDoc } from '@/lib/firebase'; // Firestore imports already here
+import type { Guild, GuildMemberRoleInfo } from '@/types/guildmaster'; // GuildMemberRoleInfo for member list
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,18 +26,21 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
 
 interface TLItem {
   name: string;
   imageUrl: string;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 }
+
+type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem';
 
 interface BankItem {
   id: string;
@@ -47,7 +50,9 @@ interface BankItem {
   trait?: string;
   imageUrl: string;
   rarity: TLItem['rarity'];
-  status: 'Disponível' | 'Distribuído';
+  status: BankItemStatus;
+  droppedByMemberId?: string;
+  droppedByMemberName?: string;
 }
 
 const TL_SWORD_ITEMS: TLItem[] = [
@@ -130,11 +135,20 @@ const rarityBackgrounds: Record<TLItem['rarity'], string> = {
   legendary: 'bg-amber-500',
 };
 
+const statusBadgeClasses: Record<BankItemStatus, string> = {
+  'Disponível': 'bg-green-500/20 text-green-600 border-green-500/50',
+  'Distribuído': 'bg-orange-500/20 text-orange-600 border-orange-500/50',
+  'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
+  'Em rolagem': 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50',
+};
+
+
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
   itemName: z.string().optional(),
   trait: z.string().optional(),
+  droppedByMemberId: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.itemCategory === 'weapon' && !data.weaponType) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
@@ -162,6 +176,7 @@ function LootPageContent() {
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [selectedItemForPreview, setSelectedItemForPreview] = useState<TLItem | null>(null);
   const [bankItems, setBankItems] = useState<BankItem[]>([]);
+  const [guildMembersForDropdown, setGuildMembersForDropdown] = useState<{ value: string; label: string }[]>([]);
 
   const guildId = searchParams.get('guildId');
 
@@ -172,6 +187,7 @@ function LootPageContent() {
       weaponType: undefined,
       itemName: undefined,
       trait: undefined,
+      droppedByMemberId: undefined,
     },
   });
 
@@ -220,6 +236,23 @@ function LootPageContent() {
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
         setHeaderTitle(`Loot: ${guildData.name}`);
+
+        // Prepare members for dropdown
+        const membersDropdownData: { value: string; label: string }[] = [];
+        if (guildData.memberIds && guildData.roles) {
+          for (const memberId of guildData.memberIds) {
+            const roleInfo = guildData.roles[memberId];
+            if (roleInfo) {
+              membersDropdownData.push({
+                value: memberId,
+                label: roleInfo.characterNickname || `Membro ${memberId.substring(0, 6)}`,
+              });
+            }
+          }
+        }
+        membersDropdownData.sort((a, b) => a.label.localeCompare(b.label));
+        setGuildMembersForDropdown(membersDropdownData);
+
       } catch (error) { console.error("Erro ao buscar dados da guilda:", error); toast({ title: "Erro ao carregar dados", variant: "destructive" });
       } finally { setLoadingGuildData(false); }
     };
@@ -233,24 +266,30 @@ function LootPageContent() {
     let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
     let rarityToUse: TLItem['rarity'] = 'common';
 
-    if (data.itemCategory === 'weapon' && data.weaponType === 'Sword' && data.itemName) {
-        const swordItem = TL_SWORD_ITEMS.find(s => s.name === data.itemName);
-        if (swordItem) {
-            imageUrlToUse = swordItem.imageUrl;
-            rarityToUse = swordItem.rarity;
+    if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) {
+        const itemsList = WEAPON_ITEMS_MAP[data.weaponType];
+        if (itemsList) {
+            const specificItem = itemsList.find(s => s.name === data.itemName);
+            if (specificItem) {
+                imageUrlToUse = specificItem.imageUrl;
+                rarityToUse = specificItem.rarity;
+            }
         }
     }
 
+    const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
 
     const newItem: BankItem = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Simple ID generation for now
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
-      trait: data.trait,
+      trait: data.itemCategory === 'weapon' && data.weaponType === 'Sword' ? data.trait : undefined,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
+      droppedByMemberId: data.droppedByMemberId,
+      droppedByMemberName: droppedByMember?.label,
     };
 
     setBankItems(prevItems => [...prevItems, newItem]);
@@ -383,6 +422,37 @@ function LootPageContent() {
                       </>
                     )}
                     
+                    <FormField
+                      control={form.control}
+                      name="droppedByMemberId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dropado por (Opcional)</FormLabel>
+                           <div className="relative flex items-center">
+                                <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                    <SelectItem value="">Ninguém / Não especificado</SelectItem>
+                                    {guildMembersForDropdown.map(member => (
+                                        <SelectItem key={member.value} value={member.value}>
+                                        <div className="flex items-center">
+                                            <Avatar className="h-6 w-6 mr-2">
+                                            <AvatarImage src={guild?.roles?.[member.value]?.characterNickname /* Placeholder for actual photoURL if available */ || `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/>
+                                            <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                            {member.label}
+                                        </div>
+                                        </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                           </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {selectedItemForPreview && (
                       <div className="mt-4 space-y-2">
                         <FormLabel>Prévia do Item</FormLabel>
@@ -441,7 +511,7 @@ function LootPageContent() {
                       variant={item.status === 'Disponível' ? 'default' : 'secondary'}
                       className={cn(
                         "mt-2 mb-2 text-xs px-2 py-0.5",
-                        item.status === 'Disponível' ? 'bg-green-500/20 text-green-600 border-green-500/50' : 'bg-orange-500/20 text-orange-600 border-orange-500/50'
+                        statusBadgeClasses[item.status]
                       )}
                     >
                       {item.status}
@@ -450,6 +520,7 @@ function LootPageContent() {
                       <p><strong>Tipo:</strong> {item.itemCategory}</p>
                       {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
                       {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
+                      {item.droppedByMemberName && <p><strong>Dropado por:</strong> {item.droppedByMemberName}</p>}
                     </div>
                   </CardContent>
                    <CardFooter className="p-3 border-t border-border">
