@@ -276,17 +276,17 @@ export default function CreateGuildPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Senha da Guilda (Opcional)</FormLabel>
-                    <FormControl>
-                      <div className="relative flex items-center mt-1">
-                        <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative mt-1">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                      <FormControl>
                         <Input
                           type="password"
                           {...field}
                           placeholder="Deixe em branco para guilda aberta"
                           className={`form-input pl-10 ${errors.password ? 'border-destructive focus:border-destructive' : ''}`}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                     <p className="text-xs text-muted-foreground mt-1">Guildas sem senha podem ficar abertas para qualquer usuário entrar.</p>
                   </FormItem>
@@ -318,19 +318,19 @@ export default function CreateGuildPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Jogo <span className="text-destructive">*</span></FormLabel>
-                    <div className="relative flex items-center mt-1">
-                       <Gamepad2 className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                        <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
-                          <FormControl>
+                    <div className="relative mt-1">
+                       <Gamepad2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                             <SelectTrigger className={`form-input pl-10 ${errors.game ? 'border-destructive focus:border-destructive' : ''}`}>
                               <SelectValue placeholder="Selecione um jogo" />
                             </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
-                            <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
-                          </SelectContent>
-                        </Select>
+                            <SelectContent>
+                              <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
+                              <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -345,20 +345,20 @@ export default function CreateGuildPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                        <div className="relative flex items-center mt-1">
-                           <Globe className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                        <div className="relative mt-1">
+                           <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                           <FormControl>
                             <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
-                              <FormControl>
-                                <SelectTrigger className={`form-input pl-10 ${errors.region ? 'border-destructive focus:border-destructive' : ''}`}>
-                                  <SelectValue placeholder="Selecione uma região" />
-                                </SelectTrigger>
-                              </FormControl>
+                              <SelectTrigger className={`form-input pl-10 ${errors.region ? 'border-destructive focus:border-destructive' : ''}`}>
+                                <SelectValue placeholder="Selecione uma região" />
+                              </SelectTrigger>
                               <SelectContent>
                                 {tlRegions.map(region => (
                                   <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                           </FormControl>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -371,29 +371,29 @@ export default function CreateGuildPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                            <div className="relative flex items-center mt-1">
-                              <ServerIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value || ""}
-                                defaultValue={field.value || ""}
-                                disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}
-                              >
-                                <FormControl>
+                            <div className="relative mt-1">
+                              <ServerIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                              <FormControl>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value || ""}
+                                  defaultValue={field.value || ""}
+                                  disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}
+                                >
                                   <SelectTrigger className={`form-input pl-10 ${errors.server ? 'border-destructive focus:border-destructive' : ''}`}>
                                     <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
                                   </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {tlServers[watchedRegion]?.length > 0 ? (
-                                    tlServers[watchedRegion].map(server => (
-                                      <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
+                                  <SelectContent>
+                                    {tlServers[watchedRegion]?.length > 0 ? (
+                                      tlServers[watchedRegion].map(server => (
+                                        <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
+                                      ))
+                                    ) : (
+                                      <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -452,10 +452,10 @@ export default function CreateGuildPage() {
               <div className="space-y-1">
                 <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
                 <div className="space-y-3">
-                  <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialFacebook">Facebook</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <Facebook className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialFacebook" {...field} placeholder="https://facebook.com/suaguilda" className={`form-input pl-10 ${errors.socialFacebook ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
-                  <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialX">X (Twitter)</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <Twitter className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialX" {...field} placeholder="https://x.com/suaguilda" className={`form-input pl-10 ${errors.socialX ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
-                  <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialYoutube">YouTube</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <Youtube className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialYoutube" {...field} placeholder="https://youtube.com/c/suaguilda" className={`form-input pl-10 ${errors.socialYoutube ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
-                  <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialDiscord">Discord</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialDiscord" {...field} placeholder="https://discord.gg/suaguilda" className={`form-input pl-10 ${errors.socialDiscord ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialFacebook">Facebook</FormLabel> <div className="relative mt-1"> <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input id="socialFacebook" {...field} placeholder="https://facebook.com/suaguilda" className={`form-input pl-10 ${errors.socialFacebook ? 'border-destructive focus:border-destructive' : ''}`} /> </FormControl> </div> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialX">X (Twitter)</FormLabel> <div className="relative mt-1"> <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input id="socialX" {...field} placeholder="https://x.com/suaguilda" className={`form-input pl-10 ${errors.socialX ? 'border-destructive focus:border-destructive' : ''}`} /> </FormControl> </div> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialYoutube">YouTube</FormLabel> <div className="relative mt-1"> <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input id="socialYoutube" {...field} placeholder="https://youtube.com/c/suaguilda" className={`form-input pl-10 ${errors.socialYoutube ? 'border-destructive focus:border-destructive' : ''}`} /> </FormControl> </div> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialDiscord">Discord</FormLabel> <div className="relative mt-1"> <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input id="socialDiscord" {...field} placeholder="https://discord.gg/suaguilda" className={`form-input pl-10 ${errors.socialDiscord ? 'border-destructive focus:border-destructive' : ''}`} /> </FormControl> </div> <FormMessage /> </FormItem> )}/>
                 </div>
               </div>
               <Alert variant="default" className="bg-background border-accent/30">
@@ -485,5 +485,3 @@ export default function CreateGuildPage() {
     </div>
   );
 }
-
-    
