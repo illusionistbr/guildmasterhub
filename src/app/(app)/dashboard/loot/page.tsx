@@ -111,6 +111,7 @@ const traitOptions = [
   { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
   { value: "Debuff Duration", label: "Debuff Duration" },
   { value: "Stun Chance", label: "Stun Chance"},
+  { value: "Attack Speed", label: "Attack Speed"},
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
