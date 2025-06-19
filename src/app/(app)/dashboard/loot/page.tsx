@@ -42,7 +42,7 @@ const TL_SWORD_ITEMS: TLItem[] = [
   { name: 'Reforged Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00002.webp', rarity: 'common' },
   { name: 'Sharpened Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00003.webp', rarity: 'common' },
   { name: 'Forged Iron Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00004.webp', rarity: 'common' },
-  { name: 'Forgotten Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00004.webp', rarity: 'common' }, // Note: Same URL as Forged Iron Sword
+  { name: 'Forgotten Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00004.webp', rarity: 'common' },
   { name: 'Manasteel Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010.webp', rarity: 'uncommon' },
   { name: 'Pathfinder Blade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00007.webp', rarity: 'uncommon' },
   { name: 'Standard Issue Longsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00008.webp', rarity: 'uncommon' },
@@ -51,7 +51,6 @@ const TL_SWORD_ITEMS: TLItem[] = [
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
-  // Other weapon types would be added here similarly
   "Greatsword": [],
   "Dagger": [],
   "Bow": [],
@@ -79,19 +78,17 @@ const weaponTypeOptions = [
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
-  common: 'bg-gray-600', // Cinza
-  uncommon: 'bg-green-600', // Verde claro
-  rare: 'bg-blue-600',
-  epic: 'bg-purple-600',
-  legendary: 'bg-orange-500',
+  common: 'bg-slate-700',
+  uncommon: 'bg-emerald-600',
+  rare: 'bg-sky-600',
+  epic: 'bg-violet-600',
+  legendary: 'bg-amber-500',
 };
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
   itemName: z.string().optional(),
-  // quantity: z.coerce.number().min(1, "Quantidade deve ser pelo menos 1.").optional(),
-  // notes: z.string().max(200, "Notas muito longas.").optional(),
 }).superRefine((data, ctx) => {
   if (data.itemCategory === 'weapon' && !data.weaponType) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
@@ -266,15 +263,15 @@ function LootPageContent() {
                       />
                     )}
                     
-                    {watchedItemCategory === 'weapon' && watchedWeaponType === 'Sword' && currentWeaponNameOptions.length > 0 && (
+                    {watchedItemCategory === 'weapon' && watchedWeaponType && currentWeaponNameOptions.length > 0 && (
                       <FormField
                         control={form.control}
                         name="itemName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome da Espada <span className="text-destructive">*</span></FormLabel>
+                            <FormLabel>Nome d{watchedWeaponType.toLowerCase().endsWith('a') || watchedWeaponType.toLowerCase() === 'staff' || watchedWeaponType.toLowerCase() === 'spear' ? 'a' : 'o'} {watchedWeaponType.toLowerCase()} <span className="text-destructive">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o nome da espada" /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${watchedWeaponType.toLowerCase().endsWith('a') || watchedWeaponType.toLowerCase() === 'staff' || watchedWeaponType.toLowerCase() === 'spear' ? 'a' : 'o'} ${watchedWeaponType.toLowerCase()}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentWeaponNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -343,3 +340,6 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
+
+
+    
