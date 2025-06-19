@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair } from 'lucide-react'; // Added Crosshair
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -97,6 +97,19 @@ const dkpDecaySettingsSchema = z.object({
 });
 type DkpDecaySettingsFormValues = z.infer<typeof dkpDecaySettingsSchema>;
 
+const tlGuildFocusOptions = [
+  { id: "pve", label: "PvE" },
+  { id: "pvp_semi_hardcore", label: "PvP Semi-Hardcore" },
+  { id: "pvp_hardcore", label: "PvP Hardcore" },
+  { id: "pvpve_semi_hardcore", label: "PvPvE Semi-Hardcore" },
+  { id: "pvpve_hardcore", label: "PvPvE Hardcore" },
+];
+
+const guildFocusSchema = z.object({
+  tlGuildFocus: z.array(z.string()).min(1, "Selecione pelo menos um foco para a guilda."),
+});
+type GuildFocusFormValues = z.infer<typeof guildFocusSchema>;
+
 
 const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
   [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Permite visualizar a lista de membros e seus perfis básicos." },
@@ -137,6 +150,7 @@ function GuildSettingsPageContent() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [isSubmittingName, setIsSubmittingName] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [isSubmittingFocus, setIsSubmittingFocus] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [customRoles, setCustomRoles] = useState<Record<string, CustomRole>>({});
@@ -159,6 +173,11 @@ function GuildSettingsPageContent() {
   const passwordForm = useForm<GuildPasswordFormValues>({
     resolver: zodResolver(guildPasswordSchema),
     defaultValues: { password: "" },
+  });
+
+  const focusForm = useForm<GuildFocusFormValues>({
+    resolver: zodResolver(guildFocusSchema),
+    defaultValues: { tlGuildFocus: [] },
   });
 
   const dkpForm = useForm<DkpSettingsFormValues>({
@@ -263,6 +282,7 @@ function GuildSettingsPageContent() {
 
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
+        focusForm.reset({ tlGuildFocus: guildData.tlGuildFocus || [] });
         dkpForm.reset({
           dkpSystemEnabled: guildData.dkpSystemEnabled || false,
           dkpRedemptionWindowValue: guildData.dkpRedemptionWindow?.value || 24,
@@ -304,7 +324,7 @@ function GuildSettingsPageContent() {
     return () => {
       setHeaderTitle(null);
     };
-  }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, dkpForm, dkpDecayForm, setHeaderTitle]);
+  }, [guildId, currentUser, authLoading, router, toast, nameForm, passwordForm, focusForm, dkpForm, dkpDecayForm, setHeaderTitle]);
 
   const handleNameSubmit: SubmitHandler<GuildNameFormValues> = async (data) => {
     if (!guild || !currentUser || !canManageGeneralSettings) {
@@ -379,6 +399,34 @@ function GuildSettingsPageContent() {
       toast({ title: "Erro ao Atualizar Senha", variant: "destructive" });
     } finally {
       setIsSubmittingPassword(false);
+    }
+  };
+
+  const handleFocusSubmit: SubmitHandler<GuildFocusFormValues> = async (data) => {
+    if (!guild || !currentUser || !canManageGeneralSettings) {
+      toast({ title: "Permissão Negada", description: "Você não tem permissão para alterar o foco da guilda.", variant: "destructive" });
+      return;
+    }
+    setIsSubmittingFocus(true);
+    const oldFocus = guild.tlGuildFocus;
+    try {
+      const guildRef = doc(db, "guilds", guild.id);
+      await updateDoc(guildRef, { tlGuildFocus: data.tlGuildFocus });
+
+      await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.GUILD_SETTINGS_UPDATED, { // Consider a more specific AuditActionType if needed
+        changedField: 'tlGuildFocus' as any, // Cast to any if 'tlGuildFocus' isn't in your AuditLogDetails.changedField union
+        oldValue: oldFocus?.join(', ') || "Nenhum",
+        newValue: data.tlGuildFocus.join(', '),
+      });
+
+      setGuild(prev => prev ? { ...prev, tlGuildFocus: data.tlGuildFocus } : null);
+      focusForm.reset({ tlGuildFocus: data.tlGuildFocus });
+      toast({ title: "Foco da Guilda Atualizado!", description: "O foco da guilda Throne and Liberty foi salvo." });
+    } catch (error) {
+      console.error("Erro ao atualizar foco da guilda:", error);
+      toast({ title: "Erro ao Atualizar Foco", variant: "destructive" });
+    } finally {
+      setIsSubmittingFocus(false);
     }
   };
 
@@ -837,6 +885,75 @@ function GuildSettingsPageContent() {
               </form>
             </Form>
           </Card>
+
+          {guild.game === "Throne and Liberty" && (
+            <Card className="static-card-container">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Crosshair className="mr-2 h-5 w-5 text-primary" />
+                  Foco da Guilda (Throne and Liberty)
+                </CardTitle>
+                <CardDescription>Defina os principais focos de atividade para sua guilda de Throne and Liberty.</CardDescription>
+              </CardHeader>
+              <Form {...focusForm}>
+                <form onSubmit={focusForm.handleSubmit(handleFocusSubmit)}>
+                  <CardContent>
+                    <FormField
+                      control={focusForm.control}
+                      name="tlGuildFocus"
+                      render={() => (
+                        <FormItem>
+                          <div className="mb-4">
+                            <FormLabel className="text-base">Selecione um ou mais focos:</FormLabel>
+                          </div>
+                          {tlGuildFocusOptions.map((option) => (
+                            <FormField
+                              key={option.id}
+                              control={focusForm.control}
+                              name="tlGuildFocus"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    className="flex flex-row items-start space-x-3 space-y-0 mb-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(option.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...(field.value || []), option.id])
+                                            : field.onChange(
+                                                (field.value || []).filter(
+                                                  (value: string) => value !== option.id
+                                                )
+                                              );
+                                        }}
+                                        disabled={!canManageGeneralSettings || isSubmittingFocus}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer">
+                                      {option.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                  <CardFooter>
+                    <Button type="submit" className="btn-gradient btn-style-secondary" disabled={!canManageGeneralSettings || isSubmittingFocus}>
+                      {isSubmittingFocus ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      Salvar Foco da Guilda
+                    </Button>
+                  </CardFooter>
+                </form>
+              </Form>
+            </Card>
+          )}
 
           <Card className="static-card-container border-destructive/50">
             <CardHeader>
@@ -1374,6 +1491,3 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
-
-
-    

@@ -111,7 +111,7 @@ export interface Guild {
   dkpDecayIntervalDays?: number;
   dkpDecayInitialDate?: Timestamp;
   lastDkpDecayTimestamp?: Timestamp;
-  tlGuildFocus?: string[]; // New field for TL guild focus
+  tlGuildFocus?: string[];
 }
 
 export interface Event {
@@ -179,11 +179,11 @@ export interface Application {
   reviewedBy?: string;
   reviewedAt?: Timestamp;
   customAnswers?: { [questionId: string]: string };
-  applicantTlRegion?: string; // New field
-  applicantTlServer?: string; // New field
-  applicantTlGameFocus?: string[]; // New field
-  knowsSomeoneInGuild?: string; // New field
-  additionalNotes?: string; // New field
+  applicantTlRegion?: string; 
+  applicantTlServer?: string; 
+  applicantTlGameFocus?: string[]; 
+  knowsSomeoneInGuild?: string; 
+  additionalNotes?: string; 
 }
 
 export interface UserProfile {
@@ -288,7 +288,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory' | 'dkpDecayEnabled' | 'dkpDecayPercentage' | 'dkpDecayIntervalDays' | 'dkpDecayInitialDate';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory' | 'dkpDecayEnabled' | 'dkpDecayPercentage' | 'dkpDecayIntervalDays' | 'dkpDecayInitialDate' | 'tlGuildFocus';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number;
@@ -352,7 +352,3 @@ export interface AppNotification {
   targetUserId?: string;
   isRead?: boolean;
 }
-
-
-
-    
