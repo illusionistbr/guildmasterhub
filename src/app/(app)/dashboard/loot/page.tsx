@@ -191,13 +191,46 @@ const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Leviathan\'s Bloodstorm Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00051.webp', rarity: 'epic' },
 ];
 
+const TL_CROSSBOW_ITEMS: TLItem[] = [
+  { name: 'Mystwood Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00001.webp', rarity: 'common' },
+  { name: 'Sturdy Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00002.webp', rarity: 'common' },
+  { name: 'Silk Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00003.webp', rarity: 'common' },
+  { name: 'Driftwood Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00004.webp', rarity: 'common' },
+  { name: 'Forgotten Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00001.webp', rarity: 'common' },
+  { name: 'Watchkeeper Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00007.webp', rarity: 'uncommon' },
+  { name: 'Repeating Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00006.webp', rarity: 'uncommon' },
+  { name: 'Birchwood Arbalests', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00005.webp', rarity: 'uncommon' },
+  { name: 'Pathfinder Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00010.webp', rarity: 'uncommon' },
+  { name: 'Golem Dismantler Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00009A.webp', rarity: 'rare' },
+  { name: 'Crossbows of Undead Piercing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00014.webp', rarity: 'rare' },
+  { name: 'Crossbows of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00008B.webp', rarity: 'rare' },
+  { name: 'Steel Flurry Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00006B.webp', rarity: 'rare' },
+  { name: 'Viperstrike Arbalests', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00008A.webp', rarity: 'rare' },
+  { name: 'First Strike Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00008D.webp', rarity: 'rare' },
+  { name: 'Resistance Vanguard Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00008E.webp', rarity: 'rare' },
+  { name: 'Rex Chimaerus\'s Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00007C.webp', rarity: 'epic' },
+  { name: 'Kowazan\'s Sunflare Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00035.webp', rarity: 'epic' },
+  { name: 'Malakar\'s Energizing Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00034.webp', rarity: 'epic' },
+  { name: 'Crossbows of Infinite Steel', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00028.webp', rarity: 'epic' },
+  { name: 'Stormbringer Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00017.webp', rarity: 'epic' },
+  { name: 'Heroic Crossbows of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00022.webp', rarity: 'epic' },
+  { name: 'Queen Bellandir\'s Toxic Spine Throwers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00033.webp', rarity: 'epic' },
+  { name: 'Crossbows of the Darkest Night', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00023.webp', rarity: 'epic' },
+  { name: 'Unrelenting Annihilation Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00020.webp', rarity: 'epic' },
+  { name: 'Akman\'s Bloodletting Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00031.webp', rarity: 'epic' },
+  { name: 'Cordy\'s Stormspore Spike Slingers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00030.webp', rarity: 'epic' },
+  { name: 'Moonlight Echo Repeaters', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00018.webp', rarity: 'epic' },
+  { name: 'Crossbows of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00049.webp', rarity: 'epic' },
+  { name: 'Bercant\'s Spineflower Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00050.webp', rarity: 'epic' },
+];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
   "Dagger": TL_DAGGER_ITEMS,
   "Bow": TL_BOW_ITEMS,
-  "Crossbow": [],
+  "Crossbow": TL_CROSSBOW_ITEMS,
   "Wand": [],
   "Staff": [],
   "Spear": [],
@@ -276,7 +309,8 @@ const lootFormSchema = z.object({
   if (data.itemCategory === 'weapon' && data.weaponType && WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
   }
-  if (data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger' || data.weaponType === 'Bow') && !data.trait) {
+  const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
+  if (data.itemCategory === 'weapon' && data.weaponType && traitMandatoryWeaponTypes.includes(data.weaponType) && !data.trait) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.weaponType}.`, path: ["trait"] });
   }
 });
@@ -326,7 +360,8 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword' && watchedWeaponType !== 'Greatsword' && watchedWeaponType !== 'Dagger' && watchedWeaponType !== 'Bow') {
+    const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
+    if (watchedWeaponType && !traitMandatoryWeaponTypes.includes(watchedWeaponType)) {
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
@@ -406,13 +441,13 @@ function LootPageContent() {
         finalDroppedByMemberId = undefined; 
     }
 
-
+    const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
     const newItem: BankItem = {
       id: Date.now().toString(), 
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       weaponType: data.weaponType,
       itemName: data.itemName,
-      trait: data.itemCategory === 'weapon' && (data.weaponType === 'Sword' || data.weaponType === 'Greatsword' || data.weaponType === 'Dagger' || data.weaponType === 'Bow') ? data.trait : undefined,
+      trait: data.itemCategory === 'weapon' && data.weaponType && traitMandatoryWeaponTypes.includes(data.weaponType) ? data.trait : undefined,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
@@ -439,7 +474,8 @@ function LootPageContent() {
   const currentWeaponNameOptions = watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
-  const isTraitMandatory = watchedItemCategory === 'weapon' && (watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger' || watchedWeaponType === 'Bow');
+  const traitMandatoryWeaponTypes = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow"];
+  const isTraitMandatory = watchedItemCategory === 'weapon' && watchedWeaponType && traitMandatoryWeaponTypes.includes(watchedWeaponType);
 
 
   return (
@@ -525,7 +561,7 @@ function LootPageContent() {
                             )}
                           />
                         )}
-                        {(watchedWeaponType === 'Sword' || watchedWeaponType === 'Greatsword' || watchedWeaponType === 'Dagger' || watchedWeaponType === 'Bow') && (
+                        {isTraitMandatory && (
                            <FormField
                             control={form.control}
                             name="trait"
