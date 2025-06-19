@@ -26,12 +26,41 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const manualConfirmationSchema = z.object({
-  screenshotUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida (ex: Imgur)." }).optional(),
+  screenshotUrl: z.string().optional(), // URL validation will be conditional
   screenshotFile: z.instanceof(File).optional(),
   notes: z.string().max(500, "Notas podem ter no máximo 500 caracteres.").optional(),
-}).refine(data => data.screenshotUrl || data.screenshotFile, {
-  message: "Forneça uma URL ou faça upload de um arquivo de screenshot.",
-  path: ["screenshotUrl"],
+}).superRefine((data, ctx) => {
+  const hasFile = !!data.screenshotFile;
+  const hasUrl = !!data.screenshotUrl && data.screenshotUrl.trim() !== "";
+
+  if (hasFile) {
+    // File is provided. URL can be empty or undefined. No further validation on URL field needed here.
+    return;
+  }
+
+  // File is NOT provided.
+  if (!hasUrl) {
+    // URL is also not provided. This is the "either/or" failure.
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Forneça uma URL ou faça upload de um arquivo de screenshot.",
+      path: ["screenshotUrl"], // Error on URL field as it's the primary text input for this case
+    });
+    return;
+  }
+
+  // File is NOT provided, but URL IS provided. Validate the URL.
+  const urlSchema = z.string().url({ message: "Por favor, insira uma URL de imagem válida (ex: Imgur)." });
+  const result = urlSchema.safeParse(data.screenshotUrl);
+  if (!result.success) {
+    result.error.issues.forEach(issue => {
+      ctx.addIssue({
+        path: ["screenshotUrl"], // Ensure the error message for invalid URL format appears on this field
+        message: issue.message,
+        code: issue.code,
+      });
+    });
+  }
 });
 
 type ManualConfirmationFormValues = z.infer<typeof manualConfirmationSchema>;
@@ -179,7 +208,9 @@ function ManualConfirmationPageContent() {
         return;
       }
       form.setValue("screenshotFile", file);
-      form.setValue("screenshotUrl", "");
+      form.setValue("screenshotUrl", ""); // Clear URL when file is chosen
+      form.trigger("screenshotUrl"); // Optionally trigger validation for related field
+      form.trigger("screenshotFile"); // Trigger validation for the file field
       const reader = new FileReader();
       reader.onloadend = () => {
         if (!isMountedRef.current) return;
@@ -225,20 +256,22 @@ function ManualConfirmationPageContent() {
         imageUrl = await getDownloadURL(uploadResult.ref);
       }
 
-      if (!imageUrl) {
+      if (!imageUrl && (!data.screenshotFile && !data.screenshotUrl) ) { // Re-check if neither URL nor file (which becomes imageUrl) is set
         if(isMountedRef.current) {
+          // This path should ideally not be hit if Zod validation is correct
           toast({ title: "Erro de Imagem", description: "Nenhuma imagem fornecida ou falha no upload.", variant: "destructive" });
           setIsSubmitting(false);
         }
         return;
       }
 
+
       const confirmationData: ManualConfirmation = {
         userId: currentUser.uid,
         userDisplayName: currentUser.displayName || currentUser.email,
         eventId: eventIdFromParams,
         eventTitle: event.title,
-        screenshotUrl: imageUrl,
+        screenshotUrl: imageUrl, // This will be the uploaded file's URL or the manually entered URL
         notes: data.notes || "",
         submittedAt: serverTimestamp() as Timestamp,
         status: 'pending',
@@ -423,7 +456,7 @@ function ManualConfirmationPageContent() {
                 <FormField
                   control={form.control}
                   name="screenshotFile"
-                  render={({ field: { onChange, value, ...rest } }) => (
+                  render={({ field: { onChange, value, ...rest } }) => ( // value is not directly used by Input type="file"
                     <FormItem>
                       <FormLabel>Upload da Screenshot (Máx 2MB: PNG, JPG, GIF, WEBP)</FormLabel>
                       <FormControl>
@@ -432,10 +465,10 @@ function ManualConfirmationPageContent() {
                           <Input
                             type="file"
                             accept="image/png, image/jpeg, image/gif, image/webp"
-                            onChange={handleFileChange}
+                            onChange={handleFileChange} // Use custom handler
                             className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                             disabled={!!form.watch("screenshotUrl")}
-                            {...rest}
+                            {...rest} // Pass rest of the field props like name, ref
                           />
                         </div>
                       </FormControl>
