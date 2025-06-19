@@ -403,36 +403,44 @@ export default function CreateGuildPage() {
                   <FormField
                     control={form.control}
                     name="tlGuildFocus"
-                    render={({ field }) => (
+                    render={() => ( // No 'field' needed from outer FormField if inner ones manage it
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos para sua guilda.</FormDescription>
                         </div>
                         {tlGuildFocusOptions.map((option) => (
-                          <FormItem
+                          <FormField // Inner FormField for each checkbox
                             key={option.id}
-                            className="flex flex-row items-start space-x-3 space-y-0 mb-2"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(option.id)}
-                                onCheckedChange={(checked) => {
-                                  const currentValues = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...currentValues, option.id]);
-                                  } else {
-                                    field.onChange(currentValues.filter((value) => value !== option.id));
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {option.label}
-                            </FormLabel>
-                          </FormItem>
+                            control={form.control}
+                            name="tlGuildFocus" // Still refers to the array field
+                            render={({ field }) => { // 'field' here is for the array
+                              return (
+                                <FormItem
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(option.id)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...currentValues, option.id]);
+                                        } else {
+                                          field.onChange(currentValues.filter((value) => value !== option.id));
+                                        }
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {option.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
                         ))}
-                        <FormMessage />
+                        <FormMessage /> {/* For array field errors */}
                       </FormItem>
                     )}
                   />
@@ -475,5 +483,3 @@ export default function CreateGuildPage() {
     </div>
   );
 }
-
-    

@@ -131,7 +131,7 @@ function ApplyPageContent() {
   }, [currentUser, form]);
 
   useEffect(() => {
-    if (watchedApplicantRegion) { // Only reset server if region changes to a valid value
+    if (watchedApplicantRegion) { 
       form.setValue("applicantTlServer", undefined);
     }
   }, [watchedApplicantRegion, form]);
@@ -459,34 +459,42 @@ function ApplyPageContent() {
                   <FormField
                     control={form.control}
                     name="applicantTlGameFocus"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos de jogo que te interessam.</FormDescription>
                         </div>
                         {tlGameFocusOptions.map((option) => (
-                          <FormItem
+                          <FormField
                             key={option.id}
-                            className="flex flex-row items-start space-x-3 space-y-0 mb-2"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(option.id)}
-                                onCheckedChange={(checked) => {
-                                  const currentValues = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...currentValues, option.id]);
-                                  } else {
-                                    field.onChange(currentValues.filter((value) => value !== option.id));
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {option.label}
-                            </FormLabel>
-                          </FormItem>
+                            control={form.control}
+                            name="applicantTlGameFocus"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(option.id)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...currentValues, option.id]);
+                                        } else {
+                                          field.onChange(currentValues.filter((value) => value !== option.id));
+                                        }
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {option.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
                         ))}
                         <FormMessage />
                       </FormItem>
@@ -547,5 +555,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-
-    
