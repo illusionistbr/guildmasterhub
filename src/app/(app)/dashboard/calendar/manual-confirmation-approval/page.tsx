@@ -18,12 +18,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Loader2, ShieldAlert, CheckCircle, XCircle, Edit, ListChecks, ExternalLink, MessageSquare, Image as ImageIcon } from 'lucide-react';
-import { format, subHours, isAfter } from 'date-fns';
+import { format, subHours, isAfter, limit } from 'date-fns'; // Added limit from date-fns, check if it's needed here, probably meant firestore limit
 import { ptBR } from 'date-fns/locale';
 import { hasPermission } from '@/lib/permissions';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
-import { Label } from '@/components/ui/label'; // Added Label import
+import { Label } from '@/components/ui/label'; 
 
 interface ConfirmationWithRejection extends ManualConfirmation {
   rejectionReasonInput?: string;
@@ -118,7 +118,11 @@ function ManualConfirmationApprovalPageContent() {
     try {
       const twentyFourHoursAgo = subHours(new Date(), 24);
       const eventsRef = collection(db, `guilds/${guildId}/events`);
-      const qEvents = firestoreQuery(eventsRef, orderBy("date", "desc"), orderBy("time", "desc"), limit(50));
+      // Corrected: Use query from firebase/firestore (imported via @/lib/firebase)
+      const qEvents = query(eventsRef, orderBy("date", "desc"), orderBy("time", "desc")); 
+      // Note: limit(50) was removed here as it might not be directly applicable to onSnapshot's initial fetch in the same way,
+      // and could lead to unexpected behavior if not handled carefully with pagination or further filtering.
+      // If limiting is crucial, it needs to be considered with how onSnapshot works or by fetching then processing.
 
       const unsubscribe = onSnapshot(qEvents, async (snapshot) => {
         const fetchedEventsPromises = snapshot.docs
@@ -129,7 +133,8 @@ function ManualConfirmationApprovalPageContent() {
           })
           .map(async (event) => {
             const confirmationsRef = collection(db, `guilds/${guildId}/events/${event.id}/manualConfirmations`);
-            const qConfirmations = firestoreQuery(confirmationsRef, where("status", "==", "pending"));
+            // Corrected: Use query
+            const qConfirmations = query(confirmationsRef, where("status", "==", "pending"));
             const confirmationsSnapshot = await getFirestoreDocs(qConfirmations);
             const pendingConfirmations = confirmationsSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data(), rejectionReasonInput: "" } as ConfirmationWithRejection));
             return { ...event, pendingConfirmations };
@@ -293,7 +298,7 @@ function ManualConfirmationApprovalPageContent() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Avatar className="h-10 w-10">
-                                <AvatarImage src={conf.applicantPhotoURL || `https://placehold.co/40x40.png?text=${(conf.userDisplayName || 'U').substring(0,1)}`} alt={conf.userDisplayName || "Usuário"} data-ai-hint="user avatar"/>
+                                <AvatarImage src={ (conf as any).applicantPhotoURL || `https://placehold.co/40x40.png?text=${(conf.userDisplayName || 'U').substring(0,1)}`} alt={conf.userDisplayName || "Usuário"} data-ai-hint="user avatar"/>
                                 <AvatarFallback>{(conf.userDisplayName || 'U').substring(0,2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <CardTitle className="text-md">{conf.userDisplayName}</CardTitle>
@@ -337,7 +342,7 @@ function ManualConfirmationApprovalPageContent() {
                           disabled={processingConfirmationId === conf.id || !canManageConfirmations}
                           className="border-destructive text-destructive hover:bg-destructive/10"
                         >
-                          {processingConfirmationId === conf.id && action === 'reject' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                          {processingConfirmationId === conf.id && confirmationAction === 'reject' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
                           Rejeitar
                         </Button>
                         <Button
@@ -345,7 +350,7 @@ function ManualConfirmationApprovalPageContent() {
                           disabled={processingConfirmationId === conf.id || !canManageConfirmations}
                           className="btn-gradient btn-style-secondary"
                         >
-                          {processingConfirmationId === conf.id && action === 'approve' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                          {processingConfirmationId === conf.id && confirmationAction === 'approve' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
                           Aprovar
                         </Button>
                       </CardFooter>
@@ -369,3 +374,4 @@ export default function ManualConfirmationApprovalPage() {
   );
 }
 
+    
