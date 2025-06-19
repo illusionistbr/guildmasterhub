@@ -9,12 +9,12 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+// Textarea import removed as it's no longer used
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-// Checkbox import removed as tlGuildFocus is no longer here
+import { Checkbox } from "@/components/ui/checkbox";
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
@@ -42,7 +42,6 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
 
 const guildSchemaBase = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
-  description: z.string().max(500, "Descrição deve ter no máximo 500 caracteres.").optional(),
   game: z.string().min(1, "Selecionar um jogo é obrigatório.").max(50, "Nome do jogo deve ter no máximo 50 caracteres."),
   password: z.string().max(50, "Senha deve ter no máximo 50 caracteres.").optional().transform(val => val === "" ? undefined : val),
   socialFacebook: z.string().url("URL do Facebook inválida.").max(200, "Link do Facebook muito longo.").optional().or(z.literal('')),
@@ -73,7 +72,7 @@ export default function CreateGuildPage() {
 
   const form = useForm<GuildFormValues>({
     resolver: zodResolver(guildSchema),
-    defaultValues: { name: "", description: "", game: "", password: "", socialFacebook: "", socialX: "", socialYoutube: "", socialDiscord: "", region: undefined, server: undefined }
+    defaultValues: { name: "", game: "", password: "", socialFacebook: "", socialX: "", socialYoutube: "", socialDiscord: "", region: undefined, server: undefined }
   });
 
   const { handleSubmit, control, formState: { errors }, watch, setValue } = form;
@@ -134,7 +133,6 @@ export default function CreateGuildPage() {
 
     const guildData: Partial<Guild> & { createdAt: any } = {
         name: data.name,
-        description: data.description || "",
         game: data.game,
         ownerId: user.uid,
         ownerDisplayName: user.displayName || user.email || "Dono Desconhecido",
@@ -235,20 +233,6 @@ export default function CreateGuildPage() {
 
               <FormField
                 control={control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Ex: Uma guilda focada em exploração e desafios épicos." rows={3} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={control}
                 name="game"
                 render={({ field }) => (
                   <FormItem>
@@ -335,10 +319,10 @@ export default function CreateGuildPage() {
 
               <div className="space-y-4 pt-4">
                 <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
-                <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel>X (Twitter)</FormLabel> <div className="relative"><Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://x.com/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <div className="relative"><Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://youtube.com/c/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
-                <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel>Discord</FormLabel> <div className="relative"><LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://discord.gg/suaguilda" className="pl-10" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel>X (Twitter)</FormLabel> <div className="relative"><Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://x.com/suaguilda" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel>YouTube</FormLabel> <div className="relative"><Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://youtube.com/c/suaguilda" /></FormControl></div> <FormMessage /> </FormItem> )}/>
+                <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel>Discord</FormLabel> <div className="relative"><LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://discord.gg/suaguilda" /></FormControl></div> <FormMessage /> </FormItem> )}/>
               </div>
               <Alert variant="default" className="bg-background border-accent/30 !mt-8">
                   <AlertCircle className="h-4 w-4 text-accent" />
@@ -361,3 +345,5 @@ export default function CreateGuildPage() {
 }
 
     
+
+      
