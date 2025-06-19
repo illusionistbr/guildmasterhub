@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart, CalendarDays } from "lucide-react";
+import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart, CalendarDays, Newspaper, Construction } from "lucide-react";
 import type { Guild, AuditActionType, Application, GuildMemberRoleInfo, Event as GuildEventType } from '@/types/guildmaster';
 import { TLRole } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -679,6 +679,22 @@ function DashboardPageContent() {
           actionLabel="Revisar Candidaturas"
         />
       </div>
+      
+      <div className="grid gap-6 lg:grid-cols-3 px-4">
+          <Card className="card-bg lg:col-span-3"> {/* Changed to span 3 */}
+              <CardHeader>
+                  <CardTitle className="text-2xl font-headline flex items-center">
+                      <Newspaper className="mr-3 h-7 w-7 text-primary" />
+                      Notícias e Atualizações
+                  </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center text-center h-full min-h-[300px]">
+                   <Construction className="h-16 w-16 text-yellow-500 mb-4" />
+                  <p className="text-lg text-muted-foreground">Seção de notícias em breve!</p>
+              </CardContent>
+          </Card>
+          {/* TwitterFeed div removed */}
+      </div>
 
     </div>
   );
@@ -714,4 +730,3 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
-
