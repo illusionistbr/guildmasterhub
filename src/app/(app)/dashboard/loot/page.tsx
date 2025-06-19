@@ -114,6 +114,7 @@ const traitOptions = [
   { value: "Attack Speed", label: "Attack Speed"},
   { value: "Mana Regen", label: "Mana Regen"},
   { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"},
+  { value: "Construct Bonus Damage", label: "Construct Bonus Damage"},
 ];
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
@@ -181,7 +182,7 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
-    if (watchedWeaponType !== 'Sword') {
+    if (watchedWeaponType !== 'Sword') { // Only reset trait if weapon type is not Sword
       form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
