@@ -174,9 +174,10 @@ function LootPageContent() {
   }, [watchedItemCategory, form]);
 
   useEffect(() => {
-    if (watchedWeaponType) {
-      form.setValue('itemName', undefined);
-      form.setValue('trait', undefined); // Reset trait if weapon type changes
+    form.setValue('itemName', undefined);
+    // Only reset trait if the new weaponType is not 'Sword'
+    if (watchedWeaponType !== 'Sword') {
+      form.setValue('trait', undefined);
     }
     setSelectedItemForPreview(null);
   }, [watchedWeaponType, form]);
@@ -299,25 +300,27 @@ function LootPageContent() {
                             </FormItem>
                           )}
                         />
-                         <FormField
-                          control={form.control}
-                          name="trait"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Trait da Arma</FormLabel>
-                               <div className="relative flex items-center">
-                                <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
-                                  <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione o trait da arma (opcional)" /></SelectTrigger></FormControl>
-                                  <SelectContent>
-                                    {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {watchedWeaponType === 'Sword' && (
+                          <FormField
+                            control={form.control}
+                            name="trait"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Trait da Arma (Específico para {watchedWeaponType})</FormLabel>
+                                <div className="relative flex items-center">
+                                  <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione o trait da arma (opcional)" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                      {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </>
                     )}
                     
