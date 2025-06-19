@@ -201,14 +201,14 @@ export default function CreateGuildPage() {
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
       <PageTitle title="Forjar Nova Guilda" description="Defina os alicerces da sua nova comunidade de heróis." icon={<ShieldPlus className="h-8 w-8 text-primary" />} action={ <Button variant="outline" onClick={() => router.back()}> <ArrowLeft className="mr-2 h-4 w-4" /> Voltar </Button> } />
-      <Card className="card-bg">
+      <Card className="static-card-container">
         <CardHeader>
           <CardTitle>Detalhes da Guilda</CardTitle>
           <CardDescription>Preencha as informações abaixo para registrar sua guilda. Detalhes como logotipo, eventos e outros ajustes finos devem ser feitos diretamente no painel de controle da guilda após a criação.</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <CardContent className="space-y-6"> {/* Restored space-y-6 */}
+            <CardContent className="space-y-6">
               <FormField
                 control={control}
                 name="name"
@@ -356,5 +356,3 @@ export default function CreateGuildPage() {
     </div>
   );
 }
-
-    

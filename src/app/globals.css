@@ -69,7 +69,7 @@
   }
 
   body {
-    background-color: hsl(var(--background)); 
+    background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     @apply font-body antialiased;
   }
@@ -97,7 +97,7 @@
   .btn-gradient:hover:not(:disabled) {
     background-position: right center;
     transform: translateY(-2px);
-    box-shadow: 0 0 8px hsla(var(--primary), 0.7), 
+    box-shadow: 0 0 8px hsla(var(--primary), 0.7),
                 0 0 15px hsla(var(--primary), 0.5),
                 0 4px 20px hsla(var(--primary), 0.3);
   }
@@ -113,7 +113,7 @@
     @apply font-medium py-2 px-5;
   }
 
-  .header-bg { 
+  .header-bg {
     background-color: hsla(var(--sidebar-background), 0.8);
     backdrop-filter: blur(10px);
   }
@@ -124,11 +124,11 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 2px; 
+    height: 2px;
     background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(39, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 40%), hsl(240, 100%, 60%), hsl(270, 100%, 60%), hsl(300, 100%, 50%));
   }
 
-  .text-gradient { 
+  .text-gradient {
     background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -138,9 +138,9 @@
     background-color: hsl(var(--card));
     @apply rounded-xl;
     box-shadow: 0 0 20px hsla(var(--primary), 0.3); /* Added static glow */
-    border-width: 1px; 
+    border-width: 1px;
     border-style: solid;
-    border-color: hsl(var(--border)); 
+    border-color: hsl(var(--border));
     transition: all 300ms ease-in-out;
     position: relative;
   }
@@ -153,10 +153,10 @@
     right: 0;
     bottom: 0;
     border-radius: inherit;
-    border: 1px solid transparent; 
+    border: 1px solid transparent;
     background: linear-gradient(45deg,
                 hsl(var(--primary)),
-                hsl(var(--accent))) border-box; 
+                hsl(var(--accent))) border-box;
     -webkit-mask: linear-gradient(#fff 0 0) padding-box,
                   linear-gradient(#fff 0 0);
     -webkit-mask-composite: destination-out;
@@ -166,12 +166,12 @@
   }
 
   .card-bg:hover::before {
-    opacity: 0.8; 
+    opacity: 0.8;
   }
 
   .card-bg:hover {
-    transform: translateY(-4px); 
-    box-shadow: 0 8px 15px hsla(var(--background), 0.3), 
+    transform: translateY(-4px);
+    box-shadow: 0 8px 15px hsla(var(--background), 0.3),
                 0 0 10px hsla(var(--primary), 0.5),
                 0 0 20px hsla(var(--accent), 0.3);
   }
@@ -209,14 +209,14 @@
     @apply w-full py-3 px-4 rounded-lg bg-input border-border text-foreground outline-none transition-colors duration-300;
   }
   .form-input:focus {
-    @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; 
+    @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))];
   }
 
   .form-select {
     @apply appearance-none w-full py-3 pl-4 pr-10 rounded-lg bg-input border-border text-foreground outline-none transition-colors duration-300;
   }
   .form-select:focus {
-     @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))]; 
+     @apply border-primary shadow-[0_0_0_2px_hsl(var(--ring))];
   }
 
   .input-group-addon {
