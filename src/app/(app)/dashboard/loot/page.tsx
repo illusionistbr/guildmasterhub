@@ -629,7 +629,31 @@ const TL_FEET_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001.webp', rarity: 'epic' },
   { name: 'Divine Justiciar Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00014A.webp', rarity: 'epic' },
   { name: 'Gilded Raven Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022A.webp', rarity: 'epic' },
+  { name: 'Oblivion\'s Wrath Stompers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00016.webp', rarity: 'epic' },
+  { name: 'Void Stalker\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00023.webp', rarity: 'epic' },
+  { name: 'Transcendent Tempest\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00014.webp', rarity: 'epic' },
+  { name: 'Ardent Herald\'s Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00012.webp', rarity: 'epic' },
+  { name: 'Immortal Legionnaire\'s Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00019A.webp', rarity: 'epic' },
+  { name: 'First Light\'s Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00022A.webp', rarity: 'epic' },
+  { name: 'Chosen Vanquisher\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001A.webp', rarity: 'epic' },
+  { name: 'Royal Praetor\'s Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00009.webp', rarity: 'epic' },
+  { name: 'Forgotten Lotus Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00008.webp', rarity: 'epic' },
+  { name: 'Dread Admiral\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00021.webp', rarity: 'epic' },
+  { name: 'Sacred Repose Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00020.webp', rarity: 'epic' },
+  { name: 'Eternal Warlord\'s Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00003.webp', rarity: 'epic' },
+  { name: 'Spectral Overseer\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00023.webp', rarity: 'epic' },
+  { name: 'Imperial Seeker\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00017.webp', rarity: 'epic' },
+  { name: 'Feral Prophet\'s Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00008A.webp', rarity: 'epic' },
+  { name: 'Infernal Demonpact Steps', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00026.webp', rarity: 'epic' },
+  { name: 'Deep Fathom Kicks', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_BT_00026.webp', rarity: 'epic' },
+  { name: 'Violent Demonic Beast\'s Fur Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00026.webp', rarity: 'epic' },
+  { name: 'Paramount Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002A.webp', rarity: 'epic' },
+  { name: 'Ossuary Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002B.webp', rarity: 'epic' },
+  { name: 'Scaled Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003A.webp', rarity: 'epic' },
+  { name: 'Hallowed Shoes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010A.webp', rarity: 'epic' },
+  { name: 'Auric Vanguards Plate Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005A.webp', rarity: 'epic' },
 ];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -695,8 +719,8 @@ const traitOptions = [
   { value: "Mana Regen", label: "Mana Regen" },
   { value: "Max Health", label: "Max Health" },
   { value: "Max Mana", label: "Max Mana" },
-  { value: "Melee Endurance", label: "Melee Endurance" },
-  { value: "Melee Evasion", label: "Melee Evasion" },
+  { value: "Max Stamina", label: "Max Stamina" },
+  { value: "Melee Endurance", label: "Melee Evasion" },
   { value: "Movement Speed", label: "Movement Speed" },
   { value: "Petrification Chance", label: "Petrification Chance" },
   { value: "Petrification Resistance", label: "Petrification Resistance" },
@@ -983,7 +1007,7 @@ function LootPageContent() {
     <div className="space-y-8">
       <PageTitle title={`Gerenciamento de Loot de ${guild.name}`} icon={<Gem className="h-8 w-8 text-primary" />} />
       <Tabs defaultValue="banco" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="banco">Banco</TabsTrigger>
           <TabsTrigger value="leiloes">Leilões</TabsTrigger>
           <TabsTrigger value="rolagem">Rolagem</TabsTrigger>
@@ -991,7 +1015,7 @@ function LootPageContent() {
         </TabsList>
 
         <TabsContent value="banco" className="mt-6">
-          <div className="flex justify-end mb-6">
+          <div className="mb-6 flex justify-end">
             <Dialog open={showAddItemDialog} onOpenChange={(isOpen) => {
                 setShowAddItemDialog(isOpen);
                 if (!isOpen) {
@@ -1002,8 +1026,8 @@ function LootPageContent() {
               <DialogTrigger asChild>
                 <Button className="btn-gradient btn-style-secondary"><PackagePlus className="mr-2 h-5 w-5" />Cadastrar Item no Banco</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col">
-                <DialogHeader className="p-6 pb-4 shrink-0 border-b border-border">
+              <DialogContent className="flex flex-col sm:max-w-2xl bg-card border-border max-h-[90vh]">
+                <DialogHeader className="pb-4 p-6 border-b border-border shrink-0">
                   <DialogTitle className="font-headline text-primary">Cadastrar Novo Item no Banco da Guilda</DialogTitle>
                   <DialogDescription>Preencha os detalhes do item a ser adicionado ao banco.</DialogDescription>
                 </DialogHeader>
@@ -1180,7 +1204,7 @@ function LootPageContent() {
                       )}
                     />
 
-                    <DialogFooter className="p-0 pt-6 sticky bottom-0 bg-card">
+                    <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
                       <Button type="button" variant="outline" onClick={() => {
                           setShowAddItemDialog(false);
                           form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
@@ -1227,7 +1251,7 @@ function LootPageContent() {
                       >
                         {item.status}
                       </Badge>
-                    <div className="text-xs text-muted-foreground space-y-0.5 text-center">
+                    <div className="space-y-0.5 text-xs text-muted-foreground text-center">
                       <p><strong>Tipo:</strong> {item.itemCategory}</p>
                       {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
                       {item.armorType && <p><strong>Armadura:</strong> {armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType}</p>}
@@ -1289,3 +1313,6 @@ export default function LootPageWrapper() {
 
 
 
+
+
+    
