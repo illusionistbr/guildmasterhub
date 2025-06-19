@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,39 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
+import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
+
+const tlRegions = [
+  { value: "Korea", label: "Coreia" },
+  { value: "NA East", label: "América do Norte (Leste)" },
+  { value: "NA West", label: "América do Norte (Oeste)" },
+  { value: "Europe", label: "Europa" },
+  { value: "South America", label: "América do Sul" },
+  { value: "Asia Pacific", label: "Ásia-Pacífico" },
+];
+
+const tlServers: Record<string, Array<{ value: string; label: string }>> = {
+  "Korea": [ { value: "Belluatan", label: "Belluatan" }, { value: "Greedal", label: "Greedal" }, { value: "Kallis", label: "Kallis" }, { value: "Sienna", label: "Sienna" }, { value: "Solar", label: "Solar" }, { value: "Syleus", label: "Syleus" }, ],
+  "NA East": [ { value: "Snowburn", label: "Snowburn" }, { value: "Carnage", label: "Carnage" }, { value: "Adrenaline", label: "Adrenaline" }, { value: "Ivory", label: "Ivory" }, { value: "Stellarite", label: "Stellarite" }, { value: "Pippin", label: "Pippin" }, ],
+  "NA West": [ { value: "Oblivion", label: "Oblivion" }, { value: "Moonstone", label: "Moonstone" }, { value: "Invoker", label: "Invoker" }, { value: "Akidu", label: "Akidu" }, ],
+  "Europe": [ { value: "Judgment", label: "Judgment" }, { value: "Obsidian", label: "Obsidian" }, { value: "Talon", label: "Talon" }, { value: "Paola", label: "Paola" }, { value: "Zephyr", label: "Zephyr" }, { value: "Cascade", label: "Cascade" }, { value: "Rebellion", label: "Rebellion" }, { value: "Fortune", label: "Fortune" }, { value: "Destiny", label: "Destiny" }, { value: "Arcane", label: "Arcane" }, { value: "Emerald", label: "Emerald" }, { value: "Conviction", label: "Conviction" }, ],
+  "South America": [ { value: "Starlight", label: "Starlight" }, { value: "Resistance", label: "Resistance" }, { value: "Eldritch", label: "Eldritch" }, { value: "Chamir", label: "Chamir" }, ],
+  "Asia Pacific": [ { value: "Valkarg", label: "Valkarg" }, { value: "Sunstorm", label: "Sunstorm" }, { value: "Amethyst", label: "Amethyst" }, { value: "Titanspine", label: "Titanspine" }, ],
+};
+
+const tlGuildFocusOptions = [
+  { id: "pve", label: "PvE" },
+  { id: "pvp_semi_hardcore", label: "PvP Semi-Hardcore" },
+  { id: "pvp_hardcore", label: "PvP Hardcore" },
+  { id: "pvpve_semi_hardcore", label: "PvPvE Semi-Hardcore" },
+  { id: "pvpve_hardcore", label: "PvPvE Hardcore" },
+];
 
 const guildSchemaBase = z.object({
   name: z.string().min(3, "Nome da guilda deve ter pelo menos 3 caracteres.").max(50, "Nome da guilda deve ter no máximo 50 caracteres."),
@@ -32,67 +59,8 @@ const guildSchemaBase = z.object({
   socialDiscord: z.string().url("URL do Discord inválida.").max(200, "Link do Discord muito longo.").optional().or(z.literal('')),
   region: z.string().optional(),
   server: z.string().optional(),
+  tlGuildFocus: z.array(z.string()).optional(),
 });
-
-const tlRegions = [
-  { value: "Korea", label: "Coreia" },
-  { value: "NA East", label: "América do Norte (Leste)" },
-  { value: "NA West", label: "América do Norte (Oeste)" },
-  { value: "Europe", label: "Europa" },
-  { value: "South America", label: "América do Sul" },
-  { value: "Asia Pacific", label: "Ásia-Pacífico" },
-];
-
-const tlServers: Record<string, Array<{ value: string; label: string }>> = {
-  "Korea": [
-    { value: "Belluatan", label: "Belluatan" },
-    { value: "Greedal", label: "Greedal" },
-    { value: "Kallis", label: "Kallis" },
-    { value: "Sienna", label: "Sienna" },
-    { value: "Solar", label: "Solar" },
-    { value: "Syleus", label: "Syleus" },
-  ],
-  "NA East": [
-    { value: "Snowburn", label: "Snowburn" },
-    { value: "Carnage", label: "Carnage" },
-    { value: "Adrenaline", label: "Adrenaline" },
-    { value: "Ivory", label: "Ivory" },
-    { value: "Stellarite", label: "Stellarite" },
-    { value: "Pippin", label: "Pippin" },
-  ],
-  "NA West": [
-    { value: "Oblivion", label: "Oblivion" },
-    { value: "Moonstone", label: "Moonstone" },
-    { value: "Invoker", label: "Invoker" },
-    { value: "Akidu", label: "Akidu" },
-  ],
-  "Europe": [
-    { value: "Judgment", label: "Judgment" },
-    { value: "Obsidian", label: "Obsidian" },
-    { value: "Talon", label: "Talon" },
-    { value: "Paola", label: "Paola" },
-    { value: "Zephyr", label: "Zephyr" },
-    { value: "Cascade", label: "Cascade" },
-    { value: "Rebellion", label: "Rebellion" },
-    { value: "Fortune", label: "Fortune" },
-    { value: "Destiny", label: "Destiny" },
-    { value: "Arcane", label: "Arcane" },
-    { value: "Emerald", label: "Emerald" },
-    { value: "Conviction", label: "Conviction" },
-  ],
-  "South America": [
-    { value: "Starlight", label: "Starlight" },
-    { value: "Resistance", label: "Resistance" },
-    { value: "Eldritch", label: "Eldritch" },
-    { value: "Chamir", label: "Chamir" },
-  ],
-  "Asia Pacific": [
-    { value: "Valkarg", label: "Valkarg" },
-    { value: "Sunstorm", label: "Sunstorm" },
-    { value: "Amethyst", label: "Amethyst" },
-    { value: "Titanspine", label: "Titanspine" },
-  ],
-};
 
 const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
     if (data.game === "Throne and Liberty") {
@@ -109,12 +77,17 @@ const guildSchema = guildSchemaBase.superRefine((data, ctx) => {
                 path: ["server"],
             });
         }
+        if (!data.tlGuildFocus || data.tlGuildFocus.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Selecione pelo menos um foco para a guilda de Throne and Liberty.",
+                path: ["tlGuildFocus"],
+            });
+        }
     }
 });
 
-
 type GuildFormValues = z.infer<typeof guildSchema>;
-
 
 export default function CreateGuildPage() {
   const { user, loading: authLoading } = useAuth();
@@ -135,6 +108,7 @@ export default function CreateGuildPage() {
       socialDiscord: "",
       region: undefined,
       server: undefined,
+      tlGuildFocus: [],
     }
   });
 
@@ -146,13 +120,13 @@ export default function CreateGuildPage() {
     if (watchedGame !== "Throne and Liberty") {
       setValue("region", undefined);
       setValue("server", undefined);
+      setValue("tlGuildFocus", []);
     }
   }, [watchedGame, setValue]);
 
   useEffect(() => {
     setValue("server", undefined);
   }, [watchedRegion, setValue]);
-
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -213,15 +187,12 @@ export default function CreateGuildPage() {
         dkpRedemptionWindow: { value: 24, unit: 'hours' },
         dkpDefaultsPerCategory: {},
         dkpDecayEnabled: false,
-        // dkpDecayPercentage, dkpDecayIntervalDays, dkpDecayInitialDate are omitted
-        // as dkpDecayEnabled is false. They will be set in settings.
     };
 
-    if (data.game === "Throne and Liberty" && data.region) {
-        guildData.region = data.region;
-        if (data.server) {
-            guildData.server = data.server;
-        }
+    if (data.game === "Throne and Liberty") {
+        if (data.region) guildData.region = data.region;
+        if (data.server) guildData.server = data.server;
+        if (data.tlGuildFocus && data.tlGuildFocus.length > 0) guildData.tlGuildFocus = data.tlGuildFocus;
     }
 
     if (Object.keys(socialLinks).length > 0) {
@@ -231,10 +202,8 @@ export default function CreateGuildPage() {
         guildData.password = data.password;
     }
 
-
     try {
       const newGuildRef = await addDoc(collection(db, "guilds"), guildData);
-
       toast({
         title: "Guilda Criada com Sucesso!",
         description: `${data.name} está pronta para a aventura! Detalhes como logo e eventos podem ser configurados no painel de controle.`,
@@ -247,7 +216,6 @@ export default function CreateGuildPage() {
         )
       });
       router.push(`/dashboard?guildId=${newGuildRef.id}`);
-
     } catch (error) {
       console.error("Erro ao criar guilda:", error);
       toast({ title: "Erro ao Criar Guilda", description: "Não foi possível criar a guilda. Tente novamente.", variant: "destructive" });
@@ -396,7 +364,7 @@ export default function CreateGuildPage() {
                       </FormItem>
                     )}
                   />
-                  {watchedRegion && (
+                  {watchedRegion && tlServers[watchedRegion]?.length > 0 && (
                      <FormField
                         control={control}
                         name="server"
@@ -432,77 +400,62 @@ export default function CreateGuildPage() {
                         )}
                       />
                   )}
+                  <FormField
+                    control={control}
+                    name="tlGuildFocus"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-2">
+                          <FormLabel className="text-base">Foco da Guilda (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                          <p className="text-sm text-muted-foreground">Selecione um ou mais focos para sua guilda.</p>
+                        </div>
+                        {tlGuildFocusOptions.map((option) => (
+                          <FormField
+                            key={option.id}
+                            control={control}
+                            name="tlGuildFocus"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={option.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(option.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), option.id])
+                                          : field.onChange(
+                                              (field.value || []).filter(
+                                                (value) => value !== option.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {option.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </>
               )}
-
 
               <div className="space-y-1">
                 <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
                 <div className="space-y-3">
-                  <FormField
-                    control={control}
-                    name="socialFacebook"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="socialFacebook">Facebook</FormLabel>
-                        <FormControl>
-                          <div className="relative flex items-center mt-1">
-                              <Facebook className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                              <Input id="socialFacebook" {...field} placeholder="https://facebook.com/suaguilda" className={`form-input pl-10 ${errors.socialFacebook ? 'border-destructive focus:border-destructive' : ''}`} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name="socialX"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="socialX">X (Twitter)</FormLabel>
-                        <FormControl>
-                          <div className="relative flex items-center mt-1">
-                              <Twitter className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                              <Input id="socialX" {...field} placeholder="https://x.com/suaguilda" className={`form-input pl-10 ${errors.socialX ? 'border-destructive focus:border-destructive' : ''}`} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name="socialYoutube"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="socialYoutube">YouTube</FormLabel>
-                        <FormControl>
-                          <div className="relative flex items-center mt-1">
-                              <Youtube className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                              <Input id="socialYoutube" {...field} placeholder="https://youtube.com/c/suaguilda" className={`form-input pl-10 ${errors.socialYoutube ? 'border-destructive focus:border-destructive' : ''}`} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name="socialDiscord"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="socialDiscord">Discord</FormLabel>
-                        <FormControl>
-                          <div className="relative flex items-center mt-1">
-                              <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                              <Input id="socialDiscord" {...field} placeholder="https://discord.gg/suaguilda" className={`form-input pl-10 ${errors.socialDiscord ? 'border-destructive focus:border-destructive' : ''}`} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialFacebook">Facebook</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <Facebook className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialFacebook" {...field} placeholder="https://facebook.com/suaguilda" className={`form-input pl-10 ${errors.socialFacebook ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialX" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialX">X (Twitter)</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <Twitter className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialX" {...field} placeholder="https://x.com/suaguilda" className={`form-input pl-10 ${errors.socialX ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialYoutube" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialYoutube">YouTube</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <Youtube className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialYoutube" {...field} placeholder="https://youtube.com/c/suaguilda" className={`form-input pl-10 ${errors.socialYoutube ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
+                  <FormField control={control} name="socialDiscord" render={({ field }) => ( <FormItem> <FormLabel htmlFor="socialDiscord">Discord</FormLabel> <FormControl> <div className="relative flex items-center mt-1"> <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input id="socialDiscord" {...field} placeholder="https://discord.gg/suaguilda" className={`form-input pl-10 ${errors.socialDiscord ? 'border-destructive focus:border-destructive' : ''}`} /> </div> </FormControl> <FormMessage /> </FormItem> )}/>
                 </div>
               </div>
               <Alert variant="default" className="bg-background border-accent/30">
@@ -512,7 +465,6 @@ export default function CreateGuildPage() {
                   Lembre-se: O logotipo, banner, gerenciamento de membros, eventos e outras configurações detalhadas da guilda são gerenciados através do painel da guilda após sua criação.
                   </AlertDescription>
               </Alert>
-
             </CardContent>
             <CardFooter className="flex justify-end gap-4 relative z-10">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
@@ -534,3 +486,4 @@ export default function CreateGuildPage() {
   );
 }
 
+    

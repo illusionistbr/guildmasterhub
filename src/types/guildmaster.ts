@@ -112,6 +112,7 @@ export interface Guild {
   dkpDecayIntervalDays?: number;
   dkpDecayInitialDate?: Timestamp;
   lastDkpDecayTimestamp?: Timestamp;
+  tlGuildFocus?: string[]; // New field for TL guild focus
 }
 
 export interface Event {
@@ -178,6 +179,11 @@ export interface Application {
   reviewedBy?: string;
   reviewedAt?: Timestamp;
   customAnswers?: { [questionId: string]: string };
+  applicantTlRegion?: string; // New field
+  applicantTlServer?: string; // New field
+  applicantTlGameFocus?: string[]; // New field
+  knowsSomeoneInGuild?: string; // New field
+  additionalNotes?: string; // New field
 }
 
 export interface UserProfile {
@@ -346,3 +352,5 @@ export interface AppNotification {
   isRead?: boolean;
 }
 
+
+    

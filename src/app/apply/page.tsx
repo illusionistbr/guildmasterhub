@@ -1,12 +1,11 @@
 
-
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,12 +19,30 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon } from 'lucide-react';
+import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Globe, Server as ServerIcon, Users as UsersIcon } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
+
+const tlRegions = [ // Copied from create-guild for now
+  { value: "Korea", label: "Coreia" }, { value: "NA East", label: "América do Norte (Leste)" }, { value: "NA West", label: "América do Norte (Oeste)" }, { value: "Europe", label: "Europa" }, { value: "South America", label: "América do Sul" }, { value: "Asia Pacific", label: "Ásia-Pacífico" },
+];
+
+const tlServers: Record<string, Array<{ value: string; label: string }>> = { // Copied from create-guild
+  "Korea": [ { value: "Belluatan", label: "Belluatan" }, { value: "Greedal", label: "Greedal" }, { value: "Kallis", label: "Kallis" }, { value: "Sienna", label: "Sienna" }, { value: "Solar", label: "Solar" }, { value: "Syleus", label: "Syleus" }, ],
+  "NA East": [ { value: "Snowburn", label: "Snowburn" }, { value: "Carnage", label: "Carnage" }, { value: "Adrenaline", label: "Adrenaline" }, { value: "Ivory", label: "Ivory" }, { value: "Stellarite", label: "Stellarite" }, { value: "Pippin", label: "Pippin" }, ],
+  "NA West": [ { value: "Oblivion", label: "Oblivion" }, { value: "Moonstone", label: "Moonstone" }, { value: "Invoker", label: "Invoker" }, { value: "Akidu", label: "Akidu" }, ],
+  "Europe": [ { value: "Judgment", label: "Judgment" }, { value: "Obsidian", label: "Obsidian" }, { value: "Talon", label: "Talon" }, { value: "Paola", label: "Paola" }, { value: "Zephyr", label: "Zephyr" }, { value: "Cascade", label: "Cascade" }, { value: "Rebellion", label: "Rebellion" }, { value: "Fortune", label: "Fortune" }, { value: "Destiny", label: "Destiny" }, { value: "Arcane", label: "Arcane" }, { value: "Emerald", label: "Emerald" }, { value: "Conviction", label: "Conviction" }, ],
+  "South America": [ { value: "Starlight", label: "Starlight" }, { value: "Resistance", label: "Resistance" }, { value: "Eldritch", label: "Eldritch" }, { value: "Chamir", label: "Chamir" }, ],
+  "Asia Pacific": [ { value: "Valkarg", label: "Valkarg" }, { value: "Sunstorm", label: "Sunstorm" }, { value: "Amethyst", label: "Amethyst" }, { value: "Titanspine", label: "Titanspine" }, ],
+};
+
+const tlGameFocusOptions = [
+  { id: "pve", label: "PvE" }, { id: "pvp_semi_hardcore", label: "PvP Semi-Hardcore" }, { id: "pvp_hardcore", label: "PvP Hardcore" }, { id: "pvpve_semi_hardcore", label: "PvPvE Semi-Hardcore" }, { id: "pvpve_hardcore", label: "PvPvE Hardcore" },
+];
 
 const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: RecruitmentQuestion[] = []) => {
   let schemaObject: any = {
@@ -33,27 +50,47 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
     gearScore: z.coerce.number().min(0, "Gearscore deve ser um número positivo.").max(10000, "Gearscore improvável."),
     gearScoreScreenshotUrl: z.string().url("Por favor, insira uma URL válida para a screenshot.").min(10, "URL da screenshot muito curta."),
     discordNick: z.string().min(2, "Nick do Discord deve ter pelo menos 2 caracteres.").max(50),
+    knowsSomeoneInGuild: z.string().max(100, "Limite de 100 caracteres atingido.").optional(),
+    additionalNotes: z.string().max(500, "Limite de 500 caracteres atingido.").optional(),
   };
 
   if (isTLGuild) {
     schemaObject.tlRole = z.nativeEnum(TLRole, { required_error: "Função (Tank/Healer/DPS) é obrigatória." });
     schemaObject.tlPrimaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." });
     schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." });
+    schemaObject.applicantTlRegion = z.string({ required_error: "Região é obrigatória." }).min(1, "Região é obrigatória.");
+    schemaObject.applicantTlServer = z.string().optional(); // Server is optional if region has no servers, validated by superRefine
+    schemaObject.applicantTlGameFocus = z.array(z.string()).min(1, "Selecione pelo menos um foco de jogo.");
   } else {
      schemaObject.tlRole = z.nativeEnum(TLRole).optional();
      schemaObject.tlPrimaryWeapon = z.nativeEnum(TLWeapon).optional();
      schemaObject.tlSecondaryWeapon = z.nativeEnum(TLWeapon).optional();
+     schemaObject.applicantTlRegion = z.string().optional();
+     schemaObject.applicantTlServer = z.string().optional();
+     schemaObject.applicantTlGameFocus = z.array(z.string()).optional();
   }
 
   customQuestions.forEach(q => {
     schemaObject[q.id] = z.string().max(500, "Resposta muito longa.").optional();
   });
+  
+  const baseSchema = z.object(schemaObject);
 
-  return z.object(schemaObject);
+  if (isTLGuild) {
+    return baseSchema.superRefine((data, ctx) => {
+      if (data.applicantTlRegion && tlServers[data.applicantTlRegion as string]?.length > 0 && !data.applicantTlServer) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Servidor é obrigatório para esta região.",
+          path: ["applicantTlServer"],
+        });
+      }
+    });
+  }
+  return baseSchema;
 };
 
 type ApplicationFormValues = z.infer<ReturnType<typeof getBaseApplicationSchema>>;
-
 
 function ApplyPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -68,10 +105,9 @@ function ApplyPageContent() {
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [activeCustomQuestions, setActiveCustomQuestions] = useState<RecruitmentQuestion[]>([]);
 
-
   const guildId = searchParams.get('guildId');
-
   const isTLGuild = guild?.game === "Throne and Liberty";
+  
   const applicationSchema = getBaseApplicationSchema(isTLGuild, activeCustomQuestions);
 
   const form = useForm<ApplicationFormValues>({
@@ -81,15 +117,23 @@ function ApplyPageContent() {
       gearScore: 0,
       gearScoreScreenshotUrl: "",
       discordNick: "",
-      ...(isTLGuild && { tlRole: undefined, tlPrimaryWeapon: undefined, tlSecondaryWeapon: undefined }),
+      knowsSomeoneInGuild: "",
+      additionalNotes: "",
+      // TL specific fields will be conditionally added to defaultValues in useEffect based on guild data
     },
   });
+  
+  const watchedApplicantRegion = form.watch("applicantTlRegion");
 
-   useEffect(() => {
+  useEffect(() => {
     if (currentUser?.displayName && !form.getValues("characterNickname")) {
       form.setValue("characterNickname", currentUser.displayName);
     }
   }, [currentUser, form]);
+
+  useEffect(() => {
+    form.setValue("applicantTlServer", undefined);
+  }, [watchedApplicantRegion, form]);
 
 
   useEffect(() => {
@@ -126,24 +170,33 @@ function ApplyPageContent() {
         }
 
         setGuild(guildData);
+        const currentIsTLGuild = guildData.game === "Throne and Liberty";
         const enabledCustomQuestions = guildData.recruitmentQuestions?.filter(q => q.isEnabled && q.type === 'custom') || [];
         setActiveCustomQuestions(enabledCustomQuestions);
-
+        
         let defaultFormValues: any = {
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
             gearScoreScreenshotUrl: "",
             discordNick: "",
+            knowsSomeoneInGuild: "",
+            additionalNotes: "",
         };
-        if (guildData.game === "Throne and Liberty") {
-            defaultFormValues.tlRole = undefined;
-            defaultFormValues.tlPrimaryWeapon = undefined;
-            defaultFormValues.tlSecondaryWeapon = undefined;
+
+        if (currentIsTLGuild) {
+            defaultFormValues = {
+                ...defaultFormValues,
+                tlRole: undefined,
+                tlPrimaryWeapon: undefined,
+                tlSecondaryWeapon: undefined,
+                applicantTlRegion: undefined,
+                applicantTlServer: undefined,
+                applicantTlGameFocus: [],
+            };
         }
         enabledCustomQuestions.forEach(q => {
             defaultFormValues[q.id] = "";
         });
-
         form.reset(defaultFormValues);
 
       } catch (error) {
@@ -153,7 +206,6 @@ function ApplyPageContent() {
         setLoadingGuildData(false);
       }
     };
-
     fetchGuildData();
   }, [guildId, currentUser, authLoading, router, toast, form]);
 
@@ -183,11 +235,11 @@ function ApplyPageContent() {
 
     const customAnswers: { [questionId: string]: string } = {};
     activeCustomQuestions.forEach(q => {
-        if (data[q.id] !== undefined) {
-            customAnswers[q.id] = data[q.id] as string;
+        if (data[q.id as keyof ApplicationFormValues] !== undefined) {
+            customAnswers[q.id] = data[q.id as keyof ApplicationFormValues] as string;
         }
     });
-
+    
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
       applicantId: currentUser.uid,
@@ -195,10 +247,17 @@ function ApplyPageContent() {
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
       discordNick: data.discordNick,
+      knowsSomeoneInGuild: data.knowsSomeoneInGuild || "",
+      additionalNotes: data.additionalNotes || "",
       status: 'pending',
-      ...(isTLGuild && { tlRole: data.tlRole }),
-      ...(isTLGuild && { tlPrimaryWeapon: data.tlPrimaryWeapon }),
-      ...(isTLGuild && { tlSecondaryWeapon: data.tlSecondaryWeapon }),
+      ...(isTLGuild && { 
+          tlRole: data.tlRole,
+          tlPrimaryWeapon: data.tlPrimaryWeapon,
+          tlSecondaryWeapon: data.tlSecondaryWeapon,
+          applicantTlRegion: data.applicantTlRegion,
+          applicantTlServer: data.applicantTlServer,
+          applicantTlGameFocus: data.applicantTlGameFocus,
+      }),
       ...(Object.keys(customAnswers).length > 0 && { customAnswers: customAnswers }),
     };
 
@@ -207,15 +266,14 @@ function ApplyPageContent() {
       const submittedAtTimestamp = serverTimestamp() as Timestamp;
 
       if (guild.isOpen === true || !guild.password) {
-        const batch = writeBatch(db);
-        const guildRef = doc(db, "guilds", guildId);
+        const batchDB = writeBatch(db);
+        const currentGuildRef = doc(db, "guilds", guildId);
 
         let memberRoleInfo: GuildMemberRoleInfo = {
           roleName: "Membro",
           characterNickname: data.characterNickname,
           gearScore: data.gearScore,
-          gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null, // Store empty as null
-          // No gearBuildLink or skillBuildLink from application form, so they remain undefined/not set
+          gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0,
           status: 'Ativo',
@@ -227,14 +285,14 @@ function ApplyPageContent() {
           memberRoleInfo.tlSecondaryWeapon = data.tlSecondaryWeapon;
         }
 
-        batch.update(guildRef, {
+        batchDB.update(currentGuildRef, {
           memberIds: arrayUnion(currentUser.uid),
           memberCount: firebaseIncrement(1),
           [`roles.${currentUser.uid}`]: memberRoleInfo,
         });
 
         const appDocForPublicJoinRef = doc(applicationsRef);
-        batch.set(appDocForPublicJoinRef, {
+        batchDB.set(appDocForPublicJoinRef, {
           ...applicationBaseData,
           applicantDisplayName: currentUser.displayName || currentUser.email,
           applicantPhotoURL: currentUser.photoURL || null,
@@ -244,7 +302,7 @@ function ApplyPageContent() {
           reviewedAt: submittedAtTimestamp,
         });
 
-        await batch.commit();
+        await batchDB.commit();
 
         await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.MEMBER_JOINED, {
             targetUserId: currentUser.uid,
@@ -377,131 +435,32 @@ function ApplyPageContent() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <CardContent className="p-0 space-y-5">
-              <FormField
-                control={form.control}
-                name="characterNickname"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nick do Personagem <span className="text-destructive">*</span></FormLabel>
-                    <FormControl>
-                      <div className="relative flex items-center">
-                        <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input {...field} placeholder="SeuNicknameNoJogo" className="form-input pl-10"/>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Nick do Personagem <span className="text-destructive">*</span></FormLabel> <FormControl> <div className="relative flex items-center"> <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input {...field} placeholder="SeuNicknameNoJogo" className="form-input pl-10"/> </div> </FormControl> <FormMessage /> </FormItem> )}/>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="gearScore"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Gearscore <span className="text-destructive">*</span></FormLabel>
-                        <FormControl>
-                        <div className="relative flex items-center">
-                            <Hash className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                            <Input type="number" {...field} placeholder="Ex: 5200" className="form-input pl-10"/>
-                        </div>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="discordNick"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Seu Nick no Discord <span className="text-destructive">*</span></FormLabel>
-                        <FormControl>
-                        <div className="relative flex items-center">
-                            <MessageSquare className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                            <Input {...field} placeholder="usuario#1234" className="form-input pl-10"/>
-                        </div>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Gearscore <span className="text-destructive">*</span></FormLabel> <FormControl> <div className="relative flex items-center"> <Hash className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input type="number" {...field} placeholder="Ex: 5200" className="form-input pl-10"/> </div> </FormControl> <FormMessage /> </FormItem> )}/>
+                <FormField control={form.control} name="discordNick" render={({ field }) => ( <FormItem> <FormLabel>Seu Nick no Discord <span className="text-destructive">*</span></FormLabel> <FormControl> <div className="relative flex items-center"> <MessageSquare className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input {...field} placeholder="usuario#1234" className="form-input pl-10"/> </div> </FormControl> <FormMessage /> </FormItem> )}/>
               </div>
-
-              <FormField
-                control={form.control}
-                name="gearScoreScreenshotUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Link para Screenshot do Gearscore (Ex: Imgur) <span className="text-destructive">*</span></FormLabel>
-                    <FormControl>
-                      <div className="relative flex items-center">
-                        <ImageIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input {...field} placeholder="https://i.imgur.com/..." className="form-input pl-10"/>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link para Screenshot do Gearscore (Ex: Imgur) <span className="text-destructive">*</span></FormLabel> <FormControl> <div className="relative flex items-center"> <ImageIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input {...field} placeholder="https://i.imgur.com/..." className="form-input pl-10"/> </div> </FormControl> <FormMessage /> </FormItem> )}/>
 
               {isTLGuild && (
                 <>
-                  <FormField
-                    control={form.control}
-                    name="tlRole"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""} >
-                          <FormControl>
-                            <SelectTrigger className="form-input">
-                              <SelectValue placeholder="Selecione sua função principal..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.values(TLRole).map(role => (
-                              <SelectItem key={role} value={role}>{role}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="tlPrimaryWeapon"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""} >
-                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma primária..." /></SelectTrigger></FormControl>
-                            <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="tlSecondaryWeapon"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""} >
-                            <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma secundária..." /></SelectTrigger></FormControl>
-                            <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
+                    <FormField control={form.control} name="applicantTlRegion" render={({ field }) => ( <FormItem> <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel> <div className="relative flex items-center"> <Globe className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}> <FormControl> <SelectTrigger className={`form-input pl-10 ${form.formState.errors.applicantTlRegion ? 'border-destructive focus:border-destructive' : ''}`}> <SelectValue placeholder="Selecione uma região" /> </SelectTrigger> </FormControl> <SelectContent> {tlRegions.map(region => ( <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem> ))} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/>
+                    {watchedApplicantRegion && tlServers[watchedApplicantRegion]?.length > 0 && (
+                      <FormField control={form.control} name="applicantTlServer" render={({ field }) => ( <FormItem> <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel> <div className="relative flex items-center"> <ServerIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={!watchedApplicantRegion || (tlServers[watchedApplicantRegion]?.length === 0)}> <FormControl> <SelectTrigger className={`form-input pl-10 ${form.formState.errors.applicantTlServer ? 'border-destructive focus:border-destructive' : ''}`}> <SelectValue placeholder={tlServers[watchedApplicantRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} /> </SelectTrigger> </FormControl> <SelectContent> {tlServers[watchedApplicantRegion]?.length > 0 ? ( tlServers[watchedApplicantRegion].map(server => ( <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem> )) ) : ( <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem> )} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/>
+                    )}
                   </div>
+                  <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""} > <FormControl> <SelectTrigger className="form-input"> <SelectValue placeholder="Selecione sua função principal..." /> </SelectTrigger> </FormControl> <SelectContent> {Object.values(TLRole).map(role => ( <SelectItem key={role} value={role}>{role}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""} > <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma primária..." /></SelectTrigger></FormControl> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""} > <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Arma secundária..." /></SelectTrigger></FormControl> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                  </div>
+                  <FormField control={form.control} name="applicantTlGameFocus" render={() => ( <FormItem> <div className="mb-2"> <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel> <p className="text-sm text-muted-foreground">Selecione um ou mais focos de jogo que te interessam.</p> </div> {tlGameFocusOptions.map((option) => ( <FormField key={option.id} control={form.control} name="applicantTlGameFocus" render={({ field }) => { return ( <FormItem key={option.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2"> <FormControl> <Checkbox checked={field.value?.includes(option.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), option.id]) : field.onChange( (field.value || []).filter( (value) => value !== option.id ) ); }} /> </FormControl> <FormLabel className="font-normal">{option.label}</FormLabel> </FormItem> ); }} /> ))} <FormMessage /> </FormItem> )}/>
                 </>
               )}
+              <FormField control={form.control} name="knowsSomeoneInGuild" render={({ field }) => ( <FormItem> <FormLabel>Conhece alguém na guilda? (Opcional)</FormLabel> <FormControl> <div className="relative flex items-center"> <UsersIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /> <Input {...field} placeholder="Nick do(s) amigo(s)" className="form-input pl-10"/> </div> </FormControl> <FormMessage /> </FormItem> )}/>
+              <FormField control={form.control} name="additionalNotes" render={({ field }) => ( <FormItem> <FormLabel>Algo mais a acrescentar? (Opcional)</FormLabel> <FormControl> <Textarea {...field} placeholder="Qualquer informação adicional que queira compartilhar..." rows={3} className="form-input"/> </FormControl> <FormMessage /> </FormItem> )}/>
+
               {activeCustomQuestions.length > 0 && (
                 <div className="pt-4 space-y-5 border-t border-border">
                   <h3 className="text-lg font-semibold text-primary">Perguntas Adicionais da Guilda</h3>
@@ -545,7 +504,6 @@ function ApplyPageContent() {
   );
 }
 
-
 export default function ApplyPage() {
     return (
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-landing-gradient"><Loader2 className="h-16 w-16 animate-spin text-primary"/></div>}>
@@ -554,4 +512,4 @@ export default function ApplyPage() {
     );
   }
 
-
+    
