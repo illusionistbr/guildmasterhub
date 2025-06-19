@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -152,16 +152,24 @@ const weaponTypeOptions = [
 ];
 
 const traitOptions = [
-  { value: "Max Health", label: "Max Health" }, { value: "Hit Chance", label: "Hit Chance" },
-  { value: "Heavy Attack Chance", label: "Heavy Attack Chance" }, { value: "Critical Hit Chance", label: "Critical Hit Chance" },
-  { value: "Collision Chance", label: "Collision Chance" }, { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
-  { value: "Max Mana", label: "Max Mana" }, { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
-  { value: "Buff Duration", label: "Buff Duration" }, { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
-  { value: "Debuff Duration", label: "Debuff Duration" }, { value: "Stun Chance", label: "Stun Chance"},
-  { value: "Attack Speed", label: "Attack Speed"}, { value: "Mana Regen", label: "Mana Regen"},
-  { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"}, { value: "Construct Bonus Damage", label: "Construct Bonus Damage"},
+  { value: "Attack Speed", label: "Attack Speed"},
+  { value: "Buff Duration", label: "Buff Duration" },
+  { value: "Collision Chance", label: "Collision Chance" },
+  { value: "Construct Bonus Damage", label: "Construct Bonus Damage"},
   { value: "Cooldown Speed", label: "Cooldown Speed"},
-];
+  { value: "Critical Hit Chance", label: "Critical Hit Chance" },
+  { value: "Debuff Duration", label: "Debuff Duration" },
+  { value: "Heavy Attack Chance", label: "Heavy Attack Chance" },
+  { value: "Hit Chance", label: "Hit Chance" },
+  { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
+  { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency"},
+  { value: "Mana Regen", label: "Mana Regen"},
+  { value: "Max Health", label: "Max Health" },
+  { value: "Max Mana", label: "Max Mana" },
+  { value: "Stun Chance", label: "Stun Chance"},
+  { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
+  { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
   common: 'bg-slate-700',
@@ -226,7 +234,7 @@ function LootPageContent() {
       weaponType: undefined,
       itemName: undefined,
       trait: undefined,
-      droppedByMemberId: undefined,
+      droppedByMemberId: NO_DROPPER_ID,
     },
   });
 
@@ -344,7 +352,7 @@ function LootPageContent() {
     toast({ title: "Item Registrado no Banco!", description: `Item ${newItem.itemName || newItem.weaponType || newItem.itemCategory} adicionado.` });
     setIsSubmitting(false);
     setShowAddItemDialog(false);
-    form.reset();
+    form.reset({ droppedByMemberId: NO_DROPPER_ID });
     setSelectedItemForPreview(null);
   };
 
@@ -377,7 +385,7 @@ function LootPageContent() {
             <Dialog open={showAddItemDialog} onOpenChange={(isOpen) => {
                 setShowAddItemDialog(isOpen);
                 if (!isOpen) {
-                    form.reset();
+                    form.reset({ droppedByMemberId: NO_DROPPER_ID });
                     setSelectedItemForPreview(null);
                 }
             }}>
@@ -522,7 +530,11 @@ function LootPageContent() {
                     />
                     
                     <DialogFooter className="p-0 pt-6 sticky bottom-0 bg-card">
-                      <Button type="button" variant="outline" onClick={() => setShowAddItemDialog(false)} disabled={isSubmitting}>Cancelar</Button>
+                      <Button type="button" variant="outline" onClick={() => {
+                          setShowAddItemDialog(false);
+                          form.reset({ droppedByMemberId: NO_DROPPER_ID });
+                          setSelectedItemForPreview(null);
+                      }} disabled={isSubmitting}>Cancelar</Button>
                       <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
                         Registrar Item
@@ -606,3 +618,4 @@ export default function LootPageWrapper() {
     
 
     
+
