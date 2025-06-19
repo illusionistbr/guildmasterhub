@@ -496,7 +496,6 @@ const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Auric Vanguard\'s Full Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00005A.webp', rarity: 'epic' },
 ];
 
-
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
@@ -518,7 +517,6 @@ const itemCategoryOptions = [
   { value: "armor", label: "Armadura", icon: Shirt },
   { value: "accessory", label: "Acessório", icon: Diamond },
 ];
-
 
 const weaponTypeOptions = [
   { value: "Sword", label: "Sword" },
@@ -564,7 +562,6 @@ const traitOptions = [
   { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
-
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
   common: 'bg-slate-700',
   uncommon: 'bg-emerald-600',
@@ -584,7 +581,6 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
 const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest"];
-
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -687,7 +683,6 @@ function LootPageContent() {
     }
   }, [watchedArmorType, form]);
 
-
   useEffect(() => {
     if (watchedItemCategory === 'weapon' && watchedWeaponType && watchedItemName) {
       const items = WEAPON_ITEMS_MAP[watchedWeaponType] || [];
@@ -747,7 +742,6 @@ function LootPageContent() {
     let itemSubType: string | undefined = undefined;
     let itemSubTypeNameKey: 'weaponType' | 'armorType' | undefined = undefined;
 
-
     if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) {
         const itemsList = WEAPON_ITEMS_MAP[data.weaponType];
         itemSubType = data.weaponType;
@@ -771,7 +765,6 @@ function LootPageContent() {
             }
         }
     }
-
 
     let finalDroppedByMemberId: string | undefined = data.droppedByMemberId;
     let finalDroppedByMemberName: string | undefined = undefined;
@@ -804,7 +797,6 @@ function LootPageContent() {
         newItem.trait = data.trait;
     }
 
-
     setBankItems(prevItems => [...prevItems, newItem]);
 
     toast({ title: "Item Registrado no Banco!", description: `Item ${newItem.itemName || itemSubType || newItem.itemCategory} adicionado.` });
@@ -826,7 +818,6 @@ function LootPageContent() {
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
     [];
 
-
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
 
   const isTraitMandatory =
@@ -837,7 +828,6 @@ function LootPageContent() {
     watchedItemCategory === 'weapon' && watchedWeaponType ? watchedWeaponType :
     watchedItemCategory === 'armor' && watchedArmorType ? (armorTypeOptions.find(opt => opt.value === watchedArmorType)?.label || watchedArmorType) :
     'item';
-
 
   return (
     <div className="space-y-8">
@@ -1140,4 +1130,5 @@ export default function LootPageWrapper() {
 
 
     
+
 
