@@ -367,27 +367,6 @@ const TL_FEET_ARMOR_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
-  { name: 'Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00015.webp', rarity: 'rare' },
-  { name: 'Resolute Crusader Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_PT_00004.webp', rarity: 'rare' },
-  { name: 'Ruthless Enforcer Leggings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004.webp', rarity: 'rare' },
-  { name: 'Gloom Guard Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00014.webp', rarity: 'rare' },
-  { name: 'Decorated Champion Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00009.webp', rarity: 'rare' },
-  { name: 'Duskblood Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00009.webp', rarity: 'rare' },
-  { name: 'Glade Stalker Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00001E.webp', rarity: 'rare' },
-  { name: 'Trousers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00002B.webp', rarity: 'rare' },
-  { name: 'Feathered Drakeskin Breeches', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00015.webp', rarity: 'rare' },
-  { name: 'Soul Mirror Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022.webp', rarity: 'rare' },
-  { name: 'Pants of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00008.webp', rarity: 'rare' },
-  { name: 'Nature\'s End Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00004.webp', rarity: 'rare' },
-  { name: 'Permafrost Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00010.webp', rarity: 'rare' },
-  { name: 'Elusive Hexweaver Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00011.webp', rarity: 'rare' },
-  { name: 'Alacritous Invoker Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016.webp', rarity: 'rare' },
-  { name: 'Flamewraught Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004B.webp', rarity: 'rare' },
-  { name: 'Starving Shadow Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00015A.webp', rarity: 'rare' },
-  { name: 'Howling Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00010B.webp', rarity: 'rare' },
-  { name: 'Polished Composite Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00004A.webp', rarity: 'rare' },
-  { name: 'Sunshade Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022C.webp', rarity: 'rare' },
-  { name: 'Premonition Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016A.webp', rarity: 'rare' },
   { name: 'Shock Commander Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05002.webp', rarity: 'epic' },
   { name: 'Ebon Roar Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00017.webp', rarity: 'epic' },
   { name: 'Heroic Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp', rarity: 'epic' },
@@ -464,21 +443,6 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_BRACELET_ITEMS: TLItem[] = [
-  { name: 'Imperial Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00012.webp', rarity: 'rare' },
-  { name: 'Serpentine Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00006.webp', rarity: 'rare' },
-  { name: 'Astral Armlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00021.webp', rarity: 'rare' },
-  { name: 'Ruby Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00024.webp', rarity: 'rare' },
-  { name: 'Kunzite Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00014.webp', rarity: 'rare' },
-  { name: 'Sophia\'s Bracelet of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00025.webp', rarity: 'rare' },
-  { name: 'Robert\'s Bracelet of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00002.webp', rarity: 'rare' },
-  { name: 'Rutaine\'s Bracelet of Wonder', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00026.webp', rarity: 'rare' },
-  { name: 'Enraged Buffering Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002.webp', rarity: 'rare' },
-  { name: 'Enraged Vigor Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004.webp', rarity: 'rare' },
-  { name: 'Enraged Liberation Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007.webp', rarity: 'rare' },
-  { name: 'Enraged Never Losing Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010.webp', rarity: 'rare' },
-  { name: 'Enraged Roaring Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011.webp', rarity: 'rare' },
-  { name: 'Timeworn Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00024A.webp', rarity: 'rare' },
-  { name: 'Hindsight Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00006A.webp', rarity: 'rare' },
   { name: 'Bracers of Unrelenting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp', rarity: 'epic' },
   { name: 'Ascended Guardian Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp', rarity: 'epic' },
   { name: 'Eternal Champion Bindings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp', rarity: 'epic' },
@@ -1195,4 +1159,3 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
-
