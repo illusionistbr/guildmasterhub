@@ -726,6 +726,30 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Spider Silk Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021.webp', rarity: 'rare' },
   { name: 'Sophia\'s Necklace of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00025.webp', rarity: 'rare' },
   { name: 'Robert\'s Necklace of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00026.webp', rarity: 'rare' },
+  { name: 'Alternating Link Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021A.webp', rarity: 'rare'},
+  { name: 'Unknown Material Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00007A.webp', rarity: 'rare'},
+  { name: 'Slayer\'s Quicksilver Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp', rarity: 'epic'},
+  { name: 'Bindings of the Unstoppable', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00008.webp', rarity: 'epic'},
+  { name: 'Thunderstorm Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp', rarity: 'epic'},
+  { name: 'Abyssal Grace Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp', rarity: 'epic'},
+  { name: 'Blessed Templar Choker', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00003.webp', rarity: 'epic'},
+  { name: 'Collar of Decimation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00001.webp', rarity: 'epic'},
+  { name: 'Wrapped Coin Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp', rarity: 'epic'},
+  { name: 'Clasp of the Overlord', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00019.webp', rarity: 'epic'},
+  { name: 'Clasp of the Conqueror', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00017.webp', rarity: 'epic'},
+  { name: 'Icy Necklace of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00015.webp', rarity: 'epic'},
+  { name: 'Icy Necklace of Dexterity', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00011.webp', rarity: 'epic'},
+  { name: 'Icy Necklace of Wisdom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00014.webp', rarity: 'epic'},
+  { name: 'Icy Necklace of Perception', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00010.webp', rarity: 'epic'},
+  { name: 'Noble Birthright Brooch', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00035.webp', rarity: 'epic'},
+  { name: 'Collar of Nature\'s Wrath', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00036.webp', rarity: 'epic'},
+  { name: 'Deep Draconic Gorget', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00041.webp', rarity: 'epic'},
+  { name: 'Death Knell Gorget', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00040.webp', rarity: 'epic'},
+  { name: 'Primal Ritual Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00042.webp', rarity: 'epic'},
+  { name: 'Pendant of Barbaric Rage', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00043.webp', rarity: 'epic'},
+  { name: 'Pendant of Frozen Tears', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp', rarity: 'epic'},
+  { name: 'Pendant of Eternal Flames', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp', rarity: 'epic'},
+  { name: 'Lunar Conjunction Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp', rarity: 'epic'},
 ];
 
 
@@ -935,26 +959,20 @@ function LootPageContent() {
 
   useEffect(() => {
     form.setValue('itemName', undefined);
+    form.setValue('trait', undefined);
     setSelectedItemForPreview(null);
-    if (watchedWeaponType && !itemSubTypesRequiringTrait.includes(watchedWeaponType)) {
-      form.setValue('trait', undefined);
-    }
   }, [watchedWeaponType, form]);
 
   useEffect(() => {
     form.setValue('itemName', undefined);
+    form.setValue('trait', undefined);
     setSelectedItemForPreview(null);
-    if (watchedArmorType && !itemSubTypesRequiringTrait.includes(watchedArmorType)) {
-      form.setValue('trait', undefined);
-    }
   }, [watchedArmorType, form]);
 
   useEffect(() => {
     form.setValue('itemName', undefined);
+    form.setValue('trait', undefined);
     setSelectedItemForPreview(null);
-    if (watchedAccessoryType && !itemSubTypesRequiringTrait.includes(watchedAccessoryType)) {
-      form.setValue('trait', undefined);
-    }
   }, [watchedAccessoryType, form]);
 
   useEffect(() => {
@@ -1110,7 +1128,7 @@ function LootPageContent() {
   const currentItemNameOptions =
     watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [];
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
 
