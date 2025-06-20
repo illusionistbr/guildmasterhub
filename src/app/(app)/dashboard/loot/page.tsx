@@ -844,6 +844,15 @@ const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Belt of the Knight Master', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp', rarity: 'epic'},
 ];
 
+const TL_EARRING_ITEMS: TLItem[] = [
+  { name: "Gilded Granite Teardrops", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp', rarity: 'epic'},
+  { name: "Bloodbright Earrings", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp', rarity: 'epic'},
+  { name: "Earrings of Primal Foresight", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp', rarity: 'epic'},
+  { name: "Earrings of Glimmering Dew", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp', rarity: 'epic'},
+  { name: "Earrings of Forlorn Elegance", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00051.webp', rarity: 'epic'},
+  { name: "Brilliant Regal Earrings", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00052.webp', rarity: 'epic'},
+];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -870,6 +879,7 @@ const ACCESSORY_ITEMS_MAP: Record<string, TLItem[]> = {
   "Bracelet": TL_BRACELET_ITEMS,
   "Ring": TL_RING_ITEMS,
   "Belt": TL_BELT_ITEMS,
+  "Earrings": TL_EARRING_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -903,6 +913,7 @@ const accessoryTypeOptions = [
   { value: "Bracelet", label: "Bracelete" },
   { value: "Ring", label: "Anel" },
   { value: "Belt", label: "Cinto" },
+  { value: "Earrings", label: "Brincos" },
 ];
 
 const traitOptions = [
@@ -916,6 +927,9 @@ const traitOptions = [
   { value: "Critical Hit Chance", label: "Critical Hit Chance" },
   { value: "Debuff Duration", label: "Debuff Duration" },
   { value: "Demon Bonus Damage", label: "Demon Bonus Damage" },
+  { value: "Front Critical Hit Chance", label: "Front Critical Hit Chance" },
+  { value: "Front Heavy Attack Chance", label: "Front Heavy Attack Chance" },
+  { value: "Front Hit Chance", label: "Front Hit Chance" },
   { value: "Health Regen", label: "Health Regen" },
   { value: "Heavy Attack Chance", label: "Heavy Attack Chance" },
   { value: "Hit Chance", label: "Hit Chance" },
@@ -933,6 +947,9 @@ const traitOptions = [
   { value: "Petrification Chance", label: "Petrification Chance" },
   { value: "Petrification Resistance", label: "Petrification Resistance" },
   { value: "Range", label: "Range" },
+  { value: "Side Critical Hit", label: "Side Critical Hit" },
+  { value: "Side Heavy Attack Chance", label: "Side Heavy Attack Chance" },
+  { value: "Side Hit Chance", label: "Side Hit Chance" },
   { value: "Silence Chance", label: "Silence Chance" },
   { value: "Silence Resistance", label: "Silence Resistance" },
   { value: "Skill Damage Boost", label: "Skill Damage Boost" },
@@ -966,7 +983,7 @@ const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
 const itemSubTypesRequiringTrait = [
   "Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear",
   "Head", "Chest", "Cloak", "Gloves", "Feet", "Legs",
-  "Necklace", "Bracelet", "Ring", "Belt",
+  "Necklace", "Bracelet", "Ring", "Belt", "Earrings",
 ];
 
 const lootFormSchema = z.object({
