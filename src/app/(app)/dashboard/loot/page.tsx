@@ -409,13 +409,6 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_NECKLACE_ITEMS: TLItem[] = [
-  { name: 'Guardian Torque', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00024.webp', rarity: 'rare' },
-  { name: 'Ornate Choker', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00004.webp', rarity: 'rare' },
-  { name: 'Ecliptic Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00007.webp', rarity: 'rare' },
-  { name: 'Mitran Leaf Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00005.webp', rarity: 'rare' },
-  { name: 'Spider Silk Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021.webp', rarity: 'rare' },
-  { name: 'Sophia\'s Necklace of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00025.webp', rarity: 'rare' },
-  { name: 'Robert\'s Necklace of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00026.webp', rarity: 'rare' },
   { name: 'Alternating Link Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021A.webp', rarity: 'rare' },
   { name: 'Unknown Material Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00007A.webp', rarity: 'rare' },
   { name: 'Slayer\'s Quicksilver Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp', rarity: 'epic'},
@@ -440,9 +433,24 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Pendant of Frozen Tears', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp', rarity: 'epic'},
   { name: 'Pendant of Eternal Flames', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp', rarity: 'epic'},
   { name: 'Lunar Conjunction Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
 
 const TL_BRACELET_ITEMS: TLItem[] = [
+  { name: 'Imperial Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00012.webp', rarity: 'rare' },
+  { name: 'Serpentine Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00006.webp', rarity: 'rare' },
+  { name: 'Astral Armlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00021.webp', rarity: 'rare' },
+  { name: 'Ruby Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00024.webp', rarity: 'rare' },
+  { name: 'Kunzite Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00014.webp', rarity: 'rare' },
+  { name: 'Sophia\'s Bracelet of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00025.webp', rarity: 'rare' },
+  { name: 'Robert\'s Bracelet of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00002.webp', rarity: 'rare' },
+  { name: 'Rutaine\'s Bracelet of Wonder', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00026.webp', rarity: 'rare' },
+  { name: 'Enraged Buffering Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002.webp', rarity: 'rare' },
+  { name: 'Enraged Vigor Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004.webp', rarity: 'rare' },
+  { name: 'Enraged Liberation Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007.webp', rarity: 'rare' },
+  { name: 'Enraged Never Losing Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010.webp', rarity: 'rare' },
+  { name: 'Enraged Roaring Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011.webp', rarity: 'rare' },
+  { name: 'Timeworn Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00024A.webp', rarity: 'rare' },
+  { name: 'Hindsight Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00006A.webp', rarity: 'rare' },
   { name: 'Bracers of Unrelenting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp', rarity: 'epic' },
   { name: 'Ascended Guardian Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp', rarity: 'epic' },
   { name: 'Eternal Champion Bindings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp', rarity: 'epic' },
@@ -466,7 +474,7 @@ const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Bracelet of Agony', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00044.webp', rarity: 'epic' },
   { name: 'Bracelet of Fractured Worlds', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00045.webp', rarity: 'epic' },
   { name: 'Twisted Coil of the Enduring', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
 
 const TL_RING_ITEMS: TLItem[] = [
   { name: "Dark Seraph Ring", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp', rarity: 'epic'},
@@ -497,7 +505,7 @@ const TL_RING_ITEMS: TLItem[] = [
   { name: "Coil of Endless Hunger", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp', rarity: 'epic'},
   { name: "Ring of Song of Punishment", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp', rarity: 'epic'},
   { name: "Ring of Divine Instruction", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
 
 const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Forbidden Eternal Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp', rarity: 'epic'},
@@ -517,7 +525,7 @@ const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Undisputed Champion\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp', rarity: 'epic'},
   { name: 'Entranced Apostle\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp', rarity: 'epic'},
   { name: 'Belt of the Knight Master', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
 
 const TL_EARRING_ITEMS: TLItem[] = [
   { name: "Gilded Granite Teardrops", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp', rarity: 'epic'},
@@ -1055,7 +1063,7 @@ function LootPageContent() {
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow overflow-y-auto px-6 py-4 space-y-5">
-                    <FormField control={form.control} name="itemCategory" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl> <SelectTrigger className="form-input"> {field.value ? ( <div className="flex items-center"> {React.createElement(itemCategoryOptions.find(opt => opt.value === field.value)?.icon || Tag, { className: "mr-2 h-5 w-5 text-muted-foreground"})} <SelectValue placeholder="Selecione a categoria do item" /> </div> ) : ( <SelectValue placeholder="Selecione a categoria do item" /> )} </SelectTrigger> </FormControl> <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="itemCategory" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl> <SelectTrigger className="form-input"> <SelectValue placeholder="Selecione a categoria do item" /> </SelectTrigger> </FormControl> <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
                     {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
                     {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
                     {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
