@@ -248,7 +248,7 @@ export enum AuditActionType {
   DKP_SETTINGS_UPDATED = "DKP_SETTINGS_UPDATED",
   DKP_DECAY_SETTINGS_UPDATED = "DKP_DECAY_SETTINGS_UPDATED",
   DKP_ON_DEMAND_DECAY_TRIGGERED = "DKP_ON_DEMAND_DECAY_TRIGGERED",
-  MEMBER_DKP_ADJUSTED = "MEMBER_DKP_ADJUSTED", // New Audit Action
+  MEMBER_DKP_ADJUSTED = "MEMBER_DKP_ADJUSTED",
   GUILD_SETTINGS_UPDATED = "GUILD_SETTINGS_UPDATED",
   GUILD_NAME_UPDATED = "GUILD_NAME_UPDATED",
   GUILD_DESCRIPTION_UPDATED = "GUILD_DESCRIPTION_UPDATED",
@@ -359,3 +359,20 @@ export interface AppNotification {
   isRead?: boolean;
 }
 
+export type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
+
+export interface BankItem {
+  id: string; // Document ID from Firestore
+  createdAt: Timestamp;
+  itemCategory: string;
+  weaponType?: string;
+  armorType?: string;
+  accessoryType?: string;
+  itemName?: string;
+  trait?: string;
+  imageUrl: string;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  status: BankItemStatus;
+  droppedByMemberId?: string;
+  droppedByMemberName?: string;
+}

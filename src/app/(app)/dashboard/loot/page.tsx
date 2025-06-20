@@ -5,19 +5,11 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile } from '@/types/guildmaster';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, onSnapshot, query as firestoreQuery, orderBy, where, Timestamp } from '@/lib/firebase';
+import type { Guild, GuildMember, UserProfile, BankItem, BankItemStatus } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -26,35 +18,26 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import type { DateRange } from "react-day-picker";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const ITEMS_PER_PAGE = 15;
 
 interface TLItem {
   name: string;
   imageUrl: string;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-}
-
-type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
-
-interface BankItem {
-  id: string;
-  itemCategory: string;
-  weaponType?: string;
-  armorType?: string;
-  accessoryType?: string;
-  itemName?: string;
-  trait?: string;
-  imageUrl: string;
-  rarity: TLItem['rarity'];
-  status: BankItemStatus;
-  droppedByMemberId?: string;
-  droppedByMemberName?: string;
 }
 
 const TL_SWORD_ITEMS: TLItem[] = [
@@ -339,6 +322,27 @@ const TL_GLOVES_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_FEET_ARMOR_ITEMS: TLItem[] = [
+  { name: 'Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00010.webp', rarity: 'rare' },
+  { name: 'Ruthless Enforcer Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005.webp', rarity: 'rare' },
+  { name: 'Gloom Guard Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00014.webp', rarity: 'rare' },
+  { name: 'Decorated Champion Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00006.webp', rarity: 'rare' },
+  { name: 'Resolute Crusader Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00015.webp', rarity: 'rare' },
+  { name: 'Duskblood Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00010.webp', rarity: 'rare' },
+  { name: 'Glade Stalker Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00007.webp', rarity: 'rare' },
+  { name: 'Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00009.webp', rarity: 'rare' },
+  { name: 'Feathered Drakeskin Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00004.webp', rarity: 'rare' },
+  { name: 'Soul Mirror Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022.webp', rarity: 'rare' },
+  { name: 'Shoes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00016.webp', rarity: 'rare' },
+  { name: 'Nature\'s End Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00011.webp', rarity: 'rare' },
+  { name: 'Permafrost Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00005A.webp', rarity: 'rare' },
+  { name: 'Elusive Hexweaver Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00004.webp', rarity: 'rare' },
+  { name: 'Alacritous Invoker Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010A.webp', rarity: 'rare' },
+  { name: 'Flamewraught Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005B.webp', rarity: 'rare' },
+  { name: 'Starving Shadow Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00004B.webp', rarity: 'rare' },
+  { name: 'Howling Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00005B.webp', rarity: 'rare' },
+  { name: 'Polished Composite Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00015A.webp', rarity: 'rare' },
+  { name: 'Sunshade Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022B.webp', rarity: 'rare' },
+  { name: 'Premonition Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010C.webp', rarity: 'rare' },
   { name: 'Shock Commander Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_05002.webp', rarity: 'epic' },
   { name: 'Ebon Roar Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00017.webp', rarity: 'epic' },
   { name: 'Heroic Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002.webp', rarity: 'epic' },
@@ -381,6 +385,27 @@ const TL_FEET_ARMOR_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
+  { name: 'Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00015.webp', rarity: 'rare' },
+  { name: 'Resolute Crusader Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_PT_00004.webp', rarity: 'rare' },
+  { name: 'Ruthless Enforcer Leggings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004.webp', rarity: 'rare' },
+  { name: 'Gloom Guard Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00014.webp', rarity: 'rare' },
+  { name: 'Decorated Champion Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00009.webp', rarity: 'rare' },
+  { name: 'Duskblood Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00009.webp', rarity: 'rare' },
+  { name: 'Glade Stalker Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00001E.webp', rarity: 'rare' },
+  { name: 'Trousers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00002B.webp', rarity: 'rare' },
+  { name: 'Feathered Drakeskin Breeches', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00015.webp', rarity: 'rare' },
+  { name: 'Soul Mirror Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022.webp', rarity: 'rare' },
+  { name: 'Pants of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00008.webp', rarity: 'rare' },
+  { name: 'Nature\'s End Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00004.webp', rarity: 'rare' },
+  { name: 'Permafrost Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00010.webp', rarity: 'rare' },
+  { name: 'Elusive Hexweaver Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00011.webp', rarity: 'rare' },
+  { name: 'Alacritous Invoker Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016.webp', rarity: 'rare' },
+  { name: 'Flamewraught Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004B.webp', rarity: 'rare' },
+  { name: 'Starving Shadow Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00015A.webp', rarity: 'rare' },
+  { name: 'Howling Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00010B.webp', rarity: 'rare' },
+  { name: 'Polished Composite Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00004A.webp', rarity: 'rare' },
+  { name: 'Sunshade Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022C.webp', rarity: 'rare' },
+  { name: 'Premonition Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016A.webp', rarity: 'rare' },
   { name: 'Shock Commander Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05002.webp', rarity: 'epic' },
   { name: 'Ebon Roar Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00017.webp', rarity: 'epic' },
   { name: 'Heroic Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp', rarity: 'epic' },
@@ -423,6 +448,15 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_NECKLACE_ITEMS: TLItem[] = [
+  { name: 'Guardian Torque', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00024.webp', rarity: 'rare' },
+  { name: 'Ornate Choker', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00004.webp', rarity: 'rare' },
+  { name: 'Ecliptic Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00007.webp', rarity: 'rare' },
+  { name: 'Mitran Leaf Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00005.webp', rarity: 'rare' },
+  { name: 'Spider Silk Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021.webp', rarity: 'rare' },
+  { name: 'Sophia\'s Necklace of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00025.webp', rarity: 'rare' },
+  { name: 'Robert\'s Necklace of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00026.webp', rarity: 'rare' },
+  { name: 'Alternating Link Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021A.webp', rarity: 'rare' },
+  { name: 'Unknown Material Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00007A.webp', rarity: 'rare' },
   { name: 'Slayer\'s Quicksilver Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp', rarity: 'epic'},
   { name: 'Bindings of the Unstoppable', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00008.webp', rarity: 'epic'},
   { name: 'Thunderstorm Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp', rarity: 'epic'},
@@ -448,6 +482,21 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
 ].filter(item => item.rarity === 'epic');
 
 const TL_BRACELET_ITEMS: TLItem[] = [
+  { name: 'Imperial Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00012.webp', rarity: 'rare' },
+  { name: 'Serpentine Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00006.webp', rarity: 'rare' },
+  { name: 'Astral Armlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00021.webp', rarity: 'rare' },
+  { name: 'Ruby Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00024.webp', rarity: 'rare' },
+  { name: 'Kunzite Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00014.webp', rarity: 'rare' },
+  { name: 'Sophia\'s Bracelet of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00025.webp', rarity: 'rare' },
+  { name: 'Robert\'s Bracelet of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00002.webp', rarity: 'rare' },
+  { name: 'Rutaine\'s Bracelet of Wonder', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00026.webp', rarity: 'rare' },
+  { name: 'Enraged Buffering Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002.webp', rarity: 'rare' },
+  { name: 'Enraged Vigor Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004.webp', rarity: 'rare' },
+  { name: 'Enraged Liberation Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007.webp', rarity: 'rare' },
+  { name: 'Enraged Never Losing Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010.webp', rarity: 'rare' },
+  { name: 'Enraged Roaring Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011.webp', rarity: 'rare' },
+  { name: 'Timeworn Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00024A.webp', rarity: 'rare' },
+  { name: 'Hindsight Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00006A.webp', rarity: 'rare' },
   { name: 'Bracers of Unrelenting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp', rarity: 'epic' },
   { name: 'Ascended Guardian Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp', rarity: 'epic' },
   { name: 'Eternal Champion Bindings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp', rarity: 'epic' },
@@ -722,8 +771,17 @@ function LootPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [selectedItemForPreview, setSelectedItemForPreview] = useState<TLItem | null>(null);
+
   const [bankItems, setBankItems] = useState<BankItem[]>([]);
+  const [loadingBankItems, setLoadingBankItems] = useState(true);
+
   const [guildMembersForDropdown, setGuildMembersForDropdown] = useState<{ value: string; label: string }[]>([]);
+
+  // Filters and Pagination State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<BankItemStatus | 'all'>('all');
+  const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const guildId = searchParams.get('guildId');
 
@@ -747,31 +805,19 @@ function LootPageContent() {
   const watchedItemName = form.watch("itemName");
 
   useEffect(() => {
-    form.setValue('weaponType', undefined);
-    form.setValue('armorType', undefined);
-    form.setValue('accessoryType', undefined);
-    form.setValue('itemName', undefined);
-    form.setValue('trait', undefined);
+    form.resetField('weaponType');
+    form.resetField('armorType');
+    form.resetField('accessoryType');
+    form.resetField('itemName');
+    form.resetField('trait');
     setSelectedItemForPreview(null);
   }, [watchedItemCategory, form]);
 
   useEffect(() => {
-    form.setValue('itemName', undefined);
-    form.setValue('trait', undefined);
+    form.resetField('itemName');
+    form.resetField('trait');
     setSelectedItemForPreview(null);
-  }, [watchedWeaponType, form]);
-
-  useEffect(() => {
-    form.setValue('itemName', undefined);
-    form.setValue('trait', undefined);
-    setSelectedItemForPreview(null);
-  }, [watchedArmorType, form]);
-
-  useEffect(() => {
-    form.setValue('itemName', undefined);
-    form.setValue('trait', undefined);
-    setSelectedItemForPreview(null);
-  }, [watchedAccessoryType, form]);
+  }, [watchedWeaponType, watchedArmorType, watchedAccessoryType, form]);
 
   useEffect(() => {
     if (watchedItemCategory === 'weapon' && watchedWeaponType && watchedItemName) {
@@ -829,50 +875,61 @@ function LootPageContent() {
     return () => setHeaderTitle(null);
   }, [guildId, user, authLoading, router, toast, setHeaderTitle]);
 
+  useEffect(() => {
+    if (!guildId) return;
+
+    setLoadingBankItems(true);
+    const bankItemsRef = collection(db, `guilds/${guildId}/bankItems`);
+    const q = firestoreQuery(bankItemsRef, orderBy("createdAt", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedItems = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as BankItem));
+      setBankItems(fetchedItems);
+      setLoadingBankItems(false);
+    }, (error) => {
+      console.error("Error fetching bank items: ", error);
+      toast({ title: "Erro ao carregar banco", variant: "destructive" });
+      setLoadingBankItems(false);
+    });
+
+    return () => unsubscribe();
+  }, [guildId, toast]);
+
   const onSubmit: SubmitHandler<LootFormValues> = async (data) => {
+    if (!guildId || !user) {
+        toast({title: "Erro", description: "Guilda ou usuário não identificado.", variant: "destructive"});
+        return;
+    }
+
     setIsSubmitting(true);
 
     let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
     let rarityToUse: TLItem['rarity'] = 'common';
     let itemSubType: string | undefined = undefined;
-    let itemSubTypeNameKey: 'weaponType' | 'armorType' | 'accessoryType' | undefined = undefined;
-
-    if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) {
-        const itemsList = WEAPON_ITEMS_MAP[data.weaponType];
+    
+    let itemsListSource;
+    if (data.itemCategory === 'weapon' && data.weaponType) {
+        itemsListSource = WEAPON_ITEMS_MAP[data.weaponType];
         itemSubType = data.weaponType;
-        itemSubTypeNameKey = 'weaponType';
-        if (itemsList) {
-            const specificItem = itemsList.find(s => s.name === data.itemName);
-            if (specificItem) {
-                imageUrlToUse = specificItem.imageUrl;
-                rarityToUse = specificItem.rarity;
-            }
-        }
-    } else if (data.itemCategory === 'armor' && data.armorType && data.itemName) {
-        const itemsList = ARMOR_ITEMS_MAP[data.armorType];
+    } else if (data.itemCategory === 'armor' && data.armorType) {
+        itemsListSource = ARMOR_ITEMS_MAP[data.armorType];
         itemSubType = data.armorType;
-        itemSubTypeNameKey = 'armorType';
-        if (itemsList) {
-            const specificItem = itemsList.find(s => s.name === data.itemName);
-            if (specificItem) {
-                imageUrlToUse = specificItem.imageUrl;
-                rarityToUse = specificItem.rarity;
-            }
-        }
-    } else if (data.itemCategory === 'accessory' && data.accessoryType && data.itemName) {
-        const itemsList = ACCESSORY_ITEMS_MAP[data.accessoryType];
+    } else if (data.itemCategory === 'accessory' && data.accessoryType) {
+        itemsListSource = ACCESSORY_ITEMS_MAP[data.accessoryType];
         itemSubType = data.accessoryType;
-        itemSubTypeNameKey = 'accessoryType';
-        if (itemsList) {
-            const specificItem = itemsList.find(s => s.name === data.itemName);
-            if (specificItem) {
-                imageUrlToUse = specificItem.imageUrl;
-                rarityToUse = specificItem.rarity;
-            }
-        }
     }
 
-
+    if (itemsListSource && data.itemName) {
+        const specificItem = itemsListSource.find(s => s.name === data.itemName);
+        if (specificItem) {
+            imageUrlToUse = specificItem.imageUrl;
+            rarityToUse = specificItem.rarity;
+        }
+    }
+    
     let finalDroppedByMemberId: string | undefined = data.droppedByMemberId;
     let finalDroppedByMemberName: string | undefined = undefined;
 
@@ -883,8 +940,8 @@ function LootPageContent() {
         finalDroppedByMemberId = undefined;
     }
 
-    const newItem: BankItem = {
-      id: Date.now().toString(),
+    const newItemPayload: Omit<BankItem, 'id'> = {
+      createdAt: serverTimestamp() as Timestamp,
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       itemName: data.itemName,
       imageUrl: imageUrlToUse,
@@ -892,29 +949,54 @@ function LootPageContent() {
       status: 'Disponível',
       droppedByMemberId: finalDroppedByMemberId,
       droppedByMemberName: finalDroppedByMemberName,
+      weaponType: data.weaponType,
+      armorType: data.armorType,
+      accessoryType: data.accessoryType,
+      trait: data.trait,
     };
-
-    if (itemSubTypeNameKey === 'weaponType' && data.weaponType) {
-      newItem.weaponType = data.weaponType;
-    } else if (itemSubTypeNameKey === 'armorType' && data.armorType) {
-      newItem.armorType = data.armorType;
-    } else if (itemSubTypeNameKey === 'accessoryType' && data.accessoryType) {
-      newItem.accessoryType = data.accessoryType;
+    
+    try {
+        const bankItemsCollectionRef = collection(db, `guilds/${guildId}/bankItems`);
+        await addDoc(bankItemsCollectionRef, newItemPayload);
+        toast({ title: "Item Registrado no Banco!", description: `Item ${newItemPayload.itemName || itemSubType || newItemPayload.itemCategory} adicionado.` });
+        setShowAddItemDialog(false);
+        form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
+        setSelectedItemForPreview(null);
+    } catch (error) {
+        console.error("Error saving item to Firestore:", error);
+        toast({title: "Erro ao Salvar Item", variant: "destructive"});
+    } finally {
+        setIsSubmitting(false);
     }
-
-
-    if (itemSubType && itemSubTypesRequiringTrait.includes(itemSubType) && data.trait) {
-        newItem.trait = data.trait;
-    }
-
-    setBankItems(prevItems => [...prevItems, newItem]);
-
-    toast({ title: "Item Registrado no Banco!", description: `Item ${newItem.itemName || itemSubType || newItem.itemCategory} adicionado.` });
-    setIsSubmitting(false);
-    setShowAddItemDialog(false);
-    form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
-    setSelectedItemForPreview(null);
   };
+
+  const filteredAndSortedItems = useMemo(() => {
+    let items = [...bankItems];
+    if (searchTerm) {
+        items = items.filter(item => item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+    if (statusFilter !== 'all') {
+        items = items.filter(item => item.status === statusFilter);
+    }
+    if (dateFilter?.from) {
+         const fromDateStartOfDay = new Date(dateFilter.from);
+         fromDateStartOfDay.setHours(0,0,0,0);
+         items = items.filter(item => item.createdAt && item.createdAt.toDate() >= fromDateStartOfDay);
+    }
+    if (dateFilter?.to) {
+        const toDateEndOfDay = new Date(dateFilter.to);
+        toDateEndOfDay.setHours(23,59,59,999);
+        items = items.filter(item => item.createdAt && item.createdAt.toDate() <= toDateEndOfDay);
+    }
+    return items;
+  }, [bankItems, searchTerm, statusFilter, dateFilter]);
+
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAndSortedItems, currentPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedItems.length / ITEMS_PER_PAGE);
 
   if (authLoading || loadingGuildData) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -929,19 +1011,18 @@ function LootPageContent() {
     watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
     [];
 
-  const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
-
   const isTraitMandatory =
     (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
     (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType)) ||
     (watchedItemCategory === 'accessory' && watchedAccessoryType && itemSubTypesRequiringTrait.includes(watchedAccessoryType));
-
 
   const subTypeLabel =
     watchedItemCategory === 'weapon' && watchedWeaponType ? watchedWeaponType :
     watchedItemCategory === 'armor' && watchedArmorType ? (armorTypeOptions.find(opt => opt.value === watchedArmorType)?.label || watchedArmorType) :
     watchedItemCategory === 'accessory' && watchedAccessoryType ? (accessoryTypeOptions.find(opt => opt.value === watchedAccessoryType)?.label || watchedAccessoryType) :
     'item';
+
+  const statusOptions: (BankItemStatus | 'all')[] = ['all', 'Disponível', 'Distribuído', 'Em leilão', 'Em rolagem', 'Aguardando leilão', 'Aguardando rolagem'];
 
   return (
     <div className="space-y-8">
@@ -955,6 +1036,45 @@ function LootPageContent() {
         </TabsList>
 
         <TabsContent value="banco" className="mt-6">
+          <Card className="static-card-container mb-6">
+            <CardHeader><CardTitle>Filtros do Banco</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               <div className="space-y-1">
+                  <Label htmlFor="searchItemName">Buscar por Nome</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="searchItemName" placeholder="Nome do item..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10"/>
+                  </div>
+               </div>
+               <div className="space-y-1">
+                 <Label htmlFor="statusFilter">Filtrar por Status</Label>
+                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as BankItemStatus | 'all')}>
+                    <SelectTrigger id="statusFilter"><SelectValue placeholder="Filtrar por status..." /></SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map(s => <SelectItem key={s} value={s}>{s === 'all' ? 'Todos os Status' : s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+               </div>
+               <div className="space-y-1">
+                <Label htmlFor="dateFilter">Filtrar por Data</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button id="dateFilter" variant={"outline"} className={cn("w-full justify-start text-left font-normal form-input", !dateFilter && "text-muted-foreground")}>
+                      <CalendarIconLucide className="mr-2 h-4 w-4" />
+                      {dateFilter?.from ? (dateFilter.to ? <>{format(dateFilter.from, "LLL dd, y")} - {format(dateFilter.to, "LLL dd, y")}</> : format(dateFilter.from, "LLL dd, y")) : <span>Escolha um intervalo</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar initialFocus mode="range" defaultMonth={dateFilter?.from} selected={dateFilter} onSelect={setDateFilter} numberOfMonths={2} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </CardContent>
+             <CardFooter className="justify-end">
+                <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); setDateFilter(undefined); setCurrentPage(1);}}>Limpar Filtros</Button>
+            </CardFooter>
+          </Card>
+
           <div className="mb-6 flex justify-end">
             <Dialog open={showAddItemDialog} onOpenChange={(isOpen) => {
                 setShowAddItemDialog(isOpen);
@@ -973,261 +1093,86 @@ function LootPageContent() {
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow overflow-y-auto px-6 py-4 space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="itemCategory"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="form-input">
-                                        {field.value ? (
-                                            <div className="flex items-center">
-                                                {React.createElement(itemCategoryOptions.find(opt => opt.value === field.value)?.icon || Tag, { className: "mr-2 h-5 w-5 text-muted-foreground"})}
-                                                <SelectValue placeholder="Selecione a categoria do item" />
-                                            </div>
-                                        ) : (
-                                            <SelectValue placeholder="Selecione a categoria do item" />
-                                        )}
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {itemCategoryOptions.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>
-                                        <div className="flex items-center">
-                                            {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})}
-                                            {opt.label}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {watchedItemCategory === 'weapon' && (
-                      <FormField
-                        control={form.control}
-                        name="weaponType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {watchedItemCategory === 'armor' && (
-                      <FormField
-                        control={form.control}
-                        name="armorType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {watchedItemCategory === 'accessory' && (
-                        <FormField
-                            control={form.control}
-                            name="accessoryType"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                                </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                    )}
-
-                     {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) ||
-                        (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) ||
-                        (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0)
-                     ) && (
-                      <FormField
-                        control={form.control}
-                        name="itemName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                                Nome do Item ({subTypeLabel})
-                                <span className="text-destructive">*</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    {isTraitMandatory && (
-                       <FormField
-                        control={form.control}
-                        name="trait"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              Trait do Item ({subTypeLabel})
-                              {isTraitMandatory && <span className="text-destructive">*</span>}
-                            </FormLabel>
-                            <div className="relative flex items-center">
-                              <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                              <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                  {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                     {selectedItemForPreview && (
-                      <div className="mt-4 space-y-2">
-                        <FormLabel>Prévia do Item</FormLabel>
-                        <div className={cn(
-                            "w-24 h-24 p-2 rounded-md flex items-center justify-center border border-border",
-                            rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted'
-                          )}
-                        >
-                          <Image
-                            src={selectedItemForPreview.imageUrl}
-                            alt={selectedItemForPreview.name}
-                            width={80}
-                            height={80}
-                            className="object-contain"
-                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name="droppedByMemberId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dropado por (Opcional)</FormLabel>
-                           <div className="relative flex items-center">
-                                <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                                <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}>
-                                    <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                    <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem>
-                                    {guildMembersForDropdown.map(member => (
-                                        <SelectItem key={member.value} value={member.value}>
-                                        <div className="flex items-center">
-                                            <Avatar className="h-6 w-6 mr-2">
-                                            <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/>
-                                            <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            {member.label}
-                                        </div>
-                                        </SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                           </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
+                    <FormField control={form.control} name="itemCategory" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl> <SelectTrigger className="form-input"> {field.value ? ( <div className="flex items-center"> {React.createElement(itemCategoryOptions.find(opt => opt.value === field.value)?.icon || Tag, { className: "mr-2 h-5 w-5 text-muted-foreground"})} <SelectValue placeholder="Selecione a categoria do item" /> </div> ) : ( <SelectValue placeholder="Selecione a categoria do item" /> )} </SelectTrigger> </FormControl> <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                    {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <div className="relative flex items-center"> <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/> )}
+                    {selectedItemForPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted' )} > <Image src={selectedItemForPreview.imageUrl} alt={selectedItemForPreview.name} width={80} height={80} className="object-contain" data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}/> </div> </div> )}
+                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <div className="relative flex items-center"> <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/>
                     <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
-                      <Button type="button" variant="outline" onClick={() => {
-                          setShowAddItemDialog(false);
-                          form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
-                          setSelectedItemForPreview(null);
-                      }} disabled={isSubmitting}>Cancelar</Button>
-                      <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
-                        Registrar Item
-                      </Button>
+                      <Button type="button" variant="outline" onClick={() => { setShowAddItemDialog(false); form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID }); setSelectedItemForPreview(null); }} disabled={isSubmitting}>Cancelar</Button>
+                      <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}> {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />} Registrar Item </Button>
                     </DialogFooter>
                   </form>
                 </Form>
               </DialogContent>
             </Dialog>
           </div>
-
-          {bankItems.length === 0 ? (
+          {loadingBankItems ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
+            </div>
+          ) : paginatedItems.length === 0 ? (
             <Card className="static-card-container text-center py-10">
               <CardHeader><Package className="mx-auto h-16 w-16 text-muted-foreground mb-4" /></CardHeader>
               <CardContent>
                 <CardTitle className="text-2xl">Banco da Guilda Vazio</CardTitle>
-                <CardDescription className="mt-2">Nenhum item registrado no banco ainda. Clique em "Cadastrar Item no Banco" para adicionar o primeiro.</CardDescription>
+                <CardDescription className="mt-2">
+                  {searchTerm || statusFilter !== 'all' || dateFilter ? 'Nenhum item encontrado com os filtros aplicados.' : 'Nenhum item registrado no banco ainda. Clique em "Cadastrar Item no Banco" para adicionar o primeiro.'}
+                </CardDescription>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {bankItems.map(item => (
-                <Card key={item.id} className="static-card-container flex flex-col">
-                  <CardHeader className="pb-2">
-                     <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.armorType || item.accessoryType || item.itemCategory}>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {paginatedItems.map(item => (
+                  <Card key={item.id} className="static-card-container flex flex-col">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.armorType || item.accessoryType || item.itemCategory}>
                         {item.itemName || item.weaponType || (armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType) || (accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType) || "Item Genérico"}
-                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
-                    <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[item.rarity])}>
-                      <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint={item.itemCategory === "Arma" ? "game item weapon" : (item.itemCategory === "Armadura" ? "game item armor" : (item.itemCategory === "Acessório" ? "game item accessory" : "game item"))}/>
-                    </div>
-                     <Badge
-                        variant={item.status === 'Disponível' ? 'default' : 'secondary'}
-                        className={cn(
-                          "mt-2 mb-2 text-xs px-2 py-0.5",
-                          statusBadgeClasses[item.status]
-                        )}
-                      >
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
+                      <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[item.rarity])}>
+                        <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint={item.itemCategory === "Arma" ? "game item weapon" : (item.itemCategory === "Armadura" ? "game item armor" : (item.itemCategory === "Acessório" ? "game item accessory" : "game item"))}/>
+                      </div>
+                      <Badge variant={item.status === 'Disponível' ? 'default' : 'secondary'} className={cn("mt-2 mb-2 text-xs px-2 py-0.5", statusBadgeClasses[item.status])}>
                         {item.status}
                       </Badge>
-                    <div className="space-y-0.5 text-xs text-muted-foreground text-center">
-                      <p><strong>Tipo:</strong> {item.itemCategory}</p>
-                      {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
-                      {item.armorType && <p><strong>Armadura:</strong> {armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType}</p>}
-                      {item.accessoryType && <p><strong>Acessório:</strong> {accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType}</p>}
-                      {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
-                      {item.droppedByMemberName && <p><strong>Dropado por:</strong> {item.droppedByMemberName}</p>}
-                    </div>
-                  </CardContent>
-                   <CardFooter className="p-3 border-t border-border">
-                        <Button variant="outline" size="sm" className="w-full text-xs">
-                            <Eye className="mr-1.5 h-3.5 w-3.5"/> Ver Detalhes
-                        </Button>
+                      <div className="space-y-0.5 text-xs text-muted-foreground text-center">
+                        <p><strong>Tipo:</strong> {item.itemCategory}</p>
+                        {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
+                        {item.armorType && <p><strong>Armadura:</strong> {armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType}</p>}
+                        {item.accessoryType && <p><strong>Acessório:</strong> {accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType}</p>}
+                        {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
+                        {item.droppedByMemberName && <p><strong>Dropado por:</strong> {item.droppedByMemberName}</p>}
+                        {item.createdAt && <p><strong>Cadastrado em:</strong> {format(item.createdAt.toDate(), 'dd/MM/yy HH:mm')}</p>}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="p-3 border-t border-border">
+                      <Button variant="outline" size="sm" className="w-full text-xs"> <Eye className="mr-1.5 h-3.5 w-3.5"/> Ver Detalhes </Button>
                     </CardFooter>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow mt-4">
+                <div className="text-sm text-muted-foreground">
+                  {filteredAndSortedItems.length} item(s) no total.
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground"> Página {totalPages > 0 ? currentPage : 0} de {totalPages} </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(1)} disabled={currentPage === 1 || totalPages === 0}> <ChevronsLeft className="h-4 w-4" /> </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || totalPages === 0}> <ChevronLeft className="h-4 w-4" /> </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}> <ChevronRight className="h-4 w-4" /> </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}> <ChevronsRight className="h-4 w-4" /> </Button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </TabsContent>
 
@@ -1252,5 +1197,3 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
-    
-    
