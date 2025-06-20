@@ -793,6 +793,38 @@ const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Twisted Coil of the Enduring', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp', rarity: 'epic' },
 ];
 
+const TL_RING_ITEMS: TLItem[] = [
+  { name: "Dark Seraph Ring", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp', rarity: 'epic'},
+  { name: "Band of the Chosen One", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00024.webp', rarity: 'epic'},
+  { name: "Band of the Silent One", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00002.webp', rarity: 'epic'},
+  { name: "Abyssal Grace Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp', rarity: 'epic'},
+  { name: "Embossed Granite Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00014.webp', rarity: 'epic'},
+  { name: "Eldritch Ice Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00004.webp', rarity: 'epic'},
+  { name: "Band of Universal Power", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00005.webp', rarity: 'epic'},
+  { name: "Etched Alabaster Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00003.webp', rarity: 'epic'},
+  { name: "Amber Dimensional Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00032.webp', rarity: 'epic'},
+  { name: "Sapphire Dimensional Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00033.webp', rarity: 'epic'},
+  { name: "Solitare of Purity", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp', rarity: 'epic'},
+  { name: "Honor's Promise Signet", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00038.webp', rarity: 'epic'},
+  { name: "Ring of Eternal Flames", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00039.webp', rarity: 'epic'},
+  { name: "Ring of Celestial Light", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00043.webp', rarity: 'epic'},
+  { name: "Symbol of Nature's Advance", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp', rarity: 'epic'},
+  { name: "Signet of the Treant Lord", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00034.webp', rarity: 'epic'},
+  { name: "Sinking Sun Signet", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp', rarity: 'epic'},
+  { name: "Band of Ancestor's Blood", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00041.webp', rarity: 'epic'},
+  { name: "Runed Band of the Black Anvil", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00042.webp', rarity: 'epic'},
+  { name: "Signet of the First Snow", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00036.webp', rarity: 'epic'},
+  { name: "Ring of Spirited Desire", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00045.webp', rarity: 'epic'},
+  { name: "Band of the Resistance Leader", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00046.webp', rarity: 'epic'},
+  { name: "Astral Bond", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00047.webp', rarity: 'epic'},
+  { name: "Distant Echoes Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00048.webp', rarity: 'epic'},
+  { name: "Ring of Stalwart Determination", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00049.webp', rarity: 'epic'},
+  { name: "Coil of Endless Hunger", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp', rarity: 'epic'},
+  { name: "Ring of Song of Punishment", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp', rarity: 'epic'},
+  { name: "Ring of Divine Instruction", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp', rarity: 'epic'},
+];
+
+
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
   "Greatsword": TL_GREATSWORD_ITEMS,
@@ -816,6 +848,7 @@ const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
 const ACCESSORY_ITEMS_MAP: Record<string, TLItem[]> = {
   "Necklace": TL_NECKLACE_ITEMS,
   "Bracelet": TL_BRACELET_ITEMS,
+  "Ring": TL_RING_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -847,6 +880,7 @@ const armorTypeOptions = [
 const accessoryTypeOptions = [
   { value: "Necklace", label: "Colar" },
   { value: "Bracelet", label: "Bracelete" },
+  { value: "Ring", label: "Anel" },
 ];
 
 const traitOptions = [
@@ -910,7 +944,7 @@ const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
 const itemSubTypesRequiringTrait = [
   "Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear",
   "Head", "Chest", "Cloak", "Gloves", "Feet", "Legs",
-  "Necklace", "Bracelet",
+  "Necklace", "Bracelet", "Ring",
 ];
 
 const lootFormSchema = z.object({
@@ -1322,7 +1356,7 @@ function LootPageContent() {
                                 <span className="text-destructive">*</span>
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -1345,7 +1379,7 @@ function LootPageContent() {
                             <div className="relative flex items-center">
                               <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                               <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                                 <SelectContent>
                                   {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                 </SelectContent>
