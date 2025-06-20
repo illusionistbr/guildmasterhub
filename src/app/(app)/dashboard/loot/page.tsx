@@ -72,7 +72,7 @@ const TL_SWORD_ITEMS: TLItem[] = [
   { name: 'Unshakeable Knight\'s Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp', rarity: 'epic' },
   { name: 'Bulwark of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00049.webp', rarity: 'epic' },
   { name: 'Deluzhnoa\'s Edge of Eternal Frost', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00052.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Immortal Titanic Quakeblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp', rarity: 'epic' },
@@ -90,7 +90,7 @@ const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Greatblade of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00049.webp', rarity: 'epic' },
   { name: 'Grayeye\'s Bloodlust Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00050.webp', rarity: 'epic' },
   { name: 'Cordy\'s Warblade of Creeping Doom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Lequirus\'s Wicked Thorns', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00014.webp', rarity: 'epic' },
@@ -107,7 +107,7 @@ const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Blades of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00049.webp', rarity: 'epic' },
   { name: 'Deluzhnoa\'s Permafrost Razors', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00052.webp', rarity: 'epic' },
   { name: 'Leviathan\'s Bladed Tendrils', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00051.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Shaikal\'s Deepmind Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00009.webp', rarity: 'epic' },
@@ -124,7 +124,7 @@ const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Mystic Truestrike Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00010.webp', rarity: 'epic' },
   { name: 'Longbow of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00049.webp', rarity: 'epic' },
   { name: 'Leviathan\'s Bloodstorm Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00051.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Rex Chimaerus\'s Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00007C.webp', rarity: 'epic' },
@@ -141,7 +141,7 @@ const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Moonlight Echo Repeaters', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00018.webp', rarity: 'epic' },
   { name: 'Crossbows of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00049.webp', rarity: 'epic' },
   { name: 'Bercant\'s Spineflower Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00050.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Excavator\'s Mysterious Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00012.webp', rarity: 'epic' },
@@ -158,7 +158,7 @@ const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Khanzaizin\'s Valorous Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00017.webp', rarity: 'epic' },
   { name: 'Overture of Eternal Salvation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00006A.webp', rarity: 'epic' },
   { name: 'Rod of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00049.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Aridus\'s Gnarled Voidstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00033.webp', rarity: 'epic' },
@@ -175,7 +175,7 @@ const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Ebon Soulwind Archstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00010.webp', rarity: 'epic' },
   { name: 'Grayeye\'s Electrified Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00017A.webp', rarity: 'epic' },
   { name: 'Staff of Enlightened Reform', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00031.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_SPEAR_ITEMS: TLItem[] = [
   { name: 'Skull Severing Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00019.webp', rarity: 'epic' },
@@ -190,7 +190,7 @@ const TL_SPEAR_ITEMS: TLItem[] = [
   { name: 'Deluzhnoa\'s Serrated Shard', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00026.webp', rarity: 'epic' },
   { name: 'Polearm of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00022.webp', rarity: 'epic' },
   { name: 'Windsheer Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00024.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Shock Commander Visor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_05002.webp', rarity: 'epic' },
@@ -232,7 +232,7 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Scaled Tricorne of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003A.webp', rarity: 'epic' },
   { name: 'Hallowed Hat of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00005B.webp', rarity: 'epic' },
   { name: 'Auric Vanguard\'s Barbute', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00014A.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Shock Commander Plate Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05002.webp', rarity: 'epic' },
@@ -273,7 +273,7 @@ const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Ossuary Tunic of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05002A.webp', rarity: 'epic' },
   { name: 'Hallowed Robes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00005A.webp', rarity: 'epic' },
   { name: 'Auric Vanguard\'s Full Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00005A.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Eldritch Whispers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00008.webp', rarity: 'epic' },
@@ -295,7 +295,7 @@ const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Cloak of the Frozen Expanse', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00025.webp', rarity: 'epic' },
   { name: 'Emperor\'s Golden Wing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00033.webp', rarity: 'epic' },
   { name: 'Iron Lord\'s Veil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00034.webp', rarity: 'epic' },
-];
+].filter(item => item.rarity === 'epic');
 
 const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Shock Commander Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05002.webp', rarity: 'epic' },
@@ -598,6 +598,9 @@ const accessoryTypeOptions = [
 
 const traitOptions = [
   { value: "Attack Speed", label: "Attack Speed" },
+  { value: "Back Critical Hit", label: "Back Critical Hit" },
+  { value: "Back Heavy Attack Chance", label: "Back Heavy Attack Chance" },
+  { value: "Back Hit Chance", label: "Back Hit Chance" },
   { value: "Bind Chance", label: "Bind Chance" },
   { value: "Buff Duration", label: "Buff Duration" },
   { value: "Collision Chance", label: "Collision Chance" },
