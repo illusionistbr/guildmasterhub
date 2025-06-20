@@ -859,19 +859,15 @@ function LootPageContent() {
     setIsSubmitting(true);
 
     let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
-    let rarityToUse: TLItem['rarity'] = 'common';
-    let itemSubType: string | undefined = undefined;
+    let rarityToUse: TLItem['rarity'] = 'epic'; // Defaulting to epic since we filtered out others
     
     let itemsListSource;
     if (data.itemCategory === 'weapon' && data.weaponType) {
         itemsListSource = WEAPON_ITEMS_MAP[data.weaponType];
-        itemSubType = data.weaponType;
     } else if (data.itemCategory === 'armor' && data.armorType) {
         itemsListSource = ARMOR_ITEMS_MAP[data.armorType];
-        itemSubType = data.armorType;
     } else if (data.itemCategory === 'accessory' && data.accessoryType) {
         itemsListSource = ACCESSORY_ITEMS_MAP[data.accessoryType];
-        itemSubType = data.accessoryType;
     }
 
     if (itemsListSource && data.itemName) {
@@ -882,35 +878,33 @@ function LootPageContent() {
         }
     }
     
-    let finalDroppedByMemberId: string | undefined = data.droppedByMemberId;
-    let finalDroppedByMemberName: string | undefined = undefined;
-
-    if (data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID) {
-        const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
-        finalDroppedByMemberName = droppedByMember?.label;
-    } else {
-        finalDroppedByMemberId = undefined;
-    }
-
-    const newItemPayload: Omit<BankItem, 'id'> = {
+    const newItemPayload: { [key: string]: any } = {
       createdAt: serverTimestamp() as Timestamp,
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
-      itemName: data.itemName,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
-      droppedByMemberId: finalDroppedByMemberId,
-      droppedByMemberName: finalDroppedByMemberName,
-      weaponType: data.weaponType,
-      armorType: data.armorType,
-      accessoryType: data.accessoryType,
-      trait: data.trait,
     };
+
+    if (data.itemName) newItemPayload.itemName = data.itemName;
+    if (data.trait) newItemPayload.trait = data.trait;
+    if (data.weaponType) newItemPayload.weaponType = data.weaponType;
+    if (data.armorType) newItemPayload.armorType = data.armorType;
+    if (data.accessoryType) newItemPayload.accessoryType = data.accessoryType;
+    
+    if (data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID) {
+        const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
+        if (droppedByMember) {
+          newItemPayload.droppedByMemberId = droppedByMember.value;
+          newItemPayload.droppedByMemberName = droppedByMember.label;
+        }
+    }
     
     try {
         const bankItemsCollectionRef = collection(db, `guilds/${guildId}/bankItems`);
         await addDoc(bankItemsCollectionRef, newItemPayload);
-        toast({ title: "Item Registrado no Banco!", description: `Item ${newItemPayload.itemName || itemSubType || newItemPayload.itemCategory} adicionado.` });
+        const subTypeForToast = data.weaponType || data.armorType || data.accessoryType;
+        toast({ title: "Item Registrado no Banco!", description: `Item ${newItemPayload.itemName || subTypeForToast || newItemPayload.itemCategory} adicionado.` });
         setShowAddItemDialog(false);
         form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
         setSelectedItemForPreview(null);
@@ -1049,24 +1043,24 @@ function LootPageContent() {
                     <FormField control={form.control} name="itemCategory" render={({ field }) => ( 
                         <FormItem> 
                             <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> 
-                            <Select onValueChange={field.onChange} value={field.value}> 
-                                <FormControl> 
+                            <FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}> 
                                     <SelectTrigger className="form-input"> 
                                         <SelectValue placeholder="Selecione a categoria do item" /> 
                                     </SelectTrigger> 
-                                </FormControl> 
-                                <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> 
-                            </Select> 
+                                    <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> 
+                                </Select>
+                            </FormControl> 
                             <FormMessage /> 
                         </FormItem> 
                     )}/>
-                    {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <div className="relative flex items-center"> <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
+                    {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
+                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <div className="relative flex items-center"> <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> </div> <FormMessage /> </FormItem> )}/> )}
                     {selectedItemForPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted' )} > <Image src={selectedItemForPreview.imageUrl} alt={selectedItemForPreview.name} width={80} height={80} className="object-contain" data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}/> </div> </div> )}
-                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <div className="relative flex items-center"> <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <div className="relative flex items-center"> <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <FormControl><Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select></FormControl> </div> <FormMessage /> </FormItem> )}/>
                     <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
                       <Button type="button" variant="outline" onClick={() => { setShowAddItemDialog(false); form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID }); setSelectedItemForPreview(null); }} disabled={isSubmitting}>Cancelar</Button>
                       <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}> {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />} Registrar Item </Button>
