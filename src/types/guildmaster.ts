@@ -24,7 +24,14 @@ export enum GuildPermission {
   MANAGE_DKP_SETTINGS = "MANAGE_DKP_SETTINGS",
   MANAGE_DKP_DECAY_SETTINGS = "MANAGE_DKP_DECAY_SETTINGS",
   MANAGE_MANUAL_CONFIRMATIONS_APPROVE = "MANAGE_MANUAL_CONFIRMATIONS_APPROVE",
-  MANAGE_MEMBER_DKP_BALANCE = "MANAGE_MEMBER_DKP_BALANCE", // New Permission
+  MANAGE_MEMBER_DKP_BALANCE = "MANAGE_MEMBER_DKP_BALANCE",
+  MANAGE_LOOT_BANK_ADD = "MANAGE_LOOT_BANK_ADD",
+  MANAGE_LOOT_BANK_MANAGE = "MANAGE_LOOT_BANK_MANAGE",
+  MANAGE_LOOT_AUCTIONS_CREATE = "MANAGE_LOOT_AUCTIONS_CREATE",
+  MANAGE_LOOT_AUCTIONS_MANAGE = "MANAGE_LOOT_AUCTIONS_MANAGE",
+  MANAGE_LOOT_ROLLS_CREATE = "MANAGE_LOOT_ROLLS_CREATE",
+  MANAGE_LOOT_ROLLS_MANAGE = "MANAGE_LOOT_ROLLS_MANAGE",
+  MANAGE_LOOT_SETTINGS = "MANAGE_LOOT_SETTINGS",
 }
 
 export enum TLRole {
@@ -358,3 +365,20 @@ export interface AppNotification {
   isRead?: boolean;
 }
 
+export type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
+
+export interface BankItem {
+  id: string; // Document ID from Firestore
+  createdAt: Timestamp;
+  itemCategory: string;
+  weaponType?: string;
+  armorType?: string;
+  accessoryType?: string;
+  itemName?: string;
+  trait?: string;
+  imageUrl: string;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  status: BankItemStatus;
+  droppedByMemberId?: string;
+  droppedByMemberName?: string;
+}

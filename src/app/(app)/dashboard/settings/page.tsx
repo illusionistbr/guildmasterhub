@@ -111,7 +111,7 @@ const guildFocusSchema = z.object({
 type GuildFocusFormValues = z.infer<typeof guildFocusSchema>;
 
 
-const permissionDescriptions: Record<PermissionEnum, { title: string; description: string }> = {
+const permissionDescriptions: Record<string, { title: string; description: string }> = {
   [GuildPermission.MANAGE_MEMBERS_VIEW]: { title: "Ver Membros", description: "Permite visualizar a lista de membros e seus perfis básicos." },
   [GuildPermission.MANAGE_MEMBERS_EDIT_ROLE]: { title: "Gerenciar Cargos de Membros", description: "Permite modificar o cargo de outros membros." },
   [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Permite alterar o status de atividade dos membros (Ativo, Inativo, Licença)." },
@@ -135,6 +135,13 @@ const permissionDescriptions: Record<PermissionEnum, { title: string; descriptio
   [GuildPermission.MANAGE_DKP_DECAY_SETTINGS]: { title: "Gerenciar Decaimento DKP", description: "Permite configurar o decaimento automático de DKP, incluindo porcentagem, intervalo e data inicial." },
   [GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE]: { title: "Aprovar Confirmações Manuais", description: "Permite aprovar ou rejeitar submissões manuais de participação em eventos." },
   [GuildPermission.MANAGE_MEMBER_DKP_BALANCE]: { title: "Gerenciar Saldo DKP de Membros", description: "Permite adicionar ou remover DKP do saldo de membros individualmente." },
+  [GuildPermission.MANAGE_LOOT_BANK_ADD]: { title: "Adicionar Item ao Banco", description: "Permite adicionar novos itens ao banco da guilda." },
+  [GuildPermission.MANAGE_LOOT_BANK_MANAGE]: { title: "Gerenciar Itens do Banco", description: "Permite editar, excluir e alterar o status de itens no banco." },
+  [GuildPermission.MANAGE_LOOT_AUCTIONS_CREATE]: { title: "Criar Leilões de Loot", description: "Permite iniciar leilões de itens do banco." },
+  [GuildPermission.MANAGE_LOOT_AUCTIONS_MANAGE]: { title: "Gerenciar Leilões de Loot", description: "Permite gerenciar lances, fechar e resolver leilões em andamento." },
+  [GuildPermission.MANAGE_LOOT_ROLLS_CREATE]: { title: "Criar Rolagens de Loot", description: "Permite iniciar rolagens de dados para itens do banco." },
+  [GuildPermission.MANAGE_LOOT_ROLLS_MANAGE]: { title: "Gerenciar Rolagens de Loot", description: "Permite gerenciar, fechar e resolver rolagens de dados em andamento." },
+  [GuildPermission.MANAGE_LOOT_SETTINGS]: { title: "Gerenciar Configurações de Loot", description: "Permite acessar e modificar as configurações do módulo de loot." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -301,7 +308,7 @@ function GuildSettingsPageContent() {
         const initialRoles = guildData.customRoles || {};
         const allCurrentPermissions = Object.values(GuildPermission);
         // Ensure Lider has all permissions, including new ones
-        const liderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE, GuildPermission.MANAGE_MEMBER_DKP_BALANCE])];
+        const liderPermissions = [...new Set([...allCurrentPermissions])];
 
 
         if (!initialRoles["Lider"]) {
@@ -590,7 +597,7 @@ function GuildSettingsPageContent() {
     setIsProcessingOnDemandDecay(true);
     try {
       const decayPercentage = guild.dkpDecayPercentage / 100;
-      const guildRef = doc(db, "guilds", guildId as string);
+      const guildRef = doc(db, guildId as string);
       const guildSnapshot = await getDoc(guildRef); 
       if (!guildSnapshot.exists()) {
         throw new Error("Guilda não encontrada para o decaimento.");
@@ -711,7 +718,7 @@ function GuildSettingsPageContent() {
       const rolesToSave = { ...customRoles };
 
       const allCurrentPermissions = Object.values(GuildPermission);
-      const defaultLiderPermissions = [...new Set([...allCurrentPermissions, GuildPermission.MANAGE_EVENTS_VIEW_PIN, GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE, GuildPermission.MANAGE_MEMBER_DKP_BALANCE])];
+      const defaultLiderPermissions = [...new Set([...allCurrentPermissions])];
       const defaultMembroPermissions = [GuildPermission.MANAGE_MEMBERS_VIEW, GuildPermission.VIEW_MEMBER_DETAILED_INFO];
 
       if (!rolesToSave["Lider"]) {
@@ -1097,38 +1104,31 @@ function GuildSettingsPageContent() {
                         <AccordionContent className="p-3 sm:px-4 sm:pb-4 pt-2">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {allPermissionsList.map(permission => {
-                            const permInfo = permissionDescriptions[permission];
-                            const isLiderManagingCriticalPermissions = roleName === "Lider" && 
-                                (permission === GuildPermission.MANAGE_ROLES_PERMISSIONS ||
-                                 permission === GuildPermission.MANAGE_DKP_SETTINGS ||
-                                 permission === GuildPermission.MANAGE_DKP_DECAY_SETTINGS ||
-                                 permission === GuildPermission.MANAGE_EVENTS_VIEW_PIN ||
-                                 permission === GuildPermission.MANAGE_MANUAL_CONFIRMATIONS_APPROVE ||
-                                 permission === GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
-
-
-                            return (
+                              const permInfo = permissionDescriptions[permission as keyof typeof permissionDescriptions];
+                              if (!permInfo) return null; // Skip if description is missing
+                              const isLiderManagingCriticalPermissions = roleName === "Lider";
+                              return (
                                 <div key={permission} className="flex items-start space-x-3 p-3 bg-background/50 dark:bg-input/30 rounded-md border border-border">
-                                <Checkbox
+                                  <Checkbox
                                     id={`${roleName}-${permission}`}
-                                    checked={roleData.permissions.includes(permission)}
-                                    onCheckedChange={(checked) => handlePermissionChange(roleName, permission, Boolean(checked))}
-                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingCriticalPermissions || (roleName === "Lider" && !isLiderManagingCriticalPermissions)}
+                                    checked={roleData.permissions.includes(permission as PermissionEnum)}
+                                    onCheckedChange={(checked) => handlePermissionChange(roleName, permission as PermissionEnum, Boolean(checked))}
+                                    disabled={isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingCriticalPermissions}
                                     aria-label={`${permInfo.title} para ${roleName}`}
-                                />
-                                <div className="grid gap-1.5 leading-none">
+                                  />
+                                  <div className="grid gap-1.5 leading-none">
                                     <label
-                                    htmlFor={`${roleName}-${permission}`}
-                                    className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", (roleName === "Lider" && !isLiderManagingCriticalPermissions) || (isSavingPermissions || !canManageRolesAndPermissionsPage || isLiderManagingCriticalPermissions) ? "peer-disabled:opacity-70" : "")}
+                                      htmlFor={`${roleName}-${permission}`}
+                                      className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed cursor-pointer", isLiderManagingCriticalPermissions ? "peer-disabled:opacity-70" : "")}
                                     >
-                                    {permInfo.title}
+                                      {permInfo.title}
                                     </label>
                                     <p className="text-xs text-muted-foreground">
-                                    {permInfo.description}
+                                      {permInfo.description}
                                     </p>
+                                  </div>
                                 </div>
-                                </div>
-                            );
+                              );
                             })}
                         </div>
                         </AccordionContent>
