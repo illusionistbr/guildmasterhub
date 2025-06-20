@@ -824,6 +824,26 @@ const TL_RING_ITEMS: TLItem[] = [
   { name: "Ring of Divine Instruction", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp', rarity: 'epic'},
 ];
 
+const TL_BELT_ITEMS: TLItem[] = [
+  { name: 'Forbidden Eternal Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp', rarity: 'epic'},
+  { name: 'Forbidden Arcane Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00014.webp', rarity: 'epic'},
+  { name: 'Forbidden Sacred Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00015.webp', rarity: 'epic'},
+  { name: 'Demonic Beast King\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00018.webp', rarity: 'epic'},
+  { name: 'Flamewrought Bindings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00019.webp', rarity: 'epic'},
+  { name: 'Girdle of Spectral Skulls', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00021.webp', rarity: 'epic'},
+  { name: 'Belt of Bloodlust', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp', rarity: 'epic'},
+  { name: 'Butcher\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp', rarity: 'epic'},
+  { name: 'Girdle of Treant Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp', rarity: 'epic'},
+  { name: 'Elusive Nymph Coil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00036.webp', rarity: 'epic'},
+  { name: 'Burnt Silk Warsash', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp', rarity: 'epic'},
+  { name: 'Hero\'s Legacy Warbelt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp', rarity: 'epic'},
+  { name: 'Cunning Ogre Girdle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp', rarity: 'epic'},
+  { name: 'Belt of Claimed Trophies', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp', rarity: 'epic'},
+  { name: 'Undisputed Champion\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp', rarity: 'epic'},
+  { name: 'Entranced Apostle\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp', rarity: 'epic'},
+  { name: 'Belt of the Knight Master', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp', rarity: 'epic'},
+];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -849,6 +869,7 @@ const ACCESSORY_ITEMS_MAP: Record<string, TLItem[]> = {
   "Necklace": TL_NECKLACE_ITEMS,
   "Bracelet": TL_BRACELET_ITEMS,
   "Ring": TL_RING_ITEMS,
+  "Belt": TL_BELT_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -881,6 +902,7 @@ const accessoryTypeOptions = [
   { value: "Necklace", label: "Colar" },
   { value: "Bracelet", label: "Bracelete" },
   { value: "Ring", label: "Anel" },
+  { value: "Belt", label: "Cinto" },
 ];
 
 const traitOptions = [
@@ -944,7 +966,7 @@ const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
 const itemSubTypesRequiringTrait = [
   "Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear",
   "Head", "Chest", "Cloak", "Gloves", "Feet", "Legs",
-  "Necklace", "Bracelet", "Ring",
+  "Necklace", "Bracelet", "Ring", "Belt",
 ];
 
 const lootFormSchema = z.object({
