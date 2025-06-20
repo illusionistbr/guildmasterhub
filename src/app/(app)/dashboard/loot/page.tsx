@@ -431,7 +431,7 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Pendant of Frozen Tears', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp', rarity: 'epic'},
   { name: 'Pendant of Eternal Flames', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp', rarity: 'epic'},
   { name: 'Lunar Conjunction Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
+].filter(item => item.rarity === 'epic');
 
 const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Bracers of Unrelenting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp', rarity: 'epic' },
@@ -457,7 +457,7 @@ const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Bracelet of Agony', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00044.webp', rarity: 'epic' },
   { name: 'Bracelet of Fractured Worlds', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00045.webp', rarity: 'epic' },
   { name: 'Twisted Coil of the Enduring', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
+].filter(item => item.rarity === 'epic');
 
 const TL_RING_ITEMS: TLItem[] = [
   { name: "Dark Seraph Ring", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp', rarity: 'epic'},
@@ -488,7 +488,7 @@ const TL_RING_ITEMS: TLItem[] = [
   { name: "Coil of Endless Hunger", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp', rarity: 'epic'},
   { name: "Ring of Song of Punishment", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp', rarity: 'epic'},
   { name: "Ring of Divine Instruction", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
+].filter(item => item.rarity === 'epic');
 
 const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Forbidden Eternal Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp', rarity: 'epic'},
@@ -508,7 +508,7 @@ const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Undisputed Champion\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp', rarity: 'epic'},
   { name: 'Entranced Apostle\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp', rarity: 'epic'},
   { name: 'Belt of the Knight Master', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic' || item.rarity === 'rare');
+].filter(item => item.rarity === 'epic');
 
 const TL_EARRING_ITEMS: TLItem[] = [
   { name: "Gilded Granite Teardrops", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp', rarity: 'epic'},
@@ -832,13 +832,22 @@ function LootPageContent() {
 
     setLoadingBankItems(true);
     const bankItemsRef = collection(db, `guilds/${guildId}/bankItems`);
-    const q = firestoreQuery(bankItemsRef, orderBy("createdAt", "desc"));
+    // Remove the orderBy from the query to avoid potential indexing issues
+    const q = firestoreQuery(bankItemsRef); 
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedItems = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as BankItem));
+
+      // Sort the items on the client-side
+      fetchedItems.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis() || 0;
+        const timeB = b.createdAt?.toMillis() || 0;
+        return timeB - timeA; // Newest first
+      });
+
       setBankItems(fetchedItems);
       setLoadingBankItems(false);
     }, (error) => {
@@ -1043,24 +1052,24 @@ function LootPageContent() {
                     <FormField control={form.control} name="itemCategory" render={({ field }) => ( 
                         <FormItem> 
                             <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> 
-                            <FormControl>
-                                <Select onValueChange={field.onChange} value={field.value}> 
+                            <Select onValueChange={field.onChange} value={field.value}> 
+                                <FormControl>
                                     <SelectTrigger className="form-input"> 
                                         <SelectValue placeholder="Selecione a categoria do item" /> 
                                     </SelectTrigger> 
-                                    <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> 
-                                </Select>
-                            </FormControl> 
+                                </FormControl>
+                                <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> 
+                            </Select>
                             <FormMessage /> 
                         </FormItem> 
                     )}/>
-                    {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
-                    {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
-                    {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
-                    {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/> )}
-                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <div className="relative flex items-center"> <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <FormControl><Select onValueChange={field.onChange} value={field.value || ""}> <SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select></FormControl> </div> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <div className="relative flex items-center"> <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/> )}
                     {selectedItemForPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted' )} > <Image src={selectedItemForPreview.imageUrl} alt={selectedItemForPreview.name} width={80} height={80} className="object-contain" data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}/> </div> </div> )}
-                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <div className="relative flex items-center"> <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <FormControl><Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select></FormControl> </div> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <div className="relative flex items-center"> <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/>
                     <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
                       <Button type="button" variant="outline" onClick={() => { setShowAddItemDialog(false); form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID }); setSelectedItemForPreview(null); }} disabled={isSubmitting}>Cancelar</Button>
                       <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}> {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />} Registrar Item </Button>
