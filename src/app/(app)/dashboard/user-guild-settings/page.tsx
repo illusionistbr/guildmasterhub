@@ -134,7 +134,7 @@ function UserGuildSettingsPageContent() {
     if (memberRoleInfo.gearBuildLink !== (data.gearBuildLink || null)) updatedFields.push('Gear Build Link');
     if (memberRoleInfo.skillBuildLink !== (data.skillBuildLink || null)) updatedFields.push('Skill Build Link');
 
-    const updatedRoleInfo: GuildMemberRoleInfo = {
+    const updatedRoleInfoForState: GuildMemberRoleInfo = {
       ...memberRoleInfo,
       characterNickname: data.characterNickname,
       gearScore: data.gearScore,
@@ -144,18 +144,27 @@ function UserGuildSettingsPageContent() {
     };
 
     if (isTLGuild) {
-      updatedRoleInfo.tlRole = data.tlRole;
-      updatedRoleInfo.tlPrimaryWeapon = data.tlPrimaryWeapon;
-      updatedRoleInfo.tlSecondaryWeapon = data.tlSecondaryWeapon;
+      updatedRoleInfoForState.tlRole = data.tlRole;
+      updatedRoleInfoForState.tlPrimaryWeapon = data.tlPrimaryWeapon;
+      updatedRoleInfoForState.tlSecondaryWeapon = data.tlSecondaryWeapon;
       if (memberRoleInfo.tlRole !== data.tlRole) updatedFields.push('Função TL');
       if (memberRoleInfo.tlPrimaryWeapon !== data.tlPrimaryWeapon) updatedFields.push('Arma Primária TL');
       if (memberRoleInfo.tlSecondaryWeapon !== data.tlSecondaryWeapon) updatedFields.push('Arma Secundária TL');
     }
 
+    // Create a separate payload for Firestore and clean it of undefined values.
+    const firestorePayload = { ...updatedRoleInfoForState };
+    Object.keys(firestorePayload).forEach(keyStr => {
+        const key = keyStr as keyof GuildMemberRoleInfo;
+        if (firestorePayload[key] === undefined) {
+            delete firestorePayload[key];
+        }
+    });
+
     try {
       const guildRef = doc(db, "guilds", guildId);
       await updateDoc(guildRef, {
-        [`roles.${currentUser.uid}`]: updatedRoleInfo,
+        [`roles.${currentUser.uid}`]: firestorePayload,
       });
 
       await logGuildActivity(guildId, currentUser.uid, data.characterNickname || currentUser.displayName, AuditActionType.MEMBER_GUILD_PROFILE_UPDATED, {
@@ -164,7 +173,7 @@ function UserGuildSettingsPageContent() {
          details: { updatedFields }
       });
 
-      setMemberRoleInfo(updatedRoleInfo);
+      setMemberRoleInfo(updatedRoleInfoForState);
       toast({ title: "Informações Atualizadas!", description: "Suas configurações na guilda foram salvas." });
     } catch (error) {
       console.error("Erro ao atualizar informações:", error);
@@ -371,4 +380,3 @@ export default function UserGuildSettingsPage() {
     </Suspense>
   );
 }
-
