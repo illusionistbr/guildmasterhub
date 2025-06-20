@@ -47,6 +47,7 @@ interface BankItem {
   itemCategory: string;
   weaponType?: string;
   armorType?: string;
+  accessoryType?: string;
   itemName?: string;
   trait?: string;
   imageUrl: string;
@@ -676,9 +677,7 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Polished Composite Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00004A.webp', rarity: 'rare' },
   { name: 'Sunshade Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022C.webp', rarity: 'rare' },
   { name: 'Premonition Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016A.webp', rarity: 'rare' },
-    { name: 'Azul Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016A.webp', rarity: 'rare' },
   { name: 'Shock Commander Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05002.webp', rarity: 'epic' },
-      { name: 'Roxo Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00016A.webp', rarity: 'epic' },
   { name: 'Ebon Roar Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00017.webp', rarity: 'epic' },
   { name: 'Heroic Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp', rarity: 'epic' },
   { name: 'Greaves of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00018.webp', rarity: 'epic' },
@@ -719,6 +718,16 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Auric Vanguard\'s Gaiters', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004A.webp', rarity: 'epic' },
 ];
 
+const TL_NECKLACE_ITEMS: TLItem[] = [
+  { name: 'Guardian Torque', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00024.webp', rarity: 'rare' },
+  { name: 'Ornate Choker', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00004.webp', rarity: 'rare' },
+  { name: 'Ecliptic Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00007.webp', rarity: 'rare' },
+  { name: 'Mitran Leaf Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00005.webp', rarity: 'rare' },
+  { name: 'Spider Silk Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00021.webp', rarity: 'rare' },
+  { name: 'Sophia\'s Necklace of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00025.webp', rarity: 'rare' },
+  { name: 'Robert\'s Necklace of Focus', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00026.webp', rarity: 'rare' },
+];
+
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
   "Sword": TL_SWORD_ITEMS,
@@ -738,6 +747,10 @@ const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
   "Gloves": TL_GLOVES_ITEMS,
   "Feet": TL_FEET_ARMOR_ITEMS,
   "Legs": TL_LEGS_ARMOR_ITEMS,
+};
+
+const ACCESSORY_ITEMS_MAP: Record<string, TLItem[]> = {
+  "Necklace": TL_NECKLACE_ITEMS,
 };
 
 const itemCategoryOptions = [
@@ -766,8 +779,13 @@ const armorTypeOptions = [
   { value: "Legs", label: "Calças" },
 ];
 
+const accessoryTypeOptions = [
+  { value: "Necklace", label: "Colar" },
+];
+
 const traitOptions = [
   { value: "Attack Speed", label: "Attack Speed" },
+  { value: "Bind Chance", label: "Bind Chance" },
   { value: "Buff Duration", label: "Buff Duration" },
   { value: "Collision Chance", label: "Collision Chance" },
   { value: "Collision Resistance", label: "Collision Resistance" },
@@ -795,6 +813,7 @@ const traitOptions = [
   { value: "Range", label: "Range" },
   { value: "Silence Chance", label: "Silence Chance" },
   { value: "Silence Resistance", label: "Silence Resistance" },
+  { value: "Skill Damage Boost", label: "Skill Damage Boost" },
   { value: "Skill Damage Resistance", label: "Skill Damage Resistance" },
   { value: "Stun Chance", label: "Stun Chance" },
   { value: "Stun Resistance", label: "Stun Resistance" },
@@ -822,12 +841,17 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const itemSubTypesRequiringTrait = ["Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear", "Head", "Chest", "Cloak", "Gloves", "Feet", "Legs"];
+const itemSubTypesRequiringTrait = [
+  "Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear",
+  "Head", "Chest", "Cloak", "Gloves", "Feet", "Legs",
+  "Necklace",
+];
 
 const lootFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
   armorType: z.string().optional(),
+  accessoryType: z.string().optional(),
   itemName: z.string().optional(),
   trait: z.string().optional(),
   droppedByMemberId: z.string().optional(),
@@ -849,6 +873,15 @@ const lootFormSchema = z.object({
     }
     if (data.armorType && itemSubTypesRequiringTrait.includes(data.armorType) && !data.trait) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${armorTypeOptions.find(opt => opt.value === data.armorType)?.label || data.armorType}.`, path: ["trait"] });
+    }
+  } else if (data.itemCategory === 'accessory') {
+    if (!data.accessoryType) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de acessório é obrigatório.", path: ["accessoryType"] });
+    } else if (ACCESSORY_ITEMS_MAP[data.accessoryType]?.length > 0 && !data.itemName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
+    }
+    if (data.accessoryType && itemSubTypesRequiringTrait.includes(data.accessoryType) && !data.trait) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${accessoryTypeOptions.find(opt => opt.value === data.accessoryType)?.label || data.accessoryType}.`, path: ["trait"] });
     }
   }
 });
@@ -878,6 +911,7 @@ function LootPageContent() {
       itemCategory: "",
       weaponType: undefined,
       armorType: undefined,
+      accessoryType: undefined,
       itemName: undefined,
       trait: undefined,
       droppedByMemberId: NO_DROPPER_ID,
@@ -887,27 +921,17 @@ function LootPageContent() {
   const watchedItemCategory = form.watch("itemCategory");
   const watchedWeaponType = form.watch("weaponType");
   const watchedArmorType = form.watch("armorType");
+  const watchedAccessoryType = form.watch("accessoryType");
   const watchedItemName = form.watch("itemName");
 
   useEffect(() => {
-    if (watchedItemCategory === 'weapon') {
-      form.setValue('armorType', undefined);
-      if (watchedWeaponType && !itemSubTypesRequiringTrait.includes(watchedWeaponType)) {
-        form.setValue('trait', undefined);
-      }
-    } else if (watchedItemCategory === 'armor') {
-      form.setValue('weaponType', undefined);
-      if (watchedArmorType && !itemSubTypesRequiringTrait.includes(watchedArmorType)) {
-        form.setValue('trait', undefined);
-      }
-    } else {
-      form.setValue('weaponType', undefined);
-      form.setValue('armorType', undefined);
-      form.setValue('trait', undefined);
-    }
+    form.setValue('weaponType', undefined);
+    form.setValue('armorType', undefined);
+    form.setValue('accessoryType', undefined);
     form.setValue('itemName', undefined);
+    form.setValue('trait', undefined);
     setSelectedItemForPreview(null);
-  }, [watchedItemCategory, form, watchedWeaponType, watchedArmorType]);
+  }, [watchedItemCategory, form]);
 
   useEffect(() => {
     form.setValue('itemName', undefined);
@@ -926,6 +950,14 @@ function LootPageContent() {
   }, [watchedArmorType, form]);
 
   useEffect(() => {
+    form.setValue('itemName', undefined);
+    setSelectedItemForPreview(null);
+    if (watchedAccessoryType && !itemSubTypesRequiringTrait.includes(watchedAccessoryType)) {
+      form.setValue('trait', undefined);
+    }
+  }, [watchedAccessoryType, form]);
+
+  useEffect(() => {
     if (watchedItemCategory === 'weapon' && watchedWeaponType && watchedItemName) {
       const items = WEAPON_ITEMS_MAP[watchedWeaponType] || [];
       const item = items.find(i => i.name === watchedItemName);
@@ -934,10 +966,15 @@ function LootPageContent() {
       const items = ARMOR_ITEMS_MAP[watchedArmorType] || [];
       const item = items.find(i => i.name === watchedItemName);
       setSelectedItemForPreview(item || null);
+    } else if (watchedItemCategory === 'accessory' && watchedAccessoryType && watchedItemName) {
+      const items = ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [];
+      const item = items.find(i => i.name === watchedItemName);
+      setSelectedItemForPreview(item || null);
     } else {
       setSelectedItemForPreview(null);
     }
-  }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedItemName]);
+  }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType, watchedItemName]);
+
 
   useEffect(() => {
     if (authLoading) return;
@@ -982,7 +1019,7 @@ function LootPageContent() {
     let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
     let rarityToUse: TLItem['rarity'] = 'common';
     let itemSubType: string | undefined = undefined;
-    let itemSubTypeNameKey: 'weaponType' | 'armorType' | undefined = undefined;
+    let itemSubTypeNameKey: 'weaponType' | 'armorType' | 'accessoryType' | undefined = undefined;
 
     if (data.itemCategory === 'weapon' && data.weaponType && data.itemName) {
         const itemsList = WEAPON_ITEMS_MAP[data.weaponType];
@@ -1006,7 +1043,19 @@ function LootPageContent() {
                 rarityToUse = specificItem.rarity;
             }
         }
+    } else if (data.itemCategory === 'accessory' && data.accessoryType && data.itemName) {
+        const itemsList = ACCESSORY_ITEMS_MAP[data.accessoryType];
+        itemSubType = data.accessoryType;
+        itemSubTypeNameKey = 'accessoryType';
+        if (itemsList) {
+            const specificItem = itemsList.find(s => s.name === data.itemName);
+            if (specificItem) {
+                imageUrlToUse = specificItem.imageUrl;
+                rarityToUse = specificItem.rarity;
+            }
+        }
     }
+
 
     let finalDroppedByMemberId: string | undefined = data.droppedByMemberId;
     let finalDroppedByMemberName: string | undefined = undefined;
@@ -1033,7 +1082,10 @@ function LootPageContent() {
       newItem.weaponType = data.weaponType;
     } else if (itemSubTypeNameKey === 'armorType' && data.armorType) {
       newItem.armorType = data.armorType;
+    } else if (itemSubTypeNameKey === 'accessoryType' && data.accessoryType) {
+      newItem.accessoryType = data.accessoryType;
     }
+
 
     if (itemSubType && itemSubTypesRequiringTrait.includes(itemSubType) && data.trait) {
         newItem.trait = data.trait;
@@ -1044,7 +1096,7 @@ function LootPageContent() {
     toast({ title: "Item Registrado no Banco!", description: `Item ${newItem.itemName || itemSubType || newItem.itemCategory} adicionado.` });
     setIsSubmitting(false);
     setShowAddItemDialog(false);
-    form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
+    form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
     setSelectedItemForPreview(null);
   };
 
@@ -1058,17 +1110,20 @@ function LootPageContent() {
   const currentItemNameOptions =
     watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    [];
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [];
 
   const getCategoryLabel = (value: string) => itemCategoryOptions.find(opt => opt.value === value)?.label || value;
 
   const isTraitMandatory =
     (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
-    (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType));
+    (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType)) ||
+    (watchedItemCategory === 'accessory' && watchedAccessoryType && itemSubTypesRequiringTrait.includes(watchedAccessoryType));
+
 
   const subTypeLabel =
     watchedItemCategory === 'weapon' && watchedWeaponType ? watchedWeaponType :
     watchedItemCategory === 'armor' && watchedArmorType ? (armorTypeOptions.find(opt => opt.value === watchedArmorType)?.label || watchedArmorType) :
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? (accessoryTypeOptions.find(opt => opt.value === watchedAccessoryType)?.label || watchedAccessoryType) :
     'item';
 
   return (
@@ -1087,7 +1142,7 @@ function LootPageContent() {
             <Dialog open={showAddItemDialog} onOpenChange={(isOpen) => {
                 setShowAddItemDialog(isOpen);
                 if (!isOpen) {
-                    form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
+                    form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
                     setSelectedItemForPreview(null);
                 }
             }}>
@@ -1174,8 +1229,28 @@ function LootPageContent() {
                       />
                     )}
 
+                    {watchedItemCategory === 'accessory' && (
+                        <FormField
+                            control={form.control}
+                            name="accessoryType"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    )}
+
                      {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) ||
-                        (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0)
+                        (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) ||
+                        (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0)
                      ) && (
                       <FormField
                         control={form.control}
@@ -1187,7 +1262,7 @@ function LootPageContent() {
                                 <span className="text-destructive">*</span>
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)}
                               </SelectContent>
@@ -1210,7 +1285,7 @@ function LootPageContent() {
                             <div className="relative flex items-center">
                               <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                               <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel && (subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar'].includes(subTypeLabel.toLowerCase())) ? 'a' : 'o'} ${subTypeLabel ? subTypeLabel.toLowerCase() : 'item'}`} /></SelectTrigger></FormControl>
                                 <SelectContent>
                                   {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                 </SelectContent>
@@ -1235,7 +1310,7 @@ function LootPageContent() {
                             width={80}
                             height={80}
                             className="object-contain"
-                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : "game item")}
+                            data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}
                           />
                         </div>
                       </div>
@@ -1275,7 +1350,7 @@ function LootPageContent() {
                     <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
                       <Button type="button" variant="outline" onClick={() => {
                           setShowAddItemDialog(false);
-                          form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
+                          form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
                           setSelectedItemForPreview(null);
                       }} disabled={isSubmitting}>Cancelar</Button>
                       <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
@@ -1302,13 +1377,13 @@ function LootPageContent() {
               {bankItems.map(item => (
                 <Card key={item.id} className="static-card-container flex flex-col">
                   <CardHeader className="pb-2">
-                     <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.armorType || item.itemCategory}>
-                        {item.itemName || item.weaponType || (armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType) || "Item Genérico"}
+                     <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.armorType || item.accessoryType || item.itemCategory}>
+                        {item.itemName || item.weaponType || (armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType) || (accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType) || "Item Genérico"}
                      </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
                     <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border border-border", rarityBackgrounds[item.rarity])}>
-                      <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint={item.itemCategory === "Arma" ? "game item weapon" : (item.itemCategory === "Armadura" ? "game item armor" : "game item")}/>
+                      <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint={item.itemCategory === "Arma" ? "game item weapon" : (item.itemCategory === "Armadura" ? "game item armor" : (item.itemCategory === "Acessório" ? "game item accessory" : "game item"))}/>
                     </div>
                      <Badge
                         variant={item.status === 'Disponível' ? 'default' : 'secondary'}
@@ -1323,6 +1398,7 @@ function LootPageContent() {
                       <p><strong>Tipo:</strong> {item.itemCategory}</p>
                       {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
                       {item.armorType && <p><strong>Armadura:</strong> {armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType}</p>}
+                      {item.accessoryType && <p><strong>Acessório:</strong> {accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType}</p>}
                       {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
                       {item.droppedByMemberName && <p><strong>Dropado por:</strong> {item.droppedByMemberName}</p>}
                     </div>
@@ -1360,29 +1436,4 @@ export default function LootPageWrapper() {
   );
 }
     
-
-    
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-    
-
     
