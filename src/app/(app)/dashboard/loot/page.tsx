@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, addDoc, serverTimestamp, onSnapshot, query as firestoreQuery, orderBy, where, Timestamp } from '@/lib/firebase';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, getDocs as getFirestoreDocs } from '@/lib/firebase';
 import type { Guild, GuildMember, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -830,33 +830,35 @@ function LootPageContent() {
   useEffect(() => {
     if (!guildId) return;
 
-    setLoadingBankItems(true);
-    const bankItemsRef = collection(db, `guilds/${guildId}/bankItems`);
-    // Remove the orderBy from the query to avoid potential indexing issues
-    const q = firestoreQuery(bankItemsRef); 
+    const fetchItems = async () => {
+        setLoadingBankItems(true);
+        try {
+            const bankItemsRef = collection(db, `guilds/${guildId}/bankItems`);
+            const q = firestoreQuery(bankItemsRef); // No ordering
+            const querySnapshot = await getFirestoreDocs(q);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedItems = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as BankItem));
+            const fetchedItems = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as BankItem));
 
-      // Sort the items on the client-side
-      fetchedItems.sort((a, b) => {
-        const timeA = a.createdAt?.toMillis() || 0;
-        const timeB = b.createdAt?.toMillis() || 0;
-        return timeB - timeA; // Newest first
-      });
+            // Sort client-side
+            fetchedItems.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis() || 0;
+                const timeB = b.createdAt?.toMillis() || 0;
+                return timeB - timeA; // Newest first
+            });
 
-      setBankItems(fetchedItems);
-      setLoadingBankItems(false);
-    }, (error) => {
-      console.error("Error fetching bank items: ", error);
-      toast({ title: "Erro ao carregar banco", variant: "destructive" });
-      setLoadingBankItems(false);
-    });
+            setBankItems(fetchedItems);
+        } catch (error) {
+            console.error("Error fetching bank items: ", error);
+            toast({ title: "Erro ao carregar banco", description: "Não foi possível carregar os itens do banco.", variant: "destructive" });
+        } finally {
+            setLoadingBankItems(false);
+        }
+    };
 
-    return () => unsubscribe();
+    fetchItems();
   }, [guildId, toast]);
 
   const onSubmit: SubmitHandler<LootFormValues> = async (data) => {
