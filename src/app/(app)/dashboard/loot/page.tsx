@@ -1652,17 +1652,17 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Início do Leilão</FormLabel>
                                                     <Popover>
-                                                        <PopoverTrigger asChild>
-                                                          <FormControl>
-                                                            <Button
-                                                              variant={"outline"}
-                                                              className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                            >
-                                                              {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
-                                                              <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                            </Button>
-                                                          </FormControl>
-                                                        </PopoverTrigger>
+                                                        <FormControl>
+                                                            <PopoverTrigger asChild>
+                                                              <Button
+                                                                variant={"outline"}
+                                                                className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                              >
+                                                                {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
+                                                                <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
+                                                              </Button>
+                                                            </PopoverTrigger>
+                                                        </FormControl>
                                                       <PopoverContent className="w-auto p-0" align="start">
                                                           <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                                                           <div className="p-2 border-t">
@@ -1681,8 +1681,8 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Fim do Leilão</FormLabel>
                                                     <Popover>
-                                                      <PopoverTrigger asChild>
-                                                          <FormControl>
+                                                      <FormControl>
+                                                        <PopoverTrigger asChild>
                                                             <Button
                                                                 variant={"outline"}
                                                                 className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
@@ -1690,8 +1690,8 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                                 {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
                                                                 <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
                                                             </Button>
-                                                          </FormControl>
-                                                      </PopoverTrigger>
+                                                        </PopoverTrigger>
+                                                      </FormControl>
                                                       <PopoverContent className="w-auto p-0" align="start">
                                                           <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus />
                                                           <div className="p-2 border-t">
@@ -1821,4 +1821,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
