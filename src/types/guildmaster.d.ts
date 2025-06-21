@@ -397,7 +397,8 @@ export interface AuctionBid {
 export interface Auction {
   id: string; // Firestore document ID
   guildId: string;
-  item: Omit<BankItem, 'id' | 'status'>; // Embed the item details, removing redundant fields
+  item: Omit<BankItem, 'id' | 'status'>; // Embed the item details
+  bankItemId?: string;
   status: AuctionStatus;
   startingBid: number;
   minBidIncrement: number;

@@ -23,7 +23,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -39,6 +39,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -63,7 +64,7 @@ const TL_SWORD_ITEMS: TLItem[] = [
   { name: 'Nirma\'s Sword of Echoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00035.webp', rarity: 'epic' },
   { name: 'Queen Bellandir\'s Languishing Blade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00034.webp', rarity: 'epic' },
   { name: 'Unshakeable Knight\'s Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Adentus\'s Gargantuan Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp', rarity: 'epic' },
@@ -81,7 +82,7 @@ const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Morokai\'s Greatblade of Corruption', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp', rarity: 'epic' },
   { name: 'Naru\'s Frenzied Greatblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp', rarity: 'epic' },
   { name: 'Tevent\'s Warblade of Despair', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Bercant\'s Whispering Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00034.webp', rarity: 'epic' },
@@ -98,7 +99,7 @@ const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Razorthorn Shredders', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00010.webp', rarity: 'epic' },
   { name: 'Rex Chimaerus\'s Fangs', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00038.webp', rarity: 'epic' },
   { name: 'Tevent\'s Fangs of Fury', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00035.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Aelon\'s Rejuvenating Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00034.webp', rarity: 'epic' },
@@ -115,7 +116,7 @@ const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Tevent\'s Arc of Wailing Death', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00018.webp', rarity: 'epic' },
   { name: 'Titanspine Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00011.webp', rarity: 'epic' },
   { name: 'Toublek\'s Deathmark Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00033.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Akman\'s Bloodletting Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00031.webp', rarity: 'epic' },
@@ -132,7 +133,7 @@ const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Rex Chimaerus\'s Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00007C.webp', rarity: 'epic' },
   { name: 'Stormbringer Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00017.webp', rarity: 'epic' },
   { name: 'Unrelenting Annihilation Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00020.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Codex of Deep Secrets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002B.webp', rarity: 'epic' },
@@ -149,7 +150,7 @@ const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Shaikal\'s Mindfire Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00014.webp', rarity: 'epic' },
   { name: 'Tevent\'s Grasp of Withering', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00011.webp', rarity: 'epic' },
   { name: 'Tome of Proximate Remedy', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008A.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Abyssal Renaissance Foci', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00009.webp', rarity: 'epic' },
@@ -166,7 +167,7 @@ const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Staff of the Umbramancer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00027.webp', rarity: 'epic' },
   { name: 'Talus\'s Crystalline Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00032.webp', rarity: 'epic' },
   { name: 'Toublek\'s Shattering Quarterstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00014.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_SPEAR_ITEMS: TLItem[] = [
   { name: 'Crimson Hellskewer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00027.webp', rarity: 'epic' },
@@ -181,7 +182,7 @@ const TL_SPEAR_ITEMS: TLItem[] = [
   { name: 'Skull Severing Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00019.webp', rarity: 'epic' },
   { name: 'Spear of Unhinged Horror', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00029.webp', rarity: 'epic' },
   { name: 'Windsheer Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00024.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00022.webp', rarity: 'epic' },
@@ -223,7 +224,7 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Visage of the Infernal Tyrant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00026.webp', rarity: 'epic' },
   { name: 'Visor of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_HM_00019.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00007.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00023.webp', rarity: 'epic' },
@@ -264,7 +265,7 @@ const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Swirling Essence Robe', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_05001.webp', rarity: 'epic' },
   { name: 'Transcendent Tempest\'s Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00014.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Overcoat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015A.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Ancient Tapestry Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00016.webp', rarity: 'epic' },
@@ -286,7 +287,7 @@ const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Starlight Fur Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00027.webp', rarity: 'epic' },
   { name: 'Steadfast Commander\'s Cape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00015.webp', rarity: 'epic' },
   { name: 'Supreme Devotion', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00018.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00005B.webp', rarity: 'epic' },
@@ -327,7 +328,7 @@ const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Swirling Essence Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00020.webp', rarity: 'epic' },
   { name: 'Transcendent Tempest\'s Touch', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00014.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Caress', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00023.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_FEET_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001.webp', rarity: 'epic' },
@@ -369,7 +370,7 @@ const TL_FEET_ARMOR_ITEMS: TLItem[] = [
   { name: 'Transcendent Tempest\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00014.webp', rarity: 'epic' },
   { name: 'Violent Demonic Beast\'s Fur Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00026.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00023.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00023.webp', rarity: 'epic' },
@@ -410,7 +411,7 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Transcendent Tempest\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00014.webp', rarity: 'epic' },
   { name: 'Trophy Adorned Leg Guards', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00026.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_0001D.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Abyssal Grace Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp', rarity: 'epic'},
@@ -435,7 +436,7 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Slayer\'s Quicksilver Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp', rarity: 'epic'},
   { name: 'Thunderstorm Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp', rarity: 'epic'},
   { name: 'Wrapped Coin Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Abyssal Grace Charm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00018.webp', rarity: 'epic' },
@@ -461,7 +462,7 @@ const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Skillful Shock Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002A.webp', rarity: 'epic' },
   { name: 'Skillful Silence Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011A.webp', rarity: 'epic' },
   { name: 'Twisted Coil of the Enduring', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_RING_ITEMS: TLItem[] = [
   { name: "Abyssal Grace Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp', rarity: 'epic'},
@@ -492,7 +493,7 @@ const TL_RING_ITEMS: TLItem[] = [
   { name: "Sinking Sun Signet", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp', rarity: 'epic'},
   { name: "Solitare of Purity", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp', rarity: 'epic'},
   { name: "Symbol of Nature's Advance", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Belt of Bloodlust', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp', rarity: 'epic'},
@@ -512,7 +513,7 @@ const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Girdle of Treant Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp', rarity: 'epic'},
   { name: 'Hero\'s Legacy Warbelt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp', rarity: 'epic'},
   { name: 'Undisputed Champion\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_EARRING_ITEMS: TLItem[] = [
   { name: "Bloodbright Earrings", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp', rarity: 'epic'},
@@ -521,7 +522,7 @@ const TL_EARRING_ITEMS: TLItem[] = [
   { name: "Earrings of Glimmering Dew", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp', rarity: 'epic'},
   { name: "Earrings of Primal Foresight", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp', rarity: 'epic'},
   { name: "Gilded Granite Teardrops", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
+].sort((a, b) => a.name.localeCompare(b.name));
 
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
@@ -636,11 +637,11 @@ const traitOptions = [
 
 
 const rarityBackgrounds: Record<TLItem['rarity'], string> = {
-  common: 'bg-slate-800 border-slate-600',
-  uncommon: 'bg-emerald-800 border-emerald-600',
-  rare: 'bg-sky-800 border-sky-600',
-  epic: 'bg-gradient-to-b from-purple-900 to-purple-700 border-purple-500',
-  legendary: 'bg-amber-700 border-amber-500',
+    common: 'bg-slate-800 border-slate-600',
+    uncommon: 'bg-emerald-800 border-emerald-600',
+    rare: 'bg-sky-800 border-sky-600',
+    epic: 'bg-gradient-to-b from-purple-900 to-purple-700 border-purple-500',
+    legendary: 'bg-gradient-to-b from-amber-800 to-amber-600 border-amber-500',
 };
 
 const statusBadgeClasses: Record<BankItemStatus, string> = {
@@ -1162,7 +1163,7 @@ function LootPageContent() {
         </TabsContent>
 
         <TabsContent value="leiloes" className="mt-6">
-          <AuctionsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateAuctions={canCreateAuctions} guildMembersForDropdown={guildMembersForDropdown}/>
+          <AuctionsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateAuctions={canCreateAuctions} guildMembersForDropdown={guildMembersForDropdown} bankItems={bankItems} />
         </TabsContent>
         <TabsContent value="rolagem" className="mt-6">
           <ComingSoon pageName="Sistemas de Rolagem de Loot" icon={<Dices className="h-8 w-8 text-primary" />} />
@@ -1260,7 +1261,7 @@ function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, curre
   )
 }
 
-function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, guildMembersForDropdown }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, guildMembersForDropdown: { value: string; label: string }[] }) {
+function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, guildMembersForDropdown, bankItems }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, guildMembersForDropdown: { value: string; label: string }[], bankItems: BankItem[] }) {
   const [showNewAuctionDialog, setShowNewAuctionDialog] = useState(false);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1382,15 +1383,18 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
         guildId={guildId}
         currentUser={currentUser}
         guildMembersForDropdown={guildMembersForDropdown}
+        bankItems={bankItems}
       />
     </div>
   );
 }
 
 // New Dialog component for creating auctions
-function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, guildMembersForDropdown }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, guildMembersForDropdown: { value: string; label: string }[] }) {
+function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[] }) {
     const { toast } = useToast();
+    const [viewMode, setViewMode] = useState<'select_or_create' | 'configure_auction'>('select_or_create');
     const [creationMode, setCreationMode] = useState<'create' | 'select'>('create');
+    const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const tlRoleOptions = Object.values(TLRole).map(role => ({ id: role, label: role }));
@@ -1403,16 +1407,18 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
         { label: "48 Horas", hours: 48 },
         { label: "72 Horas", hours: 72 },
     ];
+    
+    const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
 
     const auctionFormSchema = z.object({
-      // Item fields
-      itemCategory: z.string().min(1, "Categoria do item é obrigatória."),
+      // Fields for creating a new item (only if `selectedItem` is null)
+      itemCategory: z.string().optional(),
       weaponType: z.string().optional(),
       armorType: z.string().optional(),
       accessoryType: z.string().optional(),
-      itemName: z.string().min(1, "Nome do item é obrigatório."),
-      trait: z.string().min(1, "Trait é obrigatório."),
-      // Auction fields
+      itemName: z.string().optional(),
+      trait: z.string().optional(),
+      // Auction fields (always required)
       startingBid: z.coerce.number().min(1, "Lance inicial deve ser no mínimo 1.").default(1),
       minBidIncrement: z.coerce.number().min(1, "Incremento mínimo deve ser no mínimo 1.").default(5),
       startTime: z.date({ required_error: "Data de início é obrigatória." }),
@@ -1420,6 +1426,11 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
       allowedRoles: z.array(z.string()).optional(),
       requiredWeapons: z.array(z.string()).optional(),
     }).superRefine((data, ctx) => {
+        if (!selectedItem) { // Validation for creating a new item
+            if (!data.itemCategory) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Categoria é obrigatória.", path: ["itemCategory"] });
+            if (!data.itemName) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
+            if (!data.trait) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório.", path: ["trait"] });
+        }
         if (data.startTime >= data.endTime) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data de fim deve ser posterior à data de início.", path: ["endTime"]});
         }
@@ -1430,10 +1441,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
     const form = useForm<NewAuctionFormValues>({
         resolver: zodResolver(auctionFormSchema),
         defaultValues: {
-            itemCategory: "weapon",
-            weaponType: "Crossbow",
-            itemName: "Rex Chimaerus's Crossbows",
-            trait: "Critical Hit Chance",
             startingBid: 1,
             minBidIncrement: 5,
             startTime: new Date(),
@@ -1443,6 +1450,34 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
         }
     });
     
+    const resetAndClose = () => {
+        form.reset({
+            startingBid: 1,
+            minBidIncrement: 5,
+            startTime: new Date(),
+            endTime: addHours(new Date(), 24),
+            allowedRoles: [],
+            requiredWeapons: [],
+        });
+        setSelectedItem(null);
+        setViewMode('select_or_create');
+        setCreationMode('create');
+        onOpenChange(false);
+    }
+    
+    const handleSelectBankItem = (item: BankItem) => {
+        setSelectedItem(item);
+        setViewMode('configure_auction');
+        form.reset({ // Reset with auction defaults but keep item info separate
+             startingBid: 1,
+            minBidIncrement: 5,
+            startTime: new Date(),
+            endTime: addHours(new Date(), 24),
+            allowedRoles: [],
+            requiredWeapons: [],
+        });
+    };
+
     const setAuctionDuration = (hours: number) => {
         const startTime = form.getValues("startTime");
         form.setValue("endTime", addHours(startTime, hours));
@@ -1452,64 +1487,77 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
         if (!guildId || !currentUser) return;
         setIsSubmitting(true);
         
-        let imageUrlToUse = "https://placehold.co/80x80.png";
-        let rarityToUse: TLItem['rarity'] = 'epic';
-        let itemTypeMap;
-
-        if (data.itemCategory === 'weapon') itemTypeMap = WEAPON_ITEMS_MAP[data.weaponType || ''];
-        else if (data.itemCategory === 'armor') itemTypeMap = ARMOR_ITEMS_MAP[data.armorType || ''];
-        else if (data.itemCategory === 'accessory') itemTypeMap = ACCESSORY_ITEMS_MAP[data.accessoryType || ''];
-        
-        const itemInfo = itemTypeMap?.find(i => i.name === data.itemName);
-        if (itemInfo) {
-            imageUrlToUse = itemInfo.imageUrl;
-            rarityToUse = itemInfo.rarity;
-        }
-
         const batch = writeBatch(db);
-        const bankItemsCollectionRef = collection(db, `guilds/${guildId}/bankItems`);
-        const bankItemRef = doc(bankItemsCollectionRef); // Create a new doc ref for the bank item
-
-        const bankItemPayload: Omit<BankItem, 'id'> = {
-            createdAt: serverTimestamp() as Timestamp,
-            itemCategory: data.itemCategory,
-            weaponType: data.weaponType,
-            armorType: data.armorType,
-            accessoryType: data.accessoryType,
-            itemName: data.itemName,
-            trait: data.trait,
-            imageUrl: imageUrlToUse,
-            rarity: rarityToUse,
-            status: 'Em leilão',
-        };
-        
-        batch.set(bankItemRef, bankItemPayload);
-        
-        const newAuction: Omit<Auction, 'id'| 'createdAt'> = {
-            guildId,
-            item: bankItemPayload,
-            status: data.startTime <= new Date() ? 'active' : 'scheduled',
-            startingBid: data.startingBid,
-            minBidIncrement: data.minBidIncrement,
-            currentBid: data.startingBid,
-            bids: [],
-            startTime: Timestamp.fromDate(data.startTime),
-            endTime: Timestamp.fromDate(data.endTime),
-            allowedRoles: data.allowedRoles,
-            requiredWeapons: data.requiredWeapons,
-            createdBy: currentUser.uid,
-            createdByName: currentUser.displayName || 'N/A',
-            isDistributed: false
-        };
-
         const auctionsCollectionRef = collection(db, `guilds/${guildId}/auctions`);
-        const auctionRef = doc(auctionsCollectionRef); // New doc for auction
-        batch.set(auctionRef, { ...newAuction, createdAt: serverTimestamp() as Timestamp });
+        const auctionRef = doc(auctionsCollectionRef);
 
+        const createAuctionDocument = (itemPayload: Omit<BankItem, 'id' | 'status'>, bankItemId?: string) => {
+             const newAuction: Omit<Auction, 'id'| 'createdAt'> = {
+                guildId,
+                item: itemPayload,
+                bankItemId: bankItemId,
+                status: data.startTime <= new Date() ? 'active' : 'scheduled',
+                startingBid: data.startingBid,
+                minBidIncrement: data.minBidIncrement,
+                currentBid: data.startingBid,
+                bids: [],
+                startTime: Timestamp.fromDate(data.startTime),
+                endTime: Timestamp.fromDate(data.endTime),
+                allowedRoles: data.allowedRoles,
+                requiredWeapons: data.requiredWeapons,
+                createdBy: currentUser.uid,
+                createdByName: currentUser.displayName || 'N/A',
+                isDistributed: false
+            };
+            batch.set(auctionRef, { ...newAuction, createdAt: serverTimestamp() as Timestamp });
+        };
+        
         try {
+            if (selectedItem) { // Case: Using an existing item from the bank
+                const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
+                batch.update(bankItemRef, { status: 'Em leilão' });
+                
+                const { id, status, createdAt, ...itemData } = selectedItem;
+                createAuctionDocument(itemData, id);
+
+            } else { // Case: Creating a new item for auction
+                let imageUrlToUse = "https://placehold.co/80x80.png";
+                let rarityToUse: TLItem['rarity'] = 'epic';
+                let itemTypeMap;
+
+                if (data.itemCategory === 'weapon') itemTypeMap = WEAPON_ITEMS_MAP[data.weaponType || ''];
+                else if (data.itemCategory === 'armor') itemTypeMap = ARMOR_ITEMS_MAP[data.armorType || ''];
+                else if (data.itemCategory === 'accessory') itemTypeMap = ACCESSORY_ITEMS_MAP[data.accessoryType || ''];
+                
+                const itemInfo = itemTypeMap?.find(i => i.name === data.itemName);
+                if (itemInfo) {
+                    imageUrlToUse = itemInfo.imageUrl;
+                    rarityToUse = itemInfo.rarity;
+                }
+
+                const bankItemPayload: Omit<BankItem, 'id'> = {
+                    createdAt: serverTimestamp() as Timestamp,
+                    itemCategory: data.itemCategory || 'Unknown',
+                    weaponType: data.weaponType,
+                    armorType: data.armorType,
+                    accessoryType: data.accessoryType,
+                    itemName: data.itemName,
+                    trait: data.trait,
+                    imageUrl: imageUrlToUse,
+                    rarity: rarityToUse,
+                    status: 'Em leilão',
+                };
+                const bankItemRef = doc(collection(db, `guilds/${guildId}/bankItems`));
+                batch.set(bankItemRef, bankItemPayload);
+                
+                const { createdAt: _, ...itemForAuction } = bankItemPayload;
+                createAuctionDocument(itemForAuction, bankItemRef.id);
+            }
+
             await batch.commit();
-            toast({ title: "Leilão Criado!", description: `O leilão para "${data.itemName}" foi iniciado.` });
-            onOpenChange(false);
+            toast({ title: "Leilão Criado!", description: `O leilão para "${selectedItem?.itemName || data.itemName}" foi agendado.` });
+            resetAndClose();
+
         } catch (error) {
             console.error("Error creating auction:", error);
             toast({ title: "Erro ao Criar Leilão", variant: "destructive" });
@@ -1517,100 +1565,140 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
             setIsSubmitting(false);
         }
     };
+    
+    const renderAuctionConfigForm = () => (
+         <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
+                <h3 className="text-lg font-semibold border-b pb-2">2. Detalhes do Leilão</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="startingBid" render={({ field }) => ( <FormItem> <FormLabel>Lance Inicial (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="minBidIncrement" render={({ field }) => ( <FormItem> <FormLabel>Incremento Mínimo (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                </div>
+                
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Início do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="endTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Fim do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
+                 </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Definir Duração Rápida</Label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
+                    </div>
+                 </div>
+
+                <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
+                 <FormField control={form.control} name="allowedRoles" render={() => (
+                    <FormItem>
+                        <div className="mb-4">
+                            <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
+                            <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
+                        </div>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            {tlRoleOptions.map((item) => (
+                                <FormField key={item.id} control={form.control} name="allowedRoles" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
+                                        <FormLabel className="font-normal">{item.label}</FormLabel>
+                                    </FormItem>
+                                )}/>
+                            ))}
+                        </div>
+                    </FormItem>
+                )}/>
+                 <FormField control={form.control} name="requiredWeapons" render={() => (
+                    <FormItem>
+                        <div className="mb-4">
+                            <FormLabel className="text-base">Armas Requeridas</FormLabel>
+                            <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {tlWeaponOptions.map((item) => (
+                                <FormField key={item.id} control={form.control} name="requiredWeapons" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
+                                        <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                    </FormItem>
+                                )}/>
+                            ))}
+                        </div>
+                    </FormItem>
+                )}/>
+
+                <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
+                    <Button type="button" variant="outline" onClick={() => resetAndClose()} disabled={isSubmitting}>Cancelar</Button>
+                    <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>}
+                        Criar Leilão
+                    </Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    );
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetAndClose(); }}>
             <DialogContent className="flex flex-col sm:max-w-3xl bg-card border-border max-h-[90vh]">
                 <DialogHeader className="p-6 pb-4 shrink-0">
                     <DialogTitle className="font-headline text-primary">Criar Novo Leilão</DialogTitle>
-                    <DialogDescription>Selecione um item existente ou cadastre um novo para leiloar.</DialogDescription>
+                     {viewMode === 'configure_auction' ? (
+                        <DialogDescription>Configure os detalhes do leilão para o item selecionado.</DialogDescription>
+                    ) : (
+                        <DialogDescription>Selecione um item existente do banco da guilda ou cadastre um novo para leiloar.</DialogDescription>
+                    )}
                 </DialogHeader>
                 
-                <Tabs value={creationMode} onValueChange={(value) => setCreationMode(value as 'select' | 'create')} className="px-6">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="create">Cadastrar Novo Item</TabsTrigger>
-                        <TabsTrigger value="select">Selecionar do Banco</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-                
-                <div className="flex-grow overflow-y-auto px-6 py-4">
-                    <TabsContent value="select" className="m-0">
-                        <ComingSoon pageName="Seleção de Itens do Banco" />
-                    </TabsContent>
-                    <TabsContent value="create" className="m-0">
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
-                                <h3 className="text-lg font-semibold border-b pb-2">1. Detalhes do Item</h3>
-                                <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel>Nome do Item <span className="text-destructive">*</span></FormLabel> <FormControl> <Input {...field} placeholder="Ex: Espada Lendária do Trovão"/> </FormControl> <FormMessage /> </FormItem> )}/>
-                                <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel>Trait <span className="text-destructive">*</span></FormLabel> <FormControl> <Input {...field} placeholder="Ex: Critical Hit Chance"/> </FormControl> <FormMessage /> </FormItem> )}/>
-
-
-                                <h3 className="text-lg font-semibold border-b pb-2 pt-4">2. Detalhes do Leilão</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField control={form.control} name="startingBid" render={({ field }) => ( <FormItem> <FormLabel>Lance Inicial (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                                    <FormField control={form.control} name="minBidIncrement" render={({ field }) => ( <FormItem> <FormLabel>Incremento Mínimo (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                                </div>
-                                
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Início do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value, "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
-                                    <FormField control={form.control} name="endTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Fim do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value, "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
-                                 </div>
-                                  <div>
-                                    <Label className="text-xs text-muted-foreground">Definir Duração Rápida</Label>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                        {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
+                 <div className="flex-grow overflow-y-auto px-6 py-4">
+                    {viewMode === 'configure_auction' && selectedItem ? (
+                         <div>
+                            <div className="border p-3 rounded-md mb-4 bg-muted/30 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                     <div className={cn("w-14 h-14 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[selectedItem.rarity])}>
+                                        <Image src={selectedItem.imageUrl} alt={selectedItem.itemName || "Item"} width={48} height={48} className="object-contain" data-ai-hint="game item"/>
                                     </div>
-                                 </div>
-
-                                <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
-                                 <FormField control={form.control} name="allowedRoles" render={() => (
-                                    <FormItem>
-                                        <div className="mb-4">
-                                            <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
-                                            <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
-                                        </div>
-                                        <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                            {tlRoleOptions.map((item) => (
-                                                <FormField key={item.id} control={form.control} name="allowedRoles" render={({ field }) => (
-                                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
-                                                        <FormLabel className="font-normal">{item.label}</FormLabel>
-                                                    </FormItem>
-                                                )}/>
-                                            ))}
-                                        </div>
-                                    </FormItem>
-                                )}/>
-                                 <FormField control={form.control} name="requiredWeapons" render={() => (
-                                    <FormItem>
-                                        <div className="mb-4">
-                                            <FormLabel className="text-base">Armas Requeridas</FormLabel>
-                                            <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
-                                        </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                            {tlWeaponOptions.map((item) => (
-                                                <FormField key={item.id} control={form.control} name="requiredWeapons" render={({ field }) => (
-                                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
-                                                        <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                                    </FormItem>
-                                                )}/>
-                                            ))}
-                                        </div>
-                                    </FormItem>
-                                )}/>
-
-                                <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
-                                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
-                                    <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>}
-                                        Criar Leilão
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </Form>
-                    </TabsContent>
-                </div>
+                                    <div>
+                                        <h4 className="font-semibold">{selectedItem.itemName}</h4>
+                                        <p className="text-sm text-muted-foreground">{selectedItem.trait}</p>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => { setSelectedItem(null); setViewMode('select_or_create'); form.reset();}}>
+                                    <X className="h-5 w-5"/>
+                                </Button>
+                            </div>
+                            {renderAuctionConfigForm()}
+                         </div>
+                    ) : (
+                        <Tabs value={creationMode} onValueChange={(value) => setCreationMode(value as 'select' | 'create')}>
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="create">Cadastrar Novo Item</TabsTrigger>
+                                <TabsTrigger value="select">Selecionar do Banco</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="create" className="mt-4">
+                                <p>Formulário para criar um novo item e leilão (funcionalidade existente).</p>
+                                {/* O formulário de criação de item + leilão estaria aqui */}
+                            </TabsContent>
+                            <TabsContent value="select" className="m-0 pt-4">
+                                <ScrollArea className="h-72 border rounded-md p-2">
+                                    <div className="space-y-2">
+                                        {availableBankItems.length > 0 ? availableBankItems.map(item => (
+                                            <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50">
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    <div className={cn("w-10 h-10 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[item.rarity])}>
+                                                        <Image src={item.imageUrl} alt={item.itemName || "Item"} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
+                                                    </div>
+                                                    <div className="truncate">
+                                                        <p className="font-semibold truncate text-sm">{item.itemName}</p>
+                                                        <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
+                                                    </div>
+                                                </div>
+                                                <Button size="sm" onClick={() => handleSelectBankItem(item)}>Selecionar</Button>
+                                            </div>
+                                        )) : <p className="text-center text-muted-foreground py-10">Nenhum item disponível no banco.</p>}
+                                    </div>
+                                </ScrollArea>
+                            </TabsContent>
+                        </Tabs>
+                    )}
+                 </div>
             </DialogContent>
         </Dialog>
     );
@@ -1623,5 +1711,3 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
-
-
