@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -1653,23 +1652,23 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                     <FormLabel>Início do Leilão</FormLabel>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
-                                                          <FormControl>
-                                                            <Button
-                                                              variant={"outline"}
-                                                              className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                            >
-                                                              {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
-                                                              <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                            </Button>
-                                                          </FormControl>
+                                                            <FormControl>
+                                                                <Button
+                                                                    variant={"outline"}
+                                                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                                >
+                                                                    {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
+                                                                    <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
+                                                                </Button>
+                                                            </FormControl>
                                                         </PopoverTrigger>
-                                                      <PopoverContent className="w-auto p-0" align="start">
-                                                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                                                          <div className="p-2 border-t">
-                                                              <Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/>
-                                                          </div>
-                                                      </PopoverContent>
-                                                    </Popover>
+                                                        <PopoverContent className="w-auto p-0" align="start">
+                                                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                                            <div className="p-2 border-t">
+                                                                <Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/>
+                                                            </div>
+                                                        </PopoverContent>
+                                                      </Popover>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -1680,25 +1679,25 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Fim do Leilão</FormLabel>
-                                                    <Popover>
-                                                      <PopoverTrigger asChild>
-                                                        <FormControl>
-                                                            <Button
-                                                                variant={"outline"}
-                                                                className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                            >
-                                                                {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
-                                                                <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                            </Button>
-                                                        </FormControl>
-                                                      </PopoverTrigger>
-                                                      <PopoverContent className="w-auto p-0" align="start">
-                                                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus />
-                                                          <div className="p-2 border-t">
-                                                              <Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/>
-                                                          </div>
-                                                      </PopoverContent>
-                                                    </Popover>
+                                                      <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <FormControl>
+                                                                  <Button
+                                                                      variant={"outline"}
+                                                                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                                  >
+                                                                      {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
+                                                                      <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
+                                                                  </Button>
+                                                            </FormControl>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-auto p-0" align="start">
+                                                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus />
+                                                            <div className="p-2 border-t">
+                                                                <Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/>
+                                                            </div>
+                                                        </PopoverContent>
+                                                      </Popover>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -1715,7 +1714,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     <FormField
                                       control={form.control}
                                       name="allowedRoles"
-                                      render={() => (
+                                      render={({ field }) => (
                                         <FormItem>
                                           <div className="mb-4">
                                             <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
@@ -1758,7 +1757,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     <FormField
                                       control={form.control}
                                       name="requiredWeapons"
-                                      render={() => (
+                                      render={({ field }) => (
                                         <FormItem>
                                           <div className="mb-4">
                                             <FormLabel className="text-base">Armas Requeridas</FormLabel>
@@ -1772,23 +1771,23 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 name="requiredWeapons"
                                                 render={({ field }) => {
                                                   return (
-                                                    <FormItem
-                                                      key={item.id}
-                                                      className="flex flex-row items-start space-x-2 space-y-0"
-                                                    >
-                                                      <FormControl>
-                                                        <Checkbox
-                                                          checked={field.value?.includes(item.id)}
-                                                          onCheckedChange={(checked) => {
-                                                            const currentValues = field.value || [];
-                                                            return checked
-                                                              ? field.onChange([...currentValues, item.id])
-                                                              : field.onChange(currentValues.filter((value) => value !== item.id));
-                                                          }}
-                                                        />
-                                                      </FormControl>
-                                                      <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                                    </FormItem>
+                                                  <FormItem
+                                                    key={item.id}
+                                                    className="flex flex-row items-start space-x-2 space-y-0"
+                                                  >
+                                                    <FormControl>
+                                                      <Checkbox
+                                                        checked={field.value?.includes(item.id)}
+                                                        onCheckedChange={(checked) => {
+                                                          const currentValues = field.value || [];
+                                                          return checked
+                                                            ? field.onChange([...currentValues, item.id])
+                                                            : field.onChange(currentValues.filter((value) => value !== item.id));
+                                                        }}
+                                                      />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                  </FormItem>
                                                   );
                                                 }}
                                               />
@@ -1845,6 +1844,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-
-
