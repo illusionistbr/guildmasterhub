@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, getDocs as getFirestoreDocs } from '@/lib/firebase';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy } from '@/lib/firebase';
 import type { Guild, GuildMember, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -384,7 +384,7 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Divine Justiciar Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00022.webp', rarity: 'epic' },
   { name: 'Gilded Raven Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022B.webp', rarity: 'epic' },
   { name: 'Oblivion\'s Wrath Leggings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00016.webp', rarity: 'epic' },
-  { name: 'Void Stalker\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00001D.webp', rarity: 'epic' },
+  { name: 'Void Stalker\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_0001D.webp', rarity: 'epic' },
   { name: 'Transcendent Tempest\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00014.webp', rarity: 'epic' },
   { name: 'Ardent Herald\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00004A.webp', rarity: 'epic' },
   { name: 'Immortal Legionnaire\'s Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00019A.webp', rarity: 'epic' },
@@ -830,35 +830,33 @@ function LootPageContent() {
   useEffect(() => {
     if (!guildId) return;
 
-    const fetchItems = async () => {
-        setLoadingBankItems(true);
-        try {
-            const bankItemsRef = collection(db, `guilds/${guildId}/bankItems`);
-            const q = firestoreQuery(bankItemsRef); // No ordering
-            const querySnapshot = await getFirestoreDocs(q);
+    setLoadingBankItems(true);
+    const bankItemsRef = collection(db, `guilds/${guildId}/bankItems`);
+    const q = firestoreQuery(bankItemsRef, orderBy("createdAt", "desc"));
 
-            const fetchedItems = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as BankItem));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedItems = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as BankItem));
+      setBankItems(fetchedItems);
+      setLoadingBankItems(false);
+    }, (error: any) => {
+      console.error("Error fetching bank items: ", error);
+       if (error.code === 'failed-precondition' && error.message.includes('index')) {
+          toast({
+              title: "Índice do Banco de Dados Necessário",
+              description: "Para ordenar os itens do banco, um índice do Firestore é necessário. Verifique o console para um link de criação.",
+              variant: "destructive",
+              duration: 15000,
+          });
+      } else {
+          toast({ title: "Erro ao carregar banco", description: "Não foi possível carregar os itens do banco em tempo real.", variant: "destructive" });
+      }
+      setLoadingBankItems(false);
+    });
 
-            // Sort client-side
-            fetchedItems.sort((a, b) => {
-                const timeA = a.createdAt?.toMillis() || 0;
-                const timeB = b.createdAt?.toMillis() || 0;
-                return timeB - timeA; // Newest first
-            });
-
-            setBankItems(fetchedItems);
-        } catch (error) {
-            console.error("Error fetching bank items: ", error);
-            toast({ title: "Erro ao carregar banco", description: "Não foi possível carregar os itens do banco.", variant: "destructive" });
-        } finally {
-            setLoadingBankItems(false);
-        }
-    };
-
-    fetchItems();
+    return () => unsubscribe();
   }, [guildId, toast]);
 
   const onSubmit: SubmitHandler<LootFormValues> = async (data) => {
@@ -911,6 +909,13 @@ function LootPageContent() {
         }
     }
     
+    // Clean up undefined fields before saving to Firestore
+    Object.keys(newItemPayload).forEach(key => {
+        if (newItemPayload[key] === undefined) {
+            delete newItemPayload[key];
+        }
+    });
+
     try {
         const bankItemsCollectionRef = collection(db, `guilds/${guildId}/bankItems`);
         await addDoc(bankItemsCollectionRef, newItemPayload);
