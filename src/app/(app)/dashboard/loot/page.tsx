@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -970,8 +971,7 @@ function LootPageContent() {
   const currentItemNameOptions =
     watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
-    [];
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : [];
 
   const isTraitMandatory =
     (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
@@ -1712,7 +1712,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     </div>
                                     <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
                                     
-                                     <FormField
+                                    <FormField
                                       control={form.control}
                                       name="allowedRoles"
                                       render={({ field }) => (
@@ -1723,29 +1723,20 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                           </div>
                                           <div className="space-y-2">
                                             {tlRoleOptions.map((item) => (
-                                              <FormItem
-                                                key={item.id}
-                                                className="flex flex-row items-start space-x-3 space-y-0"
-                                              >
-                                                <FormControl>
-                                                  <Checkbox
-                                                    checked={field.value?.includes(item.id)}
-                                                    onCheckedChange={(checked) => {
-                                                      const currentValues = field.value || [];
-                                                      return checked
-                                                        ? field.onChange([...currentValues, item.id])
-                                                        : field.onChange(
-                                                            currentValues.filter(
-                                                              (value) => value !== item.id
-                                                            )
-                                                          );
-                                                    }}
-                                                  />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">
-                                                  {item.label}
-                                                </FormLabel>
-                                              </FormItem>
+                                                <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                                                  <FormControl>
+                                                    <Checkbox
+                                                      checked={field.value?.includes(item.id)}
+                                                      onCheckedChange={(checked) => {
+                                                        const currentValues = field.value || [];
+                                                        return checked
+                                                          ? field.onChange([...currentValues, item.id])
+                                                          : field.onChange(currentValues.filter((value) => value !== item.id));
+                                                      }}
+                                                    />
+                                                  </FormControl>
+                                                  <FormLabel className="font-normal">{item.label}</FormLabel>
+                                                </FormItem>
                                             ))}
                                           </div>
                                           <FormMessage />
@@ -1753,45 +1744,37 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                       )}
                                     />
                                     <FormField
-                                        control={form.control}
-                                        name="requiredWeapons"
-                                        render={({ field }) => (
-                                          <FormItem>
-                                              <div className="mb-4">
-                                                  <FormLabel className="text-base">Armas Requeridas</FormLabel>
-                                                  <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
-                                              </div>
-                                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                                  {tlWeaponOptions.map((item) => (
-                                                      <FormItem
-                                                          key={item.id}
-                                                          className="flex flex-row items-start space-x-2 space-y-0"
-                                                      >
-                                                          <FormControl>
-                                                              <Checkbox
-                                                              checked={field.value?.includes(item.id)}
-                                                              onCheckedChange={(checked) => {
-                                                                  const currentValues = field.value || [];
-                                                                  return checked
-                                                                  ? field.onChange([...currentValues, item.id])
-                                                                  : field.onChange(
-                                                                      currentValues.filter(
-                                                                      (value) => value !== item.id
-                                                                      )
-                                                                  )
-                                                              }}
-                                                              />
-                                                          </FormControl>
-                                                          <FormLabel className="font-normal text-sm">
-                                                              {item.label}
-                                                          </FormLabel>
-                                                      </FormItem>
-                                                  ))}
-                                              </div>
-                                              <FormMessage />
-                                          </FormItem>
-                                        )}
+                                      control={form.control}
+                                      name="requiredWeapons"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <div className="mb-4">
+                                            <FormLabel className="text-base">Armas Requeridas</FormLabel>
+                                            <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
+                                          </div>
+                                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                            {tlWeaponOptions.map((item) => (
+                                                <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
+                                                  <FormControl>
+                                                    <Checkbox
+                                                      checked={field.value?.includes(item.id)}
+                                                      onCheckedChange={(checked) => {
+                                                        const currentValues = field.value || [];
+                                                        return checked
+                                                          ? field.onChange([...currentValues, item.id])
+                                                          : field.onChange(currentValues.filter((value) => value !== item.id));
+                                                      }}
+                                                    />
+                                                  </FormControl>
+                                                  <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                </FormItem>
+                                            ))}
+                                          </div>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
                                     />
+
 
                                     <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
                                         <Button type="button" variant="outline" onClick={() => resetAndClose()} disabled={isSubmitting}>Cancelar</Button>
@@ -1838,3 +1821,4 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
