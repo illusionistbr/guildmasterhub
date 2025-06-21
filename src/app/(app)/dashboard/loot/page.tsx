@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -68,7 +67,7 @@ const TL_SWORD_ITEMS: TLItem[] = [
 
 const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Adentus\'s Gargantuan Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp', rarity: 'epic' },
-  { name: 'Broadsword of the Juggernaught', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp', rarity: 'epic' },
+  { name: 'Broadsword of the Juggernaut', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp', rarity: 'epic' },
   { name: 'Celestial Cyclone Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp', rarity: 'epic' },
   { name: 'Cordy\'s Warblade of Creeping Doom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp', rarity: 'epic' },
   { name: 'Duke Magna\'s Fury Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp', rarity: 'epic' },
@@ -971,7 +970,7 @@ function LootPageContent() {
   const currentItemNameOptions =
     watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : [];
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [];
 
   const isTraitMandatory =
     (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
@@ -1651,18 +1650,18 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Início do Leilão</FormLabel>
-                                                    <Popover>
-                                                        <FormControl>
-                                                            <PopoverTrigger asChild>
+                                                     <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <FormControl>
                                                                 <Button
-                                                                    variant="outline"
-                                                                    className={cn("form-input justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                                                                    variant={"outline"}
+                                                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                                                 >
                                                                     {field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}
                                                                     <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
-                                                            </PopoverTrigger>
-                                                        </FormControl>
+                                                            </FormControl>
+                                                        </PopoverTrigger>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                                                             <div className="p-2 border-t">
@@ -1681,17 +1680,17 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Fim do Leilão</FormLabel>
                                                     <Popover>
-                                                        <FormControl>
-                                                            <PopoverTrigger asChild>
+                                                        <PopoverTrigger asChild>
+                                                            <FormControl>
                                                                 <Button
-                                                                    variant="outline"
-                                                                    className={cn("form-input justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                                                                    variant={"outline"}
+                                                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                                                 >
                                                                     {field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}
                                                                     <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
-                                                            </PopoverTrigger>
-                                                        </FormControl>
+                                                            </FormControl>
+                                                        </PopoverTrigger>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus />
                                                             <div className="p-2 border-t">
@@ -1714,28 +1713,33 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     <FormField
                                         control={form.control}
                                         name="allowedRoles"
-                                        render={({ field }) => (
+                                        render={() => (
                                             <FormItem>
                                                 <div className="mb-4">
                                                     <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
                                                     <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
                                                 </div>
-                                                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                                <div className="space-y-1">
                                                     {tlRoleOptions.map((item) => (
-                                                        <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
+                                                      <FormField
+                                                        key={item.id}
+                                                        control={form.control}
+                                                        name="allowedRoles"
+                                                        render={({ field }) => (
+                                                          <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2">
                                                             <FormControl>
-                                                                <Checkbox
-                                                                    checked={field.value?.includes(item.id)}
-                                                                    onCheckedChange={(checked) => {
-                                                                        const currentValues = field.value || [];
-                                                                        return checked
-                                                                            ? field.onChange([...currentValues, item.id])
-                                                                            : field.onChange(currentValues.filter((value) => value !== item.id));
-                                                                    }}
-                                                                />
+                                                              <Checkbox
+                                                                checked={!!field.value?.includes(item.id)}
+                                                                onCheckedChange={(checked) =>
+                                                                  checked ? field.onChange([...(field.value || []), item.id])
+                                                                          : field.onChange((field.value || []).filter(value => value !== item.id))
+                                                                }
+                                                              />
                                                             </FormControl>
                                                             <FormLabel className="font-normal">{item.label}</FormLabel>
-                                                        </FormItem>
+                                                          </FormItem>
+                                                        )}
+                                                      />
                                                     ))}
                                                 </div>
                                                 <FormMessage />
@@ -1745,7 +1749,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     <FormField
                                         control={form.control}
                                         name="requiredWeapons"
-                                        render={({ field }) => (
+                                        render={() => (
                                             <FormItem>
                                                 <div className="mb-4">
                                                     <FormLabel className="text-base">Armas Requeridas</FormLabel>
@@ -1753,20 +1757,25 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 </div>
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                                                     {tlWeaponOptions.map((item) => (
-                                                        <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
-                                                            <FormControl>
-                                                                <Checkbox
-                                                                    checked={field.value?.includes(item.id)}
-                                                                    onCheckedChange={(checked) => {
-                                                                        const currentValues = field.value || [];
-                                                                        return checked
-                                                                            ? field.onChange([...currentValues, item.id])
-                                                                            : field.onChange(currentValues.filter((value) => value !== item.id));
-                                                                    }}
-                                                                />
-                                                            </FormControl>
-                                                            <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                                        </FormItem>
+                                                        <FormField
+                                                            key={item.id}
+                                                            control={form.control}
+                                                            name="requiredWeapons"
+                                                            render={({ field }) => (
+                                                              <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
+                                                                <FormControl>
+                                                                  <Checkbox
+                                                                    checked={!!field.value?.includes(item.id)}
+                                                                    onCheckedChange={(checked) =>
+                                                                        checked ? field.onChange([...(field.value || []), item.id])
+                                                                                : field.onChange((field.value || []).filter(value => value !== item.id))
+                                                                    }
+                                                                  />
+                                                                </FormControl>
+                                                                <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                              </FormItem>
+                                                            )}
+                                                          />
                                                     ))}
                                                 </div>
                                                 <FormMessage />
@@ -1811,11 +1820,13 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
     );
 }
 
-export default function LootPageWrapper() {
+const LootPageWrapper = () => {
   return (
     <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
       <LootPageContent />
     </Suspense>
   );
 }
+export default LootPageWrapper;
 
+    
