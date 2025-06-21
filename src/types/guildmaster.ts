@@ -409,4 +409,5 @@ export interface Auction {
   createdBy: string;
   createdByName: string;
   createdAt: Timestamp;
+  isDistributed?: boolean;
 }

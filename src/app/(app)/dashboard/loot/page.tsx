@@ -5,8 +5,8 @@ import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'reac
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch } from '@/lib/firebase';
-import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus } from '@/types/guildmaster';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc } from '@/lib/firebase';
+import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -21,7 +21,7 @@ import { useForm, type SubmitHandler, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -31,11 +31,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import type { DateRange } from "react-day-picker";
-import { format, addHours, addDays } from 'date-fns';
+import { format, addHours, addDays, formatDistanceToNow, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -853,6 +854,14 @@ function LootPageContent() {
       setLoadingBankItems(false);
     }, (error: any) => {
       console.error("Error fetching bank items: ", error);
+      if (error.code === 'permission-denied') {
+         toast({
+          title: "Erro de Permissão",
+          description: "Verifique as regras de segurança do Firestore. Pode ser necessário um índice para esta consulta.",
+          variant: "destructive",
+          duration: 9000
+        });
+      }
       setLoadingBankItems(false);
     });
 
@@ -907,8 +916,8 @@ function LootPageContent() {
     // Clean up undefined fields before saving to Firestore
     Object.keys(newItemPayload).forEach(keyStr => {
         const key = keyStr as keyof typeof newItemPayload;
-        if (newItemPayload[key] === undefined || newItemPayload[key] === null) {
-            delete newItemPayload[key];
+        if (newItemPayload[key] === undefined) {
+            delete (newItemPayload as any)[key];
         }
     });
 
@@ -1055,13 +1064,22 @@ function LootPageContent() {
                     <FormField control={form.control} name="itemCategory" render={({ field }) => ( 
                         <FormItem> 
                             <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> 
-                            <Select onValueChange={field.onChange} value={field.value}> 
+                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                    <SelectTrigger className="form-input"> 
-                                        <SelectValue placeholder="Selecione a categoria do item" /> 
-                                    </SelectTrigger> 
+                                    <SelectTrigger className="form-input">
+                                        <SelectValue placeholder="Selecione a categoria do item" />
+                                    </SelectTrigger>
                                 </FormControl>
-                                <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}> <div className="flex items-center"> {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})} {opt.label} </div> </SelectItem> ))} </SelectContent> 
+                                <SelectContent>
+                                    {itemCategoryOptions.map(opt => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            <div className="flex items-center">
+                                                {React.createElement(opt.icon || Tag, { className: "mr-2 h-5 w-5"})}
+                                                {opt.label}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
                             </Select>
                             <FormMessage /> 
                         </FormItem> 
@@ -1070,9 +1088,9 @@ function LootPageContent() {
                     {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
                     {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
                     {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <div className="relative flex items-center"> <Sparkles className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/> )}
+                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
                     {selectedItemForPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border-2", rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted border-border' )} > <Image src={selectedItemForPreview.imageUrl} alt={selectedItemForPreview.name} width={80} height={80} className="object-contain" data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}/> </div> </div> )}
-                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <div className="relative flex items-center"> <UserCircle className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" /> <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <FormControl><SelectTrigger className="form-input pl-10"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select> </div> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
                     <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
                       <Button type="button" variant="outline" onClick={() => { setShowAddItemDialog(false); form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID }); setSelectedItemForPreview(null); }} disabled={isSubmitting}>Cancelar</Button>
                       <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}> {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />} Registrar Item </Button>
@@ -1162,27 +1180,205 @@ function LootPageContent() {
   );
 }
 
-// New component for the Auctions Tab
+function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, currentUser: UserProfile | null }) {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const endTime = auction.endTime.toDate();
+      const startTime = auction.startTime.toDate();
+      
+      if (isAfter(now, endTime)) {
+        setTimeLeft("Encerrado");
+        setProgress(100);
+        return;
+      }
+      
+      const totalDuration = endTime.getTime() - startTime.getTime();
+      const elapsedDuration = now.getTime() - startTime.getTime();
+      const currentProgress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+      setProgress(currentProgress > 0 ? currentProgress : 0);
+      setTimeLeft(formatDistanceToNow(endTime, { locale: ptBR, addSuffix: true }));
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000 * 60); // Update every minute
+    return () => clearInterval(interval);
+  }, [auction]);
+
+  const yourBid = useMemo(() => {
+    if (!currentUser) return undefined;
+    // Find the highest bid by the current user
+    return auction.bids
+      .filter(b => b.bidderId === currentUser.uid)
+      .reduce((max, bid) => bid.amount > max ? bid.amount : max, 0);
+  }, [auction.bids, currentUser]);
+
+  const isWinning = auction.currentWinnerId === currentUser?.uid;
+
+  return (
+    <Card className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gradient-to-br from-card to-background/50">
+      <div className="md:col-span-1 flex items-center justify-center">
+        <div className={cn(
+          "w-48 h-48 p-3 rounded-lg flex items-center justify-center",
+          rarityBackgrounds[auction.item.rarity]
+        )}>
+          <Image src={auction.item.imageUrl} alt={auction.item.itemName || "Item"} width={160} height={160} className="object-contain" data-ai-hint="auctioned item"/>
+        </div>
+      </div>
+      <div className="md:col-span-2 space-y-4">
+        <div className="flex justify-between items-start">
+          <h3 className="text-2xl font-bold text-foreground">{auction.item.itemName}</h3>
+          <Badge className={cn(auction.status === 'active' ? "bg-green-500/20 text-green-500 border-green-500/50" : "bg-muted text-muted-foreground")}>
+            {auction.status === 'active' ? 'Aberto' : auction.status.charAt(0).toUpperCase() + auction.status.slice(1)}
+          </Badge>
+        </div>
+        
+        <div>
+          <div className="flex justify-between items-baseline mb-1">
+            <span className="text-sm text-muted-foreground">Tempo restante</span>
+            <span className="text-sm font-semibold text-primary">{timeLeft}</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="space-y-1">
+            <p className="text-muted-foreground">Seu Lance</p>
+            <p className="text-lg font-bold text-foreground">{yourBid ? `${yourBid} DKP` : 'Nenhum lance'}</p>
+          </div>
+           <div className="space-y-1">
+            <p className="text-muted-foreground">Lance Mais Alto</p>
+            <p className="text-lg font-bold text-foreground">{auction.currentBid} DKP</p>
+          </div>
+        </div>
+
+        {isWinning && (
+          <div className="bg-green-500/10 text-green-500 text-sm font-semibold p-3 rounded-md text-center">
+            Você está ganhando este leilão!
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
 function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, guildMembersForDropdown }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, guildMembersForDropdown: { value: string; label: string }[] }) {
   const [showNewAuctionDialog, setShowNewAuctionDialog] = useState(false);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!guildId) return;
+    setLoading(true);
+    const auctionsRef = collection(db, `guilds/${guildId}/auctions`);
+    const q = firestoreQuery(auctionsRef, where("status", "in", ["active", "scheduled"]), orderBy("endTime", "asc"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedAuctions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Auction));
+      setAuctions(fetchedAuctions);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching auctions:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [guildId]);
+  
+  if (loading) {
+    return <div className="flex justify-center items-center p-10"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+  }
+  
+  const featuredAuction = auctions.find(a => a.status === 'active') || (auctions.length > 0 ? auctions[0] : null);
+
+  const getLatestBidder = (bids: AuctionBid[]) => {
+    if (bids.length === 0) return 'N/A';
+    // Assumes bids are not necessarily sorted, so we find the one with the latest timestamp
+    return [...bids].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())[0]?.bidderName || 'N/A';
+  }
 
   return (
     <div className="space-y-6">
-       <div className="flex justify-end">
-          <Button onClick={() => setShowNewAuctionDialog(true)} disabled={!canCreateAuctions}>
-            <Gavel className="mr-2 h-5 w-5" /> Novo Leilão
-          </Button>
-      </div>
+        <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-foreground">Leilões Ativos</h2>
+            <p className="text-sm text-muted-foreground">Última atualização: agora</p>
+        </div>
+        
+        {featuredAuction && <FeaturedAuctionCard auction={featuredAuction} currentUser={currentUser} />}
+        
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+                <Input placeholder="Buscar por nome..." className="w-48" />
+                <Select defaultValue="all"><SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Todos Status</SelectItem><SelectItem value="active">Aberto</SelectItem><SelectItem value="ended">Encerrado</SelectItem></SelectContent></Select>
+                 <Select defaultValue="all"><SelectTrigger className="w-36"><SelectValue placeholder="Trait" /></SelectTrigger><SelectContent><SelectItem value="all">Todos Traits</SelectItem></SelectContent></Select>
+            </div>
+            <div className="flex gap-2">
+                <Button variant="outline" disabled>Ações</Button>
+                <Button onClick={() => setShowNewAuctionDialog(true)} disabled={!canCreateAuctions} className="btn-gradient btn-style-secondary">
+                    <Gavel className="mr-2 h-4 w-4" /> Novo Leilão
+                </Button>
+            </div>
+        </div>
 
-       <Card className="static-card-container text-center py-10">
-          <CardHeader><Gavel className="mx-auto h-16 w-16 text-muted-foreground mb-4" /></CardHeader>
-          <CardContent>
-            <CardTitle className="text-2xl">Nenhum Leilão Ativo</CardTitle>
-            <CardDescription className="mt-2">
-              Nenhum leilão está em andamento. Crie um novo leilão para começar a distribuir itens.
-            </CardDescription>
-          </CardContent>
-        </Card>
+       <Card className="static-card-container">
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[50px]"><Checkbox /></TableHead>
+                        <TableHead>Item <ArrowUpDown className="inline h-3 w-3" /></TableHead>
+                        <TableHead>Trait</TableHead>
+                        <TableHead>Lance Inicial</TableHead>
+                        <TableHead>Último Lance</TableHead>
+                        <TableHead>Último Licitante</TableHead>
+                        <TableHead>Início <ArrowUpDown className="inline h-3 w-3" /></TableHead>
+                        <TableHead>Fim <ArrowUpDown className="inline h-3 w-3" /></TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Distribuído</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {auctions.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                                Nenhum leilão ativo ou agendado no momento.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        auctions.map(auction => (
+                            <TableRow key={auction.id}>
+                                <TableCell><Checkbox /></TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <div className={cn("w-8 h-8 p-1 rounded-md flex items-center justify-center", rarityBackgrounds[auction.item.rarity])}>
+                                            <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
+                                        </div>
+                                        <span className="font-medium truncate max-w-[150px]">{auction.item.itemName}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>{auction.item.trait || 'N/A'}</TableCell>
+                                <TableCell>{auction.startingBid}</TableCell>
+                                <TableCell>{auction.currentBid}</TableCell>
+                                <TableCell>{getLatestBidder(auction.bids)}</TableCell>
+                                <TableCell>{formatDistanceToNow(auction.startTime.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
+                                <TableCell>{formatDistanceToNow(auction.endTime.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
+                                <TableCell><Badge variant={auction.status === 'active' ? 'default' : 'outline'} className={auction.status === 'active' ? 'bg-green-500/80' : ''}>{auction.status === 'active' ? 'Aberto' : 'Agendado'}</Badge></TableCell>
+                                <TableCell><Badge variant={auction.isDistributed ? 'default' : 'destructive'} className={auction.isDistributed ? 'bg-green-500/80' : 'bg-red-500/80'}>{auction.isDistributed ? 'Sim' : 'Não'}</Badge></TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+          </div>
+       </Card>
       
       <NewAuctionDialog 
         isOpen={showNewAuctionDialog} 
@@ -1199,7 +1395,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
 // New Dialog component for creating auctions
 function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, guildMembersForDropdown }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, guildMembersForDropdown: { value: string; label: string }[] }) {
     const { toast } = useToast();
-    const [creationMode, setCreationMode] = useState<'select' | 'create'>('create');
+    const [creationMode, setCreationMode] = useState<'create' | 'select'>('create');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const tlRoleOptions = Object.values(TLRole).map(role => ({ id: role, label: role }));
@@ -1219,8 +1415,8 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
       weaponType: z.string().optional(),
       armorType: z.string().optional(),
       accessoryType: z.string().optional(),
-      itemName: z.string().optional(),
-      trait: z.string().optional(),
+      itemName: z.string().min(1, "Nome do item é obrigatório."),
+      trait: z.string().min(1, "Trait é obrigatório."),
       // Auction fields
       startingBid: z.coerce.number().min(1, "Lance inicial deve ser no mínimo 1.").default(1),
       minBidIncrement: z.coerce.number().min(1, "Incremento mínimo deve ser no mínimo 1.").default(5),
@@ -1229,7 +1425,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
       allowedRoles: z.array(z.string()).optional(),
       requiredWeapons: z.array(z.string()).optional(),
     }).superRefine((data, ctx) => {
-        // Item validation logic here...
         if (data.startTime >= data.endTime) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data de fim deve ser posterior à data de início.", path: ["endTime"]});
         }
@@ -1240,7 +1435,10 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
     const form = useForm<NewAuctionFormValues>({
         resolver: zodResolver(auctionFormSchema),
         defaultValues: {
-            itemCategory: "",
+            itemCategory: "weapon",
+            weaponType: "Crossbow",
+            itemName: "Rex Chimaerus's Crossbows",
+            trait: "Critical Hit Chance",
             startingBid: 1,
             minBidIncrement: 5,
             startTime: new Date(),
@@ -1252,17 +1450,77 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
     
     const setAuctionDuration = (hours: number) => {
         const startTime = form.getValues("startTime");
-        if (startTime) {
-            form.setValue("endTime", addHours(startTime, hours));
-        } else {
-            toast({ title: "Atenção", description: "Por favor, defina uma data de início primeiro.", variant: "default"});
-        }
+        form.setValue("endTime", addHours(startTime, hours));
     };
     
     const handleAuctionSubmit: SubmitHandler<NewAuctionFormValues> = async (data) => {
-        toast({title: "Funcionalidade em desenvolvimento", description: "A criação de leilões a partir de novos itens será implementada em breve."});
-        console.log("Form data submitted:", data);
-        // Full logic to be implemented here
+        if (!guildId || !currentUser) return;
+        setIsSubmitting(true);
+        
+        let imageUrlToUse = "https://placehold.co/80x80.png";
+        let rarityToUse: TLItem['rarity'] = 'epic';
+        let itemTypeMap;
+
+        if (data.itemCategory === 'weapon') itemTypeMap = WEAPON_ITEMS_MAP[data.weaponType || ''];
+        else if (data.itemCategory === 'armor') itemTypeMap = ARMOR_ITEMS_MAP[data.armorType || ''];
+        else if (data.itemCategory === 'accessory') itemTypeMap = ACCESSORY_ITEMS_MAP[data.accessoryType || ''];
+        
+        const itemInfo = itemTypeMap?.find(i => i.name === data.itemName);
+        if (itemInfo) {
+            imageUrlToUse = itemInfo.imageUrl;
+            rarityToUse = itemInfo.rarity;
+        }
+
+        const batch = writeBatch(db);
+        const bankItemsCollectionRef = collection(db, `guilds/${guildId}/bankItems`);
+        const bankItemRef = doc(bankItemsCollectionRef); // Create a new doc ref for the bank item
+
+        const bankItemPayload: Omit<BankItem, 'id'> = {
+            createdAt: serverTimestamp() as Timestamp,
+            itemCategory: data.itemCategory,
+            weaponType: data.weaponType,
+            armorType: data.armorType,
+            accessoryType: data.accessoryType,
+            itemName: data.itemName,
+            trait: data.trait,
+            imageUrl: imageUrlToUse,
+            rarity: rarityToUse,
+            status: 'Em leilão',
+        };
+        
+        batch.set(bankItemRef, bankItemPayload);
+        
+        const newAuction: Omit<Auction, 'id'| 'createdAt'> = {
+            guildId,
+            item: bankItemPayload,
+            status: data.startTime <= new Date() ? 'active' : 'scheduled',
+            startingBid: data.startingBid,
+            minBidIncrement: data.minBidIncrement,
+            currentBid: data.startingBid,
+            bids: [],
+            startTime: Timestamp.fromDate(data.startTime),
+            endTime: Timestamp.fromDate(data.endTime),
+            allowedRoles: data.allowedRoles,
+            requiredWeapons: data.requiredWeapons,
+            createdBy: currentUser.uid,
+            createdByName: currentUser.displayName || 'N/A',
+            isDistributed: false
+        };
+
+        const auctionsCollectionRef = collection(db, `guilds/${guildId}/auctions`);
+        const auctionRef = doc(auctionsCollectionRef); // New doc for auction
+        batch.set(auctionRef, { ...newAuction, createdAt: serverTimestamp() as Timestamp });
+
+        try {
+            await batch.commit();
+            toast({ title: "Leilão Criado!", description: `O leilão para "${data.itemName}" foi iniciado.` });
+            onOpenChange(false);
+        } catch (error) {
+            console.error("Error creating auction:", error);
+            toast({ title: "Erro ao Criar Leilão", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -1287,10 +1545,10 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, g
                     <TabsContent value="create" className="m-0">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
-                                {/* Item Creation Fields Here - could be a reusable component */}
                                 <h3 className="text-lg font-semibold border-b pb-2">1. Detalhes do Item</h3>
-                                {/* Minimal item form for now */}
                                 <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel>Nome do Item <span className="text-destructive">*</span></FormLabel> <FormControl> <Input {...field} placeholder="Ex: Espada Lendária do Trovão"/> </FormControl> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel>Trait <span className="text-destructive">*</span></FormLabel> <FormControl> <Input {...field} placeholder="Ex: Critical Hit Chance"/> </FormControl> <FormMessage /> </FormItem> )}/>
+
 
                                 <h3 className="text-lg font-semibold border-b pb-2 pt-4">2. Detalhes do Leilão</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
