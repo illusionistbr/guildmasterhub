@@ -1382,7 +1382,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
         guild={guild}
         guildId={guildId}
         currentUser={currentUser}
-        guildMembersForDropdown={guildMembersForDropdown}
         bankItems={bankItems}
       />
     </div>
@@ -1392,8 +1391,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
 // New Dialog component for creating auctions
 function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[] }) {
     const { toast } = useToast();
-    const [viewMode, setViewMode] = useState<'select_or_create' | 'configure_auction'>('select_or_create');
-    const [creationMode, setCreationMode] = useState<'create' | 'select'>('create');
+    const [activeTab, setActiveTab] = useState<'create' | 'select'>('create');
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -1411,14 +1409,12 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
     const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
 
     const auctionFormSchema = z.object({
-      // Fields for creating a new item (only if `selectedItem` is null)
       itemCategory: z.string().optional(),
       weaponType: z.string().optional(),
       armorType: z.string().optional(),
       accessoryType: z.string().optional(),
       itemName: z.string().optional(),
       trait: z.string().optional(),
-      // Auction fields (always required)
       startingBid: z.coerce.number().min(1, "Lance inicial deve ser no mínimo 1.").default(1),
       minBidIncrement: z.coerce.number().min(1, "Incremento mínimo deve ser no mínimo 1.").default(5),
       startTime: z.date({ required_error: "Data de início é obrigatória." }),
@@ -1426,7 +1422,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
       allowedRoles: z.array(z.string()).optional(),
       requiredWeapons: z.array(z.string()).optional(),
     }).superRefine((data, ctx) => {
-        if (!selectedItem) { // Validation for creating a new item
+        if (!selectedItem) {
             if (!data.itemCategory) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Categoria é obrigatória.", path: ["itemCategory"] });
             if (!data.itemName) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
             if (!data.trait) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório.", path: ["trait"] });
@@ -1449,6 +1445,24 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
             requiredWeapons: [],
         }
     });
+
+    const watchedItemCategory = form.watch("itemCategory");
+    const watchedWeaponType = form.watch("weaponType");
+    const watchedArmorType = form.watch("armorType");
+    const watchedAccessoryType = form.watch("accessoryType");
+
+    useEffect(() => {
+        form.resetField('weaponType');
+        form.resetField('armorType');
+        form.resetField('accessoryType');
+        form.resetField('itemName');
+        form.resetField('trait');
+    }, [watchedItemCategory, form]);
+
+    useEffect(() => {
+        form.resetField('itemName');
+        form.resetField('trait');
+    }, [watchedWeaponType, watchedArmorType, watchedAccessoryType, form]);
     
     const resetAndClose = () => {
         form.reset({
@@ -1458,24 +1472,18 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
             endTime: addHours(new Date(), 24),
             allowedRoles: [],
             requiredWeapons: [],
+            itemCategory: "",
+            itemName: "",
+            trait: "",
         });
         setSelectedItem(null);
-        setViewMode('select_or_create');
-        setCreationMode('create');
+        setActiveTab('create');
         onOpenChange(false);
-    }
+    };
     
     const handleSelectBankItem = (item: BankItem) => {
         setSelectedItem(item);
-        setViewMode('configure_auction');
-        form.reset({ // Reset with auction defaults but keep item info separate
-             startingBid: 1,
-            minBidIncrement: 5,
-            startTime: new Date(),
-            endTime: addHours(new Date(), 24),
-            allowedRoles: [],
-            requiredWeapons: [],
-        });
+        setActiveTab('create'); // Switch to the form tab
     };
 
     const setAuctionDuration = (hours: number) => {
@@ -1513,14 +1521,14 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
         };
         
         try {
-            if (selectedItem) { // Case: Using an existing item from the bank
+            if (selectedItem) {
                 const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
                 batch.update(bankItemRef, { status: 'Em leilão' });
                 
                 const { id, status, createdAt, ...itemData } = selectedItem;
                 createAuctionDocument(itemData, id);
 
-            } else { // Case: Creating a new item for auction
+            } else {
                 let imageUrlToUse = "https://placehold.co/80x80.png";
                 let rarityToUse: TLItem['rarity'] = 'epic';
                 let itemTypeMap;
@@ -1537,7 +1545,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
 
                 const bankItemPayload: Omit<BankItem, 'id'> = {
                     createdAt: serverTimestamp() as Timestamp,
-                    itemCategory: data.itemCategory || 'Unknown',
+                    itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory || 'Unknown',
                     weaponType: data.weaponType,
                     armorType: data.armorType,
                     accessoryType: data.accessoryType,
@@ -1566,139 +1574,156 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
         }
     };
     
-    const renderAuctionConfigForm = () => (
-         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
-                <h3 className="text-lg font-semibold border-b pb-2">2. Detalhes do Leilão</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="startingBid" render={({ field }) => ( <FormItem> <FormLabel>Lance Inicial (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="minBidIncrement" render={({ field }) => ( <FormItem> <FormLabel>Incremento Mínimo (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                </div>
-                
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Início do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="endTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Fim do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
-                 </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Definir Duração Rápida</Label>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                        {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
-                    </div>
-                 </div>
+    const watchedItemName = form.watch("itemName");
+    const itemPreview = useMemo(() => {
+        if (selectedItem) return selectedItem;
+        if (!watchedItemCategory || !watchedItemName) return null;
 
-                <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
-                 <FormField control={form.control} name="allowedRoles" render={() => (
-                    <FormItem>
-                        <div className="mb-4">
-                            <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
-                            <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
-                        </div>
-                        <div className="flex flex-wrap gap-x-6 gap-y-2">
-                            {tlRoleOptions.map((item) => (
-                                <FormField key={item.id} control={form.control} name="allowedRoles" render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
-                                        <FormLabel className="font-normal">{item.label}</FormLabel>
-                                    </FormItem>
-                                )}/>
-                            ))}
-                        </div>
-                    </FormItem>
-                )}/>
-                 <FormField control={form.control} name="requiredWeapons" render={() => (
-                    <FormItem>
-                        <div className="mb-4">
-                            <FormLabel className="text-base">Armas Requeridas</FormLabel>
-                            <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                            {tlWeaponOptions.map((item) => (
-                                <FormField key={item.id} control={form.control} name="requiredWeapons" render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
-                                        <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                    </FormItem>
-                                )}/>
-                            ))}
-                        </div>
-                    </FormItem>
-                )}/>
-
-                <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
-                    <Button type="button" variant="outline" onClick={() => resetAndClose()} disabled={isSubmitting}>Cancelar</Button>
-                    <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>}
-                        Criar Leilão
-                    </Button>
-                </DialogFooter>
-            </form>
-        </Form>
-    );
+        let itemsMap;
+        let typeKey;
+        if (watchedItemCategory === 'weapon') { itemsMap = WEAPON_ITEMS_MAP; typeKey = watchedWeaponType; }
+        else if (watchedItemCategory === 'armor') { itemsMap = ARMOR_ITEMS_MAP; typeKey = watchedArmorType; }
+        else if (watchedItemCategory === 'accessory') { itemsMap = ACCESSORY_ITEMS_MAP; typeKey = watchedAccessoryType; }
+        
+        if (!itemsMap || !typeKey) return null;
+        
+        return itemsMap[typeKey]?.find(i => i.name === watchedItemName) || null;
+    }, [selectedItem, watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType, watchedItemName]);
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetAndClose(); }}>
             <DialogContent className="flex flex-col sm:max-w-3xl bg-card border-border max-h-[90vh]">
                 <DialogHeader className="p-6 pb-4 shrink-0">
                     <DialogTitle className="font-headline text-primary">Criar Novo Leilão</DialogTitle>
-                     {viewMode === 'configure_auction' ? (
-                        <DialogDescription>Configure os detalhes do leilão para o item selecionado.</DialogDescription>
-                    ) : (
-                        <DialogDescription>Selecione um item existente do banco da guilda ou cadastre um novo para leiloar.</DialogDescription>
-                    )}
+                     <DialogDescription>Selecione um item existente do banco da guilda ou cadastre um novo para leiloar.</DialogDescription>
                 </DialogHeader>
                 
-                 <div className="flex-grow overflow-y-auto px-6 py-4">
-                    {viewMode === 'configure_auction' && selectedItem ? (
-                         <div>
-                            <div className="border p-3 rounded-md mb-4 bg-muted/30 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                     <div className={cn("w-14 h-14 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[selectedItem.rarity])}>
-                                        <Image src={selectedItem.imageUrl} alt={selectedItem.itemName || "Item"} width={48} height={48} className="object-contain" data-ai-hint="game item"/>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">{selectedItem.itemName}</h4>
-                                        <p className="text-sm text-muted-foreground">{selectedItem.trait}</p>
-                                    </div>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => { setSelectedItem(null); setViewMode('select_or_create'); form.reset();}}>
-                                    <X className="h-5 w-5"/>
-                                </Button>
-                            </div>
-                            {renderAuctionConfigForm()}
-                         </div>
-                    ) : (
-                        <Tabs value={creationMode} onValueChange={(value) => setCreationMode(value as 'select' | 'create')}>
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="create">Cadastrar Novo Item</TabsTrigger>
-                                <TabsTrigger value="select">Selecionar do Banco</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="create" className="mt-4">
-                                <p>Formulário para criar um novo item e leilão (funcionalidade existente).</p>
-                                {/* O formulário de criação de item + leilão estaria aqui */}
-                            </TabsContent>
-                            <TabsContent value="select" className="m-0 pt-4">
-                                <ScrollArea className="h-72 border rounded-md p-2">
-                                    <div className="space-y-2">
-                                        {availableBankItems.length > 0 ? availableBankItems.map(item => (
-                                            <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50">
-                                                <div className="flex items-center gap-2 overflow-hidden">
-                                                    <div className={cn("w-10 h-10 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[item.rarity])}>
-                                                        <Image src={item.imageUrl} alt={item.itemName || "Item"} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
+                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'create' | 'select')} className="flex-grow flex flex-col min-h-0">
+                     <TabsList className="grid w-full grid-cols-2 mx-6 shrink-0">
+                        <TabsTrigger value="create">Criar/Configurar Item</TabsTrigger>
+                        <TabsTrigger value="select">Selecionar do Banco</TabsTrigger>
+                     </TabsList>
+                     <div className="flex-grow overflow-y-auto px-6 py-4">
+                        <TabsContent value="create" className="m-0">
+                             <Form {...form}>
+                                <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
+                                    {selectedItem ? (
+                                        <div>
+                                            <h3 className="text-lg font-semibold border-b pb-2 mb-4">Item Selecionado</h3>
+                                            <div className="border p-3 rounded-md bg-muted/30 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn("w-14 h-14 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[selectedItem.rarity])}>
+                                                        <Image src={selectedItem.imageUrl} alt={selectedItem.itemName || "Item"} width={48} height={48} className="object-contain" data-ai-hint="game item"/>
                                                     </div>
-                                                    <div className="truncate">
-                                                        <p className="font-semibold truncate text-sm">{item.itemName}</p>
-                                                        <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
+                                                    <div>
+                                                        <h4 className="font-semibold">{selectedItem.itemName}</h4>
+                                                        <p className="text-sm text-muted-foreground">{selectedItem.trait}</p>
                                                     </div>
                                                 </div>
-                                                <Button size="sm" onClick={() => handleSelectBankItem(item)}>Selecionar</Button>
+                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedItem(null); }}>
+                                                    <X className="h-5 w-5"/>
+                                                </Button>
                                             </div>
-                                        )) : <p className="text-center text-muted-foreground py-10">Nenhum item disponível no banco.</p>}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold border-b pb-2">1. Detalhes do Novo Item</h3>
+                                            <FormField control={form.control} name="itemCategory" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione a categoria do item" /></SelectTrigger></FormControl> <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}><div className="flex items-center"><opt.icon className="mr-2 h-5 w-5"/>{opt.label}</div></SelectItem> ))} </SelectContent> </Select><FormMessage /></FormItem> )}/>
+                                            {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                                            {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                                            {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
+                                            <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel>Nome do Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o nome do item" /></SelectTrigger></FormControl> <SelectContent> { (watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] : watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : []).map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                            <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel>Trait do Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o trait do item" /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                        </div>
+                                    )}
+
+                                    {itemPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border-2", rarityBackgrounds[itemPreview.rarity] || 'bg-muted border-border' )} > <Image src={itemPreview.imageUrl} alt={itemPreview.name} width={80} height={80} className="object-contain" data-ai-hint="game item weapon"/> </div> </div> )}
+
+                                    <h3 className="text-lg font-semibold border-b pb-2 pt-6">2. Detalhes do Leilão</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="startingBid" render={({ field }) => ( <FormItem> <FormLabel>Lance Inicial (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                                        <FormField control={form.control} name="minBidIncrement" render={({ field }) => ( <FormItem> <FormLabel>Incremento Mínimo (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
                                     </div>
-                                </ScrollArea>
-                            </TabsContent>
-                        </Tabs>
-                    )}
-                 </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Início do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("form-input justify-start text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
+                                        <FormField control={form.control} name="endTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Fim do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("form-input justify-start text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Definir Duração Rápida</Label>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
+                                        </div>
+                                    </div>
+                                    <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
+                                    <FormField control={form.control} name="allowedRoles" render={() => (
+                                        <FormItem>
+                                            <div className="mb-4">
+                                                <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
+                                                <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
+                                            </div>
+                                            <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                                {tlRoleOptions.map((item) => (
+                                                    <FormField key={item.id} control={form.control} name="allowedRoles" render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                                            <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
+                                                            <FormLabel className="font-normal">{item.label}</FormLabel>
+                                                        </FormItem>
+                                                    )}/>
+                                                ))}
+                                            </div>
+                                        </FormItem>
+                                    )}/>
+                                    <FormField control={form.control} name="requiredWeapons" render={() => (
+                                        <FormItem>
+                                            <div className="mb-4">
+                                                <FormLabel className="text-base">Armas Requeridas</FormLabel>
+                                                <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                                {tlWeaponOptions.map((item) => (
+                                                    <FormField key={item.id} control={form.control} name="requiredWeapons" render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                                            <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
+                                                            <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                        </FormItem>
+                                                    )}/>
+                                                ))}
+                                            </div>
+                                        </FormItem>
+                                    )}/>
+
+                                    <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
+                                        <Button type="button" variant="outline" onClick={() => resetAndClose()} disabled={isSubmitting}>Cancelar</Button>
+                                        <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
+                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>}
+                                            Criar Leilão
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </Form>
+                        </TabsContent>
+                        <TabsContent value="select" className="m-0 pt-4">
+                            <ScrollArea className="h-96 border rounded-md p-2">
+                                <div className="space-y-2">
+                                    {availableBankItems.length > 0 ? availableBankItems.map(item => (
+                                        <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className={cn("w-10 h-10 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[item.rarity])}>
+                                                    <Image src={item.imageUrl} alt={item.itemName || "Item"} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
+                                                </div>
+                                                <div className="truncate">
+                                                    <p className="font-semibold truncate text-sm">{item.itemName}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
+                                                </div>
+                                            </div>
+                                            <Button size="sm" onClick={() => handleSelectBankItem(item)}>Selecionar</Button>
+                                        </div>
+                                    )) : <p className="text-center text-muted-foreground py-10">Nenhum item disponível no banco.</p>}
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                     </div>
+                 </Tabs>
             </DialogContent>
         </Dialog>
     );
