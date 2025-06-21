@@ -684,7 +684,7 @@ const lootFormSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
     }
     if (data.armorType && itemSubTypesRequiringTrait.includes(data.armorType) && !data.trait) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${armorTypeOptions.find(opt => opt.value === data.armorType)?.label || data.armorType}.`, path: ["trait"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${armorTypeOptions.find(opt => opt.value === data.armorType)?.label || data.armorType}.`, path: ["armorType"] });
     }
   } else if (data.itemCategory === 'accessory') {
     if (!data.accessoryType) {
@@ -970,7 +970,7 @@ function LootPageContent() {
   const currentItemNameOptions =
     watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [];
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : [];
 
   const isTraitMandatory =
     (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
@@ -1510,8 +1510,8 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                 bids: [],
                 startTime: Timestamp.fromDate(data.startTime),
                 endTime: Timestamp.fromDate(data.endTime),
-                allowedRoles: data.allowedRoles,
-                requiredWeapons: data.requiredWeapons,
+                allowedRoles: data.allowedRoles as TLRole[],
+                requiredWeapons: data.requiredWeapons as TLWeapon[],
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
                 isDistributed: false
@@ -1650,7 +1650,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Início do Leilão</FormLabel>
-                                                     <Popover>
+                                                    <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
                                                                 <Button
@@ -1679,7 +1679,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Fim do Leilão</FormLabel>
-                                                    <Popover>
+                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <FormControl>
                                                                 <Button
@@ -1722,24 +1722,24 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 <div className="space-y-1">
                                                     {tlRoleOptions.map((item) => (
                                                       <FormField
-                                                        key={item.id}
-                                                        control={form.control}
-                                                        name="allowedRoles"
-                                                        render={({ field }) => (
-                                                          <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2">
-                                                            <FormControl>
-                                                              <Checkbox
-                                                                checked={!!field.value?.includes(item.id)}
-                                                                onCheckedChange={(checked) =>
-                                                                  checked ? field.onChange([...(field.value || []), item.id])
-                                                                          : field.onChange((field.value || []).filter(value => value !== item.id))
-                                                                }
-                                                              />
-                                                            </FormControl>
-                                                            <FormLabel className="font-normal">{item.label}</FormLabel>
-                                                          </FormItem>
-                                                        )}
-                                                      />
+                                                            key={item.id}
+                                                            control={form.control}
+                                                            name="allowedRoles"
+                                                            render={({ field }) => (
+                                                                <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2">
+                                                                    <FormControl>
+                                                                    <Checkbox
+                                                                        checked={field.value?.includes(item.id)}
+                                                                        onCheckedChange={(checked) =>
+                                                                        checked ? field.onChange([...(field.value || []), item.id])
+                                                                                : field.onChange((field.value || []).filter(value => value !== item.id))
+                                                                        }
+                                                                    />
+                                                                    </FormControl>
+                                                                    <FormLabel className="font-normal">{item.label}</FormLabel>
+                                                                </FormItem>
+                                                            )}
+                                                        />
                                                     ))}
                                                 </div>
                                                 <FormMessage />
@@ -1762,20 +1762,20 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                             control={form.control}
                                                             name="requiredWeapons"
                                                             render={({ field }) => (
-                                                              <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
-                                                                <FormControl>
-                                                                  <Checkbox
-                                                                    checked={!!field.value?.includes(item.id)}
-                                                                    onCheckedChange={(checked) =>
-                                                                        checked ? field.onChange([...(field.value || []), item.id])
-                                                                                : field.onChange((field.value || []).filter(value => value !== item.id))
-                                                                    }
-                                                                  />
-                                                                </FormControl>
-                                                                <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                                              </FormItem>
+                                                                <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
+                                                                    <FormControl>
+                                                                        <Checkbox
+                                                                            checked={field.value?.includes(item.id)}
+                                                                            onCheckedChange={(checked) =>
+                                                                                checked ? field.onChange([...(field.value || []), item.id])
+                                                                                        : field.onChange((field.value || []).filter(value => value !== item.id))
+                                                                            }
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                                </FormItem>
                                                             )}
-                                                          />
+                                                        />
                                                     ))}
                                                 </div>
                                                 <FormMessage />
@@ -1828,5 +1828,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-    
