@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment as firebaseIncrement, deleteField, getDocs as getFirestoreDocs } from '@/lib/firebase';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment as firebaseIncrement, deleteField, getDocs as getFirestoreDocs, where } from '@/lib/firebase';
 import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -62,7 +63,7 @@ const TL_SWORD_ITEMS: TLItem[] = [
   { name: 'Nirma\'s Sword of Echoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00035.webp', rarity: 'epic' },
   { name: 'Queen Bellandir\'s Languishing Blade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00034.webp', rarity: 'epic' },
   { name: 'Unshakeable Knight\'s Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Adentus\'s Gargantuan Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp', rarity: 'epic' },
@@ -80,7 +81,7 @@ const TL_GREATSWORD_ITEMS: TLItem[] = [
   { name: 'Morokai\'s Greatblade of Corruption', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp', rarity: 'epic' },
   { name: 'Naru\'s Frenzied Greatblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp', rarity: 'epic' },
   { name: 'Tevent\'s Warblade of Despair', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Bercant\'s Whispering Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00034.webp', rarity: 'epic' },
@@ -97,7 +98,7 @@ const TL_DAGGER_ITEMS: TLItem[] = [
   { name: 'Razorthorn Shredders', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00010.webp', rarity: 'epic' },
   { name: 'Rex Chimaerus\'s Fangs', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00038.webp', rarity: 'epic' },
   { name: 'Tevent\'s Fangs of Fury', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00035.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Aelon\'s Rejuvenating Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00034.webp', rarity: 'epic' },
@@ -114,7 +115,7 @@ const TL_BOW_ITEMS: TLItem[] = [
   { name: 'Tevent\'s Arc of Wailing Death', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00018.webp', rarity: 'epic' },
   { name: 'Titanspine Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00011.webp', rarity: 'epic' },
   { name: 'Toublek\'s Deathmark Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00033.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Akman\'s Bloodletting Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00031.webp', rarity: 'epic' },
@@ -131,7 +132,7 @@ const TL_CROSSBOW_ITEMS: TLItem[] = [
   { name: 'Rex Chimaerus\'s Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00007C.webp', rarity: 'epic' },
   { name: 'Stormbringer Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00017.webp', rarity: 'epic' },
   { name: 'Unrelenting Annihilation Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00020.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Codex of Deep Secrets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002B.webp', rarity: 'epic' },
@@ -148,7 +149,7 @@ const TL_WAND_ITEMS: TLItem[] = [
   { name: 'Shaikal\'s Mindfire Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00014.webp', rarity: 'epic' },
   { name: 'Tevent\'s Grasp of Withering', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00011.webp', rarity: 'epic' },
   { name: 'Tome of Proximate Remedy', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008A.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Abyssal Renaissance Foci', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00009.webp', rarity: 'epic' },
@@ -165,7 +166,7 @@ const TL_STAFF_ITEMS: TLItem[] = [
   { name: 'Staff of the Umbramancer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00027.webp', rarity: 'epic' },
   { name: 'Talus\'s Crystalline Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00032.webp', rarity: 'epic' },
   { name: 'Toublek\'s Shattering Quarterstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00014.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_SPEAR_ITEMS: TLItem[] = [
   { name: 'Crimson Hellskewer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00027.webp', rarity: 'epic' },
@@ -180,7 +181,7 @@ const TL_SPEAR_ITEMS: TLItem[] = [
   { name: 'Skull Severing Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00019.webp', rarity: 'epic' },
   { name: 'Spear of Unhinged Horror', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00029.webp', rarity: 'epic' },
   { name: 'Windsheer Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00024.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00022.webp', rarity: 'epic' },
@@ -222,7 +223,7 @@ const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
   { name: 'Visage of the Infernal Tyrant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00026.webp', rarity: 'epic' },
   { name: 'Visor of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_HM_00019.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00007.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00023.webp', rarity: 'epic' },
@@ -263,7 +264,7 @@ const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
   { name: 'Swirling Essence Robe', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_05001.webp', rarity: 'epic' },
   { name: 'Transcendent Tempest\'s Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00014.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Overcoat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015A.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Ancient Tapestry Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00016.webp', rarity: 'epic' },
@@ -285,7 +286,7 @@ const TL_CLOAK_ITEMS: TLItem[] = [
   { name: 'Starlight Fur Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00027.webp', rarity: 'epic' },
   { name: 'Steadfast Commander\'s Cape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00015.webp', rarity: 'epic' },
   { name: 'Supreme Devotion', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00018.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00005B.webp', rarity: 'epic' },
@@ -326,7 +327,7 @@ const TL_GLOVES_ITEMS: TLItem[] = [
   { name: 'Swirling Essence Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00020.webp', rarity: 'epic' },
   { name: 'Transcendent Tempest\'s Touch', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00014.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Caress', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00023.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_FEET_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001.webp', rarity: 'epic' },
@@ -368,7 +369,7 @@ const TL_FEET_ARMOR_ITEMS: TLItem[] = [
   { name: 'Transcendent Tempest\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00014.webp', rarity: 'epic' },
   { name: 'Violent Demonic Beast\'s Fur Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00026.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00023.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Arcane Shadow Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00023.webp', rarity: 'epic' },
@@ -409,7 +410,7 @@ const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
   { name: 'Transcendent Tempest\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00014.webp', rarity: 'epic' },
   { name: 'Trophy Adorned Leg Guards', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00026.webp', rarity: 'epic' },
   { name: 'Void Stalker\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_0001D.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Abyssal Grace Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp', rarity: 'epic'},
@@ -434,7 +435,7 @@ const TL_NECKLACE_ITEMS: TLItem[] = [
   { name: 'Slayer\'s Quicksilver Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp', rarity: 'epic'},
   { name: 'Thunderstorm Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp', rarity: 'epic'},
   { name: 'Wrapped Coin Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Abyssal Grace Charm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00018.webp', rarity: 'epic' },
@@ -460,7 +461,7 @@ const TL_BRACELET_ITEMS: TLItem[] = [
   { name: 'Skillful Shock Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002A.webp', rarity: 'epic' },
   { name: 'Skillful Silence Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011A.webp', rarity: 'epic' },
   { name: 'Twisted Coil of the Enduring', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp', rarity: 'epic' },
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_RING_ITEMS: TLItem[] = [
   { name: "Abyssal Grace Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp', rarity: 'epic'},
@@ -491,7 +492,7 @@ const TL_RING_ITEMS: TLItem[] = [
   { name: "Sinking Sun Signet", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp', rarity: 'epic'},
   { name: "Solitare of Purity", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp', rarity: 'epic'},
   { name: "Symbol of Nature's Advance", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Belt of Bloodlust', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp', rarity: 'epic'},
@@ -511,7 +512,7 @@ const TL_BELT_ITEMS: TLItem[] = [
   { name: 'Girdle of Treant Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp', rarity: 'epic'},
   { name: 'Hero\'s Legacy Warbelt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp', rarity: 'epic'},
   { name: 'Undisputed Champion\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 const TL_EARRING_ITEMS: TLItem[] = [
   { name: "Bloodbright Earrings", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp', rarity: 'epic'},
@@ -520,7 +521,7 @@ const TL_EARRING_ITEMS: TLItem[] = [
   { name: "Earrings of Glimmering Dew", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp', rarity: 'epic'},
   { name: "Earrings of Primal Foresight", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp', rarity: 'epic'},
   { name: "Gilded Granite Teardrops", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp', rarity: 'epic'},
-].filter(item => item.rarity === 'epic');
+].filter(item => item.rarity === 'epic').sort((a, b) => a.name.localeCompare(b.name));
 
 
 const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
@@ -586,51 +587,51 @@ const accessoryTypeOptions = [
 ];
 
 const traitOptions = [
-  { value: "Attack Speed", label: "Attack Speed" },
-  { value: "Back Critical Hit", label: "Back Critical Hit" },
-  { value: "Back Heavy Attack Chance", label: "Back Heavy Attack Chance" },
-  { value: "Back Hit Chance", label: "Back Hit Chance" },
-  { value: "Bind Chance", label: "Bind Chance" },
-  { value: "Buff Duration", label: "Buff Duration" },
-  { value: "Collision Chance", label: "Collision Chance" },
-  { value: "Collision Resistance", label: "Collision Resistance" },
-  { value: "Construct Bonus Damage", label: "Construct Bonus Damage" },
-  { value: "Cooldown Speed", label: "Cooldown Speed" },
-  { value: "Critical Hit Chance", label: "Critical Hit Chance" },
-  { value: "Debuff Duration", label: "Debuff Duration" },
-  { value: "Demon Bonus Damage", label: "Demon Bonus Damage" },
-  { value: "Front Critical Hit Chance", label: "Front Critical Hit Chance" },
-  { value: "Front Heavy Attack Chance", label: "Front Heavy Attack Chance" },
-  { value: "Front Hit Chance", label: "Front Hit Chance" },
-  { value: "Health Regen", label: "Health Regen" },
-  { value: "Heavy Attack Chance", label: "Heavy Attack Chance" },
-  { value: "Hit Chance", label: "Hit Chance" },
-  { value: "Humanoid Bonus Damage", label: "Humanoid Bonus Damage" },
-  { value: "Magic Endurance", label: "Magic Endurance" },
-  { value: "Magic Evasion", label: "Magic Evasion" },
-  { value: "Mana Cost Efficiency", label: "Mana Cost Efficiency" },
-  { value: "Mana Regen", label: "Mana Regen" },
-  { value: "Max Health", label: "Max Health" },
-  { value: "Max Mana", label: "Max Mana" },
-  { value: "Max Stamina", label: "Max Stamina" },
-  { value: "Melee Endurance", label: "Melee Endurance" },
-  { value: "Melee Evasion", label: "Melee Evasion" },
-  { value: "Movement Speed", label: "Movement Speed" },
-  { value: "Petrification Chance", label: "Petrification Chance" },
-  { value: "Petrification Resistance", label: "Petrification Resistance" },
-  { value: "Range", label: "Range" },
-  { value: "Side Critical Hit", label: "Side Critical Hit" },
-  { value: "Side Heavy Attack Chance", label: "Side Heavy Attack Chance" },
-  { value: "Side Hit Chance", label: "Side Hit Chance" },
-  { value: "Silence Chance", label: "Silence Chance" },
-  { value: "Silence Resistance", label: "Silence Resistance" },
-  { value: "Skill Damage Boost", label: "Skill Damage Boost" },
-  { value: "Skill Damage Resistance", label: "Skill Damage Resistance" },
-  { value: "Stun Chance", label: "Stun Chance" },
-  { value: "Stun Resistance", label: "Stun Resistance" },
-  { value: "Undead Bonus Damage", label: "Undead Bonus Damage" },
-  { value: "Weaken Chance", label: "Weaken Chance" },
-  { value: "Wildkin Bonus Damage", label: "Wildkin Bonus Damage" },
+  { value: 'Attack Speed', label: 'Attack Speed' },
+  { value: 'Back Critical Hit', label: 'Back Critical Hit' },
+  { value: 'Back Heavy Attack Chance', label: 'Back Heavy Attack Chance' },
+  { value: 'Back Hit Chance', label: 'Back Hit Chance' },
+  { value: 'Bind Chance', label: 'Bind Chance' },
+  { value: 'Buff Duration', label: 'Buff Duration' },
+  { value: 'Collision Chance', label: 'Collision Chance' },
+  { value: 'Collision Resistance', label: 'Collision Resistance' },
+  { value: 'Construct Bonus Damage', label: 'Construct Bonus Damage' },
+  { value: 'Cooldown Speed', label: 'Cooldown Speed' },
+  { value: 'Critical Hit Chance', label: 'Critical Hit Chance' },
+  { value: 'Debuff Duration', label: 'Debuff Duration' },
+  { value: 'Demon Bonus Damage', label: 'Demon Bonus Damage' },
+  { value: 'Front Critical Hit Chance', label: 'Front Critical Hit Chance' },
+  { value: 'Front Heavy Attack Chance', label: 'Front Heavy Attack Chance' },
+  { value: 'Front Hit Chance', label: 'Front Hit Chance' },
+  { value: 'Health Regen', label: 'Health Regen' },
+  { value: 'Heavy Attack Chance', label: 'Heavy Attack Chance' },
+  { value: 'Hit Chance', label: 'Hit Chance' },
+  { value: 'Humanoid Bonus Damage', label: 'Humanoid Bonus Damage' },
+  { value: 'Magic Endurance', label: 'Magic Endurance' },
+  { value: 'Magic Evasion', label: 'Magic Evasion' },
+  { value: 'Mana Cost Efficiency', label: 'Mana Cost Efficiency' },
+  { value: 'Mana Regen', label: 'Mana Regen' },
+  { value: 'Max Health', label: 'Max Health' },
+  { value: 'Max Mana', label: 'Max Mana' },
+  { value: 'Max Stamina', label: 'Max Stamina' },
+  { value: 'Melee Endurance', label: 'Melee Endurance' },
+  { value: 'Melee Evasion', label: 'Melee Evasion' },
+  { value: 'Movement Speed', label: 'Movement Speed' },
+  { value: 'Petrification Chance', label: 'Petrification Chance' },
+  { value: 'Petrification Resistance', label: 'Petrification Resistance' },
+  { value: 'Range', label: 'Range' },
+  { value: 'Side Critical Hit', label: 'Side Critical Hit' },
+  { value: 'Side Heavy Attack Chance', label: 'Side Heavy Attack Chance' },
+  { value: 'Side Hit Chance', label: 'Side Hit Chance' },
+  { value: 'Silence Chance', label: 'Silence Chance' },
+  { value: 'Silence Resistance', label: 'Silence Resistance' },
+  { value: 'Skill Damage Boost', label: 'Skill Damage Boost' },
+  { value: 'Skill Damage Resistance', label: 'Skill Damage Resistance' },
+  { value: 'Stun Chance', label: 'Stun Chance' },
+  { value: 'Stun Resistance', label: 'Stun Resistance' },
+  { value: 'Undead Bonus Damage', label: 'Undead Bonus Damage' },
+  { value: 'Weaken Chance', label: 'Weaken Chance' },
+  { value: 'Wildkin Bonus Damage', label: 'Wildkin Bonus Damage' },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 
@@ -1622,4 +1623,5 @@ export default function LootPageWrapper() {
     </Suspense>
   );
 }
+
 
