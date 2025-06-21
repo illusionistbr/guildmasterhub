@@ -383,3 +383,31 @@ export interface BankItem {
   droppedByMemberId?: string;
   droppedByMemberName?: string;
 }
+
+export type AuctionStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
+
+export interface AuctionBid {
+  bidderId: string;
+  bidderName: string;
+  amount: number;
+  timestamp: Timestamp;
+}
+
+export interface Auction {
+  id: string; // Firestore document ID
+  guildId: string;
+  item: Omit<BankItem, 'id' | 'status'>; // Embed the item details, removing redundant fields
+  status: AuctionStatus;
+  startingBid: number;
+  minBidIncrement: number;
+  currentBid: number;
+  currentWinnerId?: string;
+  bids: AuctionBid[];
+  startTime: Timestamp;
+  endTime: Timestamp;
+  allowedRoles?: TLRole[];
+  requiredWeapons?: TLWeapon[];
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp;
+}

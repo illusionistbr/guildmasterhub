@@ -739,7 +739,7 @@ function GuildSettingsPageContent() {
       setCustomRoles(rolesToSave);
 
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "Usuario", AuditActionType.PERMISSIONS_UPDATED_FOR_ROLE, {
-         details: { changedField: 'customRoles' } as any,
+         details: { changedField: 'customRoles' },
          roleName: "Todos os Cargos",
       });
 
@@ -1494,4 +1494,3 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
-

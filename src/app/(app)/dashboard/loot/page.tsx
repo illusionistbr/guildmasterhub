@@ -5,9 +5,9 @@ import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'reac
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo } from '@/types/guildmaster';
-import { GuildPermission } from '@/types/guildmaster';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch } from '@/lib/firebase';
+import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus } from '@/types/guildmaster';
+import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -17,11 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -31,9 +31,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import type { DateRange } from "react-day-picker";
-import { format } from 'date-fns';
+import { format, addHours, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -736,6 +738,14 @@ function LootPageContent() {
     );
   }, [currentUserRoleInfo, guild]);
 
+  const canCreateAuctions = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(
+      currentUserRoleInfo.roleName,
+      guild.customRoles,
+      GuildPermission.MANAGE_LOOT_AUCTIONS_CREATE
+    );
+  }, [currentUserRoleInfo, guild]);
 
   const form = useForm<LootFormValues>({
     resolver: zodResolver(lootFormSchema),
@@ -843,16 +853,6 @@ function LootPageContent() {
       setLoadingBankItems(false);
     }, (error: any) => {
       console.error("Error fetching bank items: ", error);
-       if (error.code === 'failed-precondition' && error.message.includes('index')) {
-          toast({
-              title: "Índice do Banco de Dados Necessário",
-              description: "Para ordenar os itens do banco, um índice do Firestore é necessário. Verifique o console para um link de criação.",
-              variant: "destructive",
-              duration: 15000,
-          });
-      } else {
-          toast({ title: "Erro ao carregar banco", description: "Não foi possível carregar os itens do banco em tempo real.", variant: "destructive" });
-      }
       setLoadingBankItems(false);
     });
 
@@ -887,30 +887,26 @@ function LootPageContent() {
         }
     }
     
-    const newItemPayload: { [key: string]: any } = {
+    const newItemPayload: Omit<BankItem, 'id'> = {
       createdAt: serverTimestamp() as Timestamp,
       itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
       imageUrl: imageUrlToUse,
       rarity: rarityToUse,
       status: 'Disponível',
+      weaponType: data.weaponType,
+      armorType: data.armorType,
+      accessoryType: data.accessoryType,
+      itemName: data.itemName,
+      trait: data.trait,
+      droppedByMemberId: data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID ? data.droppedByMemberId : undefined,
+      droppedByMemberName: data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID 
+        ? guildMembersForDropdown.find(m => m.value === data.droppedByMemberId)?.label
+        : undefined,
     };
-
-    if (data.itemName) newItemPayload.itemName = data.itemName;
-    if (data.trait) newItemPayload.trait = data.trait;
-    if (data.weaponType) newItemPayload.weaponType = data.weaponType;
-    if (data.armorType) newItemPayload.armorType = data.armorType;
-    if (data.accessoryType) newItemPayload.accessoryType = data.accessoryType;
-    
-    if (data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID) {
-        const droppedByMember = guildMembersForDropdown.find(m => m.value === data.droppedByMemberId);
-        if (droppedByMember) {
-          newItemPayload.droppedByMemberId = droppedByMember.value;
-          newItemPayload.droppedByMemberName = droppedByMember.label;
-        }
-    }
     
     // Clean up undefined fields before saving to Firestore
-    Object.keys(newItemPayload).forEach(key => {
+    Object.keys(newItemPayload).forEach(keyStr => {
+        const key = keyStr as keyof typeof newItemPayload;
         if (newItemPayload[key] === undefined || newItemPayload[key] === null) {
             delete newItemPayload[key];
         }
@@ -1153,10 +1149,10 @@ function LootPageContent() {
         </TabsContent>
 
         <TabsContent value="leiloes" className="mt-6">
-          <ComingSoon pageName="Leilões de Itens da Guilda" icon={<Dices className="h-8 w-8 text-primary" />} />
+          <AuctionsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateAuctions={canCreateAuctions} guildMembersForDropdown={guildMembersForDropdown}/>
         </TabsContent>
         <TabsContent value="rolagem" className="mt-6">
-          <ComingSoon pageName="Sistemas de Rolagem de Loot" icon={<Diamond className="h-8 w-8 text-primary" />} />
+          <ComingSoon pageName="Sistemas de Rolagem de Loot" icon={<Dices className="h-8 w-8 text-primary" />} />
         </TabsContent>
         <TabsContent value="configuracoes" className="mt-6">
           <ComingSoon pageName="Configurações do Módulo de Loot" icon={<Wrench className="h-8 w-8 text-primary" />} />
@@ -1164,6 +1160,207 @@ function LootPageContent() {
       </Tabs>
     </div>
   );
+}
+
+// New component for the Auctions Tab
+function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, guildMembersForDropdown }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, guildMembersForDropdown: { value: string; label: string }[] }) {
+  const [showNewAuctionDialog, setShowNewAuctionDialog] = useState(false);
+
+  return (
+    <div className="space-y-6">
+       <div className="flex justify-end">
+          <Button onClick={() => setShowNewAuctionDialog(true)} disabled={!canCreateAuctions}>
+            <Gavel className="mr-2 h-5 w-5" /> Novo Leilão
+          </Button>
+      </div>
+
+       <Card className="static-card-container text-center py-10">
+          <CardHeader><Gavel className="mx-auto h-16 w-16 text-muted-foreground mb-4" /></CardHeader>
+          <CardContent>
+            <CardTitle className="text-2xl">Nenhum Leilão Ativo</CardTitle>
+            <CardDescription className="mt-2">
+              Nenhum leilão está em andamento. Crie um novo leilão para começar a distribuir itens.
+            </CardDescription>
+          </CardContent>
+        </Card>
+      
+      <NewAuctionDialog 
+        isOpen={showNewAuctionDialog} 
+        onOpenChange={setShowNewAuctionDialog} 
+        guild={guild}
+        guildId={guildId}
+        currentUser={currentUser}
+        guildMembersForDropdown={guildMembersForDropdown}
+      />
+    </div>
+  );
+}
+
+// New Dialog component for creating auctions
+function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, guildMembersForDropdown }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, guildMembersForDropdown: { value: string; label: string }[] }) {
+    const { toast } = useToast();
+    const [creationMode, setCreationMode] = useState<'select' | 'create'>('create');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const tlRoleOptions = Object.values(TLRole).map(role => ({ id: role, label: role }));
+    const tlWeaponOptions = Object.values(TLWeapon).map(weapon => ({ id: weapon, label: weapon }));
+
+    const durationPresets = [
+        { label: "6 Horas", hours: 6 },
+        { label: "12 Horas", hours: 12 },
+        { label: "24 Horas", hours: 24 },
+        { label: "48 Horas", hours: 48 },
+        { label: "72 Horas", hours: 72 },
+    ];
+
+    const auctionFormSchema = z.object({
+      // Item fields
+      itemCategory: z.string().min(1, "Categoria do item é obrigatória."),
+      weaponType: z.string().optional(),
+      armorType: z.string().optional(),
+      accessoryType: z.string().optional(),
+      itemName: z.string().optional(),
+      trait: z.string().optional(),
+      // Auction fields
+      startingBid: z.coerce.number().min(1, "Lance inicial deve ser no mínimo 1.").default(1),
+      minBidIncrement: z.coerce.number().min(1, "Incremento mínimo deve ser no mínimo 1.").default(5),
+      startTime: z.date({ required_error: "Data de início é obrigatória." }),
+      endTime: z.date({ required_error: "Data de fim é obrigatória." }),
+      allowedRoles: z.array(z.string()).optional(),
+      requiredWeapons: z.array(z.string()).optional(),
+    }).superRefine((data, ctx) => {
+        // Item validation logic here...
+        if (data.startTime >= data.endTime) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data de fim deve ser posterior à data de início.", path: ["endTime"]});
+        }
+    });
+
+    type NewAuctionFormValues = z.infer<typeof auctionFormSchema>;
+
+    const form = useForm<NewAuctionFormValues>({
+        resolver: zodResolver(auctionFormSchema),
+        defaultValues: {
+            itemCategory: "",
+            startingBid: 1,
+            minBidIncrement: 5,
+            startTime: new Date(),
+            endTime: addHours(new Date(), 24),
+            allowedRoles: [],
+            requiredWeapons: [],
+        }
+    });
+    
+    const setAuctionDuration = (hours: number) => {
+        const startTime = form.getValues("startTime");
+        if (startTime) {
+            form.setValue("endTime", addHours(startTime, hours));
+        } else {
+            toast({ title: "Atenção", description: "Por favor, defina uma data de início primeiro.", variant: "default"});
+        }
+    };
+    
+    const handleAuctionSubmit: SubmitHandler<NewAuctionFormValues> = async (data) => {
+        toast({title: "Funcionalidade em desenvolvimento", description: "A criação de leilões a partir de novos itens será implementada em breve."});
+        console.log("Form data submitted:", data);
+        // Full logic to be implemented here
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="flex flex-col sm:max-w-3xl bg-card border-border max-h-[90vh]">
+                <DialogHeader className="p-6 pb-4 shrink-0">
+                    <DialogTitle className="font-headline text-primary">Criar Novo Leilão</DialogTitle>
+                    <DialogDescription>Selecione um item existente ou cadastre um novo para leiloar.</DialogDescription>
+                </DialogHeader>
+                
+                <Tabs value={creationMode} onValueChange={(value) => setCreationMode(value as 'select' | 'create')} className="px-6">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="create">Cadastrar Novo Item</TabsTrigger>
+                        <TabsTrigger value="select">Selecionar do Banco</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                
+                <div className="flex-grow overflow-y-auto px-6 py-4">
+                    <TabsContent value="select" className="m-0">
+                        <ComingSoon pageName="Seleção de Itens do Banco" />
+                    </TabsContent>
+                    <TabsContent value="create" className="m-0">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
+                                {/* Item Creation Fields Here - could be a reusable component */}
+                                <h3 className="text-lg font-semibold border-b pb-2">1. Detalhes do Item</h3>
+                                {/* Minimal item form for now */}
+                                <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel>Nome do Item <span className="text-destructive">*</span></FormLabel> <FormControl> <Input {...field} placeholder="Ex: Espada Lendária do Trovão"/> </FormControl> <FormMessage /> </FormItem> )}/>
+
+                                <h3 className="text-lg font-semibold border-b pb-2 pt-4">2. Detalhes do Leilão</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="startingBid" render={({ field }) => ( <FormItem> <FormLabel>Lance Inicial (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                                    <FormField control={form.control} name="minBidIncrement" render={({ field }) => ( <FormItem> <FormLabel>Incremento Mínimo (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                                </div>
+                                
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="startTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Início do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value, "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
+                                    <FormField control={form.control} name="endTime" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Fim do Leilão</FormLabel> <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}<CalendarIconLucide className="ml-auto h-4 w-4 opacity-50"/></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={format(field.value, "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/></div></PopoverContent></Popover> <FormMessage /> </FormItem> )}/>
+                                 </div>
+                                  <div>
+                                    <Label className="text-xs text-muted-foreground">Definir Duração Rápida</Label>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                        {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
+                                    </div>
+                                 </div>
+
+                                <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
+                                 <FormField control={form.control} name="allowedRoles" render={() => (
+                                    <FormItem>
+                                        <div className="mb-4">
+                                            <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
+                                            <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
+                                        </div>
+                                        <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                            {tlRoleOptions.map((item) => (
+                                                <FormField key={item.id} control={form.control} name="allowedRoles" render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
+                                                        <FormLabel className="font-normal">{item.label}</FormLabel>
+                                                    </FormItem>
+                                                )}/>
+                                            ))}
+                                        </div>
+                                    </FormItem>
+                                )}/>
+                                 <FormField control={form.control} name="requiredWeapons" render={() => (
+                                    <FormItem>
+                                        <div className="mb-4">
+                                            <FormLabel className="text-base">Armas Requeridas</FormLabel>
+                                            <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                            {tlWeaponOptions.map((item) => (
+                                                <FormField key={item.id} control={form.control} name="requiredWeapons" render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange((field.value || []).filter(v => v !== item.id)) }}/></FormControl>
+                                                        <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                    </FormItem>
+                                                )}/>
+                                            ))}
+                                        </div>
+                                    </FormItem>
+                                )}/>
+
+                                <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
+                                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
+                                    <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>}
+                                        Criar Leilão
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </TabsContent>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 export default function LootPageWrapper() {
