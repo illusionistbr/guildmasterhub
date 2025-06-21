@@ -4,6 +4,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper function to check if a user is a member of the guild
+    function isGuildMember(guildId) {
+      let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
+      return request.auth != null &&
+             guildData.memberIds != null &&
+             guildData.memberIds.hasAny([request.auth.uid]);
+    }
+    
     // Helper function to check if a user has a specific permission for a guild
     function hasGuildPermission(guildId, permissionName) {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
@@ -18,14 +26,7 @@ service cloud.firestore {
              permissionName in guildData.customRoles[guildData.roles[request.auth.uid].roleName].permissions;
     }
 
-    // Helper to check if a user is a member of the guild
-    function isGuildMember(guildId) {
-      let memberIds = get(/databases/$(database)/documents/guilds/$(guildId)).data.memberIds;
-      return request.auth != null && request.auth.uid in memberIds;
-    }
-
     // Simplified check for owner or a user with a broad admin-like permission.
-    // Use specific permissions for specific actions where possible.
     function isGuildAdminEquivalent(guildId) {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
       return request.auth != null &&
@@ -34,23 +35,15 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read, update: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
-      // Delete typically handled by admin tools or Cloud Functions
     }
 
     match /guilds/{guildId} {
       allow read: if request.auth != null;
-
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
-
       allow update: if request.auth != null && (
-        // Condition 1: Guild Owner can do (almost) anything to their guild document.
-        // Certain fields like ownerId itself should ideally be immutable after creation.
         request.auth.uid == resource.data.ownerId ||
-
-        // Condition 2: Updating general settings (name, description, game, region, server, tags, password, isOpen, socialLinks)
         (
           (
             (request.resource.data.name != resource.data.name ||
@@ -58,24 +51,19 @@ service cloud.firestore {
             request.resource.data.game != resource.data.game ||
             request.resource.data.region != resource.data.region ||
             request.resource.data.server != resource.data.server ||
-            request.resource.data.tags != resource.data.tags || // Note: List comparisons are exact
+            request.resource.data.tags != resource.data.tags || 
             request.resource.data.password != resource.data.password ||
             request.resource.data.isOpen != resource.data.isOpen ||
-            request.resource.data.socialLinks != resource.data.socialLinks // Note: Map comparisons are exact
+            request.resource.data.socialLinks != resource.data.socialLinks
             ) &&
-            // Only these fields are allowed to change under this condition
             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'game', 'region', 'server', 'tags', 'password', 'isOpen', 'socialLinks'])
           ) && hasGuildPermission(guildId, "MANAGE_GUILD_SETTINGS_GENERAL")
         ) ||
-
-        // Condition 3: Updating recruitment questions
         (
             request.resource.data.recruitmentQuestions != resource.data.recruitmentQuestions &&
             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recruitmentQuestions']) &&
-            hasGuildPermission(guildId, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS") // Or a new dedicated perm
+            hasGuildPermission(guildId, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS")
         ) ||
-
-        // Condition 4: Updating appearance (bannerUrl, logoUrl)
         (
           (request.resource.data.bannerUrl != resource.data.bannerUrl ||
            request.resource.data.logoUrl != resource.data.logoUrl
@@ -83,8 +71,6 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bannerUrl', 'logoUrl']) &&
           hasGuildPermission(guildId, "MANAGE_GUILD_SETTINGS_APPEARANCE")
         ) ||
-
-        // Condition 5: Updating DKP Settings
         (
           (request.resource.data.dkpSystemEnabled != resource.data.dkpSystemEnabled ||
            request.resource.data.dkpRedemptionWindow != resource.data.dkpRedemptionWindow ||
@@ -93,8 +79,6 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dkpSystemEnabled', 'dkpRedemptionWindow', 'dkpDefaultsPerCategory']) &&
           hasGuildPermission(guildId, "MANAGE_DKP_SETTINGS")
         ) ||
-
-        // Condition 6: Updating DKP Decay Settings
         (
           (request.resource.data.dkpDecayEnabled != resource.data.dkpDecayEnabled ||
            request.resource.data.dkpDecayPercentage != resource.data.dkpDecayPercentage ||
@@ -105,60 +89,39 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dkpDecayEnabled', 'dkpDecayPercentage', 'dkpDecayIntervalDays', 'dkpDecayInitialDate', 'lastDkpDecayTimestamp']) &&
           hasGuildPermission(guildId, "MANAGE_DKP_DECAY_SETTINGS")
         ) ||
-
-        // Condition 7: Updating customRoles (permissions management)
         (
-          request.resource.data.customRoles != resource.data.customRoles && // Map comparisons are exact
+          request.resource.data.customRoles != resource.data.customRoles &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customRoles']) &&
           hasGuildPermission(guildId, "MANAGE_ROLES_PERMISSIONS")
         ) ||
-
-        // Condition 8: Adding a member (accepting application)
-        // This means memberCount increases, memberIds gets a new ID, roles gets a new entry.
         (
           request.resource.data.memberCount == resource.data.memberCount + 1 &&
           request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1 &&
           request.resource.data.roles.keys().size() == resource.data.roles.keys().size() + 1 &&
-          // Ensure only these fields changed
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'memberIds', 'roles']) &&
           hasGuildPermission(guildId, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS")
         ) ||
-
-        // Condition 9: Kicking a member
-        // This means memberCount decreases, memberIds loses an ID, roles loses an entry.
         (
           request.resource.data.memberCount == resource.data.memberCount - 1 &&
           request.resource.data.memberIds.size() == resource.data.memberIds.size() - 1 &&
           request.resource.data.roles.keys().size() == resource.data.roles.keys().size() - 1 &&
-          // Ensure only these fields changed
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'memberIds', 'roles']) &&
           hasGuildPermission(guildId, "MANAGE_MEMBERS_KICK")
         ) ||
-
-        // Condition 10: User updating their OWN specific profile fields within the guild's roles map
         (
           request.resource.data.roles[request.auth.uid] != null && resource.data.roles[request.auth.uid] != null &&
-          // Check that only the user's own entry in roles is changing
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
           request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid]) &&
-          // And only allowed fields within their own role entry are changing
           request.resource.data.roles[request.auth.uid].diff(resource.data.roles[request.auth.uid]).affectedKeys().hasOnly([
             'characterNickname', 'gearScore', 'gearScoreScreenshotUrl', 'gearBuildLink', 'skillBuildLink', 'tlRole', 'tlPrimaryWeapon', 'tlSecondaryWeapon'
-            // Note: 'notes', 'status', 'roleName', 'dkpBalance' are NOT self-editable here.
           ])
-          // No specific guild-wide permission needed for self-profile updates within roles
         ) ||
-
-        // Condition 11: Admin updating OTHER member's roleName, status, or notes in roles map
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
-          // This requires iterating keys, which is hard. Instead, we check if *any* role entry has changed these fields.
-          // This is a broader permission but simpler to write. It relies on the calling code being correct.
-          // The check 'request.resource.data.roles.diff(resource.data.roles).affectedKeys().size() > 0' ensures some role changed.
-          request.resource.data.roles.keys().size() == resource.data.roles.keys().size() && // No new roles added/removed under this rule
+          request.resource.data.roles.keys().size() == resource.data.roles.keys().size() &&
           (
             (hasGuildPermission(guildId, "MANAGE_MEMBERS_EDIT_ROLE") &&
-             request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasAny(resource.data.roles.keys().removeAll([request.auth.uid])) // Ensure it's not self-change of role if that's restricted
+             request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasAny(resource.data.roles.keys().removeAll([request.auth.uid]))
             ) ||
             (hasGuildPermission(guildId, "MANAGE_MEMBERS_EDIT_STATUS") &&
              request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasAny(resource.data.roles.keys().removeAll([request.auth.uid]))
@@ -173,10 +136,8 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
 
       // --- Subcollections ---
-
       match /auditLogs/{logId} {
         allow read: if request.auth != null && hasGuildPermission(guildId, "VIEW_AUDIT_LOG");
-        // Create: Typically server-side or by a highly privileged user. Using isGuildAdminEquivalent as placeholder.
         allow create: if request.auth != null && isGuildAdminEquivalent(guildId);
         allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
       }
@@ -196,7 +157,6 @@ service cloud.firestore {
 
         match /manualConfirmations/{userId} {
           allow read: if request.auth != null && (request.auth.uid == userId || hasGuildPermission(guildId, "MANAGE_MANUAL_CONFIRMATIONS_APPROVE"));
-          // User creates their own confirmation, ensure userId in path matches auth and data
           allow create: if request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
           allow update: if request.auth != null && hasGuildPermission(guildId, "MANAGE_MANUAL_CONFIRMATIONS_APPROVE");
           allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
@@ -212,7 +172,6 @@ service cloud.firestore {
 
       match /notifications/{notificationId} {
         allow read: if request.auth != null;
-        // Create/update typically by server or highly privileged users.
         allow create, update: if request.auth != null && isGuildAdminEquivalent(guildId);
         allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
       }
@@ -222,37 +181,19 @@ service cloud.firestore {
          allow create: if request.auth != null && isGuildAdminEquivalent(guildId);
          allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
       }
-      
-      // **NEW** Loot System Rules
+
       match /bankItems/{itemId} {
-        // Any guild member can view the bank items
-        allow read: if isGuildMember(guildId);
-        // Only members with specific permission can add items
-        allow create: if hasGuildPermission(guildId, "MANAGE_LOOT_BANK_ADD");
-        // Only members with specific permission can manage (update/delete) items
-        allow update, delete: if hasGuildPermission(guildId, "MANAGE_LOOT_BANK_MANAGE");
+        allow read: if request.auth != null; 
+        allow create: if request.auth != null && hasGuildPermission(guildId, "MANAGE_LOOT_BANK_ADD");
+        allow update: if request.auth != null && hasGuildPermission(guildId, "MANAGE_LOOT_BANK_MANAGE");
+        allow delete: if request.auth != null && hasGuildPermission(guildId, "MANAGE_LOOT_BANK_MANAGE");
       }
 
-      match /lootAuctions/{auctionId} {
-        // Any guild member can view auctions
-        allow read: if isGuildMember(guildId);
-        // Only members with permission can create auctions
-        allow create: if hasGuildPermission(guildId, "MANAGE_LOOT_AUCTIONS_CREATE");
-        // Only members with permission can manage (e.g., update bids, close) auctions
-        allow update: if hasGuildPermission(guildId, "MANAGE_LOOT_AUCTIONS_MANAGE");
-        // Deleting auctions should be restricted
-        allow delete: if hasGuildPermission(guildId, "MANAGE_LOOT_SETTINGS");
-      }
-
-      match /lootRolls/{rollId} {
-        // Any guild member can view rolls
-        allow read: if isGuildMember(guildId);
-        // Only members with permission can create rolls
-        allow create: if hasGuildPermission(guildId, "MANAGE_LOOT_ROLLS_CREATE");
-        // Only members with permission can manage (e.g., update, close) rolls
-        allow update: if hasGuildPermission(guildId, "MANAGE_LOOT_ROLLS_MANAGE");
-        // Deleting rolls should be restricted
-        allow delete: if hasGuildPermission(guildId, "MANAGE_LOOT_SETTINGS");
+      match /auctions/{auctionId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && hasGuildPermission(guildId, "MANAGE_LOOT_AUCTIONS_CREATE");
+        allow update: if request.auth != null && hasGuildPermission(guildId, "MANAGE_LOOT_AUCTIONS_EDIT");
+        allow delete: if request.auth != null && hasGuildPermission(guildId, "MANAGE_LOOT_AUCTIONS_DELETE");
       }
     }
   }
