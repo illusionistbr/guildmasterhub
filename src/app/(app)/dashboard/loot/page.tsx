@@ -1651,17 +1651,17 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Início do Leilão</FormLabel>
                                                     <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
+                                                        <FormControl>
+                                                            <PopoverTrigger asChild>
                                                                 <Button
                                                                     variant={"outline"}
                                                                     className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}
+                                                                    {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
                                                                     <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
+                                                            </PopoverTrigger>
+                                                        </FormControl>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                                                             <div className="p-2 border-t">
@@ -1679,18 +1679,18 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Fim do Leilão</FormLabel>
-                                                     <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
+                                                    <Popover>
+                                                        <FormControl>
+                                                            <PopoverTrigger asChild>
                                                                 <Button
                                                                     variant={"outline"}
                                                                     className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                                                 >
-                                                                    {field.value ? format(field.value, "PPP HH:mm") : <span>Escolha a data e hora</span>}
+                                                                    {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
                                                                     <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
                                                                 </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
+                                                            </PopoverTrigger>
+                                                        </FormControl>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus />
                                                             <div className="p-2 border-t">
@@ -1713,7 +1713,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     <FormField
                                         control={form.control}
                                         name="allowedRoles"
-                                        render={() => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <div className="mb-4">
                                                     <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
@@ -1721,24 +1721,29 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 </div>
                                                 <div className="space-y-1">
                                                     {tlRoleOptions.map((item) => (
-                                                      <FormField
-                                                            key={item.id}
-                                                            control={form.control}
-                                                            name="allowedRoles"
-                                                            render={({ field }) => (
-                                                                <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2">
-                                                                    <FormControl>
+                                                        <FormField
+                                                          key={item.id}
+                                                          control={form.control}
+                                                          name="allowedRoles"
+                                                          render={({ field }) => (
+                                                            <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0 mb-2">
+                                                                <FormControl>
                                                                     <Checkbox
                                                                         checked={field.value?.includes(item.id)}
-                                                                        onCheckedChange={(checked) =>
-                                                                        checked ? field.onChange([...(field.value || []), item.id])
-                                                                                : field.onChange((field.value || []).filter(value => value !== item.id))
-                                                                        }
+                                                                        onCheckedChange={(checked) => {
+                                                                            return checked
+                                                                            ? field.onChange([...(field.value || []), item.id])
+                                                                            : field.onChange(
+                                                                                (field.value || []).filter(
+                                                                                (value) => value !== item.id
+                                                                                )
+                                                                            );
+                                                                        }}
                                                                     />
-                                                                    </FormControl>
-                                                                    <FormLabel className="font-normal">{item.label}</FormLabel>
-                                                                </FormItem>
-                                                            )}
+                                                                </FormControl>
+                                                                <FormLabel className="font-normal">{item.label}</FormLabel>
+                                                            </FormItem>
+                                                          )}
                                                         />
                                                     ))}
                                                 </div>
@@ -1749,7 +1754,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                     <FormField
                                         control={form.control}
                                         name="requiredWeapons"
-                                        render={() => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <div className="mb-4">
                                                     <FormLabel className="text-base">Armas Requeridas</FormLabel>
@@ -1758,23 +1763,28 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                                                     {tlWeaponOptions.map((item) => (
                                                         <FormField
-                                                            key={item.id}
-                                                            control={form.control}
-                                                            name="requiredWeapons"
-                                                            render={({ field }) => (
-                                                                <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
-                                                                    <FormControl>
-                                                                        <Checkbox
-                                                                            checked={field.value?.includes(item.id)}
-                                                                            onCheckedChange={(checked) =>
-                                                                                checked ? field.onChange([...(field.value || []), item.id])
-                                                                                        : field.onChange((field.value || []).filter(value => value !== item.id))
-                                                                            }
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                                                </FormItem>
-                                                            )}
+                                                          key={item.id}
+                                                          control={form.control}
+                                                          name="requiredWeapons"
+                                                          render={({ field }) => (
+                                                            <FormItem key={item.id} className="flex flex-row items-start space-x-2 space-y-0">
+                                                                <FormControl>
+                                                                    <Checkbox
+                                                                        checked={field.value?.includes(item.id)}
+                                                                        onCheckedChange={(checked) => {
+                                                                            return checked
+                                                                            ? field.onChange([...(field.value || []), item.id])
+                                                                            : field.onChange(
+                                                                                (field.value || []).filter(
+                                                                                (value) => value !== item.id
+                                                                                )
+                                                                            );
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
+                                                            </FormItem>
+                                                          )}
                                                         />
                                                     ))}
                                                 </div>
