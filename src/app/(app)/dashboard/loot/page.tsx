@@ -404,11 +404,11 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
         <div className="static-card-container bg-background/80 p-3 flex flex-col group rounded-lg transition-all duration-300">
             {/* Header with Name and Actions */}
             <div className="flex justify-between items-start mb-2 h-10">
-                <h3 className="font-semibold text-foreground text-sm leading-tight pr-2 pt-1">{item.itemName}</h3>
+                <h3 className="font-semibold text-foreground text-sm leading-tight pr-2 pt-1 text-center w-full">{item.itemName}</h3>
                 {canManageBankItem && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground">
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground absolute top-2 right-2">
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -454,7 +454,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
 
             {/* Info below image */}
             <div className="flex-grow flex flex-col mt-2 space-y-2">
-                <Badge className={cn("text-xs", statusBadgeClasses[item.status])}>{item.status}</Badge>
+                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
                 {item.trait && <p className="text-xs text-muted-foreground text-center truncate">{item.trait}</p>}
                 
                 <div className="mt-auto !mt-2">
@@ -962,10 +962,12 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                 <Label>Data de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
-                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
-                                        </Button>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                                {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
+                                            </Button>
+                                        </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
@@ -976,10 +978,12 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                 <Label>Data de Fim</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
-                                        </Button>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                                {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
+                                            </Button>
+                                        </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
