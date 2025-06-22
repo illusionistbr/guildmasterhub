@@ -40,7 +40,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair, Swords, Trash2, UploadCloud } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair, Swords, Trash2, UploadCloud, Axe } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -61,11 +61,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 const ITEMS_PER_PAGE = 15;
 
 const rarityBackgrounds: Record<BankItem['rarity'], string> = {
-    common: 'bg-slate-800 border-slate-600',
-    uncommon: 'bg-emerald-800 border-emerald-600',
-    rare: 'bg-sky-800 border-sky-600',
-    epic: 'bg-gradient-to-b from-purple-900 to-purple-700 border-purple-500',
-    legendary: 'bg-gradient-to-b from-amber-800 to-amber-600 border-amber-500',
+    common: 'bg-slate-700/50',
+    uncommon: 'bg-emerald-700/50',
+    rare: 'bg-sky-700/50',
+    epic: 'bg-purple-700/50',
+    legendary: 'bg-amber-700/50',
 };
 
 const statusBadgeClasses: Record<BankItemStatus, string> = {
@@ -108,9 +108,29 @@ type ItemFormValues = z.infer<typeof itemFormSchema>;
 const WEAPON_TYPES = ["Greatsword", "Longbow", "Daggers", "Crossbow", "Staff", "Wand & Tome", "Sword & Shield"];
 const ARMOR_TYPES = ["Helmet", "Chestpiece", "Gloves", "Pants", "Shoes"];
 const ACCESSORY_TYPES = ["Necklace", "Earring", "Ring", "Belt"];
-const WEAPON_ITEMS_MAP: Record<string, string[]> = { "Greatsword": ["Claymore of Destruction"], "Longbow": ["Elven Bow of Precision"] };
-const ARMOR_ITEMS_MAP: Record<string, string[]> = { "Helmet": ["Helm of Valor"], "Chestpiece": ["Cuirass of the Guardian"] };
-const ACCESSORY_ITEMS_MAP: Record<string, string[]> = { "Ring": ["Ring of Power"], "Necklace": ["Amulet of Kings"] };
+
+const WEAPON_ITEMS_MAP: Record<string, string[]> = {
+    "Greatsword": ["Void-Edge Greatsword", "Dragon's Maw Blade", "Claymore of Destruction"],
+    "Longbow": ["Storm-Caller Longbow", "Whisperwind Bow", "Elven Bow of Precision"],
+    "Daggers": ["Shadowstrike Blades", "Twin Fangs of the Viper", "Soul-Eater Daggers"],
+    "Crossbow": ["Bolt-Thrower of the Citadel", "Hell-Screamer Repeater", "Eagle Eye Arbalest"],
+    "Staff": ["Staff of the Archmagus", "Scepter of Cosmic Fury", "Dragon-Soul Staff"],
+    "Wand & Tome": ["Wand of Abyssal Secrets", "Tome of Forgotten Lore", "Celestial Pointer"],
+    "Sword & Shield": ["Aegis of the Protector", "Lionheart Longsword", "Bulwark of the Unbroken"]
+};
+const ARMOR_ITEMS_MAP: Record<string, string[]> = {
+    "Helmet": ["Crown of the Abyss", "Vindicator's Greathelm", "Helm of Valor"],
+    "Chestpiece": ["Breastplate of Eternal Flame", "Shadow-Weave Robes", "Cuirass of the Guardian"],
+    "Gloves": ["Gauntlets of the Colossus", "Gloves of the Deft Hand", "Soul-Forged Vambraces"],
+    "Pants": ["Greaves of the Unstoppable Force", "Legplates of the Phoenix", "Spell-Woven Breeches"],
+    "Shoes": ["Boots of the Wanderer", "Sabatons of the Juggernaut", "Fleet-Footed Slippers"]
+};
+const ACCESSORY_ITEMS_MAP: Record<string, string[]> = {
+    "Necklace": ["Talisman of the Storm Lord", "Pendant of Arcane Power", "Amulet of Kings"],
+    "Earring": ["Earring of the Whispering Wind", "Sunstone Earring", "Abyssal Pearl Stud"],
+    "Ring": ["Band of the Archon", "Seal of the Shadow Serpent", "Ring of Power"],
+    "Belt": ["Girdle of Giant Strength", "Sash of the Sorcerer-King", "Cinch of the Wild Spirit"]
+};
 const itemSubTypesRequiringTrait = ["Greatsword", "Longbow", "Staff"];
 
 
@@ -310,7 +330,7 @@ function LootPageContent() {
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -401,63 +421,58 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     };
 
     return (
-        <div className="static-card-container bg-background/80 p-3 flex flex-col group rounded-lg transition-all duration-300">
-            {/* Header with Name and Actions */}
-            <div className="flex justify-between items-start mb-2 h-10">
-                <h3 className="font-semibold text-foreground text-sm leading-tight pr-2 pt-1 text-center w-full">{item.itemName}</h3>
-                {canManageBankItem && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground absolute top-2 right-2">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem disabled>Editar</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">Excluir</DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                                        <ShadCnAlertDialogDescription>Tem certeza que quer excluir o item "{item.itemName}"? Esta ação não pode ser desfeita.</ShadCnAlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
-                                            {isDeleting ? <Loader2 className="animate-spin" /> : "Excluir"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-            </div>
+        <Card className="static-card-container bg-background/80 flex flex-col group transition-all duration-300">
+            <CardHeader className={cn("p-2 text-center", rarityBackgrounds[item.rarity])}>
+                <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
+            </CardHeader>
 
-            {/* Image Container */}
-            <div className={cn(
-                "w-full aspect-square rounded-md flex items-center justify-center p-2 relative transition-all duration-300",
-                rarityBackgrounds[item.rarity]
-            )}>
-                <Image
-                    src={item.imageUrl}
-                    alt={item.itemName || "Item"}
-                    width={150} 
-                    height={150}
-                    className="object-contain transition-transform duration-300 group-hover:scale-110"
-                    data-ai-hint="game item"
-                />
-            </div>
-
-            {/* Info below image */}
-            <div className="flex-grow flex flex-col mt-2 space-y-2">
-                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                {item.trait && <p className="text-xs text-muted-foreground text-center truncate">{item.trait}</p>}
+            <CardContent className="p-2 flex-grow flex flex-col">
+                <div className="w-full aspect-square rounded-md flex items-center justify-center p-1 relative transition-all duration-300 bg-muted/20 mb-2">
+                    <Image
+                        src={item.imageUrl}
+                        alt={item.itemName || "Item"}
+                        width={150} 
+                        height={150}
+                        className="object-contain transition-transform duration-300 group-hover:scale-110"
+                        data-ai-hint="game item"
+                    />
+                    {canManageBankItem && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 bg-black/30 hover:bg-black/60 text-white z-10">
+                                    <MoreHorizontal />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem disabled>Editar</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">Excluir</DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                            <ShadCnAlertDialogDescription>Tem certeza que quer excluir o item "{item.itemName}"? Esta ação não pode ser desfeita.</ShadCnAlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                                                {isDeleting ? <Loader2 className="animate-spin" /> : "Excluir"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
                 
-                <div className="mt-auto !mt-2">
+                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
+                
+                <div className="mt-auto pt-2 space-y-1 text-center">
+                    {item.trait && <p className="text-xs text-muted-foreground truncate" title={item.trait}>{item.trait}</p>}
+                    
                     {item.status === 'Disponível' && canStartAuction && (
                         <Button size="sm" variant="outline" className="h-7 text-xs w-full" onClick={() => {
                             const event = new CustomEvent('openAuctionWizard', { detail: item });
@@ -467,8 +482,8 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                         </Button>
                     )}
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -478,7 +493,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     const { toast } = useToast();
     const form = useForm<ItemFormValues>({
         resolver: zodResolver(itemFormSchema),
-        defaultValues: { itemCategory: "", rarity: 'common', imageUrl: "" }
+        defaultValues: { itemCategory: "", rarity: 'epic', imageUrl: "" }
     });
 
     const { watch, reset, setValue } = form;
@@ -487,15 +502,17 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     const watchedArmorType = watch('armorType');
     const watchedAccessoryType = watch('accessoryType');
 
-    const currentItemNameOptions =
-        watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
-        watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-        watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
-        [];
+    const currentItemNameOptions = useMemo(() => {
+        return watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
+               watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
+               watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
+               [];
+    }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType]);
     
-    const isTraitMandatory =
-        (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
-        (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType));
+    const isTraitMandatory = useMemo(() => {
+        return (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
+               (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType));
+    }, [watchedItemCategory, watchedWeaponType, watchedArmorType]);
 
 
     const onSubmit: SubmitHandler<ItemFormValues> = async (data) => {
@@ -962,12 +979,10 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                 <Label>Data de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
-                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                                {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
-                                            </Button>
-                                        </FormControl>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
+                                        </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
@@ -978,12 +993,10 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                 <Label>Data de Fim</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                                {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
-                                            </Button>
-                                        </FormControl>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
+                                        </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
@@ -1034,3 +1047,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
+    
