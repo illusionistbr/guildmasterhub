@@ -306,11 +306,11 @@ function LootPageContent() {
             </div>
 
             {loadingBankItems ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -401,14 +401,15 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     };
 
     return (
-        <Card className="static-card-container flex flex-col group overflow-hidden">
-            <CardHeader className={cn("p-2 relative aspect-square flex items-center justify-center border-2", rarityBackgrounds[item.rarity])}>
-                <Image src={item.imageUrl} alt={item.itemName || "Item"} layout="fill" objectFit="contain" className="transition-transform duration-300 group-hover:scale-110" data-ai-hint="game item"/>
+        <div className="static-card-container bg-background/80 p-3 flex flex-col group rounded-lg transition-all duration-300">
+            {/* Header with Name and Actions */}
+            <div className="flex justify-between items-start mb-2 h-10">
+                <h3 className="font-semibold text-foreground text-sm leading-tight pr-2 pt-1">{item.itemName}</h3>
                 {canManageBankItem && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 bg-black/30 hover:bg-black/60 text-white z-10">
-                                <MoreHorizontal />
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground">
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -434,16 +435,31 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
-            </CardHeader>
-            <CardContent className="p-3 flex-grow flex flex-col justify-between">
-                <div>
-                    <CardTitle className="text-base font-semibold leading-tight truncate">{item.itemName}</CardTitle>
-                    {item.trait && <CardDescription className="text-xs truncate">{item.trait}</CardDescription>}
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                    <Badge className={cn("text-xs", statusBadgeClasses[item.status])}>{item.status}</Badge>
+            </div>
+
+            {/* Image Container */}
+            <div className={cn(
+                "w-full aspect-square rounded-md flex items-center justify-center p-2 relative transition-all duration-300",
+                rarityBackgrounds[item.rarity]
+            )}>
+                <Image
+                    src={item.imageUrl}
+                    alt={item.itemName || "Item"}
+                    width={150} 
+                    height={150}
+                    className="object-contain transition-transform duration-300 group-hover:scale-110"
+                    data-ai-hint="game item"
+                />
+            </div>
+
+            {/* Info below image */}
+            <div className="flex-grow flex flex-col mt-2 space-y-2">
+                <Badge className={cn("text-xs", statusBadgeClasses[item.status])}>{item.status}</Badge>
+                {item.trait && <p className="text-xs text-muted-foreground text-center truncate">{item.trait}</p>}
+                
+                <div className="mt-auto !mt-2">
                     {item.status === 'Disponível' && canStartAuction && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => {
+                        <Button size="sm" variant="outline" className="h-7 text-xs w-full" onClick={() => {
                             const event = new CustomEvent('openAuctionWizard', { detail: item });
                             window.dispatchEvent(event);
                         }}>
@@ -451,8 +467,8 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                         </Button>
                     )}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 
@@ -825,8 +841,6 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         minIncrement: 1,
         startTime: new Date(),
         endTime: addHours(new Date(), 24),
-        roleRestriction: 'Geral',
-        weaponRestriction: 'Geral',
     });
 
     const resetWizard = () => {
@@ -837,8 +851,6 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
             minIncrement: 1,
             startTime: new Date(),
             endTime: addHours(new Date(), 24),
-            roleRestriction: 'Geral',
-            weaponRestriction: 'Geral',
         });
         onOpenChange(false);
     };
