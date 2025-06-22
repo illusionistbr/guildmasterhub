@@ -306,11 +306,11 @@ function LootPageContent() {
             </div>
 
             {loadingBankItems ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -404,7 +404,6 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
         <Card className="static-card-container flex flex-col group overflow-hidden">
             <CardHeader className={cn("p-2 relative aspect-square flex items-center justify-center border-2", rarityBackgrounds[item.rarity])}>
                 <Image src={item.imageUrl} alt={item.itemName || "Item"} layout="fill" objectFit="contain" className="transition-transform duration-300 group-hover:scale-110" data-ai-hint="game item"/>
-                <Badge variant="secondary" className="absolute top-2 left-2 z-10 capitalize">{item.rarity}</Badge>
                 {canManageBankItem && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -444,7 +443,10 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 <div className="mt-2 flex items-center justify-between">
                     <Badge className={cn("text-xs", statusBadgeClasses[item.status])}>{item.status}</Badge>
                     {item.status === 'Disponível' && canStartAuction && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" disabled>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => {
+                            const event = new CustomEvent('openAuctionWizard', { detail: item });
+                            window.dispatchEvent(event);
+                        }}>
                            <Gavel className="mr-1 h-3 w-3"/> Leiloar
                         </Button>
                     )}
@@ -472,7 +474,8 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     const currentItemNameOptions =
         watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
         watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-        watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : [];
+        watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
+        [];
     
     const isTraitMandatory =
         (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
@@ -650,6 +653,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   const [loading, setLoading] = useState(true);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showNoItemsAlert, setShowNoItemsAlert] = useState(false);
+  const [initialItemForWizard, setInitialItemForWizard] = useState<BankItem | null>(null);
 
   const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
 
@@ -668,7 +672,18 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const handleOpenWizard = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setInitialItemForWizard(customEvent.detail);
+      setIsWizardOpen(true);
+    };
+    
+    window.addEventListener('openAuctionWizard', handleOpenWizard);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('openAuctionWizard', handleOpenWizard);
+    };
   }, [guildId]);
   
   if (loading) {
@@ -683,6 +698,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   }
 
   const handleNewAuctionClick = () => {
+    setInitialItemForWizard(null);
     if (availableBankItems.length === 0) {
       setShowNoItemsAlert(true);
     } else {
@@ -769,6 +785,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
         guildId={guildId}
         currentUser={currentUser}
         bankItems={availableBankItems}
+        initialItem={initialItemForWizard}
       />
       
       <AlertDialog open={showNoItemsAlert} onOpenChange={setShowNoItemsAlert}>
@@ -788,17 +805,28 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   );
 }
 
-function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[] }) {
+function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems, initialItem }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[], initialItem: BankItem | null }) {
     const { toast } = useToast();
     const [step, setStep] = useState<'select' | 'details' | 'confirm'>('select');
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
+    useEffect(() => {
+        if (isOpen && initialItem) {
+            setSelectedItem(initialItem);
+            setStep('details');
+        } else if (isOpen) {
+            setStep('select');
+        }
+    }, [isOpen, initialItem]);
+
     const [config, setConfig] = useState({
         startBid: 1,
         minIncrement: 1,
         startTime: new Date(),
         endTime: addHours(new Date(), 24),
+        roleRestriction: 'Geral',
+        weaponRestriction: 'Geral',
     });
 
     const resetWizard = () => {
@@ -809,6 +837,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
             minIncrement: 1,
             startTime: new Date(),
             endTime: addHours(new Date(), 24),
+            roleRestriction: 'Geral',
+            weaponRestriction: 'Geral',
         });
         onOpenChange(false);
     };
@@ -821,8 +851,12 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
     const handlePrevStep = () => {
         if (step === 'confirm') setStep('details');
         else if (step === 'details') {
-            setSelectedItem(null);
-            setStep('select');
+            if (initialItem) { // If started from a specific item, just close the dialog
+                resetWizard();
+            } else { // If started from "New Auction", go back to item selection
+                setSelectedItem(null);
+                setStep('select');
+            }
         }
     };
     
@@ -911,31 +945,35 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                           <Label>Aumento mínimo por lance (DKP)</Label>
                           <Input type="number" value={config.minIncrement} onChange={(e) => setConfig((c) => ({ ...c, minIncrement: Number(e.target.value) }))} min="1"/>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                           <div>
+                         <div className="grid grid-cols-2 gap-4">
+                            <div>
                                 <Label>Data de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
                                             <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.startTime ? format(config.startTime, "PPP") : <span>Data de início</span>}
+                                            {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus /></PopoverContent>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
+                                    </PopoverContent>
                                 </Popover>
-                           </div>
-                           <div>
+                            </div>
+                            <div>
                                 <Label>Data de Fim</Label>
-                                 <Popover>
+                                <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
                                             <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.endTime ? format(config.endTime, "PPP") : <span>Data de fim</span>}
+                                            {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus /></PopoverContent>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
+                                    </PopoverContent>
                                 </Popover>
-                           </div>
+                            </div>
                         </div>
                       </div>
                       <DialogFooter>
