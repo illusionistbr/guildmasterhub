@@ -12,6 +12,17 @@ import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription as ShadCnAlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -22,7 +33,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -42,600 +53,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ITEMS_PER_PAGE = 15;
 
-interface TLItem {
-  name: string;
-  imageUrl: string;
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-}
-
-const TL_SWORD_ITEMS: TLItem[] = [
-  { name: 'Ahzreil\'s Siphoning Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00026.webp', rarity: 'epic' },
-  { name: 'Blade of Fiendish Fortitude', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017.webp', rarity: 'epic' },
-  { name: 'Bulwark of Invulnerability', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00016.webp', rarity: 'epic' },
-  { name: 'Bulwark of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00049.webp', rarity: 'epic' },
-  { name: 'Chernobog\'s Blade of Beheading', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00033.webp', rarity: 'epic' },
-  { name: 'Cornelius\'s Animated Edge', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00008A.webp', rarity: 'epic' },
-  { name: 'Crimson Doomblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00038.webp', rarity: 'epic' },
-  { name: 'Daigon\'s Stormblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017A.webp', rarity: 'epic' },
-  { name: 'Deluzhnoa\'s Edge of Eternal Frost', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00052.webp', rarity: 'epic' },
-  { name: 'Heroic Blade of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00032.webp', rarity: 'epic' },
-  { name: 'Karnix\'s Netherblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00015.webp', rarity: 'epic' },
-  { name: 'Nirma\'s Sword of Echoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00035.webp', rarity: 'epic' },
-  { name: 'Queen Bellandir\'s Languishing Blade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00034.webp', rarity: 'epic' },
-  { name: 'Unshakeable Knight\'s Sword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_GREATSWORD_ITEMS: TLItem[] = [
-  { name: 'Adentus\'s Gargantuan Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp', rarity: 'epic' },
-  { name: 'Broadsword of the Juggernaut', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp', rarity: 'epic' },
-  { name: 'Celestial Cyclone Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp', rarity: 'epic' },
-  { name: 'Cordy\'s Warblade of Creeping Doom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp', rarity: 'epic' },
-  { name: 'Duke Magna\'s Fury Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp', rarity: 'epic' },
-  { name: 'Duke Magna\'s Provoking Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00022.webp', rarity: 'epic' },
-  { name: 'Grayeye\'s Bloodlust Greatsword', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00050.webp', rarity: 'epic' },
-  { name: 'Greatblade of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00049.webp', rarity: 'epic' },
-  { name: 'Greatsword of the Banshee', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00018.webp', rarity: 'epic' },
-  { name: 'Heroic Broadsword of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00038.webp', rarity: 'epic' },
-  { name: 'Immortal Titanic Quakeblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp', rarity: 'epic' },
-  { name: 'Junobote\'s Juggernaut Warblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00039.webp', rarity: 'epic' },
-  { name: 'Morokai\'s Greatblade of Corruption', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp', rarity: 'epic' },
-  { name: 'Naru\'s Frenzied Greatblade', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp', rarity: 'epic' },
-  { name: 'Tevent\'s Warblade of Despair', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_DAGGER_ITEMS: TLItem[] = [
-  { name: 'Bercant\'s Whispering Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00034.webp', rarity: 'epic' },
-  { name: 'Blades of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00049.webp', rarity: 'epic' },
-  { name: 'Darkslayer Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00036.webp', rarity: 'epic' },
-  { name: 'Deluzhnoa\'s Permafrost Razors', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00052.webp', rarity: 'epic' },
-  { name: 'Destiny Binders', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00017.webp', rarity: 'epic' },
-  { name: 'Heroic Daggers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00013.webp', rarity: 'epic' },
-  { name: 'Kowazan\'s Twilight Daggers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00037.webp', rarity: 'epic' },
-  { name: 'Lequirus\'s Wicked Thorns', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00014.webp', rarity: 'epic' },
-  { name: 'Leviathan\'s Bladed Tendrils', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00051.webp', rarity: 'epic' },
-  { name: 'Minezerok\'s Daggers of Crippling', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00039.webp', rarity: 'epic' },
-  { name: 'Peerless Obsidian Razors', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00027.webp', rarity: 'epic' },
-  { name: 'Razorthorn Shredders', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00010.webp', rarity: 'epic' },
-  { name: 'Rex Chimaerus\'s Fangs', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00038.webp', rarity: 'epic' },
-  { name: 'Tevent\'s Fangs of Fury', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Dagger_00035.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_BOW_ITEMS: TLItem[] = [
-  { name: 'Aelon\'s Rejuvenating Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00034.webp', rarity: 'epic' },
-  { name: 'Arc of Lunar Radiance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00007A.webp', rarity: 'epic' },
-  { name: 'Bercant\'s Steelstring Bow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00028.webp', rarity: 'epic' },
-  { name: 'Deluzhnoa\'s Arc of Frozen Death', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00017.webp', rarity: 'epic' },
-  { name: 'Heroic Longbow of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00030.webp', rarity: 'epic' },
-  { name: 'Karnix\'s Netherbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00032.webp', rarity: 'epic' },
-  { name: 'Leviathan\'s Bloodstorm Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00051.webp', rarity: 'epic' },
-  { name: 'Longbow of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00049.webp', rarity: 'epic' },
-  { name: 'Longbow of the World Tree', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00020.webp', rarity: 'epic' },
-  { name: 'Mystic Truestrike Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00010.webp', rarity: 'epic' },
-  { name: 'Shaikal\'s Deepmind Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00009.webp', rarity: 'epic' },
-  { name: 'Tevent\'s Arc of Wailing Death', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00018.webp', rarity: 'epic' },
-  { name: 'Titanspine Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00011.webp', rarity: 'epic' },
-  { name: 'Toublek\'s Deathmark Longbow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Bow_00033.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_CROSSBOW_ITEMS: TLItem[] = [
-  { name: 'Akman\'s Bloodletting Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00031.webp', rarity: 'epic' },
-  { name: 'Bercant\'s Spineflower Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00050.webp', rarity: 'epic' },
-  { name: 'Cordy\'s Stormspore Spike Slingers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00030.webp', rarity: 'epic' },
-  { name: 'Crossbows of Infinite Steel', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00028.webp', rarity: 'epic' },
-  { name: 'Crossbows of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00049.webp', rarity: 'epic' },
-  { name: 'Crossbows of the Darkest Night', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00023.webp', rarity: 'epic' },
-  { name: 'Heroic Crossbows of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00022.webp', rarity: 'epic' },
-  { name: 'Kowazan\'s Sunflare Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00035.webp', rarity: 'epic' },
-  { name: 'Malakar\'s Energizing Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00034.webp', rarity: 'epic' },
-  { name: 'Moonlight Echo Repeaters', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00018.webp', rarity: 'epic' },
-  { name: 'Queen Bellandir\'s Toxic Spine Throwers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00033.webp', rarity: 'epic' },
-  { name: 'Rex Chimaerus\'s Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00007C.webp', rarity: 'epic' },
-  { name: 'Stormbringer Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00017.webp', rarity: 'epic' },
-  { name: 'Unrelenting Annihilation Crossbows', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Crossbow_00020.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_WAND_ITEMS: TLItem[] = [
-  { name: 'Codex of Deep Secrets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00002B.webp', rarity: 'epic' },
-  { name: 'Cordy\'s Grasp of Manipulation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00015.webp', rarity: 'epic' },
-  { name: 'Deckman\'s Balefire Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00003C.webp', rarity: 'epic' },
-  { name: 'Excavator\'s Mysterious Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00012.webp', rarity: 'epic' },
-  { name: 'Forbidden Demonic Lexicon', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008B.webp', rarity: 'epic' },
-  { name: 'Heroic Scepter of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00004C.webp', rarity: 'epic' },
-  { name: 'Khanzaizin\'s Valorous Wand', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00017.webp', rarity: 'epic' },
-  { name: 'Lequirus\'s Coveted Tome', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00013.webp', rarity: 'epic' },
-  { name: 'Overture of Eternal Salvation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00006A.webp', rarity: 'epic' },
-  { name: 'Rod of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00049.webp', rarity: 'epic' },
-  { name: 'Sacred Manuscript', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00001C.webp', rarity: 'epic' },
-  { name: 'Shaikal\'s Mindfire Scepter', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00014.webp', rarity: 'epic' },
-  { name: 'Tevent\'s Grasp of Withering', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00011.webp', rarity: 'epic' },
-  { name: 'Tome of Proximate Remedy', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Wand_00008A.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_STAFF_ITEMS: TLItem[] = [
-  { name: 'Abyssal Renaissance Foci', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00009.webp', rarity: 'epic' },
-  { name: 'Archstaff of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00049.webp', rarity: 'epic' },
-  { name: 'Aridus\'s Gnarled Voidstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00033.webp', rarity: 'epic' },
-  { name: 'Daigon\'s Charred Emberstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_staff_00036.webp', rarity: 'epic' },
-  { name: 'Deluzhnoa\'s Ancient Petrified Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00018A.webp', rarity: 'epic' },
-  { name: 'Ebon Soulwind Archstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00010.webp', rarity: 'epic' },
-  { name: 'Grayeye\'s Electrified Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00017A.webp', rarity: 'epic' },
-  { name: 'Heroic Staff of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00016.webp', rarity: 'epic' },
-  { name: 'Queen Bellandir\'s Hivemind Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00019.webp', rarity: 'epic' },
-  { name: 'Staff of Enlightened Reform', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00031.webp', rarity: 'epic' },
-  { name: 'Staff of Lucid Light', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00028.webp', rarity: 'epic' },
-  { name: 'Staff of the Umbramancer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00027.webp', rarity: 'epic' },
-  { name: 'Talus\'s Crystalline Staff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00032.webp', rarity: 'epic' },
-  { name: 'Toublek\'s Shattering Quarterstaff', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Staff_00014.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_SPEAR_ITEMS: TLItem[] = [
-  { name: 'Crimson Hellskewer', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00027.webp', rarity: 'epic' },
-  { name: 'Deluzhnoa\'s Serrated Shard', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00026.webp', rarity: 'epic' },
-  { name: 'Heroic Polearm of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00015.webp', rarity: 'epic' },
-  { name: 'Junobote\'s Smoldering Ranseur', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00021.webp', rarity: 'epic' },
-  { name: 'Naru\'s Sawfang Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00030.webp', rarity: 'epic' },
-  { name: 'Polearm of the Black Anvil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00022.webp', rarity: 'epic' },
-  { name: 'Queen Bellandir\'s Serrated Spike', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00018.webp', rarity: 'epic' },
-  { name: 'Ranseur of Murderous Glee', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00013.webp', rarity: 'epic' },
-  { name: 'Shaikal\'s Mindveil Harpoon', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00016.webp', rarity: 'epic' },
-  { name: 'Skull Severing Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00019.webp', rarity: 'epic' },
-  { name: 'Spear of Unhinged Horror', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00029.webp', rarity: 'epic' },
-  { name: 'Windsheer Spear', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Spear_00024.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_HEAD_ARMOR_ITEMS: TLItem[] = [
-  { name: 'Arcane Shadow Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00022.webp', rarity: 'epic' },
-  { name: 'Ardent Herald\'s Crown', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00001.webp', rarity: 'epic' },
-  { name: 'Ascended Guardian Hood', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00011A.webp', rarity: 'epic' },
-  { name: 'Auric Vanguard\'s Barbute', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00014A.webp', rarity: 'epic' },
-  { name: 'Blessed Templar Helmet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00016.webp', rarity: 'epic' },
-  { name: 'Chosen Vanquisher\'s Visage', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_06001A.webp', rarity: 'epic' },
-  { name: 'Crown of Icebound Infinity', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00010.webp', rarity: 'epic' },
-  { name: 'Crowned Skull of Victory', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00026.webp', rarity: 'epic' },
-  { name: 'Divine Justiciar Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_06001.webp', rarity: 'epic' },
-  { name: 'Dread Admiral\'s Bicorne', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00021.webp', rarity: 'epic' },
-  { name: 'Eternal Warlord\'s Faceguard', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00012A.webp', rarity: 'epic' },
-  { name: 'Feral Prophet\'s Crown', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00002.webp', rarity: 'epic' },
-  { name: 'First Light\'s Halo', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00006A.webp', rarity: 'epic' },
-  { name: 'Forgotten Lotus Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00008.webp', rarity: 'epic' },
-  { name: 'Gilded Raven Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00012A.webp', rarity: 'epic' },
-  { name: 'Hallowed Hat of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00005B.webp', rarity: 'epic' },
-  { name: 'Helm of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00018.webp', rarity: 'epic' },
-  { name: 'Heroic Hat of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00005A.webp', rarity: 'epic' },
-  { name: 'Heroic Helmet of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_06002.webp', rarity: 'epic' },
-  { name: 'Heroic Hood of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00014.webp', rarity: 'epic' },
-  { name: 'Heroic Tricorne of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003.webp', rarity: 'epic' },
-  { name: 'Immortal Legionnaire\'s Helm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00019A.webp', rarity: 'epic' },
-  { name: 'Imperial Seeker\'s Circlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00003.webp', rarity: 'epic' },
-  { name: 'Oblivion\'s Wrath Barbute', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00016.webp', rarity: 'epic' },
-  { name: 'Ossuary Hood of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00014A.webp', rarity: 'epic' },
-  { name: 'Paramount Visor of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_06002A.webp', rarity: 'epic' },
-  { name: 'Phantom Wolf Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00005.webp', rarity: 'epic' },
-  { name: 'Royal Praetor\'s Visor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00017.webp', rarity: 'epic' },
-  { name: 'Sacred Repose Circle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00015.webp', rarity: 'epic' },
-  { name: 'Scaled Tricorne of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003A.webp', rarity: 'epic' },
-  { name: 'Shadow Harvester Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00008.webp', rarity: 'epic' },
-  { name: 'Shock Commander Visor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_05002.webp', rarity: 'epic' },
-  { name: 'Spectral Overseer\'s Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00016.webp', rarity: 'epic' },
-  { name: 'Swirling Essence Hat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_05001.webp', rarity: 'epic' },
-  { name: 'Transcendent Tempest\'s Cowl', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00014.webp', rarity: 'epic' },
-  { name: 'Visage of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00006.webp', rarity: 'epic' },
-  { name: 'Visage of the Infernal Tyrant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00026.webp', rarity: 'epic' },
-  { name: 'Visor of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_HM_00019.webp', rarity: 'epic' },
-  { name: 'Void Stalker\'s Mask', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00007.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_CHEST_ARMOR_ITEMS: TLItem[] = [
-  { name: 'Arcane Shadow Robes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00023.webp', rarity: 'epic' },
-  { name: 'Ardent Herald\'s Gown', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00011.webp', rarity: 'epic' },
-  { name: 'Ascended Guardian Raiment', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00010.webp', rarity: 'epic' },
-  { name: 'Auric Vanguard\'s Full Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00005A.webp', rarity: 'epic' },
-  { name: 'Blessed Templar Plate Mail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00015.webp', rarity: 'epic' },
-  { name: 'Chosen Vanquisher\'s Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_06001A.webp', rarity: 'epic' },
-  { name: 'Coat of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00022.webp', rarity: 'epic' },
-  { name: 'Divine Justiciar Attire', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_06001.webp', rarity: 'epic' },
-  { name: 'Dread Admiral\'s Uniform', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00021.webp', rarity: 'epic' },
-  { name: 'Eternal Warlord\'s Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00017.webp', rarity: 'epic' },
-  { name: 'Feral Prophet\'s Overcoat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00008.webp', rarity: 'epic' },
-  { name: 'First Light\'s Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00022A.webp', rarity: 'epic' },
-  { name: 'Forgotten Lotus Garb', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00008.webp', rarity: 'epic' },
-  { name: 'Gilded Raven Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00014A.webp', rarity: 'epic' },
-  { name: 'Golden Blossom Regalia', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00026.webp', rarity: 'epic' },
-  { name: 'Hallowed Robes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00005A.webp', rarity: 'epic' },
-  { name: 'Heroic Armor of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_06002.webp', rarity: 'epic' },
-  { name: 'Heroic Garb of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05002.webp', rarity: 'epic' },
-  { name: 'Heroic Robes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00005.webp', rarity: 'epic' },
-  { name: 'Heroic Tunic of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05003.webp', rarity: 'epic' },
-  { name: 'Immortal Legionnaire\'s Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00019A.webp', rarity: 'epic' },
-  { name: 'Imperial Seeker\'s Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00015.webp', rarity: 'epic' },
-  { name: 'Kingslayer\'s Banded Platemail', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00014A.webp', rarity: 'epic' },
-  { name: 'Oblivion\'s Wrath Chest Plate', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00016.webp', rarity: 'epic' },
-  { name: 'Ossuary Tunic of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05002A.webp', rarity: 'epic' },
-  { name: 'Paramount Full Plate of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_06002A.webp', rarity: 'epic' },
-  { name: 'Phantom Wolf Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00010.webp', rarity: 'epic' },
-  { name: 'Plate of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00018.webp', rarity: 'epic' },
-  { name: 'Plate of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_TS_00019.webp', rarity: 'epic' },
-  { name: 'Royal Praetor\'s Plate Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00011.webp', rarity: 'epic' },
-  { name: 'Sacred Repose Garb', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00004.webp', rarity: 'epic' },
-  { name: 'Scaled Armor of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05003A.webp', rarity: 'epic' },
-  { name: 'Shadow Harvester Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00013.webp', rarity: 'epic' },
-  { name: 'Shock Commander Plate Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05002.webp', rarity: 'epic' },
-  { name: 'Spectral Overseer\'s Tunic', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00023.webp', rarity: 'epic' },
-  { name: 'Swirling Essence Robe', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_05001.webp', rarity: 'epic' },
-  { name: 'Transcendent Tempest\'s Armor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00014.webp', rarity: 'epic' },
-  { name: 'Void Stalker\'s Overcoat', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015A.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_CLOAK_ITEMS: TLItem[] = [
-  { name: 'Ancient Tapestry Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00016.webp', rarity: 'epic' },
-  { name: 'Bile Drenched Veil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00013.webp', rarity: 'epic' },
-  { name: 'Blessed Templar Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00019.webp', rarity: 'epic' },
-  { name: 'Cloak of Victorious Destiny', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00002.webp', rarity: 'epic' },
-  { name: 'Cloak of the Frozen Expanse', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00025.webp', rarity: 'epic' },
-  { name: 'Eldritch Whispers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00008.webp', rarity: 'epic' },
-  { name: 'Emperor\'s Golden Wing', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00033.webp', rarity: 'epic' },
-  { name: 'Forsaken Embrace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00017.webp', rarity: 'epic' },
-  { name: 'Forward General\'s Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00026.webp', rarity: 'epic' },
-  { name: 'Grieving Vengeance Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00024.webp', rarity: 'epic' },
-  { name: 'Howling Wind Shroud', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00003.webp', rarity: 'epic' },
-  { name: 'Immortal Reckoning', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00020.webp', rarity: 'epic' },
-  { name: 'Iron Lord\'s Veil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00034.webp', rarity: 'epic' },
-  { name: 'Opulent Noble\'s Mantle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00023.webp', rarity: 'epic' },
-  { name: 'Relentless Assault', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00014.webp', rarity: 'epic' },
-  { name: 'Royal Spineflower Drape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00021.webp', rarity: 'epic' },
-  { name: 'Starlight Fur Cloak', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00027.webp', rarity: 'epic' },
-  { name: 'Steadfast Commander\'s Cape', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00015.webp', rarity: 'epic' },
-  { name: 'Supreme Devotion', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00018.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_GLOVES_ITEMS: TLItem[] = [
-  { name: 'Arcane Shadow Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00005B.webp', rarity: 'epic' },
-  { name: 'Ardent Herald\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00022.webp', rarity: 'epic' },
-  { name: 'Ascended Guardian Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00011.webp', rarity: 'epic' },
-  { name: 'Chosen Vanquisher\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001A.webp', rarity: 'epic' },
-  { name: 'Deep Fathom Grasp', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00026.webp', rarity: 'epic' },
-  { name: 'Devious Hellfire Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00026.webp', rarity: 'epic' },
-  { name: 'Divine Justiciar Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001.webp', rarity: 'epic' },
-  { name: 'Dread Admiral\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00021.webp', rarity: 'epic' },
-  { name: 'Ebon Roar Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05001.webp', rarity: 'epic' },
-  { name: 'Eternal Warlord\'s Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00017.webp', rarity: 'epic' },
-  { name: 'Feral Prophet\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00014.webp', rarity: 'epic' },
-  { name: 'First Light\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00022A.webp', rarity: 'epic' },
-  { name: 'Forgotten Lotus Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00008.webp', rarity: 'epic' },
-  { name: 'Gauntlets of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00018.webp', rarity: 'epic' },
-  { name: 'Gauntlets of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_GL_00019.webp', rarity: 'epic' },
-  { name: 'Gilded Raven Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00022B.webp', rarity: 'epic' },
-  { name: 'Grip of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00004.webp', rarity: 'epic' },
-  { name: 'Hallowed Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010A.webp', rarity: 'epic' },
-  { name: 'Heroic Gauntlets of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_06002.webp', rarity: 'epic' },
-  { name: 'Heroic Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05003.webp', rarity: 'epic' },
-  { name: 'Heroic Grips of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05002.webp', rarity: 'epic' },
-  { name: 'Heroic Mitts of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010.webp', rarity: 'epic' },
-  { name: 'Immortal Legionnaire\'s Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00019A.webp', rarity: 'epic' },
-  { name: 'Imperial Seeker\'s Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00015.webp', rarity: 'epic' },
-  { name: 'Infernal Demonpact Grasp', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_GL_00026.webp', rarity: 'epic' },
-  { name: 'Oblivion\'s Wrath Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05004.webp', rarity: 'epic' },
-  { name: 'Ossuary Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05002B.webp', rarity: 'epic' },
-  { name: 'Paramount Gauntlets of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_06002A.webp', rarity: 'epic' },
-  { name: 'Phantom Wolf Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00001B.webp', rarity: 'epic' },
-  { name: 'Royal Praetor\'s Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_GL_00006.webp', rarity: 'epic' },
-  { name: 'Sacred Repose Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00005B.webp', rarity: 'epic' },
-  { name: 'Scaled Gloves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05003A.webp', rarity: 'epic' },
-  { name: 'Shadow Harvester Grips', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00017A.webp', rarity: 'epic' },
-  { name: 'Shock Commander Gauntlets', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05002.webp', rarity: 'epic' },
-  { name: 'Spectral Overseer\'s Handguards', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00023.webp', rarity: 'epic' },
-  { name: 'Swirling Essence Gloves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00020.webp', rarity: 'epic' },
-  { name: 'Transcendent Tempest\'s Touch', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00014.webp', rarity: 'epic' },
-  { name: 'Void Stalker\'s Caress', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00023.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_FEET_ARMOR_ITEMS: TLItem[] = [
-  { name: 'Arcane Shadow Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001.webp', rarity: 'epic' },
-  { name: 'Ardent Herald\'s Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00012.webp', rarity: 'epic' },
-  { name: 'Ascended Guardian Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00011.webp', rarity: 'epic' },
-  { name: 'Auric Vanguards Plate Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005A.webp', rarity: 'epic' },
-  { name: 'Boots of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00022.webp', rarity: 'epic' },
-  { name: 'Boots of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_BT_00019.webp', rarity: 'epic' },
-  { name: 'Chosen Vanquisher\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001A.webp', rarity: 'epic' },
-  { name: 'Deep Fathom Kicks', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_BT_00026.webp', rarity: 'epic' },
-  { name: 'Divine Justiciar Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00014A.webp', rarity: 'epic' },
-  { name: 'Dread Admiral\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00021.webp', rarity: 'epic' },
-  { name: 'Ebon Roar Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00017.webp', rarity: 'epic' },
-  { name: 'Eternal Warlord\'s Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00003.webp', rarity: 'epic' },
-  { name: 'Feral Prophet\'s Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00008A.webp', rarity: 'epic' },
-  { name: 'First Light\'s Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00022A.webp', rarity: 'epic' },
-  { name: 'Forgotten Lotus Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00008.webp', rarity: 'epic' },
-  { name: 'Gilded Raven Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022A.webp', rarity: 'epic' },
-  { name: 'Hallowed Shoes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010A.webp', rarity: 'epic' },
-  { name: 'Heroic Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003.webp', rarity: 'epic' },
-  { name: 'Heroic Footguards of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002.webp', rarity: 'epic' },
-  { name: 'Heroic Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002.webp', rarity: 'epic' },
-  { name: 'Heroic Shoes of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010.webp', rarity: 'epic' },
-  { name: 'Immortal Legionnaire\'s Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00019A.webp', rarity: 'epic' },
-  { name: 'Imperial Seeker\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00017.webp', rarity: 'epic' },
-  { name: 'Infernal Demonpact Steps', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00026.webp', rarity: 'epic' },
-  { name: 'Oblivion\'s Wrath Stompers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00016.webp', rarity: 'epic' },
-  { name: 'Ossuary Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002B.webp', rarity: 'epic' },
-  { name: 'Paramount Sabatons of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002A.webp', rarity: 'epic' },
-  { name: 'Phantom Wolf Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00005.webp', rarity: 'epic' },
-  { name: 'Royal Praetor\'s Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00009.webp', rarity: 'epic' },
-  { name: 'Sabatons of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00018.webp', rarity: 'epic' },
-  { name: 'Sacred Repose Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00020.webp', rarity: 'epic' },
-  { name: 'Scaled Boots of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003A.webp', rarity: 'epic' },
-  { name: 'Shadow Harvester Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00002.webp', rarity: 'epic' },
-  { name: 'Shock Commander Sabatons', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_05002.webp', rarity: 'epic' },
-  { name: 'Spectral Overseer\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00023.webp', rarity: 'epic' },
-  { name: 'Swirling Essence Shoes', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00008C.webp', rarity: 'epic' },
-  { name: 'Transcendent Tempest\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00014.webp', rarity: 'epic' },
-  { name: 'Violent Demonic Beast\'s Fur Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00026.webp', rarity: 'epic' },
-  { name: 'Void Stalker\'s Boots', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00023.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_LEGS_ARMOR_ITEMS: TLItem[] = [
-  { name: 'Arcane Shadow Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00023.webp', rarity: 'epic' },
-  { name: 'Ardent Herald\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00004A.webp', rarity: 'epic' },
-  { name: 'Ascended Guardian Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00005B.webp', rarity: 'epic' },
-  { name: 'Auric Vanguard\'s Gaiters', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004A.webp', rarity: 'epic' },
-  { name: 'Breeches of the Executioner', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022A.webp', rarity: 'epic' },
-  { name: 'Chosen Vanquisher\'s Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001A.webp', rarity: 'epic' },
-  { name: 'Divine Justiciar Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00022.webp', rarity: 'epic' },
-  { name: 'Dread Admiral\'s Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00021.webp', rarity: 'epic' },
-  { name: 'Ebon Roar Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00017.webp', rarity: 'epic' },
-  { name: 'Effortless Victory Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_PT_00026.webp', rarity: 'epic' },
-  { name: 'Eternal Warlord\'s Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00010.webp', rarity: 'epic' },
-  { name: 'Feral Prophet\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00014.webp', rarity: 'epic' },
-  { name: 'First Light\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00022A.webp', rarity: 'epic' },
-  { name: 'Forgotten Lotus Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00008.webp', rarity: 'epic' },
-  { name: 'Greaves of the Field General', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00018.webp', rarity: 'epic' },
-  { name: 'Greaves of the Infernal Herald', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_PT_00019.webp', rarity: 'epic' },
-  { name: 'Hallowed Pants of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001A.webp', rarity: 'epic' },
-  { name: 'Heroic Breeches of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00004A.webp', rarity: 'epic' },
-  { name: 'Heroic Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp', rarity: 'epic' },
-  { name: 'Heroic Pants of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001.webp', rarity: 'epic' },
-  { name: 'Heroic Trousers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_05003.webp', rarity: 'epic' },
-  { name: 'Immortal Legionnaire\'s Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00019A.webp', rarity: 'epic' },
-  { name: 'Imperial Seeker\'s Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00005.webp', rarity: 'epic' },
-  { name: 'Oblivion\'s Wrath Leggings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00016.webp', rarity: 'epic' },
-  { name: 'Ossuary Trousers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00004B.webp', rarity: 'epic' },
-  { name: 'Paramount Greaves of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002A.webp', rarity: 'epic' },
-  { name: 'Phantom Wolf Breeches', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_05002.webp', rarity: 'epic' },
-  { name: 'Pristine Primalfang Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00026.webp', rarity: 'epic' },
-  { name: 'Royal Praetor\'s Gaiters', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00006A.webp', rarity: 'epic' },
-  { name: 'Sacred Repose Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00020.webp', rarity: 'epic' },
-  { name: 'Scaled Trousers of the Resistance', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_05003A.webp', rarity: 'epic' },
-  { name: 'Shadow Harvester Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00007.webp', rarity: 'epic' },
-  { name: 'Shock Commander Greaves', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05002.webp', rarity: 'epic' },
-  { name: 'Spectral Overseer\'s Trousers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00023.webp', rarity: 'epic' },
-  { name: 'Swirling Essence Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00003.webp', rarity: 'epic' },
-  { name: 'Transcendent Tempest\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00014.webp', rarity: 'epic' },
-  { name: 'Trophy Adorned Leg Guards', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00026.webp', rarity: 'epic' },
-  { name: 'Void Stalker\'s Pants', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_0001D.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_NECKLACE_ITEMS: TLItem[] = [
-  { name: 'Abyssal Grace Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp', rarity: 'epic'},
-  { name: 'Bindings of the Unstoppable', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00008.webp', rarity: 'epic'},
-  { name: 'Blessed Templar Choker', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00003.webp', rarity: 'epic'},
-  { name: 'Clasp of the Conqueror', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00017.webp', rarity: 'epic'},
-  { name: 'Clasp of the Overlord', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00019.webp', rarity: 'epic'},
-  { name: 'Collar of Decimation', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00001.webp', rarity: 'epic'},
-  { name: 'Collar of Nature\'s Wrath', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00036.webp', rarity: 'epic'},
-  { name: 'Death Knell Gorget', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00040.webp', rarity: 'epic'},
-  { name: 'Deep Draconic Gorget', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00041.webp', rarity: 'epic'},
-  { name: 'Icy Necklace of Dexterity', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00011.webp', rarity: 'epic'},
-  { name: 'Icy Necklace of Perception', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00010.webp', rarity: 'epic'},
-  { name: 'Icy Necklace of Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00015.webp', rarity: 'epic'},
-  { name: 'Icy Necklace of Wisdom', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00014.webp', rarity: 'epic'},
-  { name: 'Lunar Conjunction Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp', rarity: 'epic'},
-  { name: 'Noble Birthright Brooch', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00035.webp', rarity: 'epic'},
-  { name: 'Pendant of Barbaric Rage', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00043.webp', rarity: 'epic'},
-  { name: 'Pendant of Eternal Flames', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp', rarity: 'epic'},
-  { name: 'Pendant of Frozen Tears', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp', rarity: 'epic'},
-  { name: 'Primal Ritual Collar', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00042.webp', rarity: 'epic'},
-  { name: 'Slayer\'s Quicksilver Pendant', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp', rarity: 'epic'},
-  { name: 'Thunderstorm Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp', rarity: 'epic'},
-  { name: 'Wrapped Coin Necklace', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp', rarity: 'epic'},
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_BRACELET_ITEMS: TLItem[] = [
-  { name: 'Abyssal Grace Charm', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00018.webp', rarity: 'epic' },
-  { name: 'Ancient Saurodoma Bracers', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00010.webp', rarity: 'epic' },
-  { name: 'Ascended Guardian Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp', rarity: 'epic' },
-  { name: 'Bangle of the Clearest Night', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00034.webp', rarity: 'epic' },
-  { name: 'Barbed Cuffs of the Tormentor', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00043.webp', rarity: 'epic' },
-  { name: 'Bracers of Unrelenting', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp', rarity: 'epic' },
-  { name: 'Bracers of the Primal King', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00023.webp', rarity: 'epic' },
-  { name: 'Bracelet of Agony', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00044.webp', rarity: 'epic' },
-  { name: 'Bracelet of Fractured Worlds', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00045.webp', rarity: 'epic' },
-  { name: 'Bracelet of the Violent Undertow', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00041.webp', rarity: 'epic' },
-  { name: 'Coil of the Verdant Sovereign', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00033.webp', rarity: 'epic' },
-  { name: 'Eternal Champion Bindings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp', rarity: 'epic' },
-  { name: 'Forged Golden Bangle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00013.webp', rarity: 'epic' },
-  { name: 'Gilded Infernal Wristlet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00008.webp', rarity: 'epic' },
-  { name: 'Infernal Demonpact Cuffs', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00040.webp', rarity: 'epic' },
-  { name: 'Primal Golden Cuffs', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00042.webp', rarity: 'epic' },
-  { name: 'Restraints of the Glacial Queen', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00035.webp', rarity: 'epic' },
-  { name: 'Skillful Charging Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010A.webp', rarity: 'epic' },
-  { name: 'Skillful Corrupted Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004A.webp', rarity: 'epic' },
-  { name: 'Skillful Oppress Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007A.webp', rarity: 'epic' },
-  { name: 'Skillful Shock Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002A.webp', rarity: 'epic' },
-  { name: 'Skillful Silence Bracelet', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011A.webp', rarity: 'epic' },
-  { name: 'Twisted Coil of the Enduring', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp', rarity: 'epic' },
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_RING_ITEMS: TLItem[] = [
-  { name: "Abyssal Grace Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp', rarity: 'epic'},
-  { name: "Amber Dimensional Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00032.webp', rarity: 'epic'},
-  { name: "Astral Bond", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00047.webp', rarity: 'epic'},
-  { name: "Band of Ancestor's Blood", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00041.webp', rarity: 'epic'},
-  { name: "Band of Universal Power", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00005.webp', rarity: 'epic'},
-  { name: "Band of the Chosen One", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00024.webp', rarity: 'epic'},
-  { name: "Band of the Resistance Leader", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00046.webp', rarity: 'epic'},
-  { name: "Band of the Silent One", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00002.webp', rarity: 'epic'},
-  { name: "Coil of Endless Hunger", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp', rarity: 'epic'},
-  { name: "Dark Seraph Ring", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp', rarity: 'epic'},
-  { name: "Distant Echoes Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00048.webp', rarity: 'epic'},
-  { name: "Eldritch Ice Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00004.webp', rarity: 'epic'},
-  { name: "Embossed Granite Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00014.webp', rarity: 'epic'},
-  { name: "Etched Alabaster Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00003.webp', rarity: 'epic'},
-  { name: "Honor's Promise Signet", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00038.webp', rarity: 'epic'},
-  { name: "Ring of Celestial Light", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00043.webp', rarity: 'epic'},
-  { name: "Ring of Divine Instruction", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp', rarity: 'epic'},
-  { name: "Ring of Eternal Flames", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00039.webp', rarity: 'epic'},
-  { name: "Ring of Song of Punishment", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp', rarity: 'epic'},
-  { name: "Ring of Spirited Desire", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00045.webp', rarity: 'epic'},
-  { name: "Ring of Stalwart Determination", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00049.webp', rarity: 'epic'},
-  { name: "Runed Band of the Black Anvil", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00042.webp', rarity: 'epic'},
-  { name: "Sapphire Dimensional Band", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00033.webp', rarity: 'epic'},
-  { name: "Signet of the First Snow", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00036.webp', rarity: 'epic'},
-  { name: "Signet of the Treant Lord", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00034.webp', rarity: 'epic'},
-  { name: "Sinking Sun Signet", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp', rarity: 'epic'},
-  { name: "Solitare of Purity", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp', rarity: 'epic'},
-  { name: "Symbol of Nature's Advance", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp', rarity: 'epic'},
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_BELT_ITEMS: TLItem[] = [
-  { name: 'Belt of Bloodlust', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp', rarity: 'epic'},
-  { name: 'Belt of Claimed Trophies', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp', rarity: 'epic'},
-  { name: 'Belt of the Knight Master', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp', rarity: 'epic'},
-  { name: 'Burnt Silk Warsash', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp', rarity: 'epic'},
-  { name: 'Butcher\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp', rarity: 'epic'},
-  { name: 'Cunning Ogre Girdle', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp', rarity: 'epic'},
-  { name: 'Demonic Beast King\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00018.webp', rarity: 'epic'},
-  { name: 'Elusive Nymph Coil', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00036.webp', rarity: 'epic'},
-  { name: 'Entranced Apostle\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp', rarity: 'epic'},
-  { name: 'Flamewrought Bindings', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00019.webp', rarity: 'epic'},
-  { name: 'Forbidden Arcane Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00014.webp', rarity: 'epic'},
-  { name: 'Forbidden Eternal Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp', rarity: 'epic'},
-  { name: 'Forbidden Sacred Chain', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00015.webp', rarity: 'epic'},
-  { name: 'Girdle of Spectral Skulls', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00021.webp', rarity: 'epic'},
-  { name: 'Girdle of Treant Strength', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp', rarity: 'epic'},
-  { name: 'Hero\'s Legacy Warbelt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp', rarity: 'epic'},
-  { name: 'Undisputed Champion\'s Belt', imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp', rarity: 'epic'},
-].sort((a, b) => a.name.localeCompare(b.name));
-
-const TL_EARRING_ITEMS: TLItem[] = [
-  { name: "Bloodbright Earrings", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp', rarity: 'epic'},
-  { name: "Brilliant Regal Earrings", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00052.webp', rarity: 'epic'},
-  { name: "Earrings of Forlorn Elegance", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00051.webp', rarity: 'epic'},
-  { name: "Earrings of Glimmering Dew", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp', rarity: 'epic'},
-  { name: "Earrings of Primal Foresight", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp', rarity: 'epic'},
-  { name: "Gilded Granite Teardrops", imageUrl: 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp', rarity: 'epic'},
-].sort((a, b) => a.name.localeCompare(b.name));
-
-
-const WEAPON_ITEMS_MAP: Record<string, TLItem[]> = {
-  "Sword": TL_SWORD_ITEMS,
-  "Greatsword": TL_GREATSWORD_ITEMS,
-  "Dagger": TL_DAGGER_ITEMS,
-  "Bow": TL_BOW_ITEMS,
-  "Crossbow": TL_CROSSBOW_ITEMS,
-  "Wand": TL_WAND_ITEMS,
-  "Staff": TL_STAFF_ITEMS,
-  "Spear": TL_SPEAR_ITEMS,
-};
-
-const ARMOR_ITEMS_MAP: Record<string, TLItem[]> = {
-  "Head": TL_HEAD_ARMOR_ITEMS,
-  "Chest": TL_CHEST_ARMOR_ITEMS,
-  "Cloak": TL_CLOAK_ITEMS,
-  "Gloves": TL_GLOVES_ITEMS,
-  "Feet": TL_FEET_ARMOR_ITEMS,
-  "Legs": TL_LEGS_ARMOR_ITEMS,
-};
-
-const ACCESSORY_ITEMS_MAP: Record<string, TLItem[]> = {
-  "Necklace": TL_NECKLACE_ITEMS,
-  "Bracelet": TL_BRACELET_ITEMS,
-  "Ring": TL_RING_ITEMS,
-  "Belt": TL_BELT_ITEMS,
-  "Earrings": TL_EARRING_ITEMS,
-};
-
-const itemCategoryOptions = [
-  { value: "weapon", label: "Arma", icon: Axe },
-  { value: "armor", label: "Armadura", icon: Shirt },
-  { value: "accessory", label: "Acessório", icon: Diamond },
-];
-
-const weaponTypeOptions = [
-  { value: "Sword", label: "Sword" },
-  { value: "Greatsword", label: "Greatsword" },
-  { value: "Dagger", label: "Dagger" },
-  { value: "Bow", label: "Bow" },
-  { value: "Crossbow", label: "Crossbow" },
-  { value: "Wand", label: "Wand" },
-  { value: "Staff", label: "Staff" },
-  { value: "Spear", label: "Spear" },
-];
-
-const armorTypeOptions = [
-  { value: "Head", label: "Cabeça" },
-  { value: "Chest", label: "Peitoral" },
-  { value: "Cloak", label: "Manto" },
-  { value: "Gloves", label: "Luvas" },
-  { value: "Feet", label: "Pés" },
-  { value: "Legs", label: "Calças" },
-];
-
-const accessoryTypeOptions = [
-  { value: "Necklace", label: "Colar" },
-  { value: "Bracelet", label: "Bracelete" },
-  { value: "Ring", label: "Anel" },
-  { value: "Belt", label: "Cinto" },
-  { value: "Earrings", label: "Brincos" },
-];
-
-const traitOptions = [
-  { value: 'Attack Speed', label: 'Attack Speed' },
-  { value: 'Back Critical Hit', label: 'Back Critical Hit' },
-  { value: 'Back Heavy Attack Chance', label: 'Back Heavy Attack Chance' },
-  { value: 'Back Hit Chance', label: 'Back Hit Chance' },
-  { value: 'Bind Chance', label: 'Bind Chance' },
-  { value: 'Buff Duration', label: 'Buff Duration' },
-  { value: 'Collision Chance', label: 'Collision Chance' },
-  { value: 'Collision Resistance', label: 'Collision Resistance' },
-  { value: 'Construct Bonus Damage', label: 'Construct Bonus Damage' },
-  { value: 'Cooldown Speed', label: 'Cooldown Speed' },
-  { value: 'Critical Hit Chance', label: 'Critical Hit Chance' },
-  { value: 'Debuff Duration', label: 'Debuff Duration' },
-  { value: 'Demon Bonus Damage', label: 'Demon Bonus Damage' },
-  { value: 'Front Critical Hit Chance', label: 'Front Critical Hit Chance' },
-  { value: 'Front Heavy Attack Chance', label: 'Front Heavy Attack Chance' },
-  { value: 'Front Hit Chance', label: 'Front Hit Chance' },
-  { value: 'Health Regen', label: 'Health Regen' },
-  { value: 'Heavy Attack Chance', label: 'Heavy Attack Chance' },
-  { value: 'Hit Chance', label: 'Hit Chance' },
-  { value: 'Humanoid Bonus Damage', label: 'Humanoid Bonus Damage' },
-  { value: 'Magic Endurance', label: 'Magic Endurance' },
-  { value: 'Magic Evasion', label: 'Magic Evasion' },
-  { value: 'Mana Cost Efficiency', label: 'Mana Cost Efficiency' },
-  { value: 'Mana Regen', label: 'Mana Regen' },
-  { value: 'Max Health', label: 'Max Health' },
-  { value: 'Max Mana', label: 'Max Mana' },
-  { value: 'Max Stamina', label: 'Max Stamina' },
-  { value: 'Melee Endurance', label: 'Melee Endurance' },
-  { value: 'Melee Evasion', label: 'Melee Evasion' },
-  { value: 'Movement Speed', label: 'Movement Speed' },
-  { value: 'Petrification Chance', label: 'Petrification Chance' },
-  { value: 'Petrification Resistance', label: 'Petrification Resistance' },
-  { value: 'Range', label: 'Range' },
-  { value: 'Side Critical Hit', label: 'Side Critical Hit' },
-  { value: 'Side Heavy Attack Chance', label: 'Side Heavy Attack Chance' },
-  { value: 'Side Hit Chance', label: 'Side Hit Chance' },
-  { value: 'Silence Chance', label: 'Silence Chance' },
-  { value: 'Silence Resistance', label: 'Silence Resistance' },
-  { value: 'Skill Damage Boost', label: 'Skill Damage Boost' },
-  { value: 'Skill Damage Resistance', label: 'Skill Damage Resistance' },
-  { value: 'Stun Chance', label: 'Stun Chance' },
-  { value: 'Stun Resistance', label: 'Stun Resistance' },
-  { value: 'Undead Bonus Damage', label: 'Undead Bonus Damage' },
-  { value: 'Weaken Chance', label: 'Weaken Chance' },
-  { value: 'Wildkin Bonus Damage', label: 'Wildkin Bonus Damage' },
-].sort((a, b) => a.label.localeCompare(b.label));
-
-
-const rarityBackgrounds: Record<TLItem['rarity'], string> = {
+const rarityBackgrounds: Record<BankItem['rarity'], string> = {
     common: 'bg-slate-800 border-slate-600',
     uncommon: 'bg-emerald-800 border-emerald-600',
     rare: 'bg-sky-800 border-sky-600',
@@ -652,54 +70,6 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50',
 };
 
-const NO_DROPPER_ID = "NO_DROPPER_SPECIFIED";
-const itemSubTypesRequiringTrait = [
-  "Sword", "Greatsword", "Dagger", "Bow", "Crossbow", "Wand", "Staff", "Spear",
-  "Head", "Chest", "Cloak", "Gloves", "Feet", "Legs",
-  "Necklace", "Bracelet", "Ring", "Belt", "Earrings",
-];
-
-const lootFormSchema = z.object({
-  itemCategory: z.string().min(1, "Categoria é obrigatória."),
-  weaponType: z.string().optional(),
-  armorType: z.string().optional(),
-  accessoryType: z.string().optional(),
-  itemName: z.string().optional(),
-  trait: z.string().optional(),
-  droppedByMemberId: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.itemCategory === 'weapon') {
-    if (!data.weaponType) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
-    } else if (WEAPON_ITEMS_MAP[data.weaponType]?.length > 0 && !data.itemName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
-    }
-    if (data.weaponType && itemSubTypesRequiringTrait.includes(data.weaponType) && !data.trait) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${data.weaponType}.`, path: ["trait"] });
-    }
-  } else if (data.itemCategory === 'armor') {
-    if (!data.armorType) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de armadura é obrigatório.", path: ["armorType"] });
-    } else if (ARMOR_ITEMS_MAP[data.armorType]?.length > 0 && !data.itemName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
-    }
-    if (data.armorType && itemSubTypesRequiringTrait.includes(data.armorType) && !data.trait) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${armorTypeOptions.find(opt => opt.value === data.armorType)?.label || data.armorType}.`, path: ["trait"] });
-    }
-  } else if (data.itemCategory === 'accessory') {
-    if (!data.accessoryType) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de acessório é obrigatório.", path: ["accessoryType"] });
-    } else if (ACCESSORY_ITEMS_MAP[data.accessoryType]?.length > 0 && !data.itemName) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatório.", path: ["itemName"] });
-    }
-    if (data.accessoryType && itemSubTypesRequiringTrait.includes(data.accessoryType) && !data.trait) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Trait é obrigatório para ${accessoryTypeOptions.find(opt => opt.value === data.accessoryType)?.label || data.accessoryType}.`, path: ["trait"] });
-    }
-  }
-});
-
-type LootFormValues = z.infer<typeof lootFormSchema>;
-
 function LootPageContent() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
@@ -709,16 +79,11 @@ function LootPageContent() {
 
   const [guild, setGuild] = useState<Guild | null>(null);
   const [loadingGuildData, setLoadingGuildData] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
-  const [selectedItemForPreview, setSelectedItemForPreview] = useState<TLItem | null>(null);
-
+  
   const [bankItems, setBankItems] = useState<BankItem[]>([]);
   const [loadingBankItems, setLoadingBankItems] = useState(true);
 
-  const [guildMembersForDropdown, setGuildMembersForDropdown] = useState<{ value: string; label: string }[]>([]);
-
-  // Filters and Pagination State
+  // Filters and Pagination State for Bank
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<BankItemStatus | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
@@ -749,58 +114,6 @@ function LootPageContent() {
     );
   }, [currentUserRoleInfo, guild]);
 
-  const form = useForm<LootFormValues>({
-    resolver: zodResolver(lootFormSchema),
-    defaultValues: {
-      itemCategory: "",
-      weaponType: undefined,
-      armorType: undefined,
-      accessoryType: undefined,
-      itemName: undefined,
-      trait: undefined,
-      droppedByMemberId: NO_DROPPER_ID,
-    },
-  });
-
-  const watchedItemCategory = form.watch("itemCategory");
-  const watchedWeaponType = form.watch("weaponType");
-  const watchedArmorType = form.watch("armorType");
-  const watchedAccessoryType = form.watch("accessoryType");
-  const watchedItemName = form.watch("itemName");
-
-  useEffect(() => {
-    form.resetField('weaponType');
-    form.resetField('armorType');
-    form.resetField('accessoryType');
-    form.resetField('itemName');
-    form.resetField('trait');
-    setSelectedItemForPreview(null);
-  }, [watchedItemCategory, form]);
-
-  useEffect(() => {
-    form.resetField('itemName');
-    form.resetField('trait');
-    setSelectedItemForPreview(null);
-  }, [watchedWeaponType, watchedArmorType, watchedAccessoryType, form]);
-
-  useEffect(() => {
-    if (watchedItemCategory === 'weapon' && watchedWeaponType && watchedItemName) {
-      const items = WEAPON_ITEMS_MAP[watchedWeaponType] || [];
-      const item = items.find(i => i.name === watchedItemName);
-      setSelectedItemForPreview(item || null);
-    } else if (watchedItemCategory === 'armor' && watchedArmorType && watchedItemName) {
-      const items = ARMOR_ITEMS_MAP[watchedArmorType] || [];
-      const item = items.find(i => i.name === watchedItemName);
-      setSelectedItemForPreview(item || null);
-    } else if (watchedItemCategory === 'accessory' && watchedAccessoryType && watchedItemName) {
-      const items = ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [];
-      const item = items.find(i => i.name === watchedItemName);
-      setSelectedItemForPreview(item || null);
-    } else {
-      setSelectedItemForPreview(null);
-    }
-  }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType, watchedItemName]);
-
 
   useEffect(() => {
     if (authLoading) return;
@@ -816,22 +129,6 @@ function LootPageContent() {
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
         setHeaderTitle(`Loot: ${guildData.name}`);
-
-        const membersDropdownData: { value: string; label: string }[] = [];
-        if (guildData.memberIds && guildData.roles) {
-          for (const memberId of guildData.memberIds) {
-            const roleInfo = guildData.roles[memberId];
-            if (roleInfo) {
-              membersDropdownData.push({
-                value: memberId,
-                label: roleInfo.characterNickname || `Membro ${memberId.substring(0, 6)}`,
-              });
-            }
-          }
-        }
-        membersDropdownData.sort((a, b) => a.label.localeCompare(b.label));
-        setGuildMembersForDropdown(membersDropdownData);
-
       } catch (error) { console.error("Erro ao buscar dados da guilda:", error); toast({ title: "Erro ao carregar dados", variant: "destructive" });
       } finally { setLoadingGuildData(false); }
     };
@@ -863,73 +160,7 @@ function LootPageContent() {
       });
       return () => unsubscribe();
   }, [guildId, toast]);
-
-  const onSubmit: SubmitHandler<LootFormValues> = async (data) => {
-    if (!guildId || !user || !canAddBankItem) {
-        toast({title: "Permissão Negada", description: "Você não tem permissão para adicionar itens ao banco.", variant: "destructive"});
-        return;
-    }
-
-    setIsSubmitting(true);
-
-    let imageUrlToUse = `https://placehold.co/80x80.png?text=${data.itemName ? data.itemName.substring(0,2) : 'Itm'}`;
-    let rarityToUse: TLItem['rarity'] = 'epic'; // Defaulting to epic since we filtered out others
-    
-    let itemsListSource;
-    if (data.itemCategory === 'weapon' && data.weaponType) {
-        itemsListSource = WEAPON_ITEMS_MAP[data.weaponType];
-    } else if (data.itemCategory === 'armor' && data.armorType) {
-        itemsListSource = ARMOR_ITEMS_MAP[data.armorType];
-    } else if (data.itemCategory === 'accessory' && data.accessoryType) {
-        itemsListSource = ACCESSORY_ITEMS_MAP[data.accessoryType];
-    }
-
-    if (itemsListSource && data.itemName) {
-        const specificItem = itemsListSource.find(s => s.name === data.itemName);
-        if (specificItem) {
-            imageUrlToUse = specificItem.imageUrl;
-            rarityToUse = specificItem.rarity;
-        }
-    }
-    
-    const newItemPayload: Omit<BankItem, 'id'> = {
-      createdAt: serverTimestamp() as Timestamp,
-      itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory,
-      imageUrl: imageUrlToUse,
-      rarity: rarityToUse,
-      status: 'Disponível',
-      weaponType: data.weaponType,
-      armorType: data.armorType,
-      accessoryType: data.accessoryType,
-      itemName: data.itemName,
-      trait: data.trait,
-      droppedByMemberId: data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID ? data.droppedByMemberId : undefined,
-      droppedByMemberName: data.droppedByMemberId && data.droppedByMemberId !== NO_DROPPER_ID 
-        ? guildMembersForDropdown.find(m => m.value === data.droppedByMemberId)?.label
-        : undefined,
-    };
-    
-    // Clean up undefined fields before saving to Firestore
-    const cleanedPayload = Object.fromEntries(
-        Object.entries(newItemPayload).filter(([, value]) => value !== undefined)
-    );
-
-    try {
-        const bankItemsCollectionRef = collection(db, `guilds/${guildId}/bankItems`);
-        await addDoc(bankItemsCollectionRef, cleanedPayload);
-        const subTypeForToast = data.weaponType || data.armorType || data.accessoryType;
-        toast({ title: "Item Registrado no Banco!", description: `Item ${newItemPayload.itemName || subTypeForToast || newItemPayload.itemCategory} adicionado.` });
-        
-        setShowAddItemDialog(false);
-        form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
-        setSelectedItemForPreview(null);
-    } catch (error) {
-        console.error("Error saving item to Firestore:", error);
-        toast({title: "Erro ao Salvar Item", variant: "destructive"});
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
+  
 
   const filteredAndSortedItems = useMemo(() => {
     let items = [...bankItems];
@@ -949,7 +180,6 @@ function LootPageContent() {
         toDateEndOfDay.setHours(23,59,59,999);
         items = items.filter(item => item.createdAt && item.createdAt.toDate() <= toDateEndOfDay);
     }
-    // Items are already sorted by createdAt descending from Firestore query
     return items;
   }, [bankItems, searchTerm, statusFilter, dateFilter]);
 
@@ -966,23 +196,6 @@ function LootPageContent() {
   if (!guild) {
     return <PageTitle title="Loot" icon={<Gem className="h-8 w-8 text-primary" />}><div className="text-center py-10">Guilda não encontrada.</div></PageTitle>;
   }
-
-  const currentItemNameOptions =
-    watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
-    watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
-    [];
-
-  const isTraitMandatory =
-    (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
-    (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType)) ||
-    (watchedItemCategory === 'accessory' && watchedAccessoryType && itemSubTypesRequiringTrait.includes(watchedAccessoryType));
-
-  const subTypeLabel =
-    watchedItemCategory === 'weapon' && watchedWeaponType ? watchedWeaponType :
-    watchedItemCategory === 'armor' && watchedArmorType ? (armorTypeOptions.find(opt => opt.value === watchedArmorType)?.label || watchedArmorType) :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? (accessoryTypeOptions.find(opt => opt.value === watchedAccessoryType)?.label || watchedAccessoryType) :
-    'item';
 
   const statusOptions: (BankItemStatus | 'all')[] = ['all', 'Disponível', 'Distribuído', 'Em leilão', 'Em rolagem', 'Aguardando leilão', 'Aguardando rolagem'];
 
@@ -1037,133 +250,11 @@ function LootPageContent() {
             </CardFooter>
           </Card>
 
-          <div className="mb-6 flex justify-end">
-            <Dialog open={showAddItemDialog} onOpenChange={(isOpen) => {
-                setShowAddItemDialog(isOpen);
-                if (!isOpen) {
-                    form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID });
-                    setSelectedItemForPreview(null);
-                }
-            }}>
-              <DialogTrigger asChild>
-                {canAddBankItem && (
-                    <Button className="btn-gradient btn-style-secondary"><PackagePlus className="mr-2 h-5 w-5" />Cadastrar Item no Banco</Button>
-                )}
-              </DialogTrigger>
-              <DialogContent className="flex flex-col sm:max-w-2xl bg-card border-border max-h-[90vh]">
-                <DialogHeader className="pb-4 p-6 border-b border-border shrink-0">
-                  <DialogTitle className="font-headline text-primary">Cadastrar Novo Item no Banco da Guilda</DialogTitle>
-                  <DialogDescription>Preencha os detalhes do item a ser adicionado ao banco.</DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="flex-grow overflow-y-auto px-6 py-4 space-y-5">
-                    <FormField control={form.control} name="itemCategory" render={({ field }) => ( 
-                        <FormItem> 
-                            <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> 
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="form-input">
-                                        <SelectValue placeholder="Selecione a categoria do item" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {itemCategoryOptions.map(opt => (
-                                        <SelectItem key={opt.value} value={opt.value}>
-                                            <div className="flex items-center">
-                                                <opt.icon className="mr-2 h-5 w-5"/>
-                                                {opt.label}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage /> 
-                        </FormItem> 
-                    )}/>
-                    {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {( (watchedItemCategory === 'weapon' && watchedWeaponType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'armor' && watchedArmorType && currentItemNameOptions.length > 0) || (watchedItemCategory === 'accessory' && watchedAccessoryType && currentItemNameOptions.length > 0) ) && ( <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel> Nome do Item ({subTypeLabel}) <span className="text-destructive">*</span> </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o nome d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {currentItemNameOptions.map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {isTraitMandatory && ( <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel> Trait do Item ({subTypeLabel}) {isTraitMandatory && <span className="text-destructive">*</span>} </FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder={`Selecione o trait d${subTypeLabel.toLowerCase().endsWith('a') || ['staff', 'spear', 'head', 'peitoral', 'manto', 'luvas', 'pés', 'calças', 'colar', 'anel'].includes(subTypeLabel.toLowerCase()) ? 'a' : 'o'} ${subTypeLabel.toLowerCase()}`} /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                    {selectedItemForPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border-2", rarityBackgrounds[selectedItemForPreview.rarity] || 'bg-muted border-border' )} > <Image src={selectedItemForPreview.imageUrl} alt={selectedItemForPreview.name} width={80} height={80} className="object-contain" data-ai-hint={watchedItemCategory === 'weapon' ? "game item weapon" : (watchedItemCategory === 'armor' ? "game item armor" : (watchedItemCategory === 'accessory' ? "game item accessory" : "game item"))}/> </div> </div> )}
-                    <FormField control={form.control} name="droppedByMemberId" render={({ field }) => ( <FormItem> <FormLabel>Dropado por (Opcional)</FormLabel> <Select onValueChange={field.onChange} value={field.value || NO_DROPPER_ID} defaultValue={field.value || NO_DROPPER_ID}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione quem dropou o item" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value={NO_DROPPER_ID}>Ninguém / Não especificado</SelectItem> {guildMembersForDropdown.map(member => ( <SelectItem key={member.value} value={member.value}> <div className="flex items-center"> <Avatar className="h-6 w-6 mr-2"> <AvatarImage src={guild?.roles?.[member.value]?.characterNickname ? `https://placehold.co/32x32.png?text=${guild.roles[member.value].characterNickname!.substring(0,1)}` : `https://placehold.co/32x32.png?text=${member.label.substring(0,1)}`} alt={member.label} data-ai-hint="user avatar"/> <AvatarFallback>{member.label.substring(0,1).toUpperCase()}</AvatarFallback> </Avatar> {member.label} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                    <DialogFooter className="p-0 pt-6 bg-card sticky bottom-0">
-                      <Button type="button" variant="outline" onClick={() => { setShowAddItemDialog(false); form.reset({ itemCategory: "", weaponType: undefined, armorType: undefined, accessoryType: undefined, itemName: undefined, trait: undefined, droppedByMemberId: NO_DROPPER_ID }); setSelectedItemForPreview(null); }} disabled={isSubmitting}>Cancelar</Button>
-                      <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}> {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />} Registrar Item </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {loadingBankItems ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
-            </div>
-          ) : paginatedItems.length === 0 ? (
-            <Card className="static-card-container text-center py-10">
-              <CardHeader><Package className="mx-auto h-16 w-16 text-muted-foreground mb-4" /></CardHeader>
-              <CardContent>
-                <CardTitle className="text-2xl">Banco da Guilda Vazio</CardTitle>
-                <CardDescription className="mt-2">
-                  {searchTerm || statusFilter !== 'all' || dateFilter ? 'Nenhum item encontrado com os filtros aplicados.' : 'Nenhum item registrado no banco ainda. Clique em "Cadastrar Item no Banco" para adicionar o primeiro.'}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {paginatedItems.map(item => (
-                  <Card key={item.id} className="static-card-container flex flex-col">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-semibold truncate text-center" title={item.itemName || item.weaponType || item.armorType || item.accessoryType || item.itemCategory}>
-                        {item.itemName || item.weaponType || (armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType) || (accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType) || "Item Genérico"}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col items-center justify-center p-4">
-                      <div className={cn("w-28 h-28 p-2 rounded-md flex items-center justify-center border-2", rarityBackgrounds[item.rarity])}>
-                        <Image src={item.imageUrl} alt={item.itemName || "Item"} width={96} height={96} className="object-contain" data-ai-hint={item.itemCategory === "Arma" ? "game item weapon" : (item.itemCategory === "Armadura" ? "game item armor" : (item.itemCategory === "Acessório" ? "game item accessory" : "game item"))}/>
-                      </div>
-                      <Badge variant={item.status === 'Disponível' ? 'default' : 'secondary'} className={cn("mt-2 mb-2 text-xs px-2 py-0.5", statusBadgeClasses[item.status])}>
-                        {item.status}
-                      </Badge>
-                      <div className="space-y-0.5 text-xs text-muted-foreground text-center">
-                        <p><strong>Tipo:</strong> {item.itemCategory}</p>
-                        {item.weaponType && <p><strong>Arma:</strong> {item.weaponType}</p>}
-                        {item.armorType && <p><strong>Armadura:</strong> {armorTypeOptions.find(opt => opt.value === item.armorType)?.label || item.armorType}</p>}
-                        {item.accessoryType && <p><strong>Acessório:</strong> {accessoryTypeOptions.find(opt => opt.value === item.accessoryType)?.label || item.accessoryType}</p>}
-                        {item.trait && <p><strong>Trait:</strong> {item.trait}</p>}
-                        {item.droppedByMemberName && <p><strong>Dropado por:</strong> {item.droppedByMemberName}</p>}
-                        {item.createdAt && <p><strong>Cadastrado em:</strong> {format(item.createdAt.toDate(), 'dd/MM/yy HH:mm')}</p>}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="p-3 border-t border-border">
-                      <Button variant="outline" size="sm" className="w-full text-xs"> <Eye className="mr-1.5 h-3.5 w-3.5"/> Ver Detalhes </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow mt-4">
-                <div className="text-sm text-muted-foreground">
-                  {filteredAndSortedItems.length} item(s) no total.
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-muted-foreground"> Página {totalPages > 0 ? currentPage : 0} de {totalPages} </span>
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(1)} disabled={currentPage === 1 || totalPages === 0}> <ChevronsLeft className="h-4 w-4" /> </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || totalPages === 0}> <ChevronLeft className="h-4 w-4" /> </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}> <ChevronRight className="h-4 w-4" /> </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0}> <ChevronsRight className="h-4 w-4" /> </Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+          {/* This section will be for displaying bank items */}
         </TabsContent>
 
         <TabsContent value="leiloes" className="mt-6">
-          <AuctionsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateAuctions={canCreateAuctions} guildMembersForDropdown={guildMembersForDropdown} bankItems={bankItems} />
+          <AuctionsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateAuctions={canCreateAuctions} bankItems={bankItems} />
         </TabsContent>
         <TabsContent value="rolagem" className="mt-6">
           <ComingSoon pageName="Sistemas de Rolagem de Loot" icon={<Dices className="h-8 w-8 text-primary" />} />
@@ -1200,13 +291,12 @@ function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, curre
     };
 
     calculateTime();
-    const interval = setInterval(calculateTime, 1000 * 60); // Update every minute
+    const interval = setInterval(calculateTime, 1000 * 60); 
     return () => clearInterval(interval);
   }, [auction]);
 
   const yourBid = useMemo(() => {
     if (!currentUser) return undefined;
-    // Find the highest bid by the current user
     return auction.bids
       .filter(b => b.bidderId === currentUser.uid)
       .reduce((max, bid) => bid.amount > max ? bid.amount : max, 0);
@@ -1261,10 +351,13 @@ function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, curre
   )
 }
 
-function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, guildMembersForDropdown, bankItems }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, guildMembersForDropdown: { value: string; label: string }[], bankItems: BankItem[] }) {
-  const [showNewAuctionDialog, setShowNewAuctionDialog] = useState(false);
+function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, bankItems }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, bankItems: BankItem[] }) {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [showNoItemsAlert, setShowNoItemsAlert] = useState(false);
+
+  const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
 
   useEffect(() => {
     if (!guildId) return;
@@ -1292,9 +385,16 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
 
   const getLatestBidder = (bids: AuctionBid[]) => {
     if (bids.length === 0) return 'N/A';
-    // Assumes bids are not necessarily sorted, so we find the one with the latest timestamp
     return [...bids].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())[0]?.bidderName || 'N/A';
   }
+
+  const handleNewAuctionClick = () => {
+    if (availableBankItems.length === 0) {
+      setShowNoItemsAlert(true);
+    } else {
+      setIsWizardOpen(true);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -1313,7 +413,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
             </div>
             <div className="flex gap-2">
                 <Button variant="outline" disabled>Ações</Button>
-                <Button onClick={() => setShowNewAuctionDialog(true)} disabled={!canCreateAuctions} className="btn-gradient btn-style-secondary">
+                <Button onClick={handleNewAuctionClick} disabled={!canCreateAuctions} className="btn-gradient btn-style-secondary">
                     <Gavel className="mr-2 h-4 w-4" /> Novo Leilão
                 </Button>
             </div>
@@ -1326,21 +426,17 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
                     <TableRow>
                         <TableHead className="w-[50px]"><Checkbox /></TableHead>
                         <TableHead>Item <ArrowUpDown className="inline h-3 w-3" /></TableHead>
-                        <TableHead>Trait</TableHead>
                         <TableHead>Lance Inicial</TableHead>
                         <TableHead>Último Lance</TableHead>
-                        <TableHead>Último Licitante</TableHead>
-                        <TableHead>Início <ArrowUpDown className="inline h-3 w-3" /></TableHead>
                         <TableHead>Fim <ArrowUpDown className="inline h-3 w-3" /></TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Distribuído</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {auctions.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                 Nenhum leilão ativo ou agendado no momento.
                             </TableCell>
                         </TableRow>
@@ -1356,14 +452,10 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
                                         <span className="font-medium truncate max-w-[150px]">{auction.item.itemName}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell>{auction.item.trait || 'N/A'}</TableCell>
                                 <TableCell>{auction.startingBid}</TableCell>
                                 <TableCell>{auction.currentBid}</TableCell>
-                                <TableCell>{getLatestBidder(auction.bids)}</TableCell>
-                                <TableCell>{formatDistanceToNow(auction.startTime.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
                                 <TableCell>{formatDistanceToNow(auction.endTime.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
                                 <TableCell><Badge variant={auction.status === 'active' ? 'default' : 'outline'} className={auction.status === 'active' ? 'bg-green-500/80' : ''}>{auction.status === 'active' ? 'Aberto' : 'Agendado'}</Badge></TableCell>
-                                <TableCell><Badge variant={auction.isDistributed ? 'default' : 'destructive'} className={auction.isDistributed ? 'bg-green-500/80' : 'bg-red-500/80'}>{auction.isDistributed ? 'Sim' : 'Não'}</Badge></TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
                                     <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -1376,184 +468,116 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, gu
           </div>
        </Card>
       
-      <NewAuctionDialog 
-        isOpen={showNewAuctionDialog} 
-        onOpenChange={setShowNewAuctionDialog} 
+      <AuctionCreationWizard
+        isOpen={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
         guild={guild}
         guildId={guildId}
         currentUser={currentUser}
-        bankItems={bankItems}
+        bankItems={availableBankItems}
       />
+      
+      <AlertDialog open={showNoItemsAlert} onOpenChange={setShowNoItemsAlert}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Nenhum Item Disponível no Banco</AlertDialogTitle>
+                <ShadCnAlertDialogDescription>
+                    Para criar um leilão, você precisa primeiro cadastrar um item no banco da guilda e garantir que seu status esteja "Disponível".
+                </ShadCnAlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Entendi</AlertDialogCancel>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-// New Dialog component for creating auctions
-function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[] }) {
+// New Wizard component for creating auctions
+function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[] }) {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<'create' | 'select'>('create');
+    const [step, setStep] = useState<'select' | 'startBid' | 'increment' | 'role' | 'weapon'>('select');
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const durationPresets = [
-        { label: "6 Horas", hours: 6 },
-        { label: "12 Horas", hours: 12 },
-        { label: "24 Horas", hours: 24 },
-        { label: "48 Horas", hours: 48 },
-        { label: "72 Horas", hours: 72 },
-    ];
-    
-    const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
+    const allWeaponOptions = Object.values(TLWeapon);
 
-    const auctionFormSchema = z.object({
-      itemCategory: z.string().optional(),
-      weaponType: z.string().optional(),
-      armorType: z.string().optional(),
-      accessoryType: z.string().optional(),
-      itemName: z.string().optional(),
-      trait: z.string().optional(),
-      startingBid: z.coerce.number().min(1, "Lance inicial deve ser no mínimo 1.").default(1),
-      minBidIncrement: z.coerce.number().min(1, "Incremento mínimo deve ser no mínimo 1.").default(5),
-      startTime: z.date({ required_error: "Data de início é obrigatória." }),
-      endTime: z.date({ required_error: "Data de fim é obrigatória." }),
-    }).superRefine((data, ctx) => {
-        if (!selectedItem) {
-            if (!data.itemCategory) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Categoria é obrigatória.", path: ["itemCategory"] });
-            if (!data.itemName) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do item é obrigatória.", path: ["itemName"] });
-            if (!data.trait) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Trait é obrigatório.", path: ["trait"] });
-        }
-        if (data.startTime >= data.endTime) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data de fim deve ser posterior à data de início.", path: ["endTime"]});
-        }
+    const [config, setConfig] = useState({
+        startBid: 1,
+        minIncrement: 1,
+        roleRestriction: 'Geral',
+        weaponRestriction: 'Geral',
+        startTime: new Date(),
+        endTime: addHours(new Date(), 24),
     });
 
-    type NewAuctionFormValues = z.infer<typeof auctionFormSchema>;
-
-    const form = useForm<NewAuctionFormValues>({
-        resolver: zodResolver(auctionFormSchema),
-        defaultValues: {
-            startingBid: 1,
-            minBidIncrement: 5,
-            startTime: new Date(),
-            endTime: addHours(new Date(), 24),
-        }
-    });
-
-    const watchedItemCategory = form.watch("itemCategory");
-    const watchedWeaponType = form.watch("weaponType");
-    const watchedArmorType = form.watch("armorType");
-    const watchedAccessoryType = form.watch("accessoryType");
-
-    useEffect(() => {
-        form.resetField('weaponType');
-        form.resetField('armorType');
-        form.resetField('accessoryType');
-        form.resetField('itemName');
-        form.resetField('trait');
-    }, [watchedItemCategory, form]);
-
-    useEffect(() => {
-        form.resetField('itemName');
-        form.resetField('trait');
-    }, [watchedWeaponType, watchedArmorType, watchedAccessoryType, form]);
-    
-    const resetAndClose = () => {
-        form.reset({
-            startingBid: 1,
-            minBidIncrement: 5,
-            startTime: new Date(),
-            endTime: addHours(new Date(), 24),
-            itemCategory: "",
-            itemName: "",
-            trait: "",
-        });
+    const resetWizard = () => {
+        setStep('select');
         setSelectedItem(null);
-        setActiveTab('create');
+        setConfig({
+            startBid: 1,
+            minIncrement: 1,
+            roleRestriction: 'Geral',
+            weaponRestriction: 'Geral',
+            startTime: new Date(),
+            endTime: addHours(new Date(), 24),
+        });
         onOpenChange(false);
     };
-    
-    const handleSelectBankItem = (item: BankItem) => {
-        setSelectedItem(item);
-        setActiveTab('create'); // Switch to the form tab
+
+    const handleNextStep = () => {
+        if (step === 'select') setStep('startBid');
+        if (step === 'startBid') setStep('increment');
+        if (step === 'increment') setStep('role');
+        if (step === 'role') setStep('weapon');
     };
 
-    const setAuctionDuration = (hours: number) => {
-        const startTime = form.getValues("startTime");
-        form.setValue("endTime", addHours(startTime, hours));
+    const handlePrevStep = () => {
+        if (step === 'weapon') setStep('role');
+        if (step === 'role') setStep('increment');
+        if (step === 'increment') setStep('startBid');
+        if (step === 'startBid') {
+            setSelectedItem(null);
+            setStep('select');
+        }
     };
     
-    const handleAuctionSubmit: SubmitHandler<NewAuctionFormValues> = async (data) => {
-        if (!guildId || !currentUser) return;
+    const handleCreateAuction = async () => {
+        if (!guildId || !currentUser || !selectedItem) return;
         setIsSubmitting(true);
         
         const batch = writeBatch(db);
-        const auctionsCollectionRef = collection(db, `guilds/${guildId}/auctions`);
-        const auctionRef = doc(auctionsCollectionRef);
+        const auctionRef = doc(collection(db, `guilds/${guildId}/auctions`));
+        const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
 
-        const createAuctionDocument = (itemPayload: Omit<BankItem, 'id' | 'status'>, bankItemId?: string) => {
-             const newAuction: Omit<Auction, 'id' | 'createdAt'> = {
+        try {
+            const { id, status, createdAt, ...itemData } = selectedItem;
+
+            const newAuctionData: Omit<Auction, 'id' | 'createdAt'> = {
                 guildId,
-                item: itemPayload,
-                bankItemId: bankItemId,
-                status: data.startTime <= new Date() ? 'active' : 'scheduled',
-                startingBid: data.startingBid,
-                minBidIncrement: data.minBidIncrement,
-                currentBid: data.startingBid,
+                item: itemData,
+                bankItemId: id,
+                status: config.startTime <= new Date() ? 'active' : 'scheduled',
+                startingBid: config.startBid,
+                minBidIncrement: config.minIncrement,
+                currentBid: config.startBid,
                 bids: [],
-                startTime: Timestamp.fromDate(data.startTime),
-                endTime: Timestamp.fromDate(data.endTime),
+                startTime: Timestamp.fromDate(config.startTime),
+                endTime: Timestamp.fromDate(config.endTime),
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
-                isDistributed: false
+                isDistributed: false,
+                roleRestriction: config.roleRestriction as TLRole | 'Geral',
+                weaponRestriction: config.weaponRestriction as TLWeapon | 'Geral',
             };
-            batch.set(auctionRef, { ...newAuction, createdAt: serverTimestamp() as Timestamp });
-        };
-        
-        try {
-            if (selectedItem) {
-                const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
-                batch.update(bankItemRef, { status: 'Em leilão' });
-                
-                const { id, status, createdAt, ...itemData } = selectedItem;
-                createAuctionDocument(itemData, id);
 
-            } else {
-                let imageUrlToUse = "https://placehold.co/80x80.png";
-                let rarityToUse: TLItem['rarity'] = 'epic';
-                let itemTypeMap;
-
-                if (data.itemCategory === 'weapon') itemTypeMap = WEAPON_ITEMS_MAP[data.weaponType || ''];
-                else if (data.itemCategory === 'armor') itemTypeMap = ARMOR_ITEMS_MAP[data.armorType || ''];
-                else if (data.itemCategory === 'accessory') itemTypeMap = ACCESSORY_ITEMS_MAP[data.accessoryType || ''];
-                
-                const itemInfo = itemTypeMap?.find(i => i.name === data.itemName);
-                if (itemInfo) {
-                    imageUrlToUse = itemInfo.imageUrl;
-                    rarityToUse = itemInfo.rarity;
-                }
-
-                const bankItemPayload: Omit<BankItem, 'id'> = {
-                    createdAt: serverTimestamp() as Timestamp,
-                    itemCategory: itemCategoryOptions.find(opt => opt.value === data.itemCategory)?.label || data.itemCategory || 'Unknown',
-                    weaponType: data.weaponType,
-                    armorType: data.armorType,
-                    accessoryType: data.accessoryType,
-                    itemName: data.itemName,
-                    trait: data.trait,
-                    imageUrl: imageUrlToUse,
-                    rarity: rarityToUse,
-                    status: 'Em leilão',
-                };
-                const bankItemRef = doc(collection(db, `guilds/${guildId}/bankItems`));
-                batch.set(bankItemRef, bankItemPayload);
-                
-                const { createdAt: _, ...itemForAuction } = bankItemPayload;
-                createAuctionDocument(itemForAuction, bankItemRef.id);
-            }
-
+            batch.set(auctionRef, { ...newAuctionData, createdAt: serverTimestamp() as Timestamp });
+            batch.update(bankItemRef, { status: 'Em leilão' });
+            
             await batch.commit();
-            toast({ title: "Leilão Criado!", description: `O leilão para "${selectedItem?.itemName || data.itemName}" foi agendado.` });
-            resetAndClose();
+            toast({ title: "Leilão Criado!", description: `O leilão para "${selectedItem.itemName}" foi agendado.` });
+            resetWizard();
 
         } catch (error) {
             console.error("Error creating auction:", error);
@@ -1563,187 +587,91 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
         }
     };
     
-    const watchedItemName = form.watch("itemName");
-    const itemPreview = useMemo(() => {
-        if (selectedItem) return selectedItem;
-        if (!watchedItemCategory || !watchedItemName) return null;
+    const renderContent = () => {
+        switch (step) {
+            case 'select':
+                return <>
+                    <DialogHeader>
+                        <DialogTitle>Passo 1: Selecione um Item do Banco</DialogTitle>
+                        <DialogDescription>Escolha um item com status "Disponível" para iniciar o leilão.</DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="h-80 my-4">
+                        <div className="space-y-2 pr-4">
+                            {bankItems.map(item => (
+                                <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedItem(item); handleNextStep(); }}>
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className={cn("w-12 h-12 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[item.rarity])}>
+                                            <Image src={item.imageUrl} alt={item.itemName || "Item"} width={40} height={40} className="object-contain" data-ai-hint="game item"/>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold truncate text-sm">{item.itemName}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="h-5 w-5 text-primary"/>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </>;
 
-        let itemsMap;
-        let typeKey;
-        if (watchedItemCategory === 'weapon') { itemsMap = WEAPON_ITEMS_MAP; typeKey = watchedWeaponType; }
-        else if (watchedItemCategory === 'armor') { itemsMap = ARMOR_ITEMS_MAP; typeKey = watchedArmorType; }
-        else if (watchedItemCategory === 'accessory') { itemsMap = ACCESSORY_ITEMS_MAP; typeKey = watchedAccessoryType; }
-        
-        if (!itemsMap || !typeKey) return null;
-        
-        return itemsMap[typeKey]?.find(i => i.name === watchedItemName) || null;
-    }, [selectedItem, watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType, watchedItemName]);
+            case 'startBid':
+                return <>
+                    <DialogHeader><DialogTitle>Passo 2: Lance Inicial</DialogTitle></DialogHeader>
+                    <div className="py-4"><Label>Lance inicial (DKP)</Label><Input type="number" value={config.startBid} onChange={e => setConfig(c => ({...c, startBid: Number(e.target.value)}))} min="1"/></div>
+                    <DialogFooter><Button variant="outline" onClick={handlePrevStep}>Voltar</Button><Button onClick={handleNextStep}>Próximo</Button></DialogFooter>
+                </>;
+
+            case 'increment':
+                 return <>
+                    <DialogHeader><DialogTitle>Passo 3: Incremento Mínimo</DialogTitle></DialogHeader>
+                    <div className="py-4"><Label>Aumento mínimo por lance (DKP)</Label><Input type="number" value={config.minIncrement} onChange={e => setConfig(c => ({...c, minIncrement: Number(e.target.value)}))} min="1"/></div>
+                    <DialogFooter><Button variant="outline" onClick={handlePrevStep}>Voltar</Button><Button onClick={handleNextStep}>Próximo</Button></DialogFooter>
+                </>;
+
+            case 'role':
+                 return <>
+                    <DialogHeader><DialogTitle>Passo 4: Restrição por Função</DialogTitle></DialogHeader>
+                    <div className="py-4 space-y-2"><Label>Leilão exclusivo para:</Label>
+                        <Select value={config.roleRestriction} onValueChange={v => setConfig(c => ({...c, roleRestriction: v}))}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todos)</div></SelectItem>
+                                <SelectItem value={TLRole.Tank}><div className="flex items-center gap-2"><ShieldLucideIcon className="h-4 w-4 text-sky-500"/>{TLRole.Tank}</div></SelectItem>
+                                <SelectItem value={TLRole.DPS}><div className="flex items-center gap-2"><Swords className="h-4 w-4 text-rose-500"/>{TLRole.DPS}</div></SelectItem>
+                                <SelectItem value={TLRole.Healer}><div className="flex items-center gap-2"><Heart className="h-4 w-4 text-emerald-500"/>{TLRole.Healer}</div></SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter><Button variant="outline" onClick={handlePrevStep}>Voltar</Button><Button onClick={handleNextStep}>Próximo</Button></DialogFooter>
+                </>;
+                
+            case 'weapon':
+                return <>
+                    <DialogHeader><DialogTitle>Passo 5: Restrição por Arma</DialogTitle></DialogHeader>
+                    <div className="py-4 space-y-2"><Label>Leilão exclusivo para usuários de:</Label>
+                        <Select value={config.weaponRestriction} onValueChange={v => setConfig(c => ({...c, weaponRestriction: v}))}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Geral"><div className="flex items-center gap-2"><Armchair className="h-4 w-4"/>Geral (Todas as armas)</div></SelectItem>
+                                {allWeaponOptions.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter><Button variant="outline" onClick={handlePrevStep}>Voltar</Button><Button onClick={handleCreateAuction} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin" /> : 'Finalizar e Criar Leilão'}</Button></DialogFooter>
+                </>;
+        }
+    }
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetAndClose(); onOpenChange(open); }}>
-            <DialogContent className="flex flex-col sm:max-w-3xl bg-card border-border max-h-[90vh]">
-                <DialogHeader className="p-6 pb-4 shrink-0">
-                    <DialogTitle className="font-headline text-primary">Criar Novo Leilão</DialogTitle>
-                     <DialogDescription>Selecione um item existente do banco da guilda ou cadastre um novo para leiloar.</DialogDescription>
-                </DialogHeader>
-                
-                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'create' | 'select')} className="flex-grow flex flex-col min-h-0">
-                     <TabsList className="grid w-full grid-cols-2 mx-6 shrink-0">
-                        <TabsTrigger value="create">Criar/Configurar Item</TabsTrigger>
-                        <TabsTrigger value="select">Selecionar do Banco</TabsTrigger>
-                     </TabsList>
-                     <div className="flex-grow overflow-y-auto px-6 py-4">
-                        <TabsContent value="create" className="m-0">
-                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(handleAuctionSubmit)} className="space-y-6">
-                                    {selectedItem ? (
-                                        <div>
-                                            <h3 className="text-lg font-semibold border-b pb-2 mb-4">Item Selecionado</h3>
-                                            <div className="border p-3 rounded-md bg-muted/30 flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={cn("w-14 h-14 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[selectedItem.rarity])}>
-                                                        <Image src={selectedItem.imageUrl} alt={selectedItem.itemName || "Item"} width={48} height={48} className="object-contain" data-ai-hint="game item"/>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-semibold">{selectedItem.itemName}</h4>
-                                                        <p className="text-sm text-muted-foreground">{selectedItem.trait}</p>
-                                                    </div>
-                                                </div>
-                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedItem(null); }}>
-                                                    <X className="h-5 w-5"/>
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold border-b pb-2">1. Detalhes do Novo Item</h3>
-                                            <FormField control={form.control} name="itemCategory" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione a categoria do item" /></SelectTrigger></FormControl> <SelectContent> {itemCategoryOptions.map(opt => ( <SelectItem key={opt.value} value={opt.value}><div className="flex items-center"><opt.icon className="mr-2 h-5 w-5"/>{opt.label}</div></SelectItem> ))} </SelectContent> </Select><FormMessage /></FormItem> )}/>
-                                            {watchedItemCategory === 'weapon' && ( <FormField control={form.control} name="weaponType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Arma <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da arma" /></SelectTrigger></FormControl> <SelectContent> {weaponTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                                            {watchedItemCategory === 'armor' && ( <FormField control={form.control} name="armorType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Armadura <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo da armadura" /></SelectTrigger></FormControl> <SelectContent> {armorTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                                            {watchedItemCategory === 'accessory' && ( <FormField control={form.control} name="accessoryType" render={({ field }) => ( <FormItem> <FormLabel>Tipo de Acessório <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o tipo de acessório" /></SelectTrigger></FormControl> <SelectContent> {accessoryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> )}
-                                            <FormField control={form.control} name="itemName" render={({ field }) => ( <FormItem> <FormLabel>Nome do Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o nome do item" /></SelectTrigger></FormControl> <SelectContent> { (watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] : watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] : watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : []).map(item => <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                                            <FormField control={form.control} name="trait" render={({ field }) => ( <FormItem> <FormLabel>Trait do Item <span className="text-destructive">*</span></FormLabel> <Select onValueChange={field.onChange} value={field.value || ""}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione o trait do item" /></SelectTrigger></FormControl> <SelectContent> {traitOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                                        </div>
-                                    )}
-
-                                    {itemPreview && ( <div className="mt-4 space-y-2"> <FormLabel>Prévia do Item</FormLabel> <div className={cn( "w-24 h-24 p-2 rounded-md flex items-center justify-center border-2", rarityBackgrounds[itemPreview.rarity] || 'bg-muted border-border' )} > <Image src={itemPreview.imageUrl} alt={itemPreview.name || 'Item'} width={80} height={80} className="object-contain" data-ai-hint="game item weapon"/> </div> </div> )}
-
-                                    <h3 className="text-lg font-semibold border-b pb-2 pt-6">2. Detalhes do Leilão</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField control={form.control} name="startingBid" render={({ field }) => ( <FormItem> <FormLabel>Lance Inicial (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                                        <FormField control={form.control} name="minBidIncrement" render={({ field }) => ( <FormItem> <FormLabel>Incremento Mínimo (DKP)</FormLabel> <FormControl> <Input type="number" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                         <FormField
-                                            control={form.control}
-                                            name="startTime"
-                                            render={({ field }) => (
-                                            <FormItem className="flex flex-col">
-                                                <FormLabel>Início do Leilão</FormLabel>
-                                                <Popover>
-                                                  <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                      <Button
-                                                          variant={"outline"}
-                                                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                      >
-                                                          <span className='flex justify-between items-center w-full'>
-                                                              <span>
-                                                                  {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : "Escolha a data e hora"}
-                                                              </span>
-                                                              <CalendarIconLucide className="h-4 w-4 opacity-50" />
-                                                          </span>
-                                                      </Button>
-                                                    </FormControl>
-                                                  </PopoverTrigger>
-                                                  <PopoverContent className="w-auto p-0" align="start">
-                                                      <Calendar mode="single" selected={field.value} onSelect={(date) => { const currentVal = field.value || new Date(); const newDate = date || new Date(); newDate.setHours(currentVal.getHours()); newDate.setMinutes(currentVal.getMinutes()); field.onChange(newDate);}} initialFocus />
-                                                      <div className="p-2 border-t border-border">
-                                                          <Input type="time" value={field.value ? format(field.value, "HH:mm") : ""} onChange={e => { if (!field.value) { field.onChange(new Date()); } const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0])); date.setMinutes(Number(time[1])); field.onChange(date);}}/>
-                                                      </div>
-                                                  </PopoverContent>
-                                                </Popover>
-                                                <FormMessage />
-                                            </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="endTime"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Fim do Leilão</FormLabel>
-                                                      <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                              <Button
-                                                                  variant={"outline"}
-                                                                  className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                              >
-                                                                  <span className='flex justify-between items-center w-full'>
-                                                                      <span>
-                                                                          {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : "Escolha a data e hora"}
-                                                                      </span>
-                                                                      <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                                  </span>
-                                                              </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar mode="single" selected={field.value} onSelect={(date) => { const currentVal = field.value || new Date(); const newDate = date || new Date(); newDate.setHours(currentVal.getHours()); newDate.setMinutes(currentVal.getMinutes()); field.onChange(newDate);}} disabled={(date) => date < form.getValues("startTime")} initialFocus />
-                                                            <div className="p-2 border-t border-border">
-                                                                <Input type="time" value={field.value ? format(field.value, "HH:mm") : ""} onChange={e => { if (!field.value) { field.onChange(new Date()); } const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0])); date.setMinutes(Number(time[1])); field.onChange(date);}}/>
-                                                            </div>
-                                                        </PopoverContent>
-                                                      </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-xs text-muted-foreground">Definir Duração Rápida</Label>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                            {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
-                                        </div>
-                                    </div>
-
-                                    <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
-                                        <Button type="button" variant="outline" onClick={() => resetAndClose()} disabled={isSubmitting}>Cancelar</Button>
-                                        <Button type="submit" className="btn-gradient btn-style-primary" disabled={isSubmitting}>
-                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>}
-                                            Criar Leilão
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </Form>
-                        </TabsContent>
-                        <TabsContent value="select" className="m-0 pt-4">
-                            <ScrollArea className="h-96 border rounded-md p-2">
-                                <div className="space-y-2">
-                                    {availableBankItems.length > 0 ? availableBankItems.map(item => (
-                                        <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50">
-                                            <div className="flex items-center gap-2 overflow-hidden">
-                                                <div className={cn("w-10 h-10 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[item.rarity])}>
-                                                    <Image src={item.imageUrl} alt={item.itemName || "Item"} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
-                                                </div>
-                                                <div className="truncate">
-                                                    <p className="font-semibold truncate text-sm">{item.itemName}</p>
-                                                    <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
-                                                </div>
-                                            </div>
-                                            <Button size="sm" onClick={() => handleSelectBankItem(item)}>Selecionar</Button>
-                                        </div>
-                                    )) : <p className="text-center text-muted-foreground py-10">Nenhum item disponível no banco.</p>}
-                                </div>
-                            </ScrollArea>
-                        </TabsContent>
-                     </div>
-                 </Tabs>
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
+            <DialogContent className="sm:max-w-md bg-card border-border">
+                {renderContent()}
             </DialogContent>
         </Dialog>
     );
 }
+
 
 const LootPageWrapper = () => {
   return (
@@ -1753,4 +681,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-

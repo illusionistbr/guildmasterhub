@@ -410,4 +410,6 @@ export interface Auction {
   createdByName: string;
   createdAt: Timestamp;
   isDistributed?: boolean;
+  roleRestriction?: TLRole | 'Geral';
+  weaponRestriction?: TLWeapon | 'Geral';
 }
