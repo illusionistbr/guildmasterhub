@@ -970,7 +970,8 @@ function LootPageContent() {
   const currentItemNameOptions =
     watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
     watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] : [];
+    watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
+    [];
 
   const isTraitMandatory =
     (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
@@ -1393,10 +1394,7 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
     const [activeTab, setActiveTab] = useState<'create' | 'select'>('create');
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const tlRoleOptions = Object.values(TLRole).map(role => ({ id: role, label: role }));
-    const tlWeaponOptions = Object.values(TLWeapon).map(weapon => ({ id: weapon, label: weapon }));
-
+    
     const durationPresets = [
         { label: "6 Horas", hours: 6 },
         { label: "12 Horas", hours: 12 },
@@ -1418,8 +1416,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
       minBidIncrement: z.coerce.number().min(1, "Incremento mínimo deve ser no mínimo 1.").default(5),
       startTime: z.date({ required_error: "Data de início é obrigatória." }),
       endTime: z.date({ required_error: "Data de fim é obrigatória." }),
-      allowedRoles: z.array(z.string()).optional(),
-      requiredWeapons: z.array(z.string()).optional(),
     }).superRefine((data, ctx) => {
         if (!selectedItem) {
             if (!data.itemCategory) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Categoria é obrigatória.", path: ["itemCategory"] });
@@ -1440,8 +1436,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
             minBidIncrement: 5,
             startTime: new Date(),
             endTime: addHours(new Date(), 24),
-            allowedRoles: [],
-            requiredWeapons: [],
         }
     });
 
@@ -1469,8 +1463,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
             minBidIncrement: 5,
             startTime: new Date(),
             endTime: addHours(new Date(), 24),
-            allowedRoles: [],
-            requiredWeapons: [],
             itemCategory: "",
             itemName: "",
             trait: "",
@@ -1510,8 +1502,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                 bids: [],
                 startTime: Timestamp.fromDate(data.startTime),
                 endTime: Timestamp.fromDate(data.endTime),
-                allowedRoles: data.allowedRoles as TLRole[],
-                requiredWeapons: data.requiredWeapons as TLWeapon[],
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
                 isDistributed: false
@@ -1709,101 +1699,6 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             {durationPresets.map(p => <Button key={p.hours} type="button" variant="outline" size="sm" onClick={() => setAuctionDuration(p.hours)}>{p.label}</Button>)}
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold border-b pb-2 pt-4">3. Restrições (Opcional)</h3>
-                                    
-                                     <FormField
-                                      control={form.control}
-                                      name="allowedRoles"
-                                      render={() => (
-                                        <FormItem>
-                                          <div className="mb-4">
-                                            <FormLabel className="text-base">Funções Permitidas (Role)</FormLabel>
-                                            <FormDescription>Selecione as funções que podem dar lances neste item. Deixe em branco para permitir todas.</FormDescription>
-                                          </div>
-                                          <div className="space-y-2">
-                                            {tlRoleOptions.map((item) => (
-                                              <FormField
-                                                key={item.id}
-                                                control={form.control}
-                                                name="allowedRoles"
-                                                render={({ field }) => {
-                                                  return (
-                                                    <FormItem
-                                                      key={item.id}
-                                                      className="flex flex-row items-start space-x-3 space-y-0"
-                                                    >
-                                                      <FormControl>
-                                                        <Checkbox
-                                                          checked={field.value?.includes(item.id)}
-                                                          onCheckedChange={(checked) => {
-                                                            return checked
-                                                              ? field.onChange([...(field.value || []), item.id])
-                                                              : field.onChange(
-                                                                  (field.value || []).filter(
-                                                                    (value) => value !== item.id
-                                                                  )
-                                                                );
-                                                          }}
-                                                        />
-                                                      </FormControl>
-                                                      <FormLabel className="font-normal">{item.label}</FormLabel>
-                                                    </FormItem>
-                                                  );
-                                                }}
-                                              />
-                                            ))}
-                                          </div>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                    <FormField
-                                      control={form.control}
-                                      name="requiredWeapons"
-                                      render={() => (
-                                        <FormItem>
-                                          <div className="mb-4">
-                                            <FormLabel className="text-base">Armas Requeridas</FormLabel>
-                                            <FormDescription>Selecione as armas que um membro deve usar (primária ou secundária) para dar um lance.</FormDescription>
-                                          </div>
-                                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                            {tlWeaponOptions.map((item) => (
-                                              <FormField
-                                                key={item.id}
-                                                control={form.control}
-                                                name="requiredWeapons"
-                                                render={({ field }) => {
-                                                  return (
-                                                  <FormItem
-                                                    key={item.id}
-                                                    className="flex flex-row items-start space-x-2 space-y-0"
-                                                  >
-                                                    <FormControl>
-                                                      <Checkbox
-                                                        checked={field.value?.includes(item.id)}
-                                                        onCheckedChange={(checked) => {
-                                                          return checked
-                                                            ? field.onChange([...(field.value || []), item.id])
-                                                            : field.onChange(
-                                                                (field.value || []).filter(
-                                                                  (value) => value !== item.id
-                                                                )
-                                                              );
-                                                        }}
-                                                      />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal text-sm">{item.label}</FormLabel>
-                                                  </FormItem>
-                                                  );
-                                                }}
-                                              />
-                                            ))}
-                                          </div>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-
 
                                     <DialogFooter className="p-0 pt-6 mt-6 border-t border-border">
                                         <Button type="button" variant="outline" onClick={() => resetAndClose()} disabled={isSubmitting}>Cancelar</Button>

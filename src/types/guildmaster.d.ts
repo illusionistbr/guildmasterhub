@@ -407,8 +407,6 @@ export interface Auction {
   bids: AuctionBid[];
   startTime: Timestamp;
   endTime: Timestamp;
-  allowedRoles?: TLRole[];
-  requiredWeapons?: TLWeapon[];
   createdBy: string;
   createdByName: string;
   createdAt: Timestamp;
