@@ -23,6 +23,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -784,7 +791,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
 
 function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[] }) {
     const { toast } = useToast();
-    const [step, setStep] = useState<'select' | 'details'>('select');
+    const [step, setStep] = useState<'select' | 'details' | 'role' | 'weapon' | 'confirm'>('select');
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -793,6 +800,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         minIncrement: 1,
         startTime: new Date(),
         endTime: addHours(new Date(), 24),
+        roleRestriction: 'Geral',
+        weaponRestriction: 'Geral',
     });
 
     const resetWizard = () => {
@@ -803,16 +812,24 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
             minIncrement: 1,
             startTime: new Date(),
             endTime: addHours(new Date(), 24),
+            roleRestriction: 'Geral',
+            weaponRestriction: 'Geral',
         });
         onOpenChange(false);
     };
 
     const handleNextStep = () => {
-        if (step === 'select') setStep('details');
+        if (step === 'select' && selectedItem) setStep('details');
+        else if (step === 'details') setStep('role');
+        else if (step === 'role') setStep('weapon');
+        else if (step === 'weapon') setStep('confirm');
     };
 
     const handlePrevStep = () => {
-        if (step === 'details') {
+        if (step === 'confirm') setStep('weapon');
+        else if (step === 'weapon') setStep('role');
+        else if (step === 'role') setStep('details');
+        else if (step === 'details') {
             setSelectedItem(null);
             setStep('select');
         }
@@ -843,6 +860,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
                 isDistributed: false,
+                roleRestriction: config.roleRestriction as TLRole | 'Geral',
+                weaponRestriction: config.weaponRestriction as TLWeapon | 'Geral',
             };
 
             batch.set(auctionRef, { ...newAuctionData, createdAt: serverTimestamp() as Timestamp });
@@ -892,7 +911,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                     <>
                       <DialogHeader>
                         <DialogTitle>Passo 2: Detalhes do Leilão</DialogTitle>
-                        <DialogDescription>Configure o lance inicial e o incremento para o item "{selectedItem?.itemName}".</DialogDescription>
+                        <DialogDescription>Configure lances e duração para o item "{selectedItem?.itemName}".</DialogDescription>
                       </DialogHeader>
                       <div className="py-4 space-y-4">
                         <div>
@@ -904,36 +923,105 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                           <Input type="number" value={config.minIncrement} onChange={(e) => setConfig((c) => ({ ...c, minIncrement: Number(e.target.value) }))} min="1"/>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <FormControl>
+                           <div>
+                                <Label>Data de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
+                                      <FormControl>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
                                             <CalendarIconLucide className="mr-2 h-4 w-4" />
                                             {config.startTime ? format(config.startTime, "PPP") : <span>Data de início</span>}
                                         </Button>
+                                      </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus /></PopoverContent>
                                 </Popover>
-                            </FormControl>
-                            <FormControl>
+                           </div>
+                           <div>
+                                <Label>Data de Fim</Label>
                                  <Popover>
                                     <PopoverTrigger asChild>
+                                      <FormControl>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
                                             <CalendarIconLucide className="mr-2 h-4 w-4" />
                                             {config.endTime ? format(config.endTime, "PPP") : <span>Data de fim</span>}
                                         </Button>
+                                      </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus /></PopoverContent>
                                 </Popover>
-                            </FormControl>
+                           </div>
                         </div>
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={handlePrevStep}>Voltar</Button>
-                        <Button onClick={handleCreateAuction} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin" /> : 'Finalizar e Criar Leilão'}</Button>
+                        <Button onClick={handleNextStep}>Próximo</Button>
                       </DialogFooter>
                     </>
                   );
+            case 'role':
+                 return <>
+                    <DialogHeader>
+                        <DialogTitle>Passo 3: Restrição por Função</DialogTitle>
+                        <DialogDescription>Restringir o leilão para uma função específica (Tank, DPS, Healer) ou deixar aberto para todos.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <Select value={config.roleRestriction} onValueChange={(value) => setConfig(c => ({...c, roleRestriction: value}))}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todos)</div></SelectItem>
+                                <SelectItem value={TLRole.Tank}><div className="flex items-center gap-2"><ShieldLucideIcon className="h-4 w-4 text-sky-500"/>{TLRole.Tank}</div></SelectItem>
+                                <SelectItem value={TLRole.DPS}><div className="flex items-center gap-2"><Swords className="h-4 w-4 text-rose-500"/>{TLRole.DPS}</div></SelectItem>
+                                <SelectItem value={TLRole.Healer}><div className="flex items-center gap-2"><Heart className="h-4 w-4 text-emerald-500"/>{TLRole.Healer}</div></SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handlePrevStep}>Voltar</Button>
+                        <Button onClick={handleNextStep}>Próximo</Button>
+                    </DialogFooter>
+                </>;
+            case 'weapon':
+                const weapons = Object.values(TLWeapon);
+                 return <>
+                    <DialogHeader>
+                        <DialogTitle>Passo 4: Restrição por Arma</DialogTitle>
+                        <DialogDescription>Restringir o leilão para quem usa uma arma específica ou deixar aberto para todos.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <Select value={config.weaponRestriction} onValueChange={(value) => setConfig(c => ({...c, weaponRestriction: value}))}>
+                           <SelectTrigger><SelectValue/></SelectTrigger>
+                           <SelectContent>
+                                <SelectItem value="Geral">Geral (Todas as Armas)</SelectItem>
+                                {weapons.map(weapon => (
+                                    <SelectItem key={weapon} value={weapon}>{weapon}</SelectItem>
+                                ))}
+                           </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handlePrevStep}>Voltar</Button>
+                        <Button onClick={handleNextStep}>Próximo</Button>
+                    </DialogFooter>
+                 </>;
+            case 'confirm':
+                return <>
+                    <DialogHeader>
+                        <DialogTitle>Passo 5: Confirmar e Criar Leilão</DialogTitle>
+                        <DialogDescription>Revise os detalhes abaixo antes de criar o leilão.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-3 text-sm">
+                        <p><strong>Item:</strong> {selectedItem?.itemName}</p>
+                        <p><strong>Lance Inicial:</strong> {config.startBid} DKP</p>
+                        <p><strong>Incremento Mínimo:</strong> {config.minIncrement} DKP</p>
+                        <p><strong>Restrição de Função:</strong> {config.roleRestriction}</p>
+                        <p><strong>Restrição de Arma:</strong> {config.weaponRestriction}</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
+                        <Button onClick={handleCreateAuction} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin" /> : 'Finalizar e Criar Leilão'}</Button>
+                    </DialogFooter>
+                </>;
         }
     }
 
@@ -954,5 +1042,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-    
