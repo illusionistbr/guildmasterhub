@@ -33,7 +33,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Axe, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair, Swords } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -455,7 +455,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                 <TableCell>{auction.startingBid}</TableCell>
                                 <TableCell>{auction.currentBid}</TableCell>
                                 <TableCell>{formatDistanceToNow(auction.endTime.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
-                                <TableCell><Badge variant={auction.status === 'active' ? 'default' : 'outline'} className={auction.status === 'active' ? 'bg-green-500/80' : ''}>{auction.status === 'active' ? 'Aberto' : 'Agendado'}</Badge></TableCell>
+                                <TableCell><Badge variant={auction.status === 'active' ? 'default' : 'outline'} className={auction.status === 'active' ? 'bg-green-600/80' : ''}>{auction.status === 'active' ? 'Aberto' : 'Agendado'}</Badge></TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
                                     <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -681,3 +681,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
+    
