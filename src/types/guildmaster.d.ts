@@ -42,13 +42,13 @@ export enum TLRole {
 }
 
 export enum TLWeapon {
-  SwordAndShield = "Sword and Shield",
+  Sword = "Sword",
   Greatsword = "Greatsword",
-  Daggers = "Daggers",
+  Dagger = "Dagger",
+  Bow = "Bow",
   Crossbow = "Crossbow",
-  Longbow = "Longbow",
+  Wand = "Wand",
   Staff = "Staff",
-  WandAndTome = "Wand and Tome",
   Spear = "Spear",
 }
 
@@ -397,7 +397,7 @@ export interface AuctionBid {
 export interface Auction {
   id: string; // Firestore document ID
   guildId: string;
-  item: Omit<BankItem, 'id' | 'status'>; // Embed the item details
+  item: Omit<BankItem, 'id' | 'status' | 'createdAt'>;
   bankItemId?: string;
   status: AuctionStatus;
   startingBid: number;

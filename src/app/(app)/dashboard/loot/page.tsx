@@ -40,7 +40,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, PackagePlus, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair, Swords, Trash2, UploadCloud, Axe } from 'lucide-react';
+import { Loader2, Gem, PackagePlus, Shield as ShieldLucideIcon, Wand2Icon, Bow, Dices, Wrench, Diamond, Sparkles, Package, Tag, CheckSquare, Eye, Users, UserCircle, Shirt, Hand, Footprints, Heart, Search, Filter, Calendar as CalendarIconLucide, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Gavel, MoreHorizontal, ArrowUpDown, Clock, Timer, X, ArrowRight, UserCheck, Armchair, Swords, Trash2, UploadCloud, Axe, ImageIcon } from 'lucide-react';
 import { ComingSoon } from '@/components/shared/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -57,6 +57,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
 
 const ITEMS_PER_PAGE = 15;
 
@@ -78,60 +80,73 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
 };
 
 
+interface ItemDetails {
+  name: string;
+  imageUrl: string;
+}
+
+const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>> = {
+  weapon: {
+    Sword: {
+      "karnixs-netherblade": { name: "Karnix's Netherblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00015.webp" },
+      "blade-of-fiendish-fortitude": { name: "Blade of Fiendish Fortitude", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017.webp" },
+      "corneliuss-animated-edge": { name: "Cornelius's Animated Edge", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00008A.webp" },
+      "bulwark-of-invulnerability": { name: "Bulwark of Invulnerability", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00016.webp" },
+      "ahzreils-siphoning-sword": { name: "Ahzreil's Siphoning Sword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00026.webp" },
+      "nirmas-sword-of-echoes": { name: "Nirma's Sword of Echoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00035.webp" },
+      "crimson-doomblade": { name: "Crimson Doomblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00038.webp" },
+      "heroic-blade-of-the-resistance": { name: "Heroic Blade of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00032.webp" },
+      "chernobogs-blade-of-beheading": { name: "Chernobog's Blade of Beheading", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00033.webp" },
+      "queen-bellandirs-languishing-blade": { name: "Queen Bellandir's Languishing Blade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00034.webp" },
+      "daigons-stormblade": { name: "Daigon's Stormblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017A.webp" },
+      "unshakeable-knights-sword": { name: "Unshakeable Knight's Sword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp" },
+      "bulwark-of-the-black-anvil": { name: "Bulwark of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00049.webp" },
+      "deluzhnoas-edge-of-eternal-frost": { name: "Deluzhnoa's Edge of Eternal Frost", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00052.webp" },
+    },
+    Greatsword: {
+      "immortal-titanic-quakeblade": { name: "Immortal Titanic Quakeblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp" },
+      "celestial-cyclone-warblade": { name: "Celestial Cyclone Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp" },
+      "morokais-greatblade-of-corruption": { name: "Morokai's Greatblade of Corruption", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp" },
+      "duke-magnas-provoking-warblade": { name: "Duke Magna's Provoking Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00022.webp" },
+      "adentuss-gargantuan-greatsword": { name: "Adentus's Gargantuan Greatsword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp" },
+      "junobotes-juggernaut-warblade": { name: "Junobote's Juggernaut Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00039.webp" },
+      "narus-frenzied-greatblade": { name: "Naru's Frenzied Greatblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp" },
+      "duke-magnas-fury-warblade": { name: "Duke Magna's Fury Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp" },
+      "heroic-broadsword-of-the-resistance": { name: "Heroic Broadsword of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00038.webp" },
+      "greatsword-of-the-banshee": { name: "Greatsword of the Banshee", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00018.webp" },
+      "tevents-warblade-of-despair": { name: "Tevent's Warblade of Despair", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp" },
+      "broadsword-of-the-juggernaught": { name: "Broadsword of the Juggernaught", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp" },
+      "greatblade-of-the-black-anvil": { name: "Greatblade of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00049.webp" },
+      "grayeyes-bloodlust-greatsword": { name: "Grayeye's Bloodlust Greatsword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00050.webp" },
+      "cordys-warblade-of-creeping-doom": { name: "Cordy's Warblade of Creeping Doom", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp" },
+    },
+    Dagger: {}, Bow: {}, Crossbow: {}, Wand: {}, Staff: {}, Spear: {}
+  },
+  armor: {},
+  accessory: {},
+};
+
+const WEAPON_TYPES = Object.keys(ITEM_DATABASE.weapon);
+const ARMOR_TYPES: string[] = [];
+const ACCESSORY_TYPES: string[] = [];
+
 const itemFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
   armorType: z.string().optional(),
   accessoryType: z.string().optional(),
-  itemName: z.string().min(1, "Nome do item é obrigatório."),
+  selectedItemKey: z.string().min(1, "É obrigatório selecionar um item da lista."),
+  itemName: z.string().optional(),
+  imageUrl: z.string().optional(),
   trait: z.string().optional(),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
-  imageUrl: z.string().url("URL de imagem inválida.").optional().or(z.literal('')),
-  imageFile: z.instanceof(File).optional(),
   droppedByMemberName: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (!data.imageUrl && !data.imageFile) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Forneça uma URL ou faça upload de uma imagem.", path: ["imageUrl"] });
-    }
     if (data.itemCategory === 'weapon' && !data.weaponType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
     }
-    if (data.itemCategory === 'armor' && !data.armorType) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de armadura é obrigatório.", path: ["armorType"] });
-    }
-    if (data.itemCategory === 'accessory' && !data.accessoryType) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de acessório é obrigatório.", path: ["accessoryType"] });
-    }
 });
 type ItemFormValues = z.infer<typeof itemFormSchema>;
-
-const WEAPON_TYPES = ["Greatsword", "Longbow", "Daggers", "Crossbow", "Staff", "Wand & Tome", "Sword & Shield"];
-const ARMOR_TYPES = ["Helmet", "Chestpiece", "Gloves", "Pants", "Shoes"];
-const ACCESSORY_TYPES = ["Necklace", "Earring", "Ring", "Belt"];
-
-const WEAPON_ITEMS_MAP: Record<string, string[]> = {
-    "Greatsword": ["Void-Edge Greatsword", "Dragon's Maw Blade", "Claymore of Destruction"],
-    "Longbow": ["Storm-Caller Longbow", "Whisperwind Bow", "Elven Bow of Precision"],
-    "Daggers": ["Shadowstrike Blades", "Twin Fangs of the Viper", "Soul-Eater Daggers"],
-    "Crossbow": ["Bolt-Thrower of the Citadel", "Hell-Screamer Repeater", "Eagle Eye Arbalest"],
-    "Staff": ["Staff of the Archmagus", "Scepter of Cosmic Fury", "Dragon-Soul Staff"],
-    "Wand & Tome": ["Wand of Abyssal Secrets", "Tome of Forgotten Lore", "Celestial Pointer"],
-    "Sword & Shield": ["Aegis of the Protector", "Lionheart Longsword", "Bulwark of the Unbroken"]
-};
-const ARMOR_ITEMS_MAP: Record<string, string[]> = {
-    "Helmet": ["Crown of the Abyss", "Vindicator's Greathelm", "Helm of Valor"],
-    "Chestpiece": ["Breastplate of Eternal Flame", "Shadow-Weave Robes", "Cuirass of the Guardian"],
-    "Gloves": ["Gauntlets of the Colossus", "Gloves of the Deft Hand", "Soul-Forged Vambraces"],
-    "Pants": ["Greaves of the Unstoppable Force", "Legplates of the Phoenix", "Spell-Woven Breeches"],
-    "Shoes": ["Boots of the Wanderer", "Sabatons of the Juggernaut", "Fleet-Footed Slippers"]
-};
-const ACCESSORY_ITEMS_MAP: Record<string, string[]> = {
-    "Necklace": ["Talisman of the Storm Lord", "Pendant of Arcane Power", "Amulet of Kings"],
-    "Earring": ["Earring of the Whispering Wind", "Sunstone Earring", "Abyssal Pearl Stud"],
-    "Ring": ["Band of the Archon", "Seal of the Shadow Serpent", "Ring of Power"],
-    "Belt": ["Girdle of Giant Strength", "Sash of the Sorcerer-King", "Cinch of the Wild Spirit"]
-};
-const itemSubTypesRequiringTrait = ["Greatsword", "Longbow", "Staff"];
 
 
 function LootPageContent() {
@@ -330,7 +345,7 @@ function LootPageContent() {
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -493,42 +508,50 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     const { toast } = useToast();
     const form = useForm<ItemFormValues>({
         resolver: zodResolver(itemFormSchema),
-        defaultValues: { itemCategory: "", rarity: 'epic', imageUrl: "" }
+        defaultValues: { itemCategory: "", rarity: 'epic', selectedItemKey: "" }
     });
 
-    const { watch, reset, setValue } = form;
+    const { watch, reset, setValue, control } = form;
     const watchedItemCategory = watch('itemCategory');
     const watchedWeaponType = watch('weaponType');
-    const watchedArmorType = watch('armorType');
     const watchedAccessoryType = watch('accessoryType');
+    const watchedArmorType = watch('armorType');
+    const watchedSelectedItemKey = watch('selectedItemKey');
 
-    const currentItemNameOptions = useMemo(() => {
-        return watchedItemCategory === 'weapon' && watchedWeaponType ? WEAPON_ITEMS_MAP[watchedWeaponType] || [] :
-               watchedItemCategory === 'armor' && watchedArmorType ? ARMOR_ITEMS_MAP[watchedArmorType] || [] :
-               watchedItemCategory === 'accessory' && watchedAccessoryType ? ACCESSORY_ITEMS_MAP[watchedAccessoryType] || [] :
-               [];
+    const currentItemOptions = useMemo(() => {
+        if (watchedItemCategory === 'weapon' && watchedWeaponType && ITEM_DATABASE.weapon[watchedWeaponType]) {
+            return ITEM_DATABASE.weapon[watchedWeaponType];
+        }
+        // TODO: Add logic for armor and accessory here
+        return {};
     }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType]);
     
-    const isTraitMandatory = useMemo(() => {
-        return (watchedItemCategory === 'weapon' && watchedWeaponType && itemSubTypesRequiringTrait.includes(watchedWeaponType)) ||
-               (watchedItemCategory === 'armor' && watchedArmorType && itemSubTypesRequiringTrait.includes(watchedArmorType));
-    }, [watchedItemCategory, watchedWeaponType, watchedArmorType]);
+    const selectedItemData = useMemo(() => {
+        if (watchedItemCategory && watchedWeaponType && watchedSelectedItemKey) {
+            return ITEM_DATABASE[watchedItemCategory]?.[watchedWeaponType]?.[watchedSelectedItemKey];
+        }
+        // TODO: Add logic for armor and accessory
+        return null;
+    }, [watchedItemCategory, watchedWeaponType, watchedSelectedItemKey]);
 
+    useEffect(() => {
+        if (selectedItemData) {
+            setValue('itemName', selectedItemData.name);
+            setValue('imageUrl', selectedItemData.imageUrl);
+        } else {
+            setValue('itemName', '');
+            setValue('imageUrl', '');
+        }
+    }, [selectedItemData, setValue]);
 
     const onSubmit: SubmitHandler<ItemFormValues> = async (data) => {
-        if (!guildId || !currentUser) return;
+        if (!guildId || !currentUser || !data.itemName || !data.imageUrl) {
+            toast({ title: "Erro", description: "Dados incompletos para adicionar item.", variant: "destructive"});
+            return;
+        };
         setIsSubmitting(true);
         
         try {
-            let finalImageUrl = data.imageUrl || "";
-            if (data.imageFile) {
-                const file = data.imageFile;
-                const filePath = `guilds/${guildId}/bank_items/${Date.now()}_${file.name}`;
-                const fileRef = storageFirebaseRef(storage, filePath);
-                await uploadBytes(fileRef, file);
-                finalImageUrl = await getDownloadURL(fileRef);
-            }
-
             const newBankItem: Omit<BankItem, 'id'> = {
                 createdAt: serverTimestamp() as Timestamp,
                 itemCategory: data.itemCategory,
@@ -537,11 +560,11 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                 accessoryType: data.accessoryType,
                 itemName: data.itemName,
                 trait: data.trait,
-                imageUrl: finalImageUrl,
+                imageUrl: data.imageUrl,
                 rarity: data.rarity,
                 status: 'Disponível',
                 droppedByMemberId: currentUser.uid,
-                droppedByMemberName: currentUser.displayName || 'N/A'
+                droppedByMemberName: data.droppedByMemberName || currentUser.displayName || 'N/A'
             };
 
             await addDoc(collection(db, `guilds/${guildId}/bankItems`), newBankItem);
@@ -555,130 +578,81 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
             setIsSubmitting(false);
         }
     };
+    
+    useEffect(() => {
+        setValue('selectedItemKey', '');
+    }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType, setValue]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) reset(); }}>
             <DialogTrigger asChild>
                 <Button className="btn-gradient btn-style-secondary"><PackagePlus className="mr-2 h-4 w-4" /> Novo Item</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>Adicionar Item ao Banco da Guilda</DialogTitle>
-                    <DialogDescription>Preencha os detalhes do item para adicioná-lo ao banco.</DialogDescription>
+                    <DialogDescription>Selecione um item pré-definido para adicioná-lo ao banco.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto p-1 pr-4">
-                    <FormField name="itemCategory" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor">Armadura</SelectItem><SelectItem value="accessory">Acessório</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                    )}/>
-                    {watchedItemCategory === 'weapon' && <FormField name="weaponType" control={form.control} render={({ field }) => (<FormItem><FormLabel>Tipo de Arma *</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{WEAPON_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
-                    {watchedItemCategory === 'armor' && <FormField name="armorType" control={form.control} render={({ field }) => (<FormItem><FormLabel>Tipo de Armadura *</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ARMOR_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
-                    {watchedItemCategory === 'accessory' && <FormField name="accessoryType" control={form.control} render={({ field }) => (<FormItem><FormLabel>Tipo de Acessório *</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ACCESSORY_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
-                    
-                    <FormField name="itemName" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Nome do Item *</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={currentItemNameOptions.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={currentItemNameOptions.length > 0 ? "Selecione o item..." : "Selecione um tipo primeiro"}/></SelectTrigger></FormControl><SelectContent>{currentItemNameOptions.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                    )}/>
-                    <FormField name="trait" control={form.control} render={({ field }) => (<FormItem><FormLabel>Trait {isTraitMandatory && '*'}</FormLabel><FormControl><Input {...field} placeholder="Ex: Precise, Impenetrable..."/></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField name="rarity" control={form.control} render={({ field }) => (<FormItem><FormLabel>Raridade *</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..."/></SelectTrigger></FormControl><SelectContent><SelectItem value="common">Comum</SelectItem><SelectItem value="uncommon">Incomum</SelectItem><SelectItem value="rare">Raro</SelectItem><SelectItem value="epic">Épico</SelectItem><SelectItem value="legendary">Lendário</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
-                    
-                    <FormField name="imageUrl" control={form.control} render={({ field }) => ( <FormItem><FormLabel>URL da Imagem</FormLabel><FormControl><Input {...field} placeholder="https://..." disabled={!!watch('imageFile')} /></FormControl><FormMessage /></FormItem>)}/>
-                    <div className="text-center text-sm text-muted-foreground my-2">OU</div>
-                    <FormField name="imageFile" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Upload da Imagem</FormLabel><FormControl><Input type="file" accept="image/*" onChange={e => setValue('imageFile', e.target.files?.[0])} disabled={!!watch('imageUrl')}/></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField name="droppedByMemberName" control={form.control} render={({ field }) => (<FormItem><FormLabel>Dropado por (opcional)</FormLabel><FormControl><Input {...field} placeholder="Nome do membro"/></FormControl><FormMessage /></FormItem>)}/>
-                    
-                    <DialogFooter className="pt-4"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin"/> : "Adicionar Item"}</Button></DialogFooter>
-                </form>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto p-1 pr-4">
+                        <div className="space-y-4">
+                            <FormField name="itemCategory" control={control} render={({ field }) => (
+                                <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor" disabled>Armadura (em breve)</SelectItem><SelectItem value="accessory" disabled>Acessório (em breve)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                            )}/>
+                            {watchedItemCategory === 'weapon' && <FormField name="weaponType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Arma *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{WEAPON_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.weapon[t] || {}).length === 0}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
+                            
+                            <FormField
+                                control={form.control}
+                                name="selectedItemKey"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nome do Item *</FormLabel>
+                                    <ScrollArea className="h-64 border rounded-md p-2 bg-muted/20">
+                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-1">
+                                            {Object.entries(currentItemOptions).length > 0 ? (
+                                                Object.entries(currentItemOptions).map(([key, itemData]) => (
+                                                    <FormItem key={key} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted cursor-pointer has-[:checked]:bg-primary/20 has-[:checked]:border-primary border border-transparent">
+                                                        <FormControl>
+                                                            <RadioGroupItem value={key} />
+                                                        </FormControl>
+                                                        <Image src={itemData.imageUrl} alt={itemData.name} width={40} height={40} className="rounded-md bg-purple-900/30 p-1" data-ai-hint="game item"/>
+                                                        <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
+                                                    </FormItem>
+                                                ))
+                                            ) : (
+                                                <div className="text-center text-muted-foreground py-10 h-full flex items-center justify-center">Selecione uma categoria e tipo acima.</div>
+                                            )}
+                                        </RadioGroup>
+                                    </ScrollArea>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label>Prévia do Item</Label>
+                            <div className="w-full aspect-square bg-muted/30 rounded-lg flex items-center justify-center p-4 border border-dashed border-purple-500/30 bg-purple-950/20">
+                                {selectedItemData ? (
+                                    <Image src={selectedItemData.imageUrl} alt={selectedItemData.name} width={128} height={128} data-ai-hint="game item preview"/>
+                                ) : (
+                                    <ImageIcon className="h-24 w-24 text-muted-foreground"/>
+                                )}
+                            </div>
+
+                            <FormField name="trait" control={control} render={({ field }) => (<FormItem><FormLabel>Trait</FormLabel><FormControl><Input {...field} placeholder="Ex: Precise, Impenetrable..."/></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField name="rarity" control={control} render={({ field }) => (<FormItem><FormLabel>Raridade *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..."/></SelectTrigger></FormControl><SelectContent><SelectItem value="common">Comum</SelectItem><SelectItem value="uncommon">Incomum</SelectItem><SelectItem value="rare">Raro</SelectItem><SelectItem value="epic">Épico</SelectItem><SelectItem value="legendary">Lendário</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                            <FormField name="droppedByMemberName" control={control} render={({ field }) => (<FormItem><FormLabel>Dropado por (opcional)</FormLabel><FormControl><Input {...field} placeholder="Nome do membro"/></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                             <DialogFooter className="pt-4 border-t"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin"/> : "Adicionar Item"}</Button></DialogFooter>
+                        </div>
+                    </form>
                 </Form>
             </DialogContent>
         </Dialog>
     );
-}
-
-
-function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, currentUser: UserProfile | null }) {
-  const [timeLeft, setTimeLeft] = useState("");
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const calculateTime = () => {
-      const now = new Date();
-      const endTime = auction.endTime.toDate();
-      const startTime = auction.startTime.toDate();
-      
-      if (isAfter(now, endTime)) {
-        setTimeLeft("Encerrado");
-        setProgress(100);
-        return;
-      }
-      
-      const totalDuration = endTime.getTime() - startTime.getTime();
-      const elapsedDuration = now.getTime() - startTime.getTime();
-      const currentProgress = Math.min(100, (elapsedDuration / totalDuration) * 100);
-      setProgress(currentProgress > 0 ? currentProgress : 0);
-      setTimeLeft(formatDistanceToNow(endTime, { locale: ptBR, addSuffix: true }));
-    };
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000 * 60); 
-    return () => clearInterval(interval);
-  }, [auction]);
-
-  const yourBid = useMemo(() => {
-    if (!currentUser) return undefined;
-    return auction.bids
-      .filter(b => b.bidderId === currentUser.uid)
-      .reduce((max, bid) => bid.amount > max ? bid.amount : max, 0);
-  }, [auction.bids, currentUser]);
-
-  const isWinning = auction.currentWinnerId === currentUser?.uid;
-
-  return (
-    <Card className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gradient-to-br from-card to-background/50">
-      <div className="md:col-span-1 flex items-center justify-center">
-        <div className={cn(
-          "w-48 h-48 p-3 rounded-lg flex items-center justify-center border-2",
-          rarityBackgrounds[auction.item.rarity]
-        )}>
-          <Image src={auction.item.imageUrl} alt={auction.item.itemName || "Item"} width={160} height={160} className="object-contain" data-ai-hint="auctioned item"/>
-        </div>
-      </div>
-      <div className="md:col-span-2 space-y-4">
-        <div className="flex justify-between items-start">
-          <h3 className="text-2xl font-bold text-foreground">{auction.item.itemName}</h3>
-          <Badge className={cn(auction.status === 'active' ? "bg-green-500/20 text-green-500 border-green-500/50" : "bg-muted text-muted-foreground")}>
-            {auction.status === 'active' ? 'Aberto' : auction.status.charAt(0).toUpperCase() + auction.status.slice(1)}
-          </Badge>
-        </div>
-        
-        <div>
-          <div className="flex justify-between items-baseline mb-1">
-            <span className="text-sm text-muted-foreground">Tempo restante</span>
-            <span className="text-sm font-semibold text-primary">{timeLeft}</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="space-y-1">
-            <p className="text-muted-foreground">Seu Lance</p>
-            <p className="text-lg font-bold text-foreground">{yourBid ? `${yourBid} DKP` : 'Nenhum lance'}</p>
-          </div>
-           <div className="space-y-1">
-            <p className="text-muted-foreground">Lance Mais Alto</p>
-            <p className="text-lg font-bold text-foreground">{auction.currentBid} DKP</p>
-          </div>
-        </div>
-
-        {isWinning && (
-          <div className="bg-green-500/10 text-green-500 text-sm font-semibold p-3 rounded-md text-center">
-            Você está ganhando este leilão!
-          </div>
-        )}
-      </div>
-    </Card>
-  )
 }
 
 function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, bankItems }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateAuctions: boolean, bankItems: BankItem[] }) {
@@ -838,6 +812,90 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   );
 }
 
+function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, currentUser: UserProfile | null }) {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const endTime = auction.endTime.toDate();
+      const startTime = auction.startTime.toDate();
+      
+      if (isAfter(now, endTime)) {
+        setTimeLeft("Encerrado");
+        setProgress(100);
+        return;
+      }
+      
+      const totalDuration = endTime.getTime() - startTime.getTime();
+      const elapsedDuration = now.getTime() - startTime.getTime();
+      const currentProgress = Math.min(100, (elapsedDuration / totalDuration) * 100);
+      setProgress(currentProgress > 0 ? currentProgress : 0);
+      setTimeLeft(formatDistanceToNow(endTime, { locale: ptBR, addSuffix: true }));
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000 * 60); 
+    return () => clearInterval(interval);
+  }, [auction]);
+
+  const yourBid = useMemo(() => {
+    if (!currentUser) return undefined;
+    return auction.bids
+      .filter(b => b.bidderId === currentUser.uid)
+      .reduce((max, bid) => bid.amount > max ? bid.amount : max, 0);
+  }, [auction.bids, currentUser]);
+
+  const isWinning = auction.currentWinnerId === currentUser?.uid;
+
+  return (
+    <Card className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gradient-to-br from-card to-background/50">
+      <div className="md:col-span-1 flex items-center justify-center">
+        <div className={cn(
+          "w-48 h-48 p-3 rounded-lg flex items-center justify-center border-2",
+          rarityBackgrounds[auction.item.rarity]
+        )}>
+          <Image src={auction.item.imageUrl} alt={auction.item.itemName || "Item"} width={160} height={160} className="object-contain" data-ai-hint="auctioned item"/>
+        </div>
+      </div>
+      <div className="md:col-span-2 space-y-4">
+        <div className="flex justify-between items-start">
+          <h3 className="text-2xl font-bold text-foreground">{auction.item.itemName}</h3>
+          <Badge className={cn(auction.status === 'active' ? "bg-green-500/20 text-green-500 border-green-500/50" : "bg-muted text-muted-foreground")}>
+            {auction.status === 'active' ? 'Aberto' : auction.status.charAt(0).toUpperCase() + auction.status.slice(1)}
+          </Badge>
+        </div>
+        
+        <div>
+          <div className="flex justify-between items-baseline mb-1">
+            <span className="text-sm text-muted-foreground">Tempo restante</span>
+            <span className="text-sm font-semibold text-primary">{timeLeft}</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="space-y-1">
+            <p className="text-muted-foreground">Seu Lance</p>
+            <p className="text-lg font-bold text-foreground">{yourBid ? `${yourBid} DKP` : 'Nenhum lance'}</p>
+          </div>
+           <div className="space-y-1">
+            <p className="text-muted-foreground">Lance Mais Alto</p>
+            <p className="text-lg font-bold text-foreground">{auction.currentBid} DKP</p>
+          </div>
+        </div>
+
+        {isWinning && (
+          <div className="bg-green-500/10 text-green-500 text-sm font-semibold p-3 rounded-md text-center">
+            Você está ganhando este leilão!
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
 function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems, initialItem }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[], initialItem: BankItem | null }) {
     const { toast } = useToast();
     const [step, setStep] = useState<'select' | 'details' | 'confirm'>('select');
@@ -858,6 +916,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         minIncrement: 1,
         startTime: new Date(),
         endTime: addHours(new Date(), 24),
+        roleRestriction: 'Geral' as TLRole | 'Geral',
+        weaponRestriction: 'Geral' as TLWeapon | 'Geral',
     });
 
     const resetWizard = () => {
@@ -868,6 +928,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
             minIncrement: 1,
             startTime: new Date(),
             endTime: addHours(new Date(), 24),
+            roleRestriction: 'Geral',
+            weaponRestriction: 'Geral',
         });
         onOpenChange(false);
     };
@@ -880,9 +942,9 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
     const handlePrevStep = () => {
         if (step === 'confirm') setStep('details');
         else if (step === 'details') {
-            if (initialItem) { // If started from a specific item, just close the dialog
+            if (initialItem) { 
                 resetWizard();
-            } else { // If started from "New Auction", go back to item selection
+            } else { 
                 setSelectedItem(null);
                 setStep('select');
             }
@@ -914,6 +976,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
                 isDistributed: false,
+                roleRestriction: config.roleRestriction,
+                weaponRestriction: config.weaponRestriction,
             };
 
             batch.set(auctionRef, { ...newAuctionData, createdAt: serverTimestamp() as Timestamp });
@@ -966,13 +1030,39 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                         <DialogDescription>Configure lances e duração para o item "{selectedItem?.itemName}".</DialogDescription>
                       </DialogHeader>
                       <div className="py-4 space-y-4">
-                        <div>
-                          <Label>Lance inicial (DKP)</Label>
-                          <Input type="number" value={config.startBid} onChange={(e) => setConfig((c) => ({ ...c, startBid: Number(e.target.value) }))} min="1"/>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Lance inicial (DKP)</Label>
+                            <Input type="number" value={config.startBid} onChange={(e) => setConfig((c) => ({ ...c, startBid: Number(e.target.value) }))} min="1"/>
+                          </div>
+                          <div>
+                            <Label>Aumento mínimo por lance (DKP)</Label>
+                            <Input type="number" value={config.minIncrement} onChange={(e) => setConfig((c) => ({ ...c, minIncrement: Number(e.target.value) }))} min="1"/>
+                          </div>
                         </div>
-                        <div>
-                          <Label>Aumento mínimo por lance (DKP)</Label>
-                          <Input type="number" value={config.minIncrement} onChange={(e) => setConfig((c) => ({ ...c, minIncrement: Number(e.target.value) }))} min="1"/>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>Restrição de Função (Opcional)</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({...c, roleRestriction: value as TLRole | 'Geral'}))} value={config.roleRestriction}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todos)</div></SelectItem>
+                                        <SelectItem value={TLRole.Tank}><div className="flex items-center gap-2"><ShieldLucideIcon className="h-4 w-4 text-sky-500"/>{TLRole.Tank}</div></SelectItem>
+                                        <SelectItem value={TLRole.DPS}><div className="flex items-center gap-2"><Swords className="h-4 w-4 text-rose-500"/>{TLRole.DPS}</div></SelectItem>
+                                        <SelectItem value={TLRole.Healer}><div className="flex items-center gap-2"><Heart className="h-4 w-4 text-emerald-500"/>{TLRole.Healer}</div></SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label>Restrição de Arma (Opcional)</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({...c, weaponRestriction: value as TLWeapon | 'Geral'}))} value={config.weaponRestriction}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todas)</div></SelectItem>
+                                        {Object.values(TLWeapon).map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                          <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -1021,6 +1111,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                         <p><strong>Item:</strong> {selectedItem?.itemName}</p>
                         <p><strong>Lance Inicial:</strong> {config.startBid} DKP</p>
                         <p><strong>Incremento Mínimo:</strong> {config.minIncrement} DKP</p>
+                        <p><strong>Restrição de Função:</strong> {config.roleRestriction}</p>
+                        <p><strong>Restrição de Arma:</strong> {config.weaponRestriction}</p>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
@@ -1047,5 +1139,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-    
