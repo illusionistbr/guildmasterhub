@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment as firebaseIncrement, deleteField, getDocs as getFirestoreDocs, where } from '@/lib/firebase';
-import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid } from '@/types/guildmaster';
+import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -1641,24 +1641,28 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                             <FormItem className="flex flex-col">
                                                 <FormLabel>Início do Leilão</FormLabel>
                                                 <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <FormControl>
-                                                            <Button
-                                                                variant={"outline"}
-                                                                className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                            >
-                                                                {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
-                                                                <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                            </Button>
-                                                        </FormControl>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-0" align="start">
-                                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                                                        <div className="p-2 border-t">
-                                                            <Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/>
-                                                        </div>
-                                                    </PopoverContent>
-                                                    </Popover>
+                                                  <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                      <Button
+                                                          variant={"outline"}
+                                                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                      >
+                                                          <span className='flex justify-between items-center w-full'>
+                                                              <span>
+                                                                  {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : "Escolha a data e hora"}
+                                                              </span>
+                                                              <CalendarIconLucide className="h-4 w-4 opacity-50" />
+                                                          </span>
+                                                      </Button>
+                                                    </FormControl>
+                                                  </PopoverTrigger>
+                                                  <PopoverContent className="w-auto p-0" align="start">
+                                                      <Calendar mode="single" selected={field.value} onSelect={(date) => { const currentVal = field.value || new Date(); const newDate = date || new Date(); newDate.setHours(currentVal.getHours()); newDate.setMinutes(currentVal.getMinutes()); field.onChange(newDate);}} initialFocus />
+                                                      <div className="p-2 border-t border-border">
+                                                          <Input type="time" value={field.value ? format(field.value, "HH:mm") : ""} onChange={e => { if (!field.value) { field.onChange(new Date()); } const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0])); date.setMinutes(Number(time[1])); field.onChange(date);}}/>
+                                                      </div>
+                                                  </PopoverContent>
+                                                </Popover>
                                                 <FormMessage />
                                             </FormItem>
                                             )}
@@ -1671,20 +1675,24 @@ function NewAuctionDialog({ isOpen, onOpenChange, guild, guildId, currentUser, b
                                                     <FormLabel>Fim do Leilão</FormLabel>
                                                       <Popover>
                                                         <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant={"outline"}
-                                                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                                >
-                                                                    {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha a data e hora</span>}
+                                                          <FormControl>
+                                                            <Button
+                                                                variant={"outline"}
+                                                                className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                            >
+                                                                <span className='flex justify-between items-center w-full'>
+                                                                    <span>
+                                                                        {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : "Escolha a data e hora"}
+                                                                    </span>
                                                                     <CalendarIconLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
+                                                                </span>
+                                                            </Button>
+                                                          </FormControl>
                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < form.getValues("startTime")} initialFocus />
-                                                            <div className="p-2 border-t">
-                                                                <Input type="time" defaultValue={format(field.value || new Date(), "HH:mm")} onChange={e => { const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date);}}/>
+                                                            <Calendar mode="single" selected={field.value} onSelect={(date) => { const currentVal = field.value || new Date(); const newDate = date || new Date(); newDate.setHours(currentVal.getHours()); newDate.setMinutes(currentVal.getMinutes()); field.onChange(newDate);}} disabled={(date) => date < form.getValues("startTime")} initialFocus />
+                                                            <div className="p-2 border-t border-border">
+                                                                <Input type="time" value={field.value ? format(field.value, "HH:mm") : ""} onChange={e => { if (!field.value) { field.onChange(new Date()); } const time = e.target.value.split(':'); const date = new Date(field.value || new Date()); date.setHours(Number(time[0])); date.setMinutes(Number(time[1])); field.onChange(date);}}/>
                                                             </div>
                                                         </PopoverContent>
                                                       </Popover>
