@@ -564,6 +564,19 @@ const WEAPON_TYPES = Object.keys(ITEM_DATABASE.weapon).sort();
 const ARMOR_TYPES = Object.keys(ITEM_DATABASE.armor).sort();
 const ACCESSORY_TYPES = Object.keys(ITEM_DATABASE.accessory).sort();
 
+const TRAIT_OPTIONS = [
+  "Attack Speed",
+  "Barbarian Bonus Damage",
+  "Bind Chance",
+  "Bind Resistance",
+  "Buff Duration",
+  "Collision Chance",
+  "Collision Resistance",
+  "Construct Bonus Damage",
+  "Cooldown Speed",
+  "Critical Hit Chance",
+].sort();
+
 const itemFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
   weaponType: z.string().optional(),
@@ -1087,7 +1100,31 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                         </div>
 
                         <div className="space-y-4">
-                            <FormField name="trait" control={control} render={({ field }) => (<FormItem><FormLabel>Trait</FormLabel><FormControl><Input {...field} placeholder="Ex: Precise, Impenetrable..."/></FormControl><FormMessage /></FormItem>)}/>
+                             <FormField
+                                name="trait"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Trait (Opcional)</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione um trait..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="">Nenhum</SelectItem>
+                                                {TRAIT_OPTIONS.map((trait) => (
+                                                    <SelectItem key={trait} value={trait}>
+                                                        {trait}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField name="droppedByMemberName" control={control} render={({ field }) => (<FormItem><FormLabel>Dropado por (opcional)</FormLabel><FormControl><Input {...field} placeholder="Nome do membro"/></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                         
@@ -1579,3 +1616,4 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
