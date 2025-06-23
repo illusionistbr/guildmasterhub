@@ -989,21 +989,20 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                     )}
                 </div>
                 
-                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
+                     <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
                     {item.trait && (
-                        <p className="text-muted-foreground break-words" title={item.trait}>
-                            <span className="font-bold text-foreground">Trait: </span>
+                        <p className="text-muted-foreground break-words">
+                            <span className="font-bold text-white">Trait: </span>
                             {item.trait}
                         </p>
                     )}
                     <p className="text-muted-foreground">
-                        <span className="font-bold text-foreground">Drop: </span>
+                        <span className="font-bold text-white">Drop: </span>
                         {item.droppedByMemberName || 'N/A'}
                     </p>
                     <p className="text-muted-foreground">
-                        <span className="font-bold text-foreground">Data: </span>
+                        <span className="font-bold text-white">Data: </span>
                         {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
                     </p>
                 </div>
@@ -1109,7 +1108,6 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
             if (data.itemCategory === 'armor' && data.armorType) newBankItem.armorType = data.armorType;
             if (data.itemCategory === 'accessory' && data.accessoryType) newBankItem.accessoryType = data.accessoryType;
             
-            // Clean up undefined fields
             Object.keys(newBankItem).forEach(key => {
                 if (newBankItem[key] === undefined) {
                     delete newBankItem[key];
@@ -1287,10 +1285,20 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   
   const featuredAuction = auctions.find(a => a.status === 'active') || (auctions.length > 0 ? auctions[0] : null);
 
-  const getLatestBidder = (bids: AuctionBid[]) => {
-    if (bids.length === 0) return 'N/A';
-    return [...bids].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())[0]?.bidderName || 'N/A';
-  }
+  const getStatusBadgeProps = (status: AuctionStatus) => {
+    switch (status) {
+        case 'active':
+            return { text: 'Aberto', className: 'bg-green-600/80' };
+        case 'scheduled':
+            return { text: 'Agendado', className: 'bg-yellow-600/80 text-yellow-foreground' };
+        case 'ended':
+            return { text: 'Encerrado', className: 'bg-gray-500/80' };
+        case 'cancelled':
+            return { text: 'Cancelado', className: 'bg-red-600/80' };
+        default:
+            return { text: status, className: 'bg-muted' };
+    }
+  };
 
   const handleNewAuctionClick = () => {
     setInitialItemForWizard(null);
@@ -1330,43 +1338,59 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[50px]"><Checkbox /></TableHead>
-                        <TableHead>Item <ArrowUpDown className="inline h-3 w-3" /></TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Trait</TableHead>
                         <TableHead>Lance Inicial</TableHead>
                         <TableHead>Último Lance</TableHead>
-                        <TableHead>Fim <ArrowUpDown className="inline h-3 w-3" /></TableHead>
+                        <TableHead>Último Licitante</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Data de Início</TableHead>
+                        <TableHead>Data de Fim</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Distribuído</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {auctions.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
                                 Nenhum leilão ativo ou agendado no momento.
                             </TableCell>
                         </TableRow>
                     ) : (
-                        auctions.map(auction => (
-                            <TableRow key={auction.id}>
-                                <TableCell><Checkbox /></TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <div className={cn("w-8 h-8 p-1 rounded-md flex items-center justify-center border-2", rarityBackgrounds[auction.item.rarity])}>
-                                            <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
+                        auctions.map(auction => {
+                            const latestBid = auction.bids && auction.bids.length > 0 ? [...auction.bids].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())[0] : null;
+                            const latestBidderName = latestBid ? latestBid.bidderName : 'N/A';
+                            const statusProps = getStatusBadgeProps(auction.status);
+
+                            return (
+                                <TableRow key={auction.id}>
+                                    <TableCell><Checkbox /></TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("w-8 h-8 p-1 rounded-md flex items-center justify-center border-2", rarityBackgrounds[auction.item.rarity])}>
+                                                <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
+                                            </div>
+                                            <span className="font-medium truncate max-w-[150px]">{auction.item.itemName}</span>
                                         </div>
-                                        <span className="font-medium truncate max-w-[150px]">{auction.item.itemName}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>{auction.startingBid}</TableCell>
-                                <TableCell>{auction.currentBid}</TableCell>
-                                <TableCell>{formatDistanceToNow(auction.endTime.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
-                                <TableCell><Badge variant={auction.status === 'active' ? 'default' : 'outline'} className={auction.status === 'active' ? 'bg-green-600/80' : ''}>{auction.status === 'active' ? 'Aberto' : 'Agendado'}</Badge></TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                                </TableCell>
-                            </TableRow>
-                        ))
+                                    </TableCell>
+                                    <TableCell>{auction.item.trait || 'N/A'}</TableCell>
+                                    <TableCell>{auction.startingBid}</TableCell>
+                                    <TableCell>{auction.currentBid}</TableCell>
+                                    <TableCell>{latestBidderName}</TableCell>
+                                    <TableCell>DKP</TableCell>
+                                    <TableCell>{format(auction.startTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                                    <TableCell>{format(auction.endTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                                    <TableCell><Badge variant="default" className={statusProps.className}>{statusProps.text}</Badge></TableCell>
+                                    <TableCell>{auction.isDistributed ? 'Sim' : 'Não'}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })
                     )}
                 </TableBody>
             </Table>
@@ -1721,6 +1745,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
