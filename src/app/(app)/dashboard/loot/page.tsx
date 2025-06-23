@@ -460,9 +460,9 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
       "gilded-granite-teardrops": { name: "Gilded Granite Teardrops", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp" },
     },
     Belt: {
-      "belt-of-bloodlust": { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
       "belt-of-claimed-trophies": { name: "Belt of Claimed Trophies", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp" },
       "belt-of-the-knight-master": { name: "Belt of the Knight Master", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp" },
+      "belt-of-bloodlust": { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
       "burnt-silk-warsash": { name: "Burnt Silk Warsash", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp" },
       "butchers-belt": { name: "Butcher's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp" },
       "cunning-ogre-girdle": { name: "Cunning Ogre Girdle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp" },
@@ -617,7 +617,7 @@ const itemFormSchema = z.object({
   selectedItemKey: z.string().min(1, "É obrigatório selecionar um item da lista."),
   itemName: z.string().optional(),
   imageUrl: z.string().optional(),
-  trait: z.string().optional(),
+  trait: z.string().min(1, "Trait é obrigatório."),
   droppedByMemberName: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.itemCategory === 'weapon' && !data.weaponType) {
@@ -993,7 +993,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     
     const form = useForm<ItemFormValues>({
         resolver: zodResolver(itemFormSchema),
-        defaultValues: { itemCategory: "", selectedItemKey: "" }
+        defaultValues: { itemCategory: "", selectedItemKey: "", trait: "" }
     });
 
     const { watch, reset, setValue, control } = form;
@@ -1054,7 +1054,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                 armorType: data.armorType,
                 accessoryType: data.accessoryType,
                 itemName: data.itemName,
-                trait: data.trait === 'none' ? undefined : data.trait,
+                trait: data.trait,
                 imageUrl: data.imageUrl,
                 rarity: 'epic',
                 status: 'Disponível',
@@ -1137,7 +1137,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                                 control={control}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Trait (Opcional)</FormLabel>
+                                        <FormLabel>Trait *</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value || undefined}>
                                             <FormControl>
                                                 <SelectTrigger>
@@ -1145,7 +1145,6 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="none">Nenhum</SelectItem>
                                                 {TRAIT_OPTIONS.map((trait) => (
                                                     <SelectItem key={trait} value={trait}>
                                                         {trait}
@@ -1648,6 +1647,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
