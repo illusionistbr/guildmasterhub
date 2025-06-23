@@ -12,7 +12,15 @@ import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +43,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm, type SubmitHandler, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -164,11 +172,189 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
       "trophy-adorned-leg-guards": { name: "Trophy Adorned Leg Guards", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00026.webp" },
       "void-stalkers-pants": { name: "Void Stalker's Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00001D.webp" },
     },
-    Feet: {},
-    Gloves: {},
-    Cloak: {},
-    Chest: {},
-    Head: {},
+    Feet: {
+      "arcane-shadow-shoes": { name: "Arcane Shadow Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001.webp" },
+      "ardent-heralds-shoes": { name: "Ardent Herald's Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00012.webp" },
+      "ascended-guardian-shoes": { name: "Ascended Guardian Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00011.webp" },
+      "auric-vanguards-plate-boots": { name: "Auric Vanguard's Plate Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00005A.webp" },
+      "boots-of-the-executioner": { name: "Boots of the Executioner", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00022.webp" },
+      "boots-of-the-infernal-herald": { name: "Boots of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_BT_00019.webp" },
+      "chosen-vanquishers-boots": { name: "Chosen Vanquisher's Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_06001A.webp" },
+      "deep-fathom-kicks": { name: "Deep Fathom Kicks", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_BT_00026.webp" },
+      "divine-justiciar-shoes": { name: "Divine Justiciar Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00014A.webp" },
+      "dread-admirals-boots": { name: "Dread Admiral's Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00021.webp" },
+      "ebon-roar-sabatons": { name: "Ebon Roar Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00017.webp" },
+      "eternal-warlords-sabatons": { name: "Eternal Warlord's Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00003.webp" },
+      "feral-prophets-shoes": { name: "Feral Prophet's Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00008A.webp" },
+      "first-lights-shoes": { name: "First Light's Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00022A.webp" },
+      "forgotten-lotus-boots": { name: "Forgotten Lotus Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00008.webp" },
+      "gilded-raven-boots": { name: "Gilded Raven Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00022A.webp" },
+      "hallowed-shoes-of-the-resistance": { name: "Hallowed Shoes of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010A.webp" },
+      "heroic-boots-of-the-resistance": { name: "Heroic Boots of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003.webp" },
+      "heroic-footguards-of-the-resistance": { name: "Heroic Footguards of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002.webp" },
+      "heroic-sabatons-of-the-resistance": { name: "Heroic Sabatons of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002.webp" },
+      "heroic-shoes-of-the-resistance": { name: "Heroic Shoes of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00010.webp" },
+      "immortal-legionnaires-sabatons": { name: "Immortal Legionnaire's Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00019A.webp" },
+      "imperial-seekers-boots": { name: "Imperial Seeker's Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00017.webp" },
+      "infernal-demonpact-steps": { name: "Infernal Demonpact Steps", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00026.webp" },
+      "oblivions-wrath-stompers": { name: "Oblivion's Wrath Stompers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00016.webp" },
+      "ossuary-boots-of-the-resistance": { name: "Ossuary Boots of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002B.webp" },
+      "paramount-sabatons-of-the-resistance": { name: "Paramount Sabatons of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002A.webp" },
+      "phantom-wolf-boots": { name: "Phantom Wolf Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00005.webp" },
+      "royal-praetors-sabatons": { name: "Royal Praetor's Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00009.webp" },
+      "sabatons-of-the-field-general": { name: "Sabatons of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00018.webp" },
+      "sacred-repose-shoes": { name: "Sacred Repose Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00020.webp" },
+      "scaled-boots-of-the-resistance": { name: "Scaled Boots of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003A.webp" },
+      "shadow-harvester-boots": { name: "Shadow Harvester Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00002.webp" },
+      "shock-commander-sabatons": { name: "Shock Commander Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_05002.webp" },
+      "spectral-overseers-boots": { name: "Spectral Overseer's Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_00023.webp" },
+      "swirling-essence-shoes": { name: "Swirling Essence Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00008C.webp" },
+      "transcendent-tempests-boots": { name: "Transcendent Tempest's Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00014.webp" },
+      "violent-demonic-beasts-fur-boots": { name: "Violent Demonic Beast's Fur Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00026.webp" },
+      "void-stalkers-boots": { name: "Void Stalker's Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00023.webp" },
+    },
+    Gloves: {
+      "arcane-shadow-gloves": { name: "Arcane Shadow Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00005B.webp" },
+      "ardent-heralds-gloves": { name: "Ardent Herald's Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00022.webp" },
+      "ascended-guardian-gloves": { name: "Ascended Guardian Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00011.webp" },
+      "chosen-vanquishers-gloves": { name: "Chosen Vanquisher's Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001A.webp" },
+      "deep-fathom-grasp": { name: "Deep Fathom Grasp", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00026.webp" },
+      "devious-hellfire-grips": { name: "Devious Hellfire Grips", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00026.webp" },
+      "divine-justiciar-gloves": { name: "Divine Justiciar Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_06001.webp" },
+      "dread-admirals-gloves": { name: "Dread Admiral's Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00021.webp" },
+      "ebon-roar-gauntlets": { name: "Ebon Roar Gauntlets", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05001.webp" },
+      "eternal-warlords-gauntlets": { name: "Eternal Warlord's Gauntlets", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00017.webp" },
+      "feral-prophets-gloves": { name: "Feral Prophet's Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00014.webp" },
+      "first-lights-gloves": { name: "First Light's Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00022A.webp" },
+      "forgotten-lotus-gloves": { name: "Forgotten Lotus Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00008.webp" },
+      "gauntlets-of-the-field-general": { name: "Gauntlets of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00018.webp" },
+      "gauntlets-of-the-infernal-herald": { name: "Gauntlets of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_GL_00019.webp" },
+      "gilded-raven-grips": { name: "Gilded Raven Grips", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00022B.webp" },
+      "grip-of-the-executioner": { name: "Grip of the Executioner", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00004.webp" },
+      "hallowed-gloves-of-the-resistance": { name: "Hallowed Gloves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010A.webp" },
+      "heroic-gauntlets-of-the-resistance": { name: "Heroic Gauntlets of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_06002.webp" },
+      "heroic-gloves-of-the-resistance": { name: "Heroic Gloves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05003.webp" },
+      "heroic-grips-of-the-resistance": { name: "Heroic Grips of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05002.webp" },
+      "heroic-mitts-of-the-resistance": { name: "Heroic Mitts of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00010.webp" },
+      "immortal-legionnaires-gauntlets": { name: "Immortal Legionnaire's Gauntlets", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_00019A.webp" },
+      "imperial-seekers-gloves": { name: "Imperial Seeker's Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00015.webp" },
+      "infernal-demonpact-grasp": { name: "Infernal Demonpact Grasp", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_GL_00026.webp" },
+      "oblivions-wrath-gauntlets": { name: "Oblivion's Wrath Gauntlets", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05004.webp" },
+      "ossuary-gloves-of-the-resistance": { name: "Ossuary Gloves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05002B.webp" },
+      "paramount-gauntlets-of-the-resistance": { name: "Paramount Gauntlets of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_06002A.webp" },
+      "phantom-wolf-gloves": { name: "Phantom Wolf Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_GL_00001B.webp" },
+      "royal-praetors-gauntlets": { name: "Royal Praetor's Gauntlets", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_GL_00006.webp" },
+      "sacred-repose-gloves": { name: "Sacred Repose Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_GL_00005B.webp" },
+      "scaled-gloves-of-the-resistance": { name: "Scaled Gloves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_05003A.webp" },
+      "shadow-harvester-grips": { name: "Shadow Harvester Grips", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00017A.webp" },
+      "shock-commander-gauntlets": { name: "Shock Commander Gauntlets", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_GL_05002.webp" },
+      "spectral-overseers-handguards": { name: "Spectral Overseer's Handguards", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_GL_00023.webp" },
+      "swirling-essence-gloves": { name: "Swirling Essence Gloves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00020.webp" },
+      "transcendent-tempests-touch": { name: "Transcendent Tempest's Touch", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00014.webp" },
+      "void-stalkers-caress": { name: "Void Stalker's Caress", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_GL_00023.webp" },
+    },
+    Cloak: {
+      "ancient-tapestry-mantle": { name: "Ancient Tapestry Mantle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00016.webp" },
+      "bile-drenched-veil": { name: "Bile Drenched Veil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00013.webp" },
+      "blessed-templar-cloak": { name: "Blessed Templar Cloak", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00019.webp" },
+      "cloak-of-the-frozen-expanse": { name: "Cloak of the Frozen Expanse", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00025.webp" },
+      "cloak-of-victorious-destiny": { name: "Cloak of Victorious Destiny", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00002.webp" },
+      "eldritch-whispers": { name: "Eldritch Whispers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00008.webp" },
+      "emperors-golden-wing": { name: "Emperor's Golden Wing", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00033.webp" },
+      "forsaken-embrace": { name: "Forsaken Embrace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00017.webp" },
+      "forward-generals-cloak": { name: "Forward General's Cloak", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00026.webp" },
+      "grieving-vengeance-cloak": { name: "Grieving Vengeance Cloak", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00024.webp" },
+      "howling-wind-shroud": { name: "Howling Wind Shroud", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00003.webp" },
+      "immortal-reckoning": { name: "Immortal Reckoning", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00020.webp" },
+      "iron-lords-veil": { name: "Iron Lord's Veil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00034.webp" },
+      "opulent-nobles-mantle": { name: "Opulent Noble's Mantle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00023.webp" },
+      "relentless-assault": { name: "Relentless Assault", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00014.webp" },
+      "royal-spineflower-drape": { name: "Royal Spineflower Drape", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00021.webp" },
+      "starlight-fur-cloak": { name: "Starlight Fur Cloak", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00027.webp" },
+      "steadfast-commanders-cape": { name: "Steadfast Commander's Cape", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00015.webp" },
+      "supreme-devotion": { name: "Supreme Devotion", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_M_CA_00018.webp" },
+    },
+    Chest: {
+      "arcane-shadow-robes": { name: "Arcane Shadow Robes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00023.webp" },
+      "ardent-heralds-gown": { name: "Ardent Herald's Gown", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00011.webp" },
+      "ascended-guardian-raiment": { name: "Ascended Guardian Raiment", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00010.webp" },
+      "auric-vanguards-full-plate": { name: "Auric Vanguard's Full Plate", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00005A.webp" },
+      "blessed-templar-plate-mail": { name: "Blessed Templar Plate Mail", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00015.webp" },
+      "chosen-vanquishers-armor": { name: "Chosen Vanquisher's Armor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_06001A.webp" },
+      "coat-of-the-executioner": { name: "Coat of the Executioner", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00022.webp" },
+      "divine-justiciar-attire": { name: "Divine Justiciar Attire", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_06001.webp" },
+      "dread-admirals-uniform": { name: "Dread Admiral's Uniform", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00021.webp" },
+      "eternal-warlords-plate": { name: "Eternal Warlord's Plate", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00017.webp" },
+      "feral-prophets-overcoat": { name: "Feral Prophet's Overcoat", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00008.webp" },
+      "first-lights-tunic": { name: "First Light's Tunic", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00022A.webp" },
+      "forgotten-lotus-garb": { name: "Forgotten Lotus Garb", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00008.webp" },
+      "gilded-raven-tunic": { name: "Gilded Raven Tunic", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00014A.webp" },
+      "golden-blossom-regalia": { name: "Golden Blossom Regalia", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00026.webp" },
+      "hallowed-robes-of-the-resistance": { name: "Hallowed Robes of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00005A.webp" },
+      "heroic-armor-of-the-resistance": { name: "Heroic Armor of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_06002.webp" },
+      "heroic-garb-of-the-resistance": { name: "Heroic Garb of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05002.webp" },
+      "heroic-robes-of-the-resistance": { name: "Heroic Robes of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00005.webp" },
+      "heroic-tunic-of-the-resistance": { name: "Heroic Tunic of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05003.webp" },
+      "immortal-legionnaires-armor": { name: "Immortal Legionnaire's Armor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00019A.webp" },
+      "imperial-seekers-tunic": { name: "Imperial Seeker's Tunic", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00015.webp" },
+      "kingslayers-banded-platemail": { name: "Kingslayer's Banded Platemail", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00014A.webp" },
+      "oblivions-wrath-chest-plate": { name: "Oblivion's Wrath Chest Plate", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00016.webp" },
+      "ossuary-tunic-of-the-resistance": { name: "Ossuary Tunic of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05002A.webp" },
+      "paramount-full-plate-of-the-resistance": { name: "Paramount Full Plate of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_06002A.webp" },
+      "phantom-wolf-tunic": { name: "Phantom Wolf Tunic", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00010.webp" },
+      "plate-of-the-field-general": { name: "Plate of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_00018.webp" },
+      "plate-of-the-infernal-herald": { name: "Plate of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_TS_00019.webp" },
+      "royal-praetors-plate-armor": { name: "Royal Praetor's Plate Armor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_TS_00011.webp" },
+      "sacred-repose-garb": { name: "Sacred Repose Garb", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_TS_00004.webp" },
+      "scaled-armor-of-the-resistance": { name: "Scaled Armor of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_05003A.webp" },
+      "shadow-harvester-tunic": { name: "Shadow Harvester Tunic", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00013.webp" },
+      "shock-commander-plate-armor": { name: "Shock Commander Plate Armor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_TS_05002.webp" },
+      "spectral-overseers-tunic": { name: "Spectral Overseer's Tunic", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_TS_00023.webp" },
+      "swirling-essence-robe": { name: "Swirling Essence Robe", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_05001.webp" },
+      "transcendent-tempests-armor": { name: "Transcendent Tempest's Armor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_TS_00014.webp" },
+      "void-stalkers-overcoat": { name: "Void Stalker's Overcoat", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_TS_00015A.webp" },
+    },
+    Head: {
+      "arcane-shadow-hat": { name: "Arcane Shadow Hat", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00022.webp" },
+      "ardent-heralds-crown": { name: "Ardent Herald's Crown", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00001.webp" },
+      "ascended-guardian-hood": { name: "Ascended Guardian Hood", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00011A.webp" },
+      "auric-vanguards-barbute": { name: "Auric Vanguard's Barbute", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00014A.webp" },
+      "blessed-templar-helmet": { name: "Blessed Templar Helmet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00016.webp" },
+      "chosen-vanquishers-visage": { name: "Chosen Vanquisher's Visage", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_06001A.webp" },
+      "crown-of-icebound-infinity": { name: "Crown of Icebound Infinity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00010.webp" },
+      "crowned-skull-of-victory": { name: "Crowned Skull of Victory", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00026.webp" },
+      "divine-justiciar-mask": { name: "Divine Justiciar Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_06001.webp" },
+      "dread-admirals-bicorne": { name: "Dread Admiral's Bicorne", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00021.webp" },
+      "eternal-warlords-faceguard": { name: "Eternal Warlord's Faceguard", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00012A.webp" },
+      "feral-prophets-crown": { name: "Feral Prophet's Crown", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00002.webp" },
+      "first-lights-halo": { name: "First Light's Halo", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00006A.webp" },
+      "forgotten-lotus-mask": { name: "Forgotten Lotus Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00008.webp" },
+      "gilded-raven-mask": { name: "Gilded Raven Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_00012A.webp" },
+      "hallowed-hat-of-the-resistance": { name: "Hallowed Hat of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00005B.webp" },
+      "helm-of-the-field-general": { name: "Helm of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00018.webp" },
+      "heroic-hat-of-the-resistance": { name: "Heroic Hat of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00005A.webp" },
+      "heroic-helmet-of-the-resistance": { name: "Heroic Helmet of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_06002.webp" },
+      "heroic-hood-of-the-resistance": { name: "Heroic Hood of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00014.webp" },
+      "heroic-tricorne-of-the-resistance": { name: "Heroic Tricorne of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003.webp" },
+      "immortal-legionnaires-helm": { name: "Immortal Legionnaire's Helm", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00019A.webp" },
+      "imperial-seekers-circlet": { name: "Imperial Seeker's Circlet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00003.webp" },
+      "oblivions-wrath-barbute": { name: "Oblivion's Wrath Barbute", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_00016.webp" },
+      "ossuary-hood-of-the-resistance": { name: "Ossuary Hood of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00014A.webp" },
+      "paramount-visor-of-the-resistance": { name: "Paramount Visor of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_06002A.webp" },
+      "phantom-wolf-mask": { name: "Phantom Wolf Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00005.webp" },
+      "royal-praetors-visor": { name: "Royal Praetor's Visor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00017.webp" },
+      "sacred-repose-circle": { name: "Sacred Repose Circle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00015.webp" },
+      "scaled-tricorne-of-the-resistance": { name: "Scaled Tricorne of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_HM_05003A.webp" },
+      "shadow-harvester-mask": { name: "Shadow Harvester Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00008.webp" },
+      "shock-commander-visor": { name: "Shock Commander Visor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_HM_05002.webp" },
+      "spectral-overseers-mask": { name: "Spectral Overseer's Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00016.webp" },
+      "swirling-essence-hat": { name: "Swirling Essence Hat", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_05001.webp" },
+      "transcendent-tempests-cowl": { name: "Transcendent Tempest's Cowl", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_HM_00014.webp" },
+      "visage-of-the-executioner": { name: "Visage of the Executioner", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_HM_00006.webp" },
+      "visage-of-the-infernal-tyrant": { name: "Visage of the Infernal Tyrant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_HM_00026.webp" },
+      "visor-of-the-infernal-herald": { name: "Visor of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_HM_00019.webp" },
+      "void-stalkers-mask": { name: "Void Stalker's Mask", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_HM_00007.webp" },
+    },
   },
   accessory: {
     earring: {
@@ -500,11 +686,11 @@ function LootPageContent() {
             </div>
 
             {loadingBankItems ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-4">
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -782,7 +968,9 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                                     <ScrollArea className="h-64 border rounded-md p-2 bg-muted/20">
                                         <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-1">
                                             {Object.entries(currentItemOptions).length > 0 ? (
-                                                Object.entries(currentItemOptions).map(([key, itemData]) => (
+                                                Object.entries(currentItemOptions)
+                                                    .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+                                                    .map(([key, itemData]) => (
                                                     <FormItem key={key} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted cursor-pointer has-[:checked]:bg-primary/20 has-[:checked]:border-primary border border-transparent">
                                                         <FormControl>
                                                             <RadioGroupItem value={key} />
@@ -803,8 +991,8 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                         </div>
 
                         <div className="space-y-4">
-                            <Label>Prévia do Item</Label>
-                            <div className="w-full aspect-square bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center p-4 border border-primary/50">
+                             <Label>Prévia do Item</Label>
+                            <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50">
                                 {selectedItemData ? (
                                     <Image src={selectedItemData.imageUrl} alt={selectedItemData.name} width={128} height={128} data-ai-hint="game item preview"/>
                                 ) : (
@@ -1304,6 +1492,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
