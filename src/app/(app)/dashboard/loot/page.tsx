@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -74,7 +75,7 @@ const rarityBackgrounds: Record<BankItem['rarity'], string> = {
     common: 'bg-slate-700/50',
     uncommon: 'bg-emerald-700/50',
     rare: 'bg-sky-700/50',
-    epic: 'bg-purple-600/60', // Adjusted for header
+    epic: 'bg-purple-600/60',
     legendary: 'bg-amber-700/50',
 };
 
@@ -874,69 +875,69 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     };
 
     return (
-        <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
-            <CardHeader className="p-2 text-center">
-                <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
-            </CardHeader>
+      <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
+        <CardHeader className={cn("p-2 text-center", rarityBackgrounds[item.rarity])}>
+          <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
+        </CardHeader>
 
-            <CardContent className="p-2 flex-grow flex flex-col">
-                <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50 relative mb-2">
-                    <Image
-                        src={item.imageUrl}
-                        alt={item.itemName || "Item"}
-                        width={150} 
-                        height={150}
-                        className="object-contain"
-                        data-ai-hint="game item"
-                    />
-                    {canManageBankItem && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 bg-black/30 hover:bg-black/60 text-white z-10">
-                                    <MoreHorizontal />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem disabled>Editar</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">Excluir</DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                                            <ShadCnAlertDialogDescription>Tem certeza que quer excluir o item "{item.itemName}"? Esta ação não pode ser desfeita.</ShadCnAlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
-                                                {isDeleting ? <Loader2 className="animate-spin" /> : "Excluir"}
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </div>
+        <CardContent className="p-2 flex-grow flex flex-col">
+            <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50 relative mb-2">
+                <Image
+                    src={item.imageUrl}
+                    alt={item.itemName || "Item"}
+                    width={150} 
+                    height={150}
+                    className="object-contain"
+                    data-ai-hint="game item"
+                />
+                {canManageBankItem && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 bg-black/30 hover:bg-black/60 text-white z-10">
+                                <MoreHorizontal />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem disabled>Editar</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">Excluir</DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                        <ShadCnAlertDialogDescription>Tem certeza que quer excluir o item "{item.itemName}"? Esta ação não pode ser desfeita.</ShadCnAlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                                            {isDeleting ? <Loader2 className="animate-spin" /> : "Excluir"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
+            
+            <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
+            
+            <div className="mt-auto pt-2 space-y-1 text-center">
+                {item.trait && <p className="text-xs text-muted-foreground truncate" title={item.trait}>{item.trait}</p>}
                 
-                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                
-                <div className="mt-auto pt-2 space-y-1 text-center">
-                    {item.trait && <p className="text-xs text-muted-foreground truncate" title={item.trait}>{item.trait}</p>}
-                    
-                    {item.status === 'Disponível' && canStartAuction && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs w-full" onClick={() => {
-                            const event = new CustomEvent('openAuctionWizard', { detail: item });
-                            window.dispatchEvent(event);
-                        }}>
-                           <Gavel className="mr-1 h-3 w-3"/> Leiloar
-                        </Button>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                {item.status === 'Disponível' && canStartAuction && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs w-full" onClick={() => {
+                        const event = new CustomEvent('openAuctionWizard', { detail: item });
+                        window.dispatchEvent(event);
+                    }}>
+                       <Gavel className="mr-1 h-3 w-3"/> Leiloar
+                    </Button>
+                )}
+            </div>
+        </CardContent>
+      </Card>
     );
 }
 
@@ -1084,7 +1085,6 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                         </div>
 
                         <div className="space-y-4">
-                            <Label>Prévia do Item</Label>
                             <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50">
                                 {selectedItemData ? (
                                     <Image src={selectedItemData.imageUrl} alt={selectedItemData.name} width={128} height={128} data-ai-hint="game item preview"/>
