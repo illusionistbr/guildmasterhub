@@ -89,154 +89,200 @@ interface ItemDetails {
 const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>> = {
   weapon: {
     Sword: {
-      "karnixs-netherblade": { name: "Karnix's Netherblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00015.webp" },
-      "blade-of-fiendish-fortitude": { name: "Blade of Fiendish Fortitude", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017.webp" },
-      "corneliuss-animated-edge": { name: "Cornelius's Animated Edge", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00008A.webp" },
-      "bulwark-of-invulnerability": { name: "Bulwark of Invulnerability", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00016.webp" },
       "ahzreils-siphoning-sword": { name: "Ahzreil's Siphoning Sword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00026.webp" },
-      "nirmas-sword-of-echoes": { name: "Nirma's Sword of Echoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00035.webp" },
-      "crimson-doomblade": { name: "Crimson Doomblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00038.webp" },
-      "heroic-blade-of-the-resistance": { name: "Heroic Blade of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00032.webp" },
-      "chernobogs-blade-of-beheading": { name: "Chernobog's Blade of Beheading", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00033.webp" },
-      "queen-bellandirs-languishing-blade": { name: "Queen Bellandir's Languishing Blade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00034.webp" },
-      "daigons-stormblade": { name: "Daigon's Stormblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017A.webp" },
-      "unshakeable-knights-sword": { name: "Unshakeable Knight's Sword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp" },
+      "blade-of-fiendish-fortitude": { name: "Blade of Fiendish Fortitude", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017.webp" },
+      "bulwark-of-invulnerability": { name: "Bulwark of Invulnerability", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00016.webp" },
       "bulwark-of-the-black-anvil": { name: "Bulwark of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00049.webp" },
+      "chernobogs-blade-of-beheading": { name: "Chernobog's Blade of Beheading", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00033.webp" },
+      "corneliuss-animated-edge": { name: "Cornelius's Animated Edge", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00008A.webp" },
+      "crimson-doomblade": { name: "Crimson Doomblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00038.webp" },
+      "daigons-stormblade": { name: "Daigon's Stormblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00017A.webp" },
       "deluzhnoas-edge-of-eternal-frost": { name: "Deluzhnoa's Edge of Eternal Frost", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00052.webp" },
+      "heroic-blade-of-the-resistance": { name: "Heroic Blade of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00032.webp" },
+      "karnixs-netherblade": { name: "Karnix's Netherblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00015.webp" },
+      "nirmas-sword-of-echoes": { name: "Nirma's Sword of Echoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00035.webp" },
+      "queen-bellandirs-languishing-blade": { name: "Queen Bellandir's Languishing Blade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00034.webp" },
+      "unshakeable-knights-sword": { name: "Unshakeable Knight's Sword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword_00010A.webp" },
     },
     Greatsword: {
-      "immortal-titanic-quakeblade": { name: "Immortal Titanic Quakeblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp" },
-      "celestial-cyclone-warblade": { name: "Celestial Cyclone Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp" },
-      "morokais-greatblade-of-corruption": { name: "Morokai's Greatblade of Corruption", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp" },
-      "duke-magnas-provoking-warblade": { name: "Duke Magna's Provoking Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00022.webp" },
       "adentuss-gargantuan-greatsword": { name: "Adentus's Gargantuan Greatsword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp" },
-      "junobotes-juggernaut-warblade": { name: "Junobote's Juggernaut Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00039.webp" },
-      "narus-frenzied-greatblade": { name: "Naru's Frenzied Greatblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp" },
-      "duke-magnas-fury-warblade": { name: "Duke Magna's Fury Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp" },
-      "heroic-broadsword-of-the-resistance": { name: "Heroic Broadsword of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00038.webp" },
-      "greatsword-of-the-banshee": { name: "Greatsword of the Banshee", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00018.webp" },
-      "tevents-warblade-of-despair": { name: "Tevent's Warblade of Despair", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp" },
       "broadsword-of-the-juggernaught": { name: "Broadsword of the Juggernaught", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp" },
-      "greatblade-of-the-black-anvil": { name: "Greatblade of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00049.webp" },
-      "grayeyes-bloodlust-greatsword": { name: "Grayeye's Bloodlust Greatsword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00050.webp" },
+      "celestial-cyclone-warblade": { name: "Celestial Cyclone Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp" },
       "cordys-warblade-of-creeping-doom": { name: "Cordy's Warblade of Creeping Doom", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp" },
+      "duke-magnas-fury-warblade": { name: "Duke Magna's Fury Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp" },
+      "duke-magnas-provoking-warblade": { name: "Duke Magna's Provoking Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00022.webp" },
+      "grayeyes-bloodlust-greatsword": { name: "Grayeye's Bloodlust Greatsword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00050.webp" },
+      "greatblade-of-the-black-anvil": { name: "Greatblade of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00049.webp" },
+      "greatsword-of-the-banshee": { name: "Greatsword of the Banshee", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00018.webp" },
+      "heroic-broadsword-of-the-resistance": { name: "Heroic Broadsword of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00038.webp" },
+      "immortal-titanic-quakeblade": { name: "Immortal Titanic Quakeblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00007.webp" },
+      "junobotes-juggernaut-warblade": { name: "Junobote's Juggernaut Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00039.webp" },
+      "morokais-greatblade-of-corruption": { name: "Morokai's Greatblade of Corruption", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00027.webp" },
+      "narus-frenzied-greatblade": { name: "Naru's Frenzied Greatblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00034.webp" },
+      "tevents-warblade-of-despair": { name: "Tevent's Warblade of Despair", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00036.webp" },
     },
     Dagger: {}, Bow: {}, Crossbow: {}, Wand: {}, Staff: {}, Spear: {}
   },
-  armor: {},
+  armor: {
+    Legs: {
+      "arcane-shadow-pants": { name: "Arcane Shadow Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00023.webp" },
+      "ascended-guardian-pants": { name: "Ascended Guardian Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00005B.webp" },
+      "auric-vanguards-gaiters": { name: "Auric Vanguard's Gaiters", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05004A.webp" },
+      "breeches-of-the-executioner": { name: "Breeches of the Executioner", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022A.webp" },
+      "chosen-vanquishers-trousers": { name: "Chosen Vanquisher's Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001A.webp" },
+      "divine-justiciar-pants": { name: "Divine Justiciar Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00022.webp" },
+      "dread-admirals-trousers": { name: "Dread Admiral's Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00021.webp" },
+      "ebon-roar-greaves": { name: "Ebon Roar Greaves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00017.webp" },
+      "effortless-victory-greaves": { name: "Effortless Victory Greaves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_PT_00026.webp" },
+      "eternal-warlords-greaves": { name: "Eternal Warlord's Greaves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00010.webp" },
+      "feral-prophets-pants": { name: "Feral Prophet's Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00014.webp" },
+      "first-lights-pants": { name: "First Light's Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00022A.webp" },
+      "forgotten-lotus-pants": { name: "Forgotten Lotus Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00008.webp" },
+      "gilded-raven-trousers": { name: "Gilded Raven Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022B.webp" },
+      "greaves-of-the-field-general": { name: "Greaves of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00018.webp" },
+      "greaves-of-the-infernal-herald": { name: "Greaves of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_PT_00019.webp" },
+      "hallowed-pants-of-the-resistance": { name: "Hallowed Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001A.webp" },
+      "heroic-breeches-of-the-resistance": { name: "Heroic Breeches of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00004A.webp" },
+      "heroic-greaves-of-the-resistance": { name: "Heroic Greaves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp" },
+      "heroic-pants-of-the-resistance": { name: "Heroic Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001.webp" },
+      "heroic-trousers-of-the-resistance": { name: "Heroic Trousers of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_05003.webp" },
+      "immortal-legionnaires-greaves": { name: "Immortal Legionnaire's Greaves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00019A.webp" },
+      "imperial-seekers-trousers": { name: "Imperial Seeker's Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00005.webp" },
+      "oblivions-wrath-leggings": { name: "Oblivion's Wrath Leggings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00016.webp" },
+      "ossuary-trousers-of-the-resistance": { name: "Ossuary Trousers of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00004B.webp" },
+      "paramount-greaves-of-the-resistance": { name: "Paramount Greaves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002A.webp" },
+      "phantom-wolf-breeches": { name: "Phantom Wolf Breeches", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_05002.webp" },
+      "pristine-primalfang-pants": { name: "Pristine Primalfang Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00026.webp" },
+      "royal-praetors-gaiters": { name: "Royal Praetor's Gaiters", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00006A.webp" },
+      "sacred-repose-pants": { name: "Sacred Repose Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00020.webp" },
+      "scaled-trousers-of-the-resistance": { name: "Scaled Trousers of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_05003A.webp" },
+      "shadow-harvester-trousers": { name: "Shadow Harvester Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00007.webp" },
+      "shock-commander-greaves": { name: "Shock Commander Greaves", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_05002.webp" },
+      "spectral-overseers-trousers": { name: "Spectral Overseer's Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00023.webp" },
+      "swirling-essence-pants": { name: "Swirling Essence Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00003.webp" },
+      "transcendent-tempests-pants": { name: "Transcendent Tempest's Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_00014.webp" },
+      "trophy-adorned-leg-guards": { name: "Trophy Adorned Leg Guards", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_FA_M_PT_00026.webp" },
+      "void-stalkers-pants": { name: "Void Stalker's Pants", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00001D.webp" },
+    },
+    Feet: {},
+    Gloves: {},
+    Cloak: {},
+    Chest: {},
+    Head: {},
+  },
   accessory: {
     earring: {
-      'gilded-granite-teardrops': { name: "Gilded Granite Teardrops", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp" },
-      'bloodbright-earrings': { name: "Bloodbright Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp" },
-      'earrings-of-primal-foresight': { name: "Earrings of Primal Foresight", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp" },
-      'earrings-of-glimmering-dew': { name: "Earrings of Glimmering Dew", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp" },
-      'earrings-of-forlorn-elegance': { name: "Earrings of Forlorn Elegance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00051.webp" },
-      'brilliant-regal-earrings': { name: "Brilliant Regal Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00052.webp" },
+      "bloodbright-earrings": { name: "Bloodbright Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp" },
+      "brilliant-regal-earrings": { name: "Brilliant Regal Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00052.webp" },
+      "earrings-of-forlorn-elegance": { name: "Earrings of Forlorn Elegance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00051.webp" },
+      "earrings-of-glimmering-dew": { name: "Earrings of Glimmering Dew", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp" },
+      "earrings-of-primal-foresight": { name: "Earrings of Primal Foresight", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp" },
+      "gilded-granite-teardrops": { name: "Gilded Granite Teardrops", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp" },
     },
     belt: {
-      'forbidden-eternal-chain': { name: "Forbidden Eternal Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp" },
-      'forbidden-arcane-chain': { name: "Forbidden Arcane Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00014.webp" },
-      'forbidden-sacred-chain': { name: "Forbidden Sacred Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00015.webp" },
-      'demonic-beast-kings-belt': { name: "Demonic Beast King's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00018.webp" },
-      'flamewrought-bindings': { name: "Flamewrought Bindings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00019.webp" },
-      'girdle-of-spectral-skulls': { name: "Girdle of Spectral Skulls", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00021.webp" },
-      'belt-of-bloodlust': { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
-      'butchers-belt': { name: "Butcher's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp" },
-      'girdle-of-treant-strength': { name: "Girdle of Treant Strength", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp" },
-      'elusive-nymph-coil': { name: "Elusive Nymph Coil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00036.webp" },
-      'burnt-silk-warsash': { name: "Burnt Silk Warsash", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp" },
-      'heros-legacy-warbelt': { name: "Hero's Legacy Warbelt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp" },
-      'cunning-ogre-girdle': { name: "Cunning Ogre Girdle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp" },
-      'belt-of-claimed-trophies': { name: "Belt of Claimed Trophies", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp" },
-      'undisputed-champions-belt': { name: "Undisputed Champion's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp" },
-      'entranced-apostles-belt': { name: "Entranced Apostle's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp" },
-      'belt-of-the-knight-master': { name: "Belt of the Knight Master", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp" },
+      "belt-of-bloodlust": { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
+      "belt-of-claimed-trophies": { name: "Belt of Claimed Trophies", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp" },
+      "belt-of-the-knight-master": { name: "Belt of the Knight Master", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp" },
+      "burnt-silk-warsash": { name: "Burnt Silk Warsash", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp" },
+      "butchers-belt": { name: "Butcher's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp" },
+      "cunning-ogre-girdle": { name: "Cunning Ogre Girdle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp" },
+      "demonic-beast-kings-belt": { name: "Demonic Beast King's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00018.webp" },
+      "elusive-nymph-coil": { name: "Elusive Nymph Coil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00036.webp" },
+      "entranced-apostles-belt": { name: "Entranced Apostle's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp" },
+      "flamewrought-bindings": { name: "Flamewrought Bindings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00019.webp" },
+      "forbidden-arcane-chain": { name: "Forbidden Arcane Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00014.webp" },
+      "forbidden-eternal-chain": { name: "Forbidden Eternal Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp" },
+      "forbidden-sacred-chain": { name: "Forbidden Sacred Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00015.webp" },
+      "girdle-of-spectral-skulls": { name: "Girdle of Spectral Skulls", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00021.webp" },
+      "girdle-of-treant-strength": { name: "Girdle of Treant Strength", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp" },
+      "heros-legacy-warbelt": { name: "Hero's Legacy Warbelt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp" },
+      "undisputed-champions-belt": { name: "Undisputed Champion's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp" },
     },
     ring: {
-      'dark-seraph-ring': { name: "Dark Seraph Ring", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp" },
-      'band-of-the-chosen-one': { name: "Band of the Chosen One", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00024.webp" },
-      'band-of-the-silent-one': { name: "Band of the Silent One", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00002.webp" },
-      'abyssal-grace-band': { name: "Abyssal Grace Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp" },
-      'embossed-granite-band': { name: "Embossed Granite Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00014.webp" },
-      'eldritch-ice-band': { name: "Eldritch Ice Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00004.webp" },
-      'band-of-universal-power': { name: "Band of Universal Power", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00005.webp" },
-      'etched-alabaster-band': { name: "Etched Alabaster Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00003.webp" },
-      'amber-dimensional-band': { name: "Amber Dimensional Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00032.webp" },
-      'sapphire-dimensional-band': { name: "Sapphire Dimensional Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00033.webp" },
-      'solitare-of-purity': { name: "Solitare of Purity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp" },
-      'honors-promise-signet': { name: "Honor's Promise Signet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00038.webp" },
-      'ring-of-eternal-flames': { name: "Ring of Eternal Flames", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00039.webp" },
-      'ring-of-celestial-light': { name: "Ring of Celestial Light", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00043.webp" },
-      'symbol-of-natures-advance': { name: "Symbol of Nature's Advance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp" },
-      'signet-of-the-treant-lord': { name: "Signet of the Treant Lord", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00034.webp" },
-      'sinking-sun-signet': { name: "Sinking Sun Signet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp" },
-      'band-of-ancestors-blood': { name: "Band of Ancestor's Blood", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00041.webp" },
-      'runed-band-of-the-black-anvil': { name: "Runed Band of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00042.webp" },
-      'signet-of-the-first-snow': { name: "Signet of the First Snow", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00036.webp" },
-      'ring-of-spirited-desire': { name: "Ring of Spirited Desire", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00045.webp" },
-      'band-of-the-resistance-leader': { name: "Band of the Resistance Leader", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00046.webp" },
-      'astral-bond': { name: "Astral Bond", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00047.webp" },
-      'distant-echoes-band': { name: "Distant Echoes Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00048.webp" },
-      'ring-of-stalwart-determination': { name: "Ring of Stalwart Determination", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00049.webp" },
-      'coil-of-endless-hunger': { name: "Coil of Endless Hunger", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp" },
-      'ring-of-song-of-punishment': { name: "Ring of Song of Punishment", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp" },
-      'ring-of-divine-instruction': { name: "Ring of Divine Instruction", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp" },
+      "abyssal-grace-band": { name: "Abyssal Grace Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp" },
+      "amber-dimensional-band": { name: "Amber Dimensional Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00032.webp" },
+      "astral-bond": { name: "Astral Bond", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00047.webp" },
+      "band-of-ancestors-blood": { name: "Band of Ancestor's Blood", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00041.webp" },
+      "band-of-the-chosen-one": { name: "Band of the Chosen One", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00024.webp" },
+      "band-of-the-resistance-leader": { name: "Band of the Resistance Leader", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00046.webp" },
+      "band-of-the-silent-one": { name: "Band of the Silent One", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00002.webp" },
+      "band-of-universal-power": { name: "Band of Universal Power", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00005.webp" },
+      "coil-of-endless-hunger": { name: "Coil of Endless Hunger", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp" },
+      "dark-seraph-ring": { name: "Dark Seraph Ring", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp" },
+      "distant-echoes-band": { name: "Distant Echoes Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00048.webp" },
+      "eldritch-ice-band": { name: "Eldritch Ice Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00004.webp" },
+      "embossed-granite-band": { name: "Embossed Granite Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00014.webp" },
+      "etched-alabaster-band": { name: "Etched Alabaster Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00003.webp" },
+      "honors-promise-signet": { name: "Honor's Promise Signet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00038.webp" },
+      "lunar-conjunction-necklace": { name: "Lunar Conjunction Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp" },
+      "ring-of-celestial-light": { name: "Ring of Celestial Light", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00043.webp" },
+      "ring-of-divine-instruction": { name: "Ring of Divine Instruction", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp" },
+      "ring-of-eternal-flames": { name: "Ring of Eternal Flames", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00039.webp" },
+      "ring-of-song-of-punishment": { name: "Ring of Song of Punishment", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp" },
+      "ring-of-spirited-desire": { name: "Ring of Spirited Desire", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00045.webp" },
+      "ring-of-stalwart-determination": { name: "Ring of Stalwart Determination", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00049.webp" },
+      "runed-band-of-the-black-anvil": { name: "Runed Band of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00042.webp" },
+      "sapphire-dimensional-band": { name: "Sapphire Dimensional Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00033.webp" },
+      "signet-of-the-first-snow": { name: "Signet of the First Snow", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00036.webp" },
+      "signet-of-the-treant-lord": { name: "Signet of the Treant Lord", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00034.webp" },
+      "sinking-sun-signet": { name: "Sinking Sun Signet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp" },
+      "solitare-of-purity": { name: "Solitare of Purity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp" },
+      "symbol-of-natures-advance": { name: "Symbol of Nature's Advance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp" },
     },
     bracelet: {
-      'bracers-of-unrelenting': { name: "Bracers of Unrelenting", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp" },
-      'ascended-guardian-bracelet': { name: "Ascended Guardian Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp" },
-      'eternal-champion-bindings': { name: "Eternal Champion Bindings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp" },
-      'abyssal-grace-charm': { name: "Abyssal Grace Charm", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00018.webp" },
-      'forged-golden-bangle': { name: "Forged Golden Bangle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00013.webp" },
-      'ancient-saurodoma-bracers': { name: "Ancient Saurodoma Bracers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00010.webp" },
-      'gilded-infernal-wristlet': { name: "Gilded Infernal Wristlet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00008.webp" },
-      'bracers-of-the-primal-king': { name: "Bracers of the Primal King", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00023.webp" },
-      'skillful-shock-bracelet': { name: "Skillful Shock Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002A.webp" },
-      'skillful-corrupted-bracelet': { name: "Skillful Corrupted Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004A.webp" },
-      'skillful-oppress-bracelet': { name: "Skillful Oppress Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007A.webp" },
-      'skillful-charging-bracelet': { name: "Skillful Charging Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010A.webp" },
-      'skillful-silence-bracelet': { name: "Skillful Silence Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011A.webp" },
-      'restraints-of-the-glacial-queen': { name: "Restraints of the Glacial Queen", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00035.webp" },
-      'bangle-of-the-clearest-night': { name: "Bangle of the Clearest Night", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00034.webp" },
-      'coil-of-the-verdant-sovereign': { name: "Coil of the Verdant Sovereign", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00033.webp" },
-      'infernal-demonpact-cuffs': { name: "Infernal Demonpact Cuffs", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00040.webp" },
-      'primal-golden-cuffs': { name: "Primal Golden Cuffs", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00042.webp" },
-      'bracelet-of-the-violent-undertow': { name: "Bracelet of the Violent Undertow", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00041.webp" },
-      'barbed-cuffs-of-the-tormentor': { name: "Barbed Cuffs of the Tormentor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00043.webp" },
-      'bracelet-of-agony': { name: "Bracelet of Agony", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00044.webp" },
-      'bracelet-of-fractured-worlds': { name: "Bracelet of Fractured Worlds", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00045.webp" },
-      'twisted-coil-of-the-enduring': { name: "Twisted Coil of the Enduring", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp" },
+      "abyssal-grace-charm": { name: "Abyssal Grace Charm", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00018.webp" },
+      "ancient-saurodoma-bracers": { name: "Ancient Saurodoma Bracers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00010.webp" },
+      "ascended-guardian-bracelet": { name: "Ascended Guardian Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp" },
+      "bangle-of-the-clearest-night": { name: "Bangle of the Clearest Night", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00034.webp" },
+      "barbed-cuffs-of-the-tormentor": { name: "Barbed Cuffs of the Tormentor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00043.webp" },
+      "bracers-of-agony": { name: "Bracelet of Agony", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00044.webp" },
+      "bracers-of-fractured-worlds": { name: "Bracelet of Fractured Worlds", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00045.webp" },
+      "bracers-of-the-primal-king": { name: "Bracers of the Primal King", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00023.webp" },
+      "bracers-of-the-violent-undertow": { name: "Bracelet of the Violent Undertow", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00041.webp" },
+      "bracers-of-unrelenting": { name: "Bracers of Unrelenting", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp" },
+      "coil-of-the-verdant-sovereign": { name: "Coil of the Verdant Sovereign", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00033.webp" },
+      "eternal-champion-bindings": { name: "Eternal Champion Bindings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp" },
+      "forged-golden-bangle": { name: "Forged Golden Bangle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00013.webp" },
+      "gilded-infernal-wristlet": { name: "Gilded Infernal Wristlet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00008.webp" },
+      "infernal-demonpact-cuffs": { name: "Infernal Demonpact Cuffs", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00040.webp" },
+      "primal-golden-cuffs": { name: "Primal Golden Cuffs", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00042.webp" },
+      "restraints-of-the-glacial-queen": { name: "Restraints of the Glacial Queen", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00035.webp" },
+      "skillful-charging-bracelet": { name: "Skillful Charging Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010A.webp" },
+      "skillful-corrupted-bracelet": { name: "Skillful Corrupted Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004A.webp" },
+      "skillful-oppress-bracelet": { name: "Skillful Oppress Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007A.webp" },
+      "skillful-shock-bracelet": { name: "Skillful Shock Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002A.webp" },
+      "skillful-silence-bracelet": { name: "Skillful Silence Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011A.webp" },
+      "twisted-coil-of-the-enduring": { name: "Twisted Coil of the Enduring", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp" },
     },
     necklace: {
-      'slayers-quicksilver-pendant': { name: "Slayer's Quicksilver Pendant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp" },
-      'bindings-of-the-unstoppable': { name: "Bindings of the Unstoppable", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00008.webp" },
-      'thunderstorm-necklace': { name: "Thunderstorm Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp" },
-      'abyssal-grace-pendant': { name: "Abyssal Grace Pendant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp" },
-      'blessed-templar-choker': { name: "Blessed Templar Choker", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00003.webp" },
-      'collar-of-decimation': { name: "Collar of Decimation", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00001.webp" },
-      'wrapped-coin-necklace': { name: "Wrapped Coin Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp" },
-      'clasp-of-the-overlord': { name: "Clasp of the Overlord", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00019.webp" },
-      'clasp-of-the-conqueror': { name: "Clasp of the Conqueror", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00017.webp" },
-      'icy-necklace-of-strength': { name: "Icy Necklace of Strength", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00015.webp" },
-      'icy-necklace-of-dexterity': { name: "Icy Necklace of Dexterity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00011.webp" },
-      'icy-necklace-of-wisdom': { name: "Icy Necklace of Wisdom", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00014.webp" },
-      'icy-necklace-of-perception': { name: "Icy Necklace of Perception", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00010.webp" },
-      'noble-birthright-brooch': { name: "Noble Birthright Brooch", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00035.webp" },
-      'collar-of-natures-wrath': { name: "Collar of Nature's Wrath", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00036.webp" },
-      'deep-draconic-gorget': { name: "Deep Draconic Gorget", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00041.webp" },
-      'death-knell-gorget': { name: "Death Knell Gorget", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00040.webp" },
-      'primal-ritual-collar': { name: "Primal Ritual Collar", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00042.webp" },
-      'pendant-of-barbaric-rage': { name: "Pendant of Barbaric Rage", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00043.webp" },
-      'pendant-of-frozen-tears': { name: "Pendant of Frozen Tears", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp" },
-      'pendant-of-eternal-flames': { name: "Pendant of Eternal Flames", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp" },
-      'lunar-conjunction-necklace': { name: "Lunar Conjunction Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp" },
+      "abyssal-grace-pendant": { name: "Abyssal Grace Pendant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp" },
+      "bindings-of-the-unstoppable": { name: "Bindings of the Unstoppable", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00008.webp" },
+      "blessed-templar-choker": { name: "Blessed Templar Choker", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00003.webp" },
+      "clasp-of-the-conqueror": { name: "Clasp of the Conqueror", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00017.webp" },
+      "clasp-of-the-overlord": { name: "Clasp of the Overlord", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00019.webp" },
+      "collar-of-decimation": { name: "Collar of Decimation", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00001.webp" },
+      "collar-of-natures-wrath": { name: "Collar of Nature's Wrath", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00036.webp" },
+      "death-knell-gorget": { name: "Death Knell Gorget", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00040.webp" },
+      "deep-draconic-gorget": { name: "Deep Draconic Gorget", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00041.webp" },
+      "icy-necklace-of-dexterity": { name: "Icy Necklace of Dexterity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00011.webp" },
+      "icy-necklace-of-perception": { name: "Icy Necklace of Perception", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00010.webp" },
+      "icy-necklace-of-strength": { name: "Icy Necklace of Strength", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00015.webp" },
+      "icy-necklace-of-wisdom": { name: "Icy Necklace of Wisdom", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00014.webp" },
+      "noble-birthright-brooch": { name: "Noble Birthright Brooch", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00035.webp" },
+      "pendant-of-barbaric-rage": { name: "Pendant of Barbaric Rage", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00043.webp" },
+      "pendant-of-eternal-flames": { name: "Pendant of Eternal Flames", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp" },
+      "pendant-of-frozen-tears": { name: "Pendant of Frozen Tears", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp" },
+      "primal-ritual-collar": { name: "Primal Ritual Collar", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00042.webp" },
+      "slayers-quicksilver-pendant": { name: "Slayer's Quicksilver Pendant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp" },
+      "thunderstorm-necklace": { name: "Thunderstorm Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp" },
+      "wrapped-coin-necklace": { name: "Wrapped Coin Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp" },
     },
   },
 };
 
-const WEAPON_TYPES = Object.keys(ITEM_DATABASE.weapon);
-const ARMOR_TYPES: string[] = [];
-const ACCESSORY_TYPES = ['earring', 'belt', 'ring', 'bracelet', 'necklace'];
+const WEAPON_TYPES = Object.keys(ITEM_DATABASE.weapon).sort();
+const ARMOR_TYPES = Object.keys(ITEM_DATABASE.armor).sort();
+const ACCESSORY_TYPES = Object.keys(ITEM_DATABASE.accessory).sort();
 
 const itemFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -251,6 +297,9 @@ const itemFormSchema = z.object({
 }).superRefine((data, ctx) => {
     if (data.itemCategory === 'weapon' && !data.weaponType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
+    }
+    if (data.itemCategory === 'armor' && !data.armorType) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de armadura é obrigatório.", path: ["armorType"] });
     }
     if (data.itemCategory === 'accessory' && !data.accessoryType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de acessório é obrigatório.", path: ["accessoryType"] });
@@ -633,6 +682,9 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
         if (watchedItemCategory === 'weapon' && watchedWeaponType && ITEM_DATABASE.weapon[watchedWeaponType]) {
             return ITEM_DATABASE.weapon[watchedWeaponType];
         }
+        if (watchedItemCategory === 'armor' && watchedArmorType && ITEM_DATABASE.armor[watchedArmorType]) {
+            return ITEM_DATABASE.armor[watchedArmorType];
+        }
         if (watchedItemCategory === 'accessory' && watchedAccessoryType && ITEM_DATABASE.accessory[watchedAccessoryType]) {
             return ITEM_DATABASE.accessory[watchedAccessoryType];
         }
@@ -643,11 +695,14 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
         if (watchedItemCategory === 'weapon' && watchedWeaponType && watchedSelectedItemKey) {
             return ITEM_DATABASE.weapon?.[watchedWeaponType]?.[watchedSelectedItemKey];
         }
+        if (watchedItemCategory === 'armor' && watchedArmorType && watchedSelectedItemKey) {
+            return ITEM_DATABASE.armor?.[watchedArmorType]?.[watchedSelectedItemKey];
+        }
         if (watchedItemCategory === 'accessory' && watchedAccessoryType && watchedSelectedItemKey) {
             return ITEM_DATABASE.accessory?.[watchedAccessoryType]?.[watchedSelectedItemKey];
         }
         return null;
-    }, [watchedItemCategory, watchedWeaponType, watchedAccessoryType, watchedSelectedItemKey]);
+    }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType, watchedSelectedItemKey]);
 
     useEffect(() => {
         if (selectedItemData) {
@@ -712,9 +767,10 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                     <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto p-1 pr-4">
                         <div className="space-y-4">
                             <FormField name="itemCategory" control={control} render={({ field }) => (
-                                <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); setValue('accessoryType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor" disabled>Armadura (em breve)</SelectItem><SelectItem value="accessory">Acessório</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); setValue('armorType', undefined); setValue('accessoryType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor">Armadura</SelectItem><SelectItem value="accessory">Acessório</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                             )}/>
                             {watchedItemCategory === 'weapon' && <FormField name="weaponType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Arma *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{WEAPON_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.weapon[t] || {}).length === 0}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
+                            {watchedItemCategory === 'armor' && <FormField name="armorType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Armadura *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ARMOR_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.armor[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
                             {watchedItemCategory === 'accessory' && <FormField name="accessoryType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Acessório *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ACCESSORY_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.accessory[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
                             
                             <FormField
@@ -748,7 +804,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
 
                         <div className="space-y-4">
                             <Label>Prévia do Item</Label>
-                            <div className="w-full aspect-square bg-muted/30 rounded-lg flex items-center justify-center p-4 border border-dashed border-purple-500/30 bg-purple-950/20">
+                            <div className="w-full aspect-square bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center p-4 border border-primary/50">
                                 {selectedItemData ? (
                                     <Image src={selectedItemData.imageUrl} alt={selectedItemData.name} width={128} height={128} data-ai-hint="game item preview"/>
                                 ) : (
@@ -1248,5 +1304,6 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
