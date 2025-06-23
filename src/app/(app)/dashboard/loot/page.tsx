@@ -452,7 +452,7 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
   },
   accessory: {
     Earrings: {
-      "bloodbright-earrings": { name: "Bloodbright Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp" },
+      "bloodright-earrings": { name: "Bloodbright Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp" },
       "brilliant-regal-earrings": { name: "Brilliant Regal Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00052.webp" },
       "earrings-of-forlorn-elegance": { name: "Earrings of Forlorn Elegance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00051.webp" },
       "earrings-of-glimmering-dew": { name: "Earrings of Glimmering Dew", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp" },
@@ -585,6 +585,28 @@ const TRAIT_OPTIONS = [
   "Mana Cost Efficiency",
   "Mana Regen",
   "Max Health",
+  "Max Mana",
+  "Max Stamina",
+  "Melee Endurance",
+  "Melee Evasion",
+  "Movement Speed",
+  "Petrification Chance",
+  "Petrification Resistance",
+  "Range %",
+  "Ranged Endurance",
+  "Ranged Evasion",
+  "Silence Chance",
+  "Silence Resistance",
+  "Skill Damage Boost",
+  "Skill Damage Resistance",
+  "Sleep Chance",
+  "Sleep Resistance",
+  "Stun Chance",
+  "Stun Resistance",
+  "Undead Bonus Damage",
+  "Weaken Chance",
+  "Weaken Resistance",
+  "Wildking Bonus Damage",
 ].sort();
 
 const itemFormSchema = z.object({
@@ -904,7 +926,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
         </CardHeader>
 
         <CardContent className="p-2 flex-grow flex flex-col">
-            <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50 relative mb-2">
+             <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50 relative mb-2">
                 <Image
                     src={item.imageUrl}
                     alt={item.itemName || "Item"}
@@ -1626,5 +1648,6 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
