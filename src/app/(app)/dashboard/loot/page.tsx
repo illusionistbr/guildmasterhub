@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -139,7 +140,6 @@ const itemFormSchema = z.object({
   itemName: z.string().optional(),
   imageUrl: z.string().optional(),
   trait: z.string().optional(),
-  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
   droppedByMemberName: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.itemCategory === 'weapon' && !data.weaponType) {
@@ -436,7 +436,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     };
 
     return (
-        <Card className="static-card-container bg-background/80 flex flex-col group transition-all duration-300">
+        <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
             <CardHeader className={cn("p-2 text-center", rarityBackgrounds[item.rarity])}>
                 <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
             </CardHeader>
@@ -506,9 +506,27 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const itemFormSchema = z.object({
+        itemCategory: z.string().min(1, "Categoria é obrigatória."),
+        weaponType: z.string().optional(),
+        armorType: z.string().optional(),
+        accessoryType: z.string().optional(),
+        selectedItemKey: z.string().min(1, "É obrigatório selecionar um item da lista."),
+        itemName: z.string().optional(),
+        imageUrl: z.string().optional(),
+        trait: z.string().optional(),
+        droppedByMemberName: z.string().optional(),
+    }).superRefine((data, ctx) => {
+        if (data.itemCategory === 'weapon' && !data.weaponType) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
+        }
+    });
+    
+    type ItemFormValues = z.infer<typeof itemFormSchema>;
+
     const form = useForm<ItemFormValues>({
         resolver: zodResolver(itemFormSchema),
-        defaultValues: { itemCategory: "", rarity: 'epic', selectedItemKey: "" }
+        defaultValues: { itemCategory: "", selectedItemKey: "" }
     });
 
     const { watch, reset, setValue, control } = form;
@@ -561,7 +579,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                 itemName: data.itemName,
                 trait: data.trait,
                 imageUrl: data.imageUrl,
-                rarity: data.rarity,
+                rarity: 'epic',
                 status: 'Disponível',
                 droppedByMemberId: currentUser.uid,
                 droppedByMemberName: data.droppedByMemberName || currentUser.displayName || 'N/A'
@@ -641,7 +659,6 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                             </div>
 
                             <FormField name="trait" control={control} render={({ field }) => (<FormItem><FormLabel>Trait</FormLabel><FormControl><Input {...field} placeholder="Ex: Precise, Impenetrable..."/></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField name="rarity" control={control} render={({ field }) => (<FormItem><FormLabel>Raridade *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..."/></SelectTrigger></FormControl><SelectContent><SelectItem value="common">Comum</SelectItem><SelectItem value="uncommon">Incomum</SelectItem><SelectItem value="rare">Raro</SelectItem><SelectItem value="epic">Épico</SelectItem><SelectItem value="legendary">Lendário</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                             <FormField name="droppedByMemberName" control={control} render={({ field }) => (<FormItem><FormLabel>Dropado por (opcional)</FormLabel><FormControl><Input {...field} placeholder="Nome do membro"/></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                         
@@ -1065,34 +1082,36 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                             </div>
                         </div>
                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label>Data de Início</Label>
+                            <Form>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
-                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
-                                        </Button>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                                {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
+                                            </Button>
+                                        </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
                                     </PopoverContent>
                                 </Popover>
-                            </div>
-                            <div>
-                                <Label>Data de Fim</Label>
+                            </Form>
+                             <Form>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
-                                        </Button>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                                {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
+                                            </Button>
+                                        </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
                                     </PopoverContent>
                                 </Popover>
-                            </div>
+                             </Form>
                         </div>
                       </div>
                       <DialogFooter>
@@ -1139,3 +1158,4 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
