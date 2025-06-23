@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -243,7 +242,7 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
       "gilded-raven-trousers": { name: "Gilded Raven Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022B.webp" },
       "greaves-of-the-field-general": { name: "Greaves of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00018.webp" },
       "greaves-of-the-infernal-herald": { name: "Greaves of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_PT_00019.webp" },
-      "hallowed-pants-of-the-resistance": { name: "Hallowed Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001.webp" },
+      "hallowed-pants-of-the-resistance": { name: "Hallowed Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001A.webp" },
       "heroic-breeches-of-the-resistance": { name: "Heroic Breeches of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00004A.webp" },
       "heroic-greaves-of-the-resistance": { name: "Heroic Greaves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp" },
       "heroic-pants-of-the-resistance": { name: "Heroic Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001.webp" },
@@ -1080,12 +1079,9 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
         const droppedByName = selectedMember ? selectedMember.name : (currentUser.displayName || "N/A");
 
         try {
-            const newBankItem: Omit<BankItem, 'id'> = {
+            const newBankItem: { [key: string]: any } = {
                 createdAt: serverTimestamp() as Timestamp,
                 itemCategory: data.itemCategory,
-                weaponType: data.weaponType,
-                armorType: data.armorType,
-                accessoryType: data.accessoryType,
                 itemName: data.itemName,
                 trait: data.trait,
                 imageUrl: data.imageUrl,
@@ -1094,6 +1090,11 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                 droppedByMemberId: droppedById,
                 droppedByMemberName: droppedByName
             };
+
+            if (data.weaponType) newBankItem.weaponType = data.weaponType;
+            if (data.armorType) newBankItem.armorType = data.armorType;
+            if (data.accessoryType) newBankItem.accessoryType = data.accessoryType;
+
 
             await addDoc(collection(db, `guilds/${guildId}/bankItems`), newBankItem);
             toast({ title: "Item Adicionado!", description: `${data.itemName} foi adicionado ao banco.` });
