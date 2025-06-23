@@ -876,7 +876,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
 
     return (
       <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
-        <CardHeader className={cn("p-2 text-center", rarityBackgrounds[item.rarity])}>
+        <CardHeader className="p-2 text-center">
           <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
         </CardHeader>
 
@@ -1069,7 +1069,9 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                                                         <FormControl>
                                                             <RadioGroupItem value={key} />
                                                         </FormControl>
-                                                        <Image src={itemData.imageUrl} alt={itemData.name} width={40} height={40} className="rounded-md bg-purple-900/30 p-1" data-ai-hint="game item"/>
+                                                        <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/30 to-black/30 border border-purple-400/50">
+                                                          <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
+                                                        </div>
                                                         <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
                                                     </FormItem>
                                                 ))
@@ -1085,13 +1087,6 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                         </div>
 
                         <div className="space-y-4">
-                            <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50">
-                                {selectedItemData ? (
-                                    <Image src={selectedItemData.imageUrl} alt={selectedItemData.name} width={128} height={128} data-ai-hint="game item preview"/>
-                                ) : (
-                                    <ImageIcon className="h-24 w-24 text-muted-foreground"/>
-                                )}
-                            </div>
                             <FormField name="trait" control={control} render={({ field }) => (<FormItem><FormLabel>Trait</FormLabel><FormControl><Input {...field} placeholder="Ex: Precise, Impenetrable..."/></FormControl><FormMessage /></FormItem>)}/>
                             <FormField name="droppedByMemberName" control={control} render={({ field }) => (<FormItem><FormLabel>Dropado por (opcional)</FormLabel><FormControl><Input {...field} placeholder="Nome do membro"/></FormControl><FormMessage /></FormItem>)}/>
                         </div>
@@ -1584,5 +1579,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-    
