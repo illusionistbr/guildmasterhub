@@ -944,7 +944,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     return (
         <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
             <CardHeader className="p-2 text-center min-h-[56px] flex justify-center items-center">
-              <h3 className="font-semibold text-white text-sm leading-tight">{item.itemName}</h3>
+              <h3 className="font-semibold text-white text-sm leading-tight break-words">{item.itemName}</h3>
             </CardHeader>
 
             <CardContent className="p-2 flex-grow flex flex-col">
@@ -989,12 +989,12 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                     )}
                 </div>
                 
+                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
+
                 <div className="my-2 space-y-1 text-center">
                     <p className="text-xs text-muted-foreground">Drop: {item.droppedByMemberName || 'N/A'}</p>
                     <p className="text-xs text-muted-foreground">Data: {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}</p>
                 </div>
-
-                <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
                 
                 <div className="mt-auto pt-2 space-y-1 text-center">
                     {item.trait && <p className="text-xs text-muted-foreground" title={item.trait}>{item.trait}</p>}
@@ -1711,4 +1711,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
