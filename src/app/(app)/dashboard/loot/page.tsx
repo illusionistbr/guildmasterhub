@@ -990,15 +990,25 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 </div>
                 
                 <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
-
-                <div className="my-2 space-y-1 text-center">
-                    <p className="text-xs text-muted-foreground">Drop: {item.droppedByMemberName || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground">Data: {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}</p>
+                
+                <div className="my-2 space-y-1 text-left text-xs px-1 flex-grow">
+                    {item.trait && (
+                        <p className="text-muted-foreground" title={item.trait}>
+                            <span className="font-bold text-foreground">Trait: </span>
+                            {item.trait}
+                        </p>
+                    )}
+                    <p className="text-muted-foreground">
+                        <span className="font-bold text-foreground">Drop: </span>
+                        {item.droppedByMemberName || 'N/A'}
+                    </p>
+                    <p className="text-muted-foreground">
+                        <span className="font-bold text-foreground">Data: </span>
+                        {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
+                    </p>
                 </div>
                 
                 <div className="mt-auto pt-2 space-y-1 text-center">
-                    {item.trait && <p className="text-xs text-muted-foreground" title={item.trait}>{item.trait}</p>}
-                    
                     {item.status === 'Disponível' && canStartAuction && (
                         <Button size="sm" variant="outline" className="h-7 text-xs w-full mt-1" onClick={() => {
                             const event = new CustomEvent('openAuctionWizard', { detail: item });
@@ -1158,10 +1168,10 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                                                     <FormControl>
                                                         <RadioGroupItem value={key} />
                                                     </FormControl>
-                                                    <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50 flex-shrink-0">
+                                                    <div className="w-10 h-10 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                                       <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
                                                     </div>
-                                                    <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
+                                                    <FormLabel className="font-normal cursor-pointer flex-1 break-words">{itemData.name}</FormLabel>
                                                 </FormItem>
                                             ))
                                         ) : (
@@ -1711,5 +1721,6 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
