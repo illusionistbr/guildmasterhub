@@ -124,12 +124,119 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
     Dagger: {}, Bow: {}, Crossbow: {}, Wand: {}, Staff: {}, Spear: {}
   },
   armor: {},
-  accessory: {},
+  accessory: {
+    earring: {
+      'gilded-granite-teardrops': { name: "Gilded Granite Teardrops", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp" },
+      'bloodbright-earrings': { name: "Bloodbright Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00004.webp" },
+      'earrings-of-primal-foresight': { name: "Earrings of Primal Foresight", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00002.webp" },
+      'earrings-of-glimmering-dew': { name: "Earrings of Glimmering Dew", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00003.webp" },
+      'earrings-of-forlorn-elegance': { name: "Earrings of Forlorn Elegance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00051.webp" },
+      'brilliant-regal-earrings': { name: "Brilliant Regal Earrings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00052.webp" },
+    },
+    belt: {
+      'forbidden-eternal-chain': { name: "Forbidden Eternal Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00013.webp" },
+      'forbidden-arcane-chain': { name: "Forbidden Arcane Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00014.webp" },
+      'forbidden-sacred-chain': { name: "Forbidden Sacred Chain", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00015.webp" },
+      'demonic-beast-kings-belt': { name: "Demonic Beast King's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00018.webp" },
+      'flamewrought-bindings': { name: "Flamewrought Bindings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00019.webp" },
+      'girdle-of-spectral-skulls': { name: "Girdle of Spectral Skulls", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00021.webp" },
+      'belt-of-bloodlust': { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
+      'butchers-belt': { name: "Butcher's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp" },
+      'girdle-of-treant-strength': { name: "Girdle of Treant Strength", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00030.webp" },
+      'elusive-nymph-coil': { name: "Elusive Nymph Coil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00036.webp" },
+      'burnt-silk-warsash': { name: "Burnt Silk Warsash", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp" },
+      'heros-legacy-warbelt': { name: "Hero's Legacy Warbelt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00041.webp" },
+      'cunning-ogre-girdle': { name: "Cunning Ogre Girdle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp" },
+      'belt-of-claimed-trophies': { name: "Belt of Claimed Trophies", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp" },
+      'undisputed-champions-belt': { name: "Undisputed Champion's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00044.webp" },
+      'entranced-apostles-belt': { name: "Entranced Apostle's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00045.webp" },
+      'belt-of-the-knight-master': { name: "Belt of the Knight Master", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp" },
+    },
+    ring: {
+      'dark-seraph-ring': { name: "Dark Seraph Ring", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00021.webp" },
+      'band-of-the-chosen-one': { name: "Band of the Chosen One", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00024.webp" },
+      'band-of-the-silent-one': { name: "Band of the Silent One", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00002.webp" },
+      'abyssal-grace-band': { name: "Abyssal Grace Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00018.webp" },
+      'embossed-granite-band': { name: "Embossed Granite Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00014.webp" },
+      'eldritch-ice-band': { name: "Eldritch Ice Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00004.webp" },
+      'band-of-universal-power': { name: "Band of Universal Power", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00005.webp" },
+      'etched-alabaster-band': { name: "Etched Alabaster Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00003.webp" },
+      'amber-dimensional-band': { name: "Amber Dimensional Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00032.webp" },
+      'sapphire-dimensional-band': { name: "Sapphire Dimensional Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00033.webp" },
+      'solitare-of-purity': { name: "Solitare of Purity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00020.webp" },
+      'honors-promise-signet': { name: "Honor's Promise Signet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00038.webp" },
+      'ring-of-eternal-flames': { name: "Ring of Eternal Flames", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00039.webp" },
+      'ring-of-celestial-light': { name: "Ring of Celestial Light", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00043.webp" },
+      'symbol-of-natures-advance': { name: "Symbol of Nature's Advance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00044.webp" },
+      'signet-of-the-treant-lord': { name: "Signet of the Treant Lord", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00034.webp" },
+      'sinking-sun-signet': { name: "Sinking Sun Signet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00040.webp" },
+      'band-of-ancestors-blood': { name: "Band of Ancestor's Blood", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00041.webp" },
+      'runed-band-of-the-black-anvil': { name: "Runed Band of the Black Anvil", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00042.webp" },
+      'signet-of-the-first-snow': { name: "Signet of the First Snow", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00036.webp" },
+      'ring-of-spirited-desire': { name: "Ring of Spirited Desire", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00045.webp" },
+      'band-of-the-resistance-leader': { name: "Band of the Resistance Leader", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00046.webp" },
+      'astral-bond': { name: "Astral Bond", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00047.webp" },
+      'distant-echoes-band': { name: "Distant Echoes Band", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00048.webp" },
+      'ring-of-stalwart-determination': { name: "Ring of Stalwart Determination", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00049.webp" },
+      'coil-of-endless-hunger': { name: "Coil of Endless Hunger", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00050.webp" },
+      'ring-of-song-of-punishment': { name: "Ring of Song of Punishment", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00051.webp" },
+      'ring-of-divine-instruction': { name: "Ring of Divine Instruction", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Ring_00052.webp" },
+    },
+    bracelet: {
+      'bracers-of-unrelenting': { name: "Bracers of Unrelenting", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00004.webp" },
+      'ascended-guardian-bracelet': { name: "Ascended Guardian Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00003.webp" },
+      'eternal-champion-bindings': { name: "Eternal Champion Bindings", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00001.webp" },
+      'abyssal-grace-charm': { name: "Abyssal Grace Charm", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00018.webp" },
+      'forged-golden-bangle': { name: "Forged Golden Bangle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00013.webp" },
+      'ancient-saurodoma-bracers': { name: "Ancient Saurodoma Bracers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00010.webp" },
+      'gilded-infernal-wristlet': { name: "Gilded Infernal Wristlet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00008.webp" },
+      'bracers-of-the-primal-king': { name: "Bracers of the Primal King", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00023.webp" },
+      'skillful-shock-bracelet': { name: "Skillful Shock Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00002A.webp" },
+      'skillful-corrupted-bracelet': { name: "Skillful Corrupted Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00004A.webp" },
+      'skillful-oppress-bracelet': { name: "Skillful Oppress Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00007A.webp" },
+      'skillful-charging-bracelet': { name: "Skillful Charging Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00010A.webp" },
+      'skillful-silence-bracelet': { name: "Skillful Silence Bracelet", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Bracelet_00011A.webp" },
+      'restraints-of-the-glacial-queen': { name: "Restraints of the Glacial Queen", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00035.webp" },
+      'bangle-of-the-clearest-night': { name: "Bangle of the Clearest Night", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00034.webp" },
+      'coil-of-the-verdant-sovereign': { name: "Coil of the Verdant Sovereign", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00033.webp" },
+      'infernal-demonpact-cuffs': { name: "Infernal Demonpact Cuffs", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00040.webp" },
+      'primal-golden-cuffs': { name: "Primal Golden Cuffs", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00042.webp" },
+      'bracelet-of-the-violent-undertow': { name: "Bracelet of the Violent Undertow", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00041.webp" },
+      'barbed-cuffs-of-the-tormentor': { name: "Barbed Cuffs of the Tormentor", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00043.webp" },
+      'bracelet-of-agony': { name: "Bracelet of Agony", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00044.webp" },
+      'bracelet-of-fractured-worlds': { name: "Bracelet of Fractured Worlds", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00045.webp" },
+      'twisted-coil-of-the-enduring': { name: "Twisted Coil of the Enduring", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Bracelet_00046.webp" },
+    },
+    necklace: {
+      'slayers-quicksilver-pendant': { name: "Slayer's Quicksilver Pendant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00002.webp" },
+      'bindings-of-the-unstoppable': { name: "Bindings of the Unstoppable", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00008.webp" },
+      'thunderstorm-necklace': { name: "Thunderstorm Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00023.webp" },
+      'abyssal-grace-pendant': { name: "Abyssal Grace Pendant", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00015.webp" },
+      'blessed-templar-choker': { name: "Blessed Templar Choker", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00003.webp" },
+      'collar-of-decimation': { name: "Collar of Decimation", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00001.webp" },
+      'wrapped-coin-necklace': { name: "Wrapped Coin Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00006.webp" },
+      'clasp-of-the-overlord': { name: "Clasp of the Overlord", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00019.webp" },
+      'clasp-of-the-conqueror': { name: "Clasp of the Conqueror", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00017.webp" },
+      'icy-necklace-of-strength': { name: "Icy Necklace of Strength", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00015.webp" },
+      'icy-necklace-of-dexterity': { name: "Icy Necklace of Dexterity", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00011.webp" },
+      'icy-necklace-of-wisdom': { name: "Icy Necklace of Wisdom", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00014.webp" },
+      'icy-necklace-of-perception': { name: "Icy Necklace of Perception", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/PC_Necklace_00010.webp" },
+      'noble-birthright-brooch': { name: "Noble Birthright Brooch", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00035.webp" },
+      'collar-of-natures-wrath': { name: "Collar of Nature's Wrath", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00036.webp" },
+      'deep-draconic-gorget': { name: "Deep Draconic Gorget", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00041.webp" },
+      'death-knell-gorget': { name: "Death Knell Gorget", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00040.webp" },
+      'primal-ritual-collar': { name: "Primal Ritual Collar", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00042.webp" },
+      'pendant-of-barbaric-rage': { name: "Pendant of Barbaric Rage", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00043.webp" },
+      'pendant-of-frozen-tears': { name: "Pendant of Frozen Tears", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00044.webp" },
+      'pendant-of-eternal-flames': { name: "Pendant of Eternal Flames", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00045.webp" },
+      'lunar-conjunction-necklace': { name: "Lunar Conjunction Necklace", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Necklace_00046.webp" },
+    },
+  },
 };
 
 const WEAPON_TYPES = Object.keys(ITEM_DATABASE.weapon);
 const ARMOR_TYPES: string[] = [];
-const ACCESSORY_TYPES: string[] = [];
+const ACCESSORY_TYPES = ['earring', 'belt', 'ring', 'bracelet', 'necklace'];
 
 const itemFormSchema = z.object({
   itemCategory: z.string().min(1, "Categoria é obrigatória."),
@@ -144,6 +251,9 @@ const itemFormSchema = z.object({
 }).superRefine((data, ctx) => {
     if (data.itemCategory === 'weapon' && !data.weaponType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
+    }
+    if (data.itemCategory === 'accessory' && !data.accessoryType) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de acessório é obrigatório.", path: ["accessoryType"] });
     }
 });
 type ItemFormValues = z.infer<typeof itemFormSchema>;
@@ -506,24 +616,7 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-    const itemFormSchema = z.object({
-        itemCategory: z.string().min(1, "Categoria é obrigatória."),
-        weaponType: z.string().optional(),
-        armorType: z.string().optional(),
-        accessoryType: z.string().optional(),
-        selectedItemKey: z.string().min(1, "É obrigatório selecionar um item da lista."),
-        itemName: z.string().optional(),
-        imageUrl: z.string().optional(),
-        trait: z.string().optional(),
-        droppedByMemberName: z.string().optional(),
-    }).superRefine((data, ctx) => {
-        if (data.itemCategory === 'weapon' && !data.weaponType) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
-        }
-    });
     
-    type ItemFormValues = z.infer<typeof itemFormSchema>;
-
     const form = useForm<ItemFormValues>({
         resolver: zodResolver(itemFormSchema),
         defaultValues: { itemCategory: "", selectedItemKey: "" }
@@ -540,17 +633,21 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
         if (watchedItemCategory === 'weapon' && watchedWeaponType && ITEM_DATABASE.weapon[watchedWeaponType]) {
             return ITEM_DATABASE.weapon[watchedWeaponType];
         }
-        // TODO: Add logic for armor and accessory here
+        if (watchedItemCategory === 'accessory' && watchedAccessoryType && ITEM_DATABASE.accessory[watchedAccessoryType]) {
+            return ITEM_DATABASE.accessory[watchedAccessoryType];
+        }
         return {};
     }, [watchedItemCategory, watchedWeaponType, watchedArmorType, watchedAccessoryType]);
     
     const selectedItemData = useMemo(() => {
-        if (watchedItemCategory && watchedWeaponType && watchedSelectedItemKey) {
-            return ITEM_DATABASE[watchedItemCategory]?.[watchedWeaponType]?.[watchedSelectedItemKey];
+        if (watchedItemCategory === 'weapon' && watchedWeaponType && watchedSelectedItemKey) {
+            return ITEM_DATABASE.weapon?.[watchedWeaponType]?.[watchedSelectedItemKey];
         }
-        // TODO: Add logic for armor and accessory
+        if (watchedItemCategory === 'accessory' && watchedAccessoryType && watchedSelectedItemKey) {
+            return ITEM_DATABASE.accessory?.[watchedAccessoryType]?.[watchedSelectedItemKey];
+        }
         return null;
-    }, [watchedItemCategory, watchedWeaponType, watchedSelectedItemKey]);
+    }, [watchedItemCategory, watchedWeaponType, watchedAccessoryType, watchedSelectedItemKey]);
 
     useEffect(() => {
         if (selectedItemData) {
@@ -615,9 +712,10 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                     <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto p-1 pr-4">
                         <div className="space-y-4">
                             <FormField name="itemCategory" control={control} render={({ field }) => (
-                                <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor" disabled>Armadura (em breve)</SelectItem><SelectItem value="accessory" disabled>Acessório (em breve)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); setValue('accessoryType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor" disabled>Armadura (em breve)</SelectItem><SelectItem value="accessory">Acessório</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                             )}/>
                             {watchedItemCategory === 'weapon' && <FormField name="weaponType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Arma *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{WEAPON_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.weapon[t] || {}).length === 0}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
+                            {watchedItemCategory === 'accessory' && <FormField name="accessoryType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Acessório *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ACCESSORY_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.accessory[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
                             
                             <FormField
                                 control={form.control}
@@ -1082,36 +1180,28 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                             </div>
                         </div>
                          <div className="grid grid-cols-2 gap-4">
-                            <Form>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
-                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                                {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                            </Form>
-                             <Form>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                                <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                                {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                             </Form>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                        <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                        {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
+                                </PopoverContent>
+                            </Popover>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                        <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                        {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                       </div>
                       <DialogFooter>
@@ -1158,4 +1248,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
