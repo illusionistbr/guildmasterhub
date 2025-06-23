@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment as firebaseIncrement, deleteField, getDocs as getFirestoreDocs, where, ref as storageFirebaseRef, uploadBytes, getDownloadURL, deleteDoc as deleteFirestoreDoc } from '@/lib/firebase';
-import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion } from '@/types/guildmaster';
+import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -460,9 +460,9 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
       "gilded-granite-teardrops": { name: "Gilded Granite Teardrops", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Earring_00001.webp" },
     },
     Belt: {
+      "belt-of-bloodlust": { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
       "belt-of-claimed-trophies": { name: "Belt of Claimed Trophies", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00043.webp" },
       "belt-of-the-knight-master": { name: "Belt of the Knight Master", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00046.webp" },
-      "belt-of-bloodlust": { name: "Belt of Bloodlust", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00022.webp" },
       "burnt-silk-warsash": { name: "Burnt Silk Warsash", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00037.webp" },
       "butchers-belt": { name: "Butcher's Belt", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00031.webp" },
       "cunning-ogre-girdle": { name: "Cunning Ogre Girdle", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Acc/IT_P_Belt_00040.webp" },
@@ -575,26 +575,37 @@ const TRAIT_OPTIONS = [
   "Construct Bonus Damage",
   "Cooldown Speed",
   "Critical Hit Chance",
+  "Damage Dampening",
   "Debuff Duration",
   "Demon Bonus Damage",
+  "Evasion %",
   "Health Regen",
   "Heavy Attack Chance",
   "Hit chance",
+  "Magic Damage Boost %",
+  "Magic Damage Resistance",
   "Magic Endurance",
   "Magic Evasion",
+  "Magic Hit",
   "Mana Cost Efficiency",
   "Mana Regen",
   "Max Health",
   "Max Mana",
   "Max Stamina",
+  "Melee Damage Boost %",
+  "Melee Damage Resistance",
   "Melee Endurance",
   "Melee Evasion",
+  "Melee Hit",
   "Movement Speed",
   "Petrification Chance",
   "Petrification Resistance",
   "Range %",
+  "Ranged Damage Boost %",
+  "Ranged Damage Resistance",
   "Ranged Endurance",
   "Ranged Evasion",
+  "Ranged Hit",
   "Silence Chance",
   "Silence Resistance",
   "Skill Damage Boost",
@@ -618,7 +629,7 @@ const itemFormSchema = z.object({
   itemName: z.string().optional(),
   imageUrl: z.string().optional(),
   trait: z.string().min(1, "Trait é obrigatório."),
-  droppedByMemberName: z.string().optional(),
+  droppedByMemberId: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.itemCategory === 'weapon' && !data.weaponType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
@@ -645,6 +656,8 @@ function LootPageContent() {
   
   const [bankItems, setBankItems] = useState<BankItem[]>([]);
   const [loadingBankItems, setLoadingBankItems] = useState(true);
+  
+  const [guildMembers, setGuildMembers] = useState<{ uid: string; name: string }[]>([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<BankItemStatus | 'all'>('all');
@@ -691,6 +704,16 @@ function LootPageContent() {
         const guildData = { id: guildSnap.id, ...guildSnap.data() } as Guild;
         setGuild(guildData);
         setHeaderTitle(`Loot: ${guildData.name}`);
+        
+        if (guildData.roles && guildData.memberIds) {
+            const membersList = guildData.memberIds.map(id => {
+                const roleInfo = guildData.roles?.[id];
+                const name = roleInfo?.characterNickname || `Membro (${id.substring(0, 6)})`;
+                return { uid: id, name: name };
+            }).sort((a, b) => a.name.localeCompare(b.name));
+            setGuildMembers(membersList);
+        }
+
       } catch (error) { console.error("Erro ao buscar dados da guilda:", error); toast({ title: "Erro ao carregar dados", variant: "destructive" });
       } finally { setLoadingGuildData(false); }
     };
@@ -820,6 +843,7 @@ function LootPageContent() {
                     <NewBankItemDialog
                         guildId={guildId}
                         currentUser={user}
+                        guildMembers={guildMembers}
                     />
                 )}
             </div>
@@ -986,14 +1010,19 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     );
 }
 
-function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; currentUser: UserProfile | null }) {
+function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: string | null; currentUser: UserProfile | null, guildMembers: { uid: string, name: string }[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
     
     const form = useForm<ItemFormValues>({
         resolver: zodResolver(itemFormSchema),
-        defaultValues: { itemCategory: "", selectedItemKey: "", trait: "" }
+        defaultValues: { 
+            itemCategory: "", 
+            selectedItemKey: "", 
+            trait: "", 
+            droppedByMemberId: currentUser?.uid
+        }
     });
 
     const { watch, reset, setValue, control } = form;
@@ -1046,6 +1075,10 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
         };
         setIsSubmitting(true);
         
+        const droppedById = data.droppedByMemberId || currentUser.uid;
+        const selectedMember = guildMembers.find(m => m.uid === droppedById);
+        const droppedByName = selectedMember ? selectedMember.name : (currentUser.displayName || "N/A");
+
         try {
             const newBankItem: Omit<BankItem, 'id'> = {
                 createdAt: serverTimestamp() as Timestamp,
@@ -1058,8 +1091,8 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
                 imageUrl: data.imageUrl,
                 rarity: 'epic',
                 status: 'Disponível',
-                droppedByMemberId: currentUser.uid,
-                droppedByMemberName: data.droppedByMemberName || currentUser.displayName || 'N/A'
+                droppedByMemberId: droppedById,
+                droppedByMemberName: droppedByName
             };
 
             await addDoc(collection(db, `guilds/${guildId}/bankItems`), newBankItem);
@@ -1083,85 +1116,104 @@ function NewBankItemDialog({ guildId, currentUser }: { guildId: string | null; c
             <DialogTrigger asChild>
                 <Button className="btn-gradient btn-style-secondary"><PackagePlus className="mr-2 h-4 w-4" /> Novo Item</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Adicionar Item ao Banco da Guilda</DialogTitle>
                     <DialogDescription>Selecione um item pré-definido para adicioná-lo ao banco.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto p-1 pr-4">
-                        <div className="space-y-4">
-                            <FormField name="itemCategory" control={control} render={({ field }) => (
-                                <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); setValue('armorType', undefined); setValue('accessoryType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor">Armadura</SelectItem><SelectItem value="accessory">Acessório</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                            )}/>
-                            {watchedItemCategory === 'weapon' && <FormField name="weaponType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Arma *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{WEAPON_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.weapon[t] || {}).length === 0}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
-                            {watchedItemCategory === 'armor' && <FormField name="armorType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Armadura *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ARMOR_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.armor[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
-                            {watchedItemCategory === 'accessory' && <FormField name="accessoryType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Acessório *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ACCESSORY_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.accessory[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
-                            
-                            <FormField
-                                control={form.control}
-                                name="selectedItemKey"
-                                render={({ field }) => (
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto p-1 pr-4">
+                        <FormField name="itemCategory" control={control} render={({ field }) => (
+                            <FormItem><FormLabel>Categoria do Item *</FormLabel><Select onValueChange={(val) => { field.onChange(val); setValue('weaponType', undefined); setValue('armorType', undefined); setValue('accessoryType', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="weapon">Arma</SelectItem><SelectItem value="armor">Armadura</SelectItem><SelectItem value="accessory">Acessório</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                        )}/>
+                        {watchedItemCategory === 'weapon' && <FormField name="weaponType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Arma *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{WEAPON_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.weapon[t] || {}).length === 0}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
+                        {watchedItemCategory === 'armor' && <FormField name="armorType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Armadura *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ARMOR_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.armor[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
+                        {watchedItemCategory === 'accessory' && <FormField name="accessoryType" control={control} render={({ field }) => (<FormItem><FormLabel>Tipo de Acessório *</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{ACCESSORY_TYPES.map(t => <SelectItem key={t} value={t} disabled={Object.keys(ITEM_DATABASE.accessory[t] || {}).length === 0}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />}
+                        
+                        <FormField
+                            control={form.control}
+                            name="selectedItemKey"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nome do Item *</FormLabel>
+                                <ScrollArea className="h-64 border rounded-md p-2 bg-muted/20">
+                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-1">
+                                        {Object.entries(currentItemOptions).length > 0 ? (
+                                            Object.entries(currentItemOptions)
+                                                .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+                                                .map(([key, itemData]) => (
+                                                <FormItem key={key} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted cursor-pointer has-[:checked]:bg-primary/20 has-[:checked]:border-primary border border-transparent">
+                                                    <FormControl>
+                                                        <RadioGroupItem value={key} />
+                                                    </FormControl>
+                                                    <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
+                                                      <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
+                                                    </div>
+                                                    <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
+                                                </FormItem>
+                                            ))
+                                        ) : (
+                                            <div className="text-center text-muted-foreground py-10 h-full flex items-center justify-center">Selecione uma categoria e tipo acima.</div>
+                                        )}
+                                    </RadioGroup>
+                                </ScrollArea>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            name="trait"
+                            control={control}
+                            render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nome do Item *</FormLabel>
-                                    <ScrollArea className="h-64 border rounded-md p-2 bg-muted/20">
-                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-1">
-                                            {Object.entries(currentItemOptions).length > 0 ? (
-                                                Object.entries(currentItemOptions)
-                                                    .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-                                                    .map(([key, itemData]) => (
-                                                    <FormItem key={key} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted cursor-pointer has-[:checked]:bg-primary/20 has-[:checked]:border-primary border border-transparent">
-                                                        <FormControl>
-                                                            <RadioGroupItem value={key} />
-                                                        </FormControl>
-                                                        <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
-                                                          <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
-                                                        </div>
-                                                        <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
-                                                    </FormItem>
-                                                ))
-                                            ) : (
-                                                <div className="text-center text-muted-foreground py-10 h-full flex items-center justify-center">Selecione uma categoria e tipo acima.</div>
-                                            )}
-                                        </RadioGroup>
-                                    </ScrollArea>
+                                    <FormLabel>Trait *</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um trait..." />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {TRAIT_OPTIONS.map((trait) => (
+                                                <SelectItem key={trait} value={trait}>
+                                                    {trait}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <div className="space-y-4">
-                            <FormField
-                                name="trait"
-                                control={control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Trait *</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecione um trait..." />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {TRAIT_OPTIONS.map((trait) => (
-                                                    <SelectItem key={trait} value={trait}>
-                                                        {trait}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField name="droppedByMemberName" control={control} render={({ field }) => (<FormItem><FormLabel>Dropado por (opcional)</FormLabel><FormControl><Input {...field} placeholder="Nome do membro"/></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
+                            )}
+                        />
+                        <FormField
+                            name="droppedByMemberId"
+                            control={control}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Dropado por</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || currentUser?.uid}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um membro..."/>
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {guildMembers.map((member) => (
+                                                <SelectItem key={member.uid} value={member.uid}>
+                                                    {member.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        Selecione o membro que obteve o item. Por padrão, será você.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         
-                        <div className="md:col-span-2">
-                             <DialogFooter className="pt-4 border-t"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin"/> : "Adicionar Item"}</Button></DialogFooter>
-                        </div>
+                        <DialogFooter className="pt-4 border-t"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin"/> : "Adicionar Item"}</Button></DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
@@ -1647,8 +1699,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-
-
-
-
