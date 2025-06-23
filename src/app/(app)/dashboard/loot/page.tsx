@@ -74,7 +74,7 @@ const rarityBackgrounds: Record<BankItem['rarity'], string> = {
     common: 'bg-slate-700/50',
     uncommon: 'bg-emerald-700/50',
     rare: 'bg-sky-700/50',
-    epic: 'bg-purple-700/50',
+    epic: 'bg-purple-600/60', // Adjusted for header
     legendary: 'bg-amber-700/50',
 };
 
@@ -113,7 +113,7 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
     },
     Greatsword: {
       "adentuss-gargantuan-greatsword": { name: "Adentus's Gargantuan Greatsword", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00028.webp" },
-      "broadsword-of-the-juggernaught": { name: "Broadsword of the Juggernaught", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp" },
+      "broadsword-of-the-juggernaut": { name: "Broadsword of the Juggernaut", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00014.webp" },
       "celestial-cyclone-warblade": { name: "Celestial Cyclone Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00010.webp" },
       "cordys-warblade-of-creeping-doom": { name: "Cordy's Warblade of Creeping Doom", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00052.webp" },
       "duke-magnas-fury-warblade": { name: "Duke Magna's Fury Warblade", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Weapon/IT_P_Sword2h_00031.webp" },
@@ -779,11 +779,11 @@ function LootPageContent() {
             </div>
 
             {loadingBankItems ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -875,18 +875,18 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
 
     return (
         <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
-            <CardHeader className={cn("p-2 text-center", rarityBackgrounds[item.rarity])}>
+            <CardHeader className="p-2 text-center">
                 <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
             </CardHeader>
 
             <CardContent className="p-2 flex-grow flex flex-col">
-                <div className="w-full aspect-square rounded-md flex items-center justify-center p-1 relative transition-all duration-300 bg-muted/20 mb-2">
+                <div className="w-full aspect-square bg-gradient-to-br from-purple-900/30 to-black/30 rounded-lg flex items-center justify-center p-4 border border-purple-400/50 relative mb-2">
                     <Image
                         src={item.imageUrl}
                         alt={item.itemName || "Item"}
                         width={150} 
                         height={150}
-                        className="object-contain transition-transform duration-300 group-hover:scale-110"
+                        className="object-contain"
                         data-ai-hint="game item"
                     />
                     {canManageBankItem && (
@@ -1584,3 +1584,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
+    
