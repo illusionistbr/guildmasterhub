@@ -243,7 +243,7 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
       "gilded-raven-trousers": { name: "Gilded Raven Trousers", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_PT_00022B.webp" },
       "greaves-of-the-field-general": { name: "Greaves of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_00018.webp" },
       "greaves-of-the-infernal-herald": { name: "Greaves of the Infernal Herald", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_set_PL_M_PT_00019.webp" },
-      "hallowed-pants-of-the-resistance": { name: "Hallowed Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001A.webp" },
+      "hallowed-pants-of-the-resistance": { name: "Hallowed Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001.webp" },
       "heroic-breeches-of-the-resistance": { name: "Heroic Breeches of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_PT_00004A.webp" },
       "heroic-greaves-of-the-resistance": { name: "Heroic Greaves of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_PT_06002.webp" },
       "heroic-pants-of-the-resistance": { name: "Heroic Pants of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_PT_06001.webp" },
@@ -575,6 +575,16 @@ const TRAIT_OPTIONS = [
   "Construct Bonus Damage",
   "Cooldown Speed",
   "Critical Hit Chance",
+  "Debuff Duration",
+  "Demon Bonus Damage",
+  "Health Regen",
+  "Heavy Attack Chance",
+  "Hit chance",
+  "Magic Endurance",
+  "Magic Evasion",
+  "Mana Cost Efficiency",
+  "Mana Regen",
+  "Max Health",
 ].sort();
 
 const itemFormSchema = z.object({
@@ -797,7 +807,7 @@ function LootPageContent() {
                     {[...Array(ITEMS_PER_PAGE)].map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
                 </div>
             ) : paginatedItems.length > 0 ? (
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                     {paginatedItems.map(item => (
                         <BankItemCard key={item.id} item={item} guildId={guildId} guild={guild} currentUserRoleInfo={currentUserRoleInfo} />
                     ))}
@@ -1616,4 +1626,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
