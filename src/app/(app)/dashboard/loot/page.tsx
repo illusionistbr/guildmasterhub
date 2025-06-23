@@ -991,17 +991,16 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                    {item.trait && (
-                        <p className="text-muted-foreground break-words">
-                            <span className="font-bold text-white">Trait: </span>
-                            {item.trait}
-                        </p>
-                    )}
-                    <p className="text-muted-foreground">
+                    
+                     <p className="text-muted-foreground break-words text-left">
+                        <span className="font-bold text-white">Trait: </span>
+                        {item.trait}
+                    </p>
+                    <p className="text-muted-foreground text-left">
                         <span className="font-bold text-white">Drop: </span>
                         {item.droppedByMemberName || 'N/A'}
                     </p>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-left">
                         <span className="font-bold text-white">Data: </span>
                         {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
                     </p>
@@ -1651,9 +1650,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                             <Label>Aumento mínimo por lance (DKP)</Label>
                             <Input type="number" value={config.minIncrement} onChange={(e) => setConfig((c) => ({ ...c, minIncrement: Number(e.target.value) }))} min="1"/>
                           </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
+                           <div>
                                 <Label>Restrição de Função (Opcional)</Label>
                                 <Select onValueChange={(value) => setConfig(c => ({...c, roleRestriction: value as TLRole | 'Geral'}))} value={config.roleRestriction}>
                                     <SelectTrigger><SelectValue/></SelectTrigger>
@@ -1675,30 +1672,34 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-                         <div className="grid grid-cols-2 gap-4">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
-                                        <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                        {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
-                                </PopoverContent>
-                            </Popover>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                        <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                        {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
-                                </PopoverContent>
-                            </Popover>
+                            <div>
+                                <Label>Data e Hora de Início</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                             <div>
+                                <Label>Data e Hora de Término</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         </div>
                       </div>
                       <DialogFooter>
@@ -1745,6 +1746,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
