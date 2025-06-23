@@ -991,9 +991,9 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
                 
-                <div className="my-2 space-y-1 text-left text-xs px-1 flex-grow">
+                <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                     {item.trait && (
-                        <p className="text-muted-foreground" title={item.trait}>
+                        <p className="text-muted-foreground break-words" title={item.trait}>
                             <span className="font-bold text-foreground">Trait: </span>
                             {item.trait}
                         </p>
@@ -1721,6 +1721,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
