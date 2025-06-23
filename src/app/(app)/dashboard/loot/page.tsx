@@ -564,59 +564,57 @@ const ARMOR_TYPES = Object.keys(ITEM_DATABASE.armor).sort();
 const ACCESSORY_TYPES = Object.keys(ITEM_DATABASE.accessory).sort();
 
 const TRAIT_OPTIONS = [
-  "Attack Speed",
-  "Barbarian Bonus Damage",
-  "Bind Chance",
-  "Bind Resistance",
-  "Buff Duration",
-  "Collision Chance",
-  "Collision Resistance",
-  "Construct Bonus Damage",
-  "Cooldown Speed",
-  "Critical Hit Chance",
-  "Damage Dampening",
-  "Debuff Duration",
-  "Demon Bonus Damage",
-  "Evasion %",
-  "Health Regen",
-  "Heavy Attack Chance",
-  "Hit chance",
-  "Magic Damage Boost %",
-  "Magic Damage Resistance",
-  "Magic Endurance",
-  "Magic Evasion",
-  "Magic Hit",
-  "Mana Cost Efficiency",
-  "Mana Regen",
-  "Max Health",
-  "Max Mana",
-  "Max Stamina",
-  "Melee Damage Boost %",
-  "Melee Damage Resistance",
-  "Melee Endurance",
-  "Melee Evasion",
-  "Melee Hit",
-  "Movement Speed",
-  "Petrification Chance",
-  "Petrification Resistance",
-  "Range %",
-  "Ranged Damage Boost %",
-  "Ranged Damage Resistance",
-  "Ranged Endurance",
-  "Ranged Evasion",
-  "Ranged Hit",
-  "Silence Chance",
-  "Silence Resistance",
-  "Skill Damage Boost",
-  "Skill Damage Resistance",
-  "Sleep Chance",
-  "Sleep Resistance",
-  "Stun Chance",
-  "Stun Resistance",
-  "Undead Bonus Damage",
-  "Weaken Chance",
-  "Weaken Resistance",
-  "Wildking Bonus Damage",
+    "Attack Speed",
+    "Barbarian Bonus Damage",
+    "Bind Chance",
+    "Bind Resistance",
+    "Buff Duration",
+    "Collision Chance",
+    "Collision Resistance",
+    "Construct Bonus Damage",
+    "Cooldown Speed",
+    "Critical Hit Chance",
+    "Damage Dampening",
+    "Debuff Duration",
+    "Demon Bonus Damage",
+    "Evasion %",
+    "Health Regen",
+    "Heavy Attack Chance",
+    "Hit chance",
+    "Magic Damage Boost %",
+    "Magic Damage Resistance",
+    "Magic Endurance",
+    "Magic Evasion",
+    "Magic Hit",
+    "Mana Cost Efficiency",
+    "Mana Regen",
+    "Max Health",
+    "Max Mana",
+    "Max Stamina",
+    "Melee Damage Boost %",
+    "Melee Damage Resistance",
+    "Melee Endurance",
+    "Melee Evasion",
+    "Movement Speed",
+    "Petrification Chance",
+    "Petrification Resistance",
+    "Range %",
+    "Ranged Damage Boost %",
+    "Ranged Damage Resistance",
+    "Ranged Endurance",
+    "Ranged Evasion",
+    "Silence Chance",
+    "Silence Resistance",
+    "Skill Damage Boost",
+    "Skill Damage Resistance",
+    "Sleep Chance",
+    "Sleep Resistance",
+    "Stun Chance",
+    "Stun Resistance",
+    "Undead Bonus Damage",
+    "Weaken Chance",
+    "Weaken Resistance",
+    "Wildking Bonus Damage",
 ].sort();
 
 const itemFormSchema = z.object({
@@ -943,7 +941,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     };
 
     return (
-        <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300 border-purple-400/30 border-2" style={{backgroundImage: 'linear-gradient(to bottom right, rgba(164, 69, 241, 0.1), rgba(13, 13, 26, 0.2))'}}>
+        <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
             <CardHeader className="p-2 text-center">
               <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
             </CardHeader>
@@ -1091,9 +1089,9 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                 droppedByMemberName: droppedByName
             };
 
-            if (data.weaponType) newBankItem.weaponType = data.weaponType;
-            if (data.armorType) newBankItem.armorType = data.armorType;
-            if (data.accessoryType) newBankItem.accessoryType = data.accessoryType;
+            if (data.itemCategory === 'weapon' && data.weaponType) newBankItem.weaponType = data.weaponType;
+            if (data.itemCategory === 'armor' && data.armorType) newBankItem.armorType = data.armorType;
+            if (data.itemCategory === 'accessory' && data.accessoryType) newBankItem.accessoryType = data.accessoryType;
 
 
             await addDoc(collection(db, `guilds/${guildId}/bankItems`), newBankItem);
@@ -1147,10 +1145,10 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                                                     <FormControl>
                                                         <RadioGroupItem value={key} />
                                                     </FormControl>
-                                                    <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
+                                                    <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50 flex-shrink-0">
                                                       <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
                                                     </div>
-                                                    <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
+                                                    <FormLabel className="font-normal cursor-pointer flex-1 truncate">{itemData.name}</FormLabel>
                                                 </FormItem>
                                             ))
                                         ) : (
