@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -626,7 +627,7 @@ const itemFormSchema = z.object({
   itemName: z.string().optional(),
   imageUrl: z.string().optional(),
   trait: z.string().min(1, "Trait é obrigatório."),
-  droppedByMemberId: z.string().optional(),
+  droppedByMemberId: z.string().min(1, "É obrigatório selecionar quem obteve o item."),
 }).superRefine((data, ctx) => {
     if (data.itemCategory === 'weapon' && !data.weaponType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
@@ -942,8 +943,8 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
 
     return (
         <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
-            <CardHeader className="p-2 text-center">
-              <h3 className="font-semibold text-white text-sm leading-tight truncate">{item.itemName}</h3>
+            <CardHeader className="p-2 text-center min-h-[56px] flex justify-center items-center">
+              <h3 className="font-semibold text-white text-sm leading-tight">{item.itemName}</h3>
             </CardHeader>
 
             <CardContent className="p-2 flex-grow flex flex-col">
@@ -988,13 +989,18 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                     )}
                 </div>
                 
+                <div className="my-2 space-y-1 text-center">
+                    <p className="text-xs text-muted-foreground">Drop: {item.droppedByMemberName || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Data: {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}</p>
+                </div>
+
                 <Badge className={cn("text-xs w-full justify-center", statusBadgeClasses[item.status])}>{item.status}</Badge>
                 
                 <div className="mt-auto pt-2 space-y-1 text-center">
-                    {item.trait && <p className="text-xs text-muted-foreground truncate" title={item.trait}>{item.trait}</p>}
+                    {item.trait && <p className="text-xs text-muted-foreground" title={item.trait}>{item.trait}</p>}
                     
                     {item.status === 'Disponível' && canStartAuction && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs w-full" onClick={() => {
+                        <Button size="sm" variant="outline" className="h-7 text-xs w-full mt-1" onClick={() => {
                             const event = new CustomEvent('openAuctionWizard', { detail: item });
                             window.dispatchEvent(event);
                         }}>
@@ -1092,6 +1098,13 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
             if (data.itemCategory === 'weapon' && data.weaponType) newBankItem.weaponType = data.weaponType;
             if (data.itemCategory === 'armor' && data.armorType) newBankItem.armorType = data.armorType;
             if (data.itemCategory === 'accessory' && data.accessoryType) newBankItem.accessoryType = data.accessoryType;
+            
+            // Clean up undefined fields
+            Object.keys(newBankItem).forEach(key => {
+                if (newBankItem[key] === undefined) {
+                    delete newBankItem[key];
+                }
+            });
 
 
             await addDoc(collection(db, `guilds/${guildId}/bankItems`), newBankItem);
@@ -1148,7 +1161,7 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                                                     <div className="w-10 h-10 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50 flex-shrink-0">
                                                       <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
                                                     </div>
-                                                    <FormLabel className="font-normal cursor-pointer flex-1 truncate">{itemData.name}</FormLabel>
+                                                    <FormLabel className="font-normal cursor-pointer flex-1">{itemData.name}</FormLabel>
                                                 </FormItem>
                                             ))
                                         ) : (
@@ -1190,7 +1203,7 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Dropado por</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value || currentUser?.uid}>
+                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Selecione um membro..."/>
@@ -1698,3 +1711,4 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
