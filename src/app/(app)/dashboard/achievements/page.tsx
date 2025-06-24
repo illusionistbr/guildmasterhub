@@ -5,7 +5,7 @@ import React, { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Trophy, Castle, Award } from 'lucide-react';
+import { Loader2, Trophy, Castle, Award, User } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { db, doc, getDoc, Timestamp } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
@@ -50,13 +50,40 @@ function AchievementsPageContent() {
      return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
 
-  const achievement = {
-    id: 'guild_founded',
-    title: 'Guild fundada',
-    description: 'Parabéns a nova guild que acabou de ser fundada',
-    icon: Castle,
-    points: 50,
+  const achievements = [
+    {
+      id: 'guild_founded',
+      title: 'Guild fundada',
+      description: 'Parabéns a nova guild que acabou de ser fundada',
+      icon: Castle,
+      points: 50,
+      color: 'amber',
+    },
+    {
+      id: 'one_member',
+      title: 'Guild com 1 membro',
+      description: 'Toda grande jornada começa com um único passo. E o primeiro membro!',
+      icon: User,
+      points: 10,
+      color: 'orange', // Represents bronze
+    }
+  ];
+
+  const colorVariants: Record<string, { icon: string; bg: string; border: string; award: string; }> = {
+    amber: { // Gold
+      icon: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/30',
+      award: 'text-amber-500',
+    },
+    orange: { // Bronze
+      icon: 'text-orange-600',
+      bg: 'bg-orange-600/10',
+      border: 'border-orange-600/30',
+      award: 'text-orange-600',
+    }
   };
+
 
   return (
     <div className="space-y-8">
@@ -66,29 +93,34 @@ function AchievementsPageContent() {
         icon={<Trophy className="h-8 w-8 text-primary" />}
       />
       
-      <div className="flex justify-center">
-        <div className="w-full max-w-sm">
-           <Card key={achievement.id} className="card-bg flex flex-col text-center transition-all duration-300">
-              <CardHeader className="pt-6">
-                <div className="mx-auto bg-amber-500/10 p-4 rounded-full border-2 border-amber-500/30">
-                  <achievement.icon size={48} className="text-amber-500" />
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow pt-4 flex flex-col items-center justify-center">
-                <CardTitle className="text-xl text-foreground">{achievement.title}</CardTitle>
-                <CardDescription className="mt-2 text-muted-foreground">{achievement.description}</CardDescription>
-                <div className="mt-4 flex items-center justify-center gap-2 font-semibold text-foreground">
-                    <Award className="h-5 w-5 text-amber-500" />
-                    <span>{achievement.points} Pontos</span>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-center border-t border-border/50 pt-3 pb-4">
-                <p className="text-xs text-green-400 font-semibold">
-                    Conquistado em: {guild?.createdAt instanceof Timestamp ? format(guild.createdAt.toDate(), 'dd/MM/yyyy', { locale: ptBR }) : 'Data Indisponível'}
-                </p>
-              </CardFooter>
-            </Card>
-        </div>
+      <div className="flex justify-center flex-wrap gap-6">
+        {achievements.map((achievement) => {
+          const colors = colorVariants[achievement.color] || colorVariants.amber;
+          return (
+            <div className="w-full max-w-sm" key={achievement.id}>
+              <Card className="card-bg flex flex-col text-center transition-all duration-300">
+                <CardHeader className="pt-6">
+                  <div className={cn("mx-auto p-4 rounded-full border-2", colors.bg, colors.border)}>
+                    <achievement.icon size={48} className={cn(colors.icon)} />
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow pt-4 flex flex-col items-center justify-center">
+                  <CardTitle className="text-xl text-foreground">{achievement.title}</CardTitle>
+                  <CardDescription className="mt-2 text-muted-foreground">{achievement.description}</CardDescription>
+                  <div className="mt-4 flex items-center justify-center gap-2 font-semibold text-foreground">
+                      <Award className={cn("h-5 w-5", colors.award)} />
+                      <span>{achievement.points} Pontos</span>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-center border-t border-border/50 pt-3 pb-4">
+                  <p className="text-xs text-green-400 font-semibold">
+                      Conquistado em: {guild?.createdAt instanceof Timestamp ? format(guild.createdAt.toDate(), 'dd/MM/yyyy', { locale: ptBR }) : 'Data Indisponível'}
+                  </p>
+                </CardFooter>
+              </Card>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -101,4 +133,3 @@ export default function AchievementsPage() {
       </Suspense>
     );
 }
-
