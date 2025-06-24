@@ -561,8 +561,8 @@ const ACCESSORY_TYPES = Object.keys(ITEM_DATABASE.accessory).sort();
 const TRAIT_OPTIONS = [
     "Attack Speed",
     "Back Critical Hit",
-    "Back Heavy Attack Chance",
     "Back Hit Chance",
+    "Back Heavy Attack Chance",
     "Barbarian Bonus Damage",
     "Bind Chance",
     "Bind Resistance",
@@ -577,8 +577,8 @@ const TRAIT_OPTIONS = [
     "Demon Bonus Damage",
     "Evasion %",
     "Front Critical Hit Chance",
-    "Front Heavy Attack Chance",
     "Front Hit Chance",
+    "Front Heavy Attack Chance",
     "Health Regen",
     "Heavy Attack Chance",
     "Hit chance",
@@ -605,8 +605,8 @@ const TRAIT_OPTIONS = [
     "Ranged Endurance",
     "Ranged Evasion",
     "Side Critical Hit",
-    "Side Heavy Attack Chance",
     "Side Hit Chance",
+    "Side Heavy Attack Chance",
     "Silence Chance",
     "Silence Resistance",
     "Skill Damage Boost",
@@ -1180,7 +1180,7 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
             <DialogTrigger asChild>
                 <Button className="btn-gradient btn-style-secondary"><PackagePlus className="mr-2 h-4 w-4" /> Novo Item</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Adicionar Item ao Banco da Guilda</DialogTitle>
                     <DialogDescription>Selecione um item pré-definido para adicioná-lo ao banco.</DialogDescription>
@@ -2091,7 +2091,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
-            <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogContent className="sm:max-w-xl bg-card border-border">
                 {renderContent()}
             </DialogContent>
         </Dialog>
@@ -2464,7 +2464,7 @@ function LootRollCreationWizard({ isOpen, onOpenChange, guild, guildId, currentU
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
-            <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogContent className="sm:max-w-xl bg-card border-border">
                 {renderContent()}
             </DialogContent>
         </Dialog>
