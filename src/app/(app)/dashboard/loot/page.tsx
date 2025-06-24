@@ -59,7 +59,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import type { DateRange } from "react-day-picker";
-import { format, addHours, addDays } from 'date-fns';
+import { format, addHours, addDays, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -69,14 +69,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const ITEMS_PER_PAGE = 15;
-
-const rarityBackgrounds: Record<BankItem['rarity'], string> = {
-    common: 'bg-slate-700/50',
-    uncommon: 'bg-emerald-700/50',
-    rare: 'bg-sky-700/50',
-    epic: 'bg-purple-600/60',
-    legendary: 'bg-amber-700/50',
-};
 
 const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Disponível': 'bg-green-500/20 text-green-600 border-green-500/50',
@@ -990,8 +982,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                     
-                    <p className="text-muted-foreground">
+                     <p className="text-muted-foreground">
                         <span className="font-bold text-white">Trait:</span> {item.trait}
                     </p>
                     <p className="text-muted-foreground">
@@ -1306,7 +1297,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     <div className="space-y-6">
         <div className="space-y-2">
             <h2 className="text-2xl font-bold text-foreground">Leilões Ativos</h2>
-            <p className="text-sm text-muted-foreground">Última atualização: agora</p>
         </div>
         
         <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -1360,7 +1350,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                     <TableCell><Checkbox /></TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            <div className={cn("w-8 h-8 p-1 rounded-md flex items-center justify-center border-2", rarityBackgrounds[auction.item.rarity])}>
+                                            <div className="w-8 h-8 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                                 <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
                                             </div>
                                             <span className="font-medium truncate max-w-[150px]">{auction.item.itemName}</span>
@@ -1601,11 +1591,11 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                             {bankItems.map(item => (
                                 <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedItem(item); handleNextStep(); }}>
                                     <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className={cn("w-12 h-12 p-1 rounded-md flex items-center justify-center border", rarityBackgrounds[item.rarity])}>
+                                        <div className="w-12 h-12 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                             <Image src={item.imageUrl} alt={item.itemName || "Item"} width={40} height={40} className="object-contain" data-ai-hint="game item"/>
                                         </div>
                                         <div>
-                                            <p className="font-semibold truncate text-sm">{item.itemName}</p>
+                                            <p className="font-semibold text-sm">{item.itemName}</p>
                                             <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
                                         </div>
                                     </div>
@@ -1803,6 +1793,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
