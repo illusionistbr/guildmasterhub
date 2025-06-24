@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, firebaseIncrement } from '@/lib/firebase';
+import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, increment as firebaseIncrement } from '@/lib/firebase';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -223,7 +223,7 @@ function AuctionPageContent() {
 
     setIsFinalizing(true);
     const batch = writeBatch(db);
-    const guildRef = doc(db, "guilds", guildId);
+    const guildRef = doc(db, "guilds", guildId as string);
     const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
 
     try {
@@ -253,7 +253,7 @@ function AuctionPageContent() {
         await batch.commit();
         
         await logGuildActivity(
-            guildId,
+            guildId as string,
             currentUser.uid,
             currentUser.displayName,
             'AUCTION_FINALIZED' as AuditActionType, // Casting for now
