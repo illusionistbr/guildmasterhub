@@ -403,11 +403,18 @@ export interface BankItem {
 
 export type AuctionStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
 
+export enum BidType {
+  Upgrade = "Upgrade",
+  Trait = "Trait",
+  Market = "Market",
+}
+
 export interface AuctionBid {
   bidderId: string;
   bidderName: string;
   amount: number;
   timestamp: Timestamp;
+  type: BidType;
 }
 
 export interface Auction {
@@ -420,6 +427,7 @@ export interface Auction {
   minBidIncrement: number;
   currentBid: number;
   currentWinnerId?: string;
+  currentHighestBidType?: BidType;
   bids: AuctionBid[];
   startTime: Timestamp;
   endTime: Timestamp;
@@ -429,6 +437,7 @@ export interface Auction {
   isDistributed?: boolean;
   roleRestriction?: TLRole | 'Geral';
   weaponRestriction?: TLWeapon | 'Geral';
+  refundDkpToLosers?: boolean;
 }
 
 export type LootRollStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
