@@ -98,7 +98,7 @@ function AchievementsPageContent() {
           const colors = colorVariants[achievement.color] || colorVariants.amber;
           return (
             <div className="w-full max-w-sm" key={achievement.id}>
-              <Card className="card-bg flex flex-col text-center transition-all duration-300">
+              <Card className="card-bg flex flex-col text-center transition-all duration-300 h-full">
                 <CardHeader className="pt-6">
                   <div className={cn("mx-auto p-4 rounded-full border-2", colors.bg, colors.border)}>
                     <achievement.icon size={48} className={cn(colors.icon)} />
