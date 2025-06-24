@@ -67,6 +67,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
 
 
 const ITEMS_PER_PAGE = 15;
@@ -690,6 +691,15 @@ function LootPageContent() {
     );
   }, [currentUserRoleInfo, guild]);
 
+  const canCreateRolls = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(
+      currentUserRoleInfo.roleName,
+      guild.customRoles,
+      GuildPermission.MANAGE_LOOT_ROLLS_CREATE
+    );
+  }, [currentUserRoleInfo, guild]);
+
 
   useEffect(() => {
     if (authLoading) return;
@@ -919,7 +929,7 @@ function LootPageContent() {
           <AuctionsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateAuctions={canCreateAuctions} bankItems={bankItems} />
         </TabsContent>
         <TabsContent value="rolagem" className="mt-6">
-          <ComingSoon pageName="Sistemas de Rolagem de Loot" icon={<Dices className="h-8 w-8 text-primary" />} />
+          <RollsTabContent guild={guild} guildId={guildId} currentUser={user} canCreateRolls={canCreateRolls} bankItems={bankItems} />
         </TabsContent>
         <TabsContent value="configuracoes" className="mt-6">
           <ComingSoon pageName="Configurações do Módulo de Loot" icon={<Wrench className="h-8 w-8 text-primary" />} />
@@ -941,6 +951,11 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     const canStartAuction = useMemo(() => {
         if (!currentUserRoleInfo || !guild?.customRoles) return false;
         return hasPermission(currentUserRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_LOOT_AUCTIONS_CREATE);
+    }, [currentUserRoleInfo, guild]);
+
+    const canStartRoll = useMemo(() => {
+        if (!currentUserRoleInfo || !guild?.customRoles) return false;
+        return hasPermission(currentUserRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_LOOT_ROLLS_CREATE);
     }, [currentUserRoleInfo, guild]);
 
 
@@ -1025,13 +1040,25 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 </div>
                 
                 <div className="mt-auto pt-2 space-y-1 text-center min-h-10">
-                    {item.status === 'Disponível' && canStartAuction && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs w-full mt-1" onClick={() => {
-                            const event = new CustomEvent('openAuctionWizard', { detail: item });
-                            window.dispatchEvent(event);
-                        }}>
-                           <Gavel className="mr-1 h-3 w-3"/> Leiloar
-                        </Button>
+                    {item.status === 'Disponível' && (canStartAuction || canStartRoll) && (
+                        <div className="flex gap-1 justify-center">
+                           {canStartAuction && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => {
+                                const event = new CustomEvent('openAuctionWizard', { detail: item });
+                                window.dispatchEvent(event);
+                            }}>
+                               <Gavel className="mr-1 h-3 w-3"/> Leiloar
+                            </Button>
+                           )}
+                           {canStartRoll && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => {
+                                const event = new CustomEvent('openRollWizard', { detail: item });
+                                window.dispatchEvent(event);
+                            }}>
+                               <Dices className="mr-1 h-3 w-3"/> Rolar
+                            </Button>
+                           )}
+                        </div>
                     )}
                 </div>
             </CardContent>
@@ -1469,6 +1496,214 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   );
 }
 
+function RollsTabContent({ guild, guildId, currentUser, canCreateRolls, bankItems }: { guild: Guild, guildId: string | null, currentUser: UserProfile | null, canCreateRolls: boolean, bankItems: BankItem[] }) {
+  const [rolls, setRolls] = useState<LootRoll[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [showNoItemsAlert, setShowNoItemsAlert] = useState(false);
+  const [initialItemForWizard, setInitialItemForWizard] = useState<BankItem | null>(null);
+  const [rollNameFilter, setRollNameFilter] = useState("");
+  const [rollStatusFilter, setRollStatusFilter] = useState<'all' | LootRollStatus>('all');
+  const [rollTraitFilter, setRollTraitFilter] = useState<'all' | string>('all');
+
+  const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
+
+  useEffect(() => {
+    if (!guildId) return;
+    setLoading(true);
+    const rollsRef = collection(db, `guilds/${guildId}/rolls`);
+    const q = firestoreQuery(rollsRef, orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedRolls = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LootRoll));
+      setRolls(fetchedRolls);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching rolls:", error);
+      setLoading(false);
+    });
+
+    const handleOpenWizard = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setInitialItemForWizard(customEvent.detail);
+      setIsWizardOpen(true);
+    };
+    
+    window.addEventListener('openRollWizard', handleOpenWizard);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('openRollWizard', handleOpenWizard);
+    };
+  }, [guildId]);
+  
+  const filteredRolls = useMemo(() => {
+    let tempRolls = [...rolls];
+    if (rollNameFilter) {
+        tempRolls = tempRolls.filter(roll =>
+            roll.item.itemName?.toLowerCase().includes(rollNameFilter.toLowerCase())
+        );
+    }
+    if (rollStatusFilter !== 'all') {
+        tempRolls = tempRolls.filter(roll => roll.status === rollStatusFilter);
+    }
+    if (rollTraitFilter !== 'all') {
+        tempRolls = tempRolls.filter(roll => roll.item.trait === rollTraitFilter);
+    }
+    return tempRolls;
+  }, [rolls, rollNameFilter, rollStatusFilter, rollTraitFilter]);
+
+  if (loading) {
+    return <div className="flex justify-center items-center p-10"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+  }
+  
+  const getStatusBadgeProps = (status: LootRollStatus) => {
+    switch (status) {
+        case 'active': return { text: 'Aberta', className: 'bg-green-500/20 text-green-600 border-green-500/50' };
+        case 'scheduled': return { text: 'Agendada', className: 'bg-sky-500/20 text-sky-600 border-sky-500/50' };
+        case 'ended': return { text: 'Encerrada', className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
+        case 'cancelled': return { text: 'Cancelada', className: 'bg-red-500/20 text-red-600 border-red-500/50' };
+        default: return { text: status, className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
+    }
+  };
+
+  const handleNewRollClick = () => {
+    setInitialItemForWizard(null);
+    if (availableBankItems.length === 0) {
+      setShowNoItemsAlert(true);
+    } else {
+      setIsWizardOpen(true);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+                <Input
+                  placeholder="Buscar por nome..."
+                  className="w-48"
+                  value={rollNameFilter}
+                  onChange={(e) => setRollNameFilter(e.target.value)}
+                />
+                <Select value={rollStatusFilter} onValueChange={(value) => setRollStatusFilter(value as 'all' | LootRollStatus)}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos Status</SelectItem>
+                    <SelectItem value="scheduled">Agendada</SelectItem>
+                    <SelectItem value="active">Aberta</SelectItem>
+                    <SelectItem value="ended">Encerrada</SelectItem>
+                    <SelectItem value="cancelled">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+                 <Select value={rollTraitFilter} onValueChange={(value) => setRollTraitFilter(value as 'all' | string)}>
+                    <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Todos Traits" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos Traits</SelectItem>
+                        {TRAIT_OPTIONS.map((trait) => (
+                            <SelectItem key={trait} value={trait}>
+                                {trait}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="flex gap-2">
+                <Button variant="outline" disabled>Ações</Button>
+                <Button onClick={handleNewRollClick} disabled={!canCreateRolls} className="btn-gradient btn-style-secondary">
+                    <Dices className="mr-2 h-4 w-4" /> Nova Rolagem
+                </Button>
+            </div>
+        </div>
+
+       <Card className="static-card-container">
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Trait</TableHead>
+                        <TableHead>Custo (DKP)</TableHead>
+                        <TableHead>Vencedor</TableHead>
+                        <TableHead>Resultado</TableHead>
+                        <TableHead>Início</TableHead>
+                        <TableHead>Fim</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Distribuído</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredRolls.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                                {rolls.length > 0 ? 'Nenhuma rolagem corresponde aos filtros.' : 'Nenhuma rolagem de loot encontrada.'}
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        filteredRolls.map(roll => {
+                            const winnerEntry = roll.status === 'ended' && roll.winnerId ? roll.rolls.find(r => r.rollerId === roll.winnerId) : null;
+                            const winnerName = winnerEntry ? winnerEntry.rollerName : 'N/A';
+                            const winningRollValue = roll.status === 'ended' && roll.winningRoll !== undefined ? roll.winningRoll : 'N/A';
+                            const statusProps = getStatusBadgeProps(roll.status);
+
+                            return (
+                                <TableRow key={roll.id}>
+                                    <TableCell>
+                                        <Link href={`/dashboard/loot/roll/${roll.id}?guildId=${guildId}`} className="flex items-center gap-2 group">
+                                            <div className="w-8 h-8 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
+                                                <Image src={roll.item.imageUrl} alt={roll.item.itemName || ""} width={24} height={24} data-ai-hint="rolled item icon" />
+                                            </div>
+                                            <span className="font-medium whitespace-normal group-hover:text-primary group-hover:underline">{roll.item.itemName}</span>
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell>{roll.item.trait || 'N/A'}</TableCell>
+                                    <TableCell>{roll.cost}</TableCell>
+                                    <TableCell>{winnerName}</TableCell>
+                                    <TableCell>{winningRollValue}</TableCell>
+                                    <TableCell>{format(roll.startTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                                    <TableCell>{format(roll.endTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                                    <TableCell><Badge variant="outline" className={cn("text-xs w-full justify-center", statusProps.className)}>{statusProps.text}</Badge></TableCell>
+                                    <TableCell>{roll.status === 'ended' ? (roll.isDistributed ? 'Sim' : 'Não') : 'N/A'}</TableCell>
+                                </TableRow>
+                            )
+                        })
+                    )}
+                </TableBody>
+            </Table>
+          </div>
+       </Card>
+      
+      <LootRollCreationWizard
+        isOpen={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
+        guild={guild}
+        guildId={guildId}
+        currentUser={currentUser}
+        bankItems={availableBankItems}
+        initialItem={initialItemForWizard}
+      />
+      
+      <AlertDialog open={showNoItemsAlert} onOpenChange={setShowNoItemsAlert}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Nenhum Item Disponível no Banco</AlertDialogTitle>
+                <ShadCnAlertDialogDescription>
+                    Para criar uma rolagem, você precisa primeiro cadastrar um item no banco da guilda e garantir que seu status esteja "Disponível".
+                </ShadCnAlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Entendi</AlertDialogCancel>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
 function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems, initialItem }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[], initialItem: BankItem | null }) {
     const { toast } = useToast();
     const [step, setStep] = useState<'select' | 'details' | 'confirm'>('select');
@@ -1844,6 +2079,173 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
             <DialogContent className="sm:max-w-md bg-card border-border">
                 {renderContent()}
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function LootRollCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems, initialItem }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[], initialItem: BankItem | null }) {
+    const { toast } = useToast();
+    const [step, setStep] = useState<'select' | 'details' | 'confirm'>('select');
+    const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const initialStartTime = new Date();
+    const initialDuration = 24;
+
+    const [config, setConfig] = useState({
+        cost: 1,
+        startTime: initialStartTime,
+        endTime: addHours(initialStartTime, initialDuration),
+        durationHours: initialDuration,
+        roleRestriction: 'Geral' as TLRole | 'Geral',
+        weaponRestriction: 'Geral' as TLWeapon | 'Geral',
+        refundDkpToLosers: false
+    });
+    
+    useEffect(() => {
+        if (isOpen && initialItem) {
+            setSelectedItem(initialItem);
+            setStep('details');
+        } else if (isOpen) {
+            setStep('select');
+        }
+    }, [isOpen, initialItem]);
+
+    const resetWizard = () => {
+        const newStartTime = new Date();
+        const newDuration = 24;
+        setStep('select');
+        setSelectedItem(null);
+        setConfig({
+            cost: 1,
+            startTime: newStartTime,
+            endTime: addHours(newStartTime, newDuration),
+            durationHours: newDuration,
+            roleRestriction: 'Geral',
+            weaponRestriction: 'Geral',
+            refundDkpToLosers: false,
+        });
+        onOpenChange(false);
+    };
+
+    const handleNextStep = () => {
+        if (step === 'select' && selectedItem) setStep('details');
+        else if (step === 'details') setStep('confirm');
+    };
+
+    const handlePrevStep = () => {
+        if (step === 'confirm') setStep('details');
+        else if (step === 'details') {
+            if (initialItem) { resetWizard(); }
+            else { setSelectedItem(null); setStep('select'); }
+        }
+    };
+    
+    const handleCreateRoll = async () => {
+        if (!guildId || !currentUser || !selectedItem) return;
+        setIsSubmitting(true);
+        
+        const batch = writeBatch(db);
+        const rollRef = doc(collection(db, `guilds/${guildId}/rolls`));
+        const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
+
+        try {
+            const { id, status, createdAt, ...itemData } = selectedItem;
+            const newRollData: Omit<LootRoll, 'id' | 'createdAt'> = {
+                guildId,
+                item: itemData,
+                bankItemId: id,
+                status: config.startTime <= new Date() ? 'active' : 'scheduled',
+                cost: config.cost,
+                rolls: [],
+                startTime: Timestamp.fromDate(config.startTime),
+                endTime: Timestamp.fromDate(config.endTime),
+                createdBy: currentUser.uid,
+                createdByName: currentUser.displayName || 'N/A',
+                isDistributed: false,
+                roleRestriction: config.roleRestriction,
+                weaponRestriction: config.weaponRestriction,
+                refundDkpToLosers: config.refundDkpToLosers,
+            };
+
+            batch.set(rollRef, { ...newRollData, createdAt: serverTimestamp() as Timestamp });
+            batch.update(bankItemRef, { status: 'Em rolagem' });
+            
+            await batch.commit();
+            toast({ title: "Rolagem Criada!", description: `A rolagem para "${selectedItem.itemName}" foi agendada.` });
+            resetWizard();
+
+        } catch (error) {
+            console.error("Error creating loot roll:", error);
+            toast({ title: "Erro ao Criar Rolagem", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
+            <DialogContent className="sm:max-w-md bg-card border-border">
+                {step === 'select' && <>
+                    <DialogHeader>
+                        <DialogTitle>Passo 1: Selecione um Item para Rolagem</DialogTitle>
+                        <DialogDescription>Escolha um item com status "Disponível" para iniciar a rolagem de dados.</DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="h-80 my-4">
+                        <div className="space-y-2 pr-4">
+                            {bankItems.map(item => (
+                                <div key={item.id} className="border p-2 rounded-md flex items-center justify-between gap-2 hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedItem(item); handleNextStep(); }}>
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="w-12 h-12 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
+                                            <Image src={item.imageUrl} alt={item.itemName || "Item"} width={40} height={40} className="object-contain" data-ai-hint="game item"/>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-sm">{item.itemName}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{item.trait}</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="h-5 w-5 text-primary"/>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </>}
+                 {step === 'details' && <>
+                      <DialogHeader>
+                        <DialogTitle>Passo 2: Detalhes da Rolagem</DialogTitle>
+                        <DialogDescription>Configure o custo e duração para o item "{selectedItem?.itemName}".</DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                        <div>
+                            <Label>Custo da Rolagem (DKP)</Label>
+                            <Input type="number" value={config.cost} onChange={(e) => setConfig((c) => ({ ...c, cost: Number(e.target.value) }))} min="0"/>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                           <Switch id="refund-dkp" checked={config.refundDkpToLosers} onCheckedChange={(checked) => setConfig(c => ({...c, refundDkpToLosers: checked}))} />
+                           <Label htmlFor="refund-dkp">Devolver DKP aos perdedores?</Label>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={handlePrevStep}>Voltar</Button>
+                        <Button onClick={handleNextStep}>Próximo</Button>
+                      </DialogFooter>
+                 </>}
+                 {step === 'confirm' && <>
+                    <DialogHeader>
+                        <DialogTitle>Passo 3: Confirmar e Criar Rolagem</DialogTitle>
+                        <DialogDescription>Revise os detalhes abaixo antes de criar a rolagem.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-3 text-sm">
+                        <p><strong>Item:</strong> {selectedItem?.itemName}</p>
+                        <p><strong>Custo para rolar:</strong> {config.cost} DKP</p>
+                        <p><strong>Devolver DKP aos perdedores:</strong> {config.refundDkpToLosers ? 'Sim' : 'Não'}</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
+                        <Button onClick={handleCreateRoll} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin" /> : 'Finalizar e Criar Rolagem'}</Button>
+                    </DialogFooter>
+                 </>}
             </DialogContent>
         </Dialog>
     );
