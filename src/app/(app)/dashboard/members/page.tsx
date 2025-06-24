@@ -472,7 +472,7 @@ function MembersListTabContent(
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
+  }, [filteredAndSortedMembers, currentPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
@@ -726,9 +726,9 @@ function GroupsTabContent(
 
   const canManageGroups = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
-    return hasPermission(currentUserRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
-           hasPermission(currentUserRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) ||
-           hasPermission(currentUserRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
+    return hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
+           hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) ||
+           hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
   }, [currentUserRoleInfo, guild?.customRoles]);
 
   useEffect(() => {
@@ -1018,4 +1018,5 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 

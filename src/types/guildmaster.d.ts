@@ -43,13 +43,13 @@ export enum TLRole {
 }
 
 export enum TLWeapon {
-  Sword = "Sword",
+  SwordAndShield = "Sword & Shield",
   Greatsword = "Greatsword",
-  Dagger = "Dagger",
-  Bow = "Bow",
+  Daggers = "Daggers",
   Crossbow = "Crossbow",
-  Wand = "Wand",
+  Longbow = "Longbow",
   Staff = "Staff",
+  WandAndTome = "Wand & Tome",
   Spear = "Spear",
 }
 
