@@ -286,7 +286,7 @@ const ITEM_DATABASE: Record<string, Record<string, Record<string, ItemDetails>>>
       "ossuary-boots-of-the-resistance": { name: "Ossuary Boots of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05002B.webp" },
       "paramount-sabatons-of-the-resistance": { name: "Paramount Sabatons of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_06002A.webp" },
       "phantom-wolf-boots": { name: "Phantom Wolf Boots", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_LE_M_BT_00005.webp" },
-      "royal-praetors-sabatons": { name: "Royal Praetor's Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00009.webp" },
+      "royal-praetors-sabatons": { name: "Royal Praetor's Sabatons", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Part_PL_M_BT_00009.webp" },
       "sabatons-of-the-field-general": { name: "Sabatons of the Field General", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_PL_M_BT_00018.webp" },
       "sacred-repose-shoes": { name: "Sacred Repose Shoes", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_FA_M_BT_00020.webp" },
       "scaled-boots-of-the-resistance": { name: "Scaled Boots of the Resistance", imageUrl: "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/Icon/Item_128/Equip/Armor/P_Set_LE_M_BT_05003A.webp" },
@@ -995,7 +995,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                     </p>
                 </div>
                 
-                <div className="mt-auto pt-2 space-y-1 text-center">
+                <div className="mt-auto pt-2 space-y-1 text-center min-h-10">
                     {item.status === 'Disponível' && canStartAuction && (
                         <Button size="sm" variant="outline" className="h-7 text-xs w-full mt-1" onClick={() => {
                             const event = new CustomEvent('openAuctionWizard', { detail: item });
@@ -1290,7 +1290,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     switch (status) {
         case 'active': return { text: 'Aberto', className: 'bg-green-500/20 text-green-600 border-green-500/50' };
         case 'scheduled': return { text: 'Agendado', className: 'bg-sky-500/20 text-sky-600 border-sky-500/50' };
-        case 'ended': return { text: 'Encerrado', className: 'bg-orange-500/20 text-orange-600 border-orange-500/50' };
+        case 'ended': return { text: 'Encerrado', className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
         case 'cancelled': return { text: 'Cancelado', className: 'bg-red-500/20 text-red-600 border-red-500/50' };
         default: return { text: status, className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
     }
@@ -1717,7 +1717,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                             mode="single"
                                             selected={config.endTime}
                                             onSelect={handleEndDateChange}
-                                            disabled={(date) => selectedStartDate ? date < selectedStartDate : false}
+                                            disabled={(date) => config.startTime ? date < config.startTime : false}
                                             initialFocus
                                             locale={ptBR}
                                         />
@@ -1813,3 +1813,4 @@ const LootPageWrapper = () => {
 }
 export default LootPageWrapper;
 
+    
