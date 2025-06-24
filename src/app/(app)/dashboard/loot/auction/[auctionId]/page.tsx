@@ -132,7 +132,7 @@ function AuctionPageContent() {
             setBidAmount(minNextBid);
         }
     }
-  }, [auction]);
+  }, [auction, bidAmount]);
 
 
   useEffect(() => {
@@ -342,7 +342,7 @@ function AuctionPageContent() {
     switch (status) {
         case 'active': return { text: 'Aberto', className: 'bg-green-500/20 text-green-600 border-green-500/50' };
         case 'scheduled': return { text: 'Agendado', className: 'bg-sky-500/20 text-sky-600 border-sky-500/50' };
-        case 'ended': return { text: 'Encerrado', className: 'bg-orange-500/20 text-orange-600 border-orange-500/50' };
+        case 'ended': return { text: 'Encerrado', className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
         case 'cancelled': return { text: 'Cancelado', className: 'bg-red-500/20 text-red-600 border-red-500/50' };
         default: return { text: status, className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
     }
