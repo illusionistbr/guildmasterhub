@@ -7,7 +7,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, storage, doc, updateDoc, firebaseUpdateProfile, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from '@/lib/firebase';
+import { db, doc, updateDoc, firebaseUpdateProfile } from '@/lib/firebase';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,15 +15,14 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { UserCog, Loader2, Save, ArrowLeft, UploadCloud, User as UserIcon } from 'lucide-react';
+import { UserCog, Loader2, Save, ArrowLeft, User as UserIcon, Link2 as LinkIcon } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
-import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 const profileSchema = z.object({
   displayName: z.string().min(2, "O nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
-  photoFile: z.instanceof(File).optional(),
+  photoURL: z.string().url("Por favor, insira uma URL de imagem válida.").max(300, "URL da foto muito longa.").optional().or(z.literal('')),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -39,7 +38,7 @@ function ProfilePageContent() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: "",
-      photoFile: undefined,
+      photoURL: "",
     },
   });
 
@@ -50,13 +49,12 @@ function ProfilePageContent() {
 
   useEffect(() => {
     if (currentUser) {
-      form.reset({
-        displayName: currentUser.displayName || "",
-      });
-      // Only set the photo preview from the user data if the user hasn't selected a new file
-      if (!form.getValues('photoFile')) {
-        setPhotoPreview(currentUser.photoURL || null);
-      }
+        const initialPhotoURL = currentUser.photoURL || "";
+        form.reset({
+            displayName: currentUser.displayName || "",
+            photoURL: initialPhotoURL,
+        });
+        setPhotoPreview(initialPhotoURL);
     }
   }, [currentUser, form]);
 
@@ -66,20 +64,9 @@ function ProfilePageContent() {
       return;
     }
     setIsSubmitting(true);
-    let finalPhotoUrl = currentUser.photoURL || null;
+    const finalPhotoUrl = data.photoURL || null;
 
     try {
-      if (data.photoFile) {
-        const file = data.photoFile;
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `profile-photo-${currentUser.uid}-${Date.now()}.${fileExtension}`;
-        const filePath = `users/${currentUser.uid}/profile-photos/${fileName}`;
-        const imageStorageRef = storageFirebaseRef(storage, filePath);
-        
-        await uploadBytes(imageStorageRef, file);
-        finalPhotoUrl = await getDownloadURL(imageStorageRef);
-      }
-
       // Update Firebase Auth profile
       await firebaseUpdateProfile(auth.currentUser, {
         displayName: data.displayName,
@@ -176,51 +163,23 @@ function ProfilePageContent() {
               
               <FormField
                 control={form.control}
-                name="photoFile"
-                render={({ field: { ref, name, onBlur } }) => ( // Destructure to avoid passing `value`
+                name="photoURL"
+                render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Fazer Upload da Foto (Máx 2MB)</FormLabel>
+                    <FormLabel>URL da Foto de Perfil (Opcional)</FormLabel>
                     <FormControl>
                         <div className="relative flex items-center">
-                        <UploadCloud className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="file"
-                            accept="image/png, image/jpeg, image/gif, image/webp"
-                            ref={ref}
-                            name={name}
-                            onBlur={onBlur}
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    if (file.size > 2 * 1024 * 1024) {
-                                    toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
-                                    form.setValue('photoFile', undefined);
-                                    setPhotoPreview(currentUser?.photoURL || null);
-                                    if (e.target) e.target.value = "";
-                                    return;
-                                    }
-                                    if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
-                                    toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
-                                    form.setValue('photoFile', undefined);
-                                    setPhotoPreview(currentUser?.photoURL || null);
-                                    if (e.target) e.target.value = "";
-                                    return;
-                                    }
-                                    form.setValue('photoFile', file);
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                    if (typeof reader.result === 'string') {
-                                        setPhotoPreview(reader.result);
-                                    }
-                                    };
-                                    reader.readAsDataURL(file);
-                                } else {
-                                    form.setValue('photoFile', undefined);
-                                    setPhotoPreview(currentUser?.photoURL || null);
-                                }
-                            }}
-                            className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                        />
+                            <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                            <Input 
+                                {...field} 
+                                value={field.value ?? ""} 
+                                placeholder="https://i.imgur.com/..." 
+                                className="form-input pl-10"
+                                onChange={(e) => {
+                                    field.onChange(e);
+                                    setPhotoPreview(e.target.value);
+                                }}
+                            />
                         </div>
                     </FormControl>
                     <FormMessage />
@@ -250,3 +209,4 @@ export default function ProfilePage() {
     );
   }
 
+    
