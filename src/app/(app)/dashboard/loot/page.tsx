@@ -633,7 +633,7 @@ const itemFormSchema = z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de arma é obrigatório.", path: ["weaponType"] });
     }
     if (data.itemCategory === 'armor' && !data.armorType) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de armadura é obrigatório.", path: ["armorType"] });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de armadura é obrigatória.", path: ["armorType"] });
     }
     if (data.itemCategory === 'accessory' && !data.accessoryType) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tipo de acessório é obrigatório.", path: ["accessoryType"] });
@@ -992,8 +992,8 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
                      
-                    <p className="text-muted-foreground break-words">
-                        <span className="font-bold text-white">Trait: </span>
+                    <p className="text-muted-foreground">
+                       <span className="font-bold text-white">Trait: </span>
                         {item.trait}
                     </p>
                     <p className="text-muted-foreground">
@@ -1443,7 +1443,7 @@ function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, curre
       const elapsedDuration = now.getTime() - startTime.getTime();
       const currentProgress = Math.min(100, (elapsedDuration / totalDuration) * 100);
       setProgress(currentProgress > 0 ? currentProgress : 0);
-      setTimeLeft(formatDistanceToNow(endTime, { locale: ptBR, addSuffix: true }));
+      setTimeLeft(formatDistanceToNow(endTime, { locale: ptBR }));
     };
 
     calculateTime();
@@ -1895,6 +1895,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
