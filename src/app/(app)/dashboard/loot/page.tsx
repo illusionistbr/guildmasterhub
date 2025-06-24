@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -1236,6 +1235,8 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [showNoItemsAlert, setShowNoItemsAlert] = useState(false);
   const [initialItemForWizard, setInitialItemForWizard] = useState<BankItem | null>(null);
+  const [auctionNameFilter, setAuctionNameFilter] = useState("");
+  const [auctionStatusFilter, setAuctionStatusFilter] = useState<'all' | AuctionStatus>('all');
 
   const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
 
@@ -1243,7 +1244,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     if (!guildId) return;
     setLoading(true);
     const auctionsRef = collection(db, `guilds/${guildId}/auctions`);
-    const q = firestoreQuery(auctionsRef, where("status", "in", ["active", "scheduled"]), orderBy("endTime", "asc"));
+    const q = firestoreQuery(auctionsRef, orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedAuctions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Auction));
@@ -1268,6 +1269,19 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     };
   }, [guildId]);
   
+  const filteredAuctions = useMemo(() => {
+    let tempAuctions = [...auctions];
+    if (auctionNameFilter) {
+        tempAuctions = tempAuctions.filter(auction =>
+            auction.item.itemName?.toLowerCase().includes(auctionNameFilter.toLowerCase())
+        );
+    }
+    if (auctionStatusFilter !== 'all') {
+        tempAuctions = tempAuctions.filter(auction => auction.status === auctionStatusFilter);
+    }
+    return tempAuctions;
+  }, [auctions, auctionNameFilter, auctionStatusFilter]);
+
   if (loading) {
     return <div className="flex justify-center items-center p-10"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
   }
@@ -1300,8 +1314,24 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     <div className="space-y-6">
         <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-2">
-                <Input placeholder="Buscar por nome..." className="w-48" />
-                <Select defaultValue="all"><SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Todos Status</SelectItem><SelectItem value="active">Aberto</SelectItem><SelectItem value="ended">Encerrado</SelectItem></SelectContent></Select>
+                <Input
+                  placeholder="Buscar por nome..."
+                  className="w-48"
+                  value={auctionNameFilter}
+                  onChange={(e) => setAuctionNameFilter(e.target.value)}
+                />
+                <Select value={auctionStatusFilter} onValueChange={(value) => setAuctionStatusFilter(value as 'all' | AuctionStatus)}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos Status</SelectItem>
+                    <SelectItem value="scheduled">Agendado</SelectItem>
+                    <SelectItem value="active">Aberto</SelectItem>
+                    <SelectItem value="ended">Encerrado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
                  <Select defaultValue="all"><SelectTrigger className="w-36"><SelectValue placeholder="Trait" /></SelectTrigger><SelectContent><SelectItem value="all">Todos Traits</SelectItem></SelectContent></Select>
             </div>
             <div className="flex gap-2">
@@ -1331,14 +1361,14 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {auctions.length === 0 ? (
+                    {filteredAuctions.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
-                                Nenhum leilão ativo ou agendado no momento.
+                                {auctions.length > 0 ? 'Nenhum leilão corresponde aos filtros.' : 'Nenhum leilão encontrado.'}
                             </TableCell>
                         </TableRow>
                     ) : (
-                        auctions.map(auction => {
+                        filteredAuctions.map(auction => {
                             const latestBid = auction.bids && auction.bids.length > 0 ? [...auction.bids].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())[0] : null;
                             const latestBidderName = latestBid ? latestBid.bidderName : 'N/A';
                             const statusProps = getStatusBadgeProps(auction.status);
@@ -1692,7 +1722,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                             mode="single"
                                             selected={config.endTime}
                                             onSelect={handleEndDateChange}
-                                            disabled={(date) => date < config.startTime}
+                                            disabled={(date) => selectedStartDate ? date < selectedStartDate : false}
                                             initialFocus
                                             locale={ptBR}
                                         />
@@ -1788,17 +1818,4 @@ const LootPageWrapper = () => {
 }
 export default LootPageWrapper;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
