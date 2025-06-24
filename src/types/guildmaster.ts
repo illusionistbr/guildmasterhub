@@ -292,6 +292,7 @@ export enum AuditActionType {
   LOOT_ROLL_DELETED = "LOOT_ROLL_DELETED",
   LOOT_ROLL_FINALIZED = "LOOT_ROLL_FINALIZED",
   LOOT_ROLL_ITEM_DISTRIBUTED = "LOOT_ROLL_ITEM_DISTRIBUTED",
+  LOOT_ROLL_PARTICIPATED = "LOOT_ROLL_PARTICIPATED",
 }
 
 export interface AuditLogDetails {
@@ -329,6 +330,7 @@ export interface AuditLogDetails {
   rollCost?: number;
   rollWinnerId?: string;
   rollWinningValue?: number;
+  rollValue?: number;
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;

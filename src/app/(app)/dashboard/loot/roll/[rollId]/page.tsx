@@ -104,12 +104,202 @@ function LootRollPageContent() {
     return () => clearInterval(interval);
   }, [roll?.endTime, roll?.status]);
 
+    useEffect(() => {
+    const handleAutomaticFinalization = async () => {
+        if (!currentUser || !guild || !roll || !guildId || !roll.bankItemId) return;
+        if (roll.status !== 'active' || new Date() < roll.endTime.toDate()) return;
+
+        setIsFinalizing(true);
+        toast({ title: "Finalizando rolagem...", description: "O tempo da rolagem acabou, processando os resultados." });
+
+        const batch = writeBatch(db);
+        const guildRef = doc(db, "guilds", guildId);
+        const rollRef = doc(db, `guilds/${guildId}/rolls`, rollId);
+        const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, roll.bankItemId);
+
+        try {
+            const rolls = roll.rolls || [];
+            if (rolls.length === 0) {
+                batch.update(rollRef, { status: 'ended' });
+                batch.update(bankItemRef, { status: 'Disponível' }); 
+                await batch.commit();
+                toast({ title: "Rolagem Encerrada", description: "Ninguém participou da rolagem. O item voltou para o banco." });
+                setIsFinalizing(false);
+                return;
+            }
+
+            const sortedRolls = [...rolls].sort((a, b) => b.rollValue - a.rollValue);
+            const winner = sortedRolls[0];
+            const winnerId = winner.rollerId;
+            const winningRoll = winner.rollValue;
+
+            if (roll.refundDkpToLosers) {
+                const losers = rolls.filter(r => r.rollerId !== winnerId);
+                losers.forEach(loser => {
+                    const loserPath = `roles.${loser.rollerId}.dkpBalance`;
+                    batch.update(guildRef, { [loserPath]: increment(roll.cost) });
+                });
+            }
+
+            batch.update(rollRef, {
+                status: 'ended',
+                winnerId: winnerId,
+                winningRoll: winningRoll
+            });
+            batch.update(bankItemRef, { status: 'Encerrado' }); 
+            
+            await batch.commit();
+
+            await logGuildActivity(
+                guildId, 'system', 'Sistema', AuditActionType.LOOT_ROLL_FINALIZED,
+                { rollId: roll.id, itemName: roll.item.itemName, rollWinnerId: winnerId, rollWinningValue: winningRoll }
+            );
+
+            toast({ title: "Rolagem Finalizada!", description: `O vencedor é ${winner.rollerName} com uma rolagem de ${winningRoll}.` });
+        } catch (error) {
+            console.error("Error finalizing loot roll:", error);
+            toast({ title: "Erro ao Finalizar", description: "Ocorreu um erro ao finalizar a rolagem.", variant: "destructive" });
+        } finally {
+            setIsFinalizing(false);
+        }
+    };
+
+    const runFinalizationCheck = async () => {
+        if (!roll || !guildId || !canEditRoll) return;
+
+        const rollRef = doc(db, `guilds/${guildId}/rolls`, rollId);
+        const rollSnap = await getDoc(rollRef);
+        if (!rollSnap.exists()) return;
+        const currentRollData = rollSnap.data() as LootRoll;
+        
+        if (currentRollData.status === 'active' && new Date() > currentRollData.endTime.toDate()) {
+            await handleAutomaticFinalization();
+        }
+    };
+
+    runFinalizationCheck();
+
+  }, [roll, canEditRoll, currentUser, guild, guildId, toast, rollId]);
+
+
   const handleRollDice = async () => {
-     // Implementation will be added in a future step
+    if (!currentUser || !guild || !roll || !guildId || !currentUserRoleInfo) {
+      toast({ title: "Erro", description: "Dados insuficientes para rolar os dados.", variant: "destructive" });
+      return;
+    }
+    if (roll.status !== 'active') {
+      toast({ title: "Rolagem não está ativa.", variant: "destructive" });
+      return;
+    }
+    const userHasRolled = roll.rolls.some(r => r.rollerId === currentUser.uid);
+    if (userHasRolled) {
+      toast({ title: "Você já rolou", description: "Você já participou desta rolagem.", variant: "default" });
+      return;
+    }
+    if ((currentUserRoleInfo.dkpBalance || 0) < roll.cost) {
+      toast({ title: "DKP Insuficiente", description: `Você não tem ${roll.cost} DKP para participar.`, variant: "destructive" });
+      return;
+    }
+    if (roll.roleRestriction && roll.roleRestriction !== 'Geral' && currentUserRoleInfo.tlRole !== roll.roleRestriction) {
+        toast({ title: "Restrição de Função", description: `Apenas a função ${roll.roleRestriction} pode rolar este item.`, variant: "destructive"});
+        return;
+    }
+    if (roll.weaponRestriction && roll.weaponRestriction !== 'Geral' && currentUserRoleInfo.tlPrimaryWeapon !== roll.weaponRestriction && currentUserRoleInfo.tlSecondaryWeapon !== roll.weaponRestriction) {
+        toast({ title: "Restrição de Arma", description: `Apenas usuários com a arma ${roll.weaponRestriction} podem rolar este item.`, variant: "destructive"});
+        return;
+    }
+
+    setIsRolling(true);
+
+    try {
+      const batch = writeBatch(db);
+      const rollRef = doc(db, `guilds/${guildId}/rolls`, rollId);
+      const guildRef = doc(db, "guilds", guildId);
+
+      const hasHundredRolled = roll.rolls.some(r => r.rollValue === 100);
+      const maxRoll = hasHundredRolled ? 99 : 100;
+      const rollValue = Math.floor(Math.random() * maxRoll) + 1;
+
+      const newRollEntry: LootRollEntry = {
+        rollerId: currentUser.uid,
+        rollerName: currentUserRoleInfo.characterNickname || currentUser.displayName || 'Desconhecido',
+        rollValue: rollValue,
+        timestamp: Timestamp.now(),
+      };
+
+      batch.update(guildRef, { [`roles.${currentUser.uid}.dkpBalance`]: increment(-roll.cost) });
+      batch.update(rollRef, { rolls: arrayUnion(newRollEntry) });
+
+      await batch.commit();
+
+      await logGuildActivity(
+        guildId,
+        currentUser.uid,
+        currentUser.displayName,
+        AuditActionType.LOOT_ROLL_PARTICIPATED,
+        {
+          rollId: roll.id,
+          itemName: roll.item.itemName,
+          rollValue: rollValue,
+          rollCost: roll.cost,
+        }
+      );
+
+      toast({ title: "Rolagem Realizada!", description: `Você rolou ${rollValue} e pagou ${roll.cost} DKP.` });
+
+    } catch (error) {
+      console.error("Error rolling dice:", error);
+      toast({ title: "Erro ao Rolar Dados", description: "Ocorreu um erro ao processar sua rolagem. Seu DKP não foi alterado.", variant: "destructive" });
+    } finally {
+      setIsRolling(false);
+    }
   };
 
   const handleMarkAsDistributed = async () => {
-     // Implementation will be added in a future step
+    if (!currentUser || !guild || !roll || !guildId || !canEditRoll || !roll.bankItemId) {
+      toast({ title: "Erro", description: "Dados insuficientes ou permissão negada.", variant: "destructive" });
+      return;
+    }
+
+    setIsFinalizing(true);
+    const batch = writeBatch(db);
+    const rollRef = doc(db, `guilds/${guildId}/rolls`, rollId);
+    const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, roll.bankItemId);
+
+    const bankItemSnap = await getDoc(bankItemRef);
+    if (!bankItemSnap.exists()) {
+        toast({ title: "Erro", description: "O item correspondente no banco não foi encontrado.", variant: "destructive" });
+        setIsFinalizing(false);
+        return;
+    }
+
+    try {
+      batch.update(rollRef, { isDistributed: true });
+      batch.update(bankItemRef, { status: 'Distribuído' });
+      await batch.commit();
+      
+      const winnerInfo = roll.rolls.find(r => r.rollerId === roll.winnerId);
+
+      await logGuildActivity(
+        guildId,
+        currentUser.uid,
+        currentUser.displayName,
+        AuditActionType.LOOT_ROLL_ITEM_DISTRIBUTED,
+        {
+          rollId: roll.id,
+          itemName: roll.item.itemName,
+          targetUserId: roll.winnerId,
+          targetUserDisplayName: winnerInfo?.rollerName || 'N/A'
+        }
+      );
+
+      toast({ title: "Item Distribuído!", description: `${roll.item.itemName} foi marcado como distribuído.` });
+    } catch (error) {
+      console.error("Error marking as distributed:", error);
+      toast({ title: "Erro", description: "Ocorreu um erro ao marcar o item como distribuído.", variant: "destructive" });
+    } finally {
+      setIsFinalizing(false);
+    }
   };
 
   if (loading) {
