@@ -1,43 +1,62 @@
 
 "use client";
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Trophy, Crown, Skull, Castle, Gem, Map, Sparkles, Swords, Lock } from 'lucide-react';
+import { Loader2, Trophy, Castle, Award } from 'lucide-react';
 import { cn } from "@/lib/utils";
-
-// Lista de conquistas pré-definidas. O status 'earned' ou 'locked'
-// viria do banco de dados da guilda em uma aplicação real.
-const predefinedAchievements = [
-  { id: '1', title: 'Rei da Colina', description: 'Defendeu o castelo por 3 semanas consecutivas.', icon: 'crown', status: 'earned' },
-  { id: '2', title: 'Matador de Dragões', description: 'Derrotou o dragão ancestral Kael\'thuzad.', icon: 'skull', status: 'earned' },
-  { id: '3', title: 'Mestre do Tesouro', description: 'Acumulou 1 milhão de ouro no banco da guilda.', icon: 'gem', status: 'earned' },
-  { id: '4', title: 'Campeão do Torneio', description: 'Venceu o grande torneio de guildas do servidor.', icon: 'trophy', status: 'locked' },
-  { id: '5', title: 'Fundador do Reino', description: 'Conquistou e manteve o controle do castelo principal.', icon: 'castle', status: 'locked' },
-  { id: '6', title: 'Exploradores Intrépidos', description: 'Descobriu todas as zonas secretas do mapa.', icon: 'map', status: 'locked' },
-  { id: '7', title: 'Lendários Unidos', description: 'Todos os membros ativos equiparam um item lendário.', icon: 'sparkles', status: 'locked' },
-  { id: '8', title: 'Força Imparável', description: 'Venceu 10 batalhas de guilda consecutivas.', icon: 'swords', status: 'locked' },
-];
-
-const iconMap: { [key: string]: React.ElementType } = {
-  crown: Crown,
-  skull: Skull,
-  trophy: Trophy,
-  castle: Castle,
-  gem: Gem,
-  map: Map,
-  sparkles: Sparkles,
-  swords: Swords,
-};
+import { db, doc, getDoc, Timestamp } from '@/lib/firebase';
+import type { Guild } from '@/types/guildmaster';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 function AchievementsPageContent() {
   const searchParams = useSearchParams();
   const guildId = searchParams.get('guildId');
+  const { toast } = useToast();
+  
+  const [guild, setGuild] = useState<Guild | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Em uma aplicação real, você buscaria o status de cada conquista pré-definida
-  // para a guilda atual (guildId) e atualizaria a lista.
+  const fetchGuildData = useCallback(async () => {
+    if (!guildId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const guildDoc = await getDoc(doc(db, 'guilds', guildId));
+      if (guildDoc.exists()) {
+        setGuild({ id: guildDoc.id, ...guildDoc.data() } as Guild);
+      } else {
+        toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar guilda:", error);
+      toast({ title: "Erro", description: "Não foi possível carregar os dados da guilda.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [guildId, toast]);
+
+  useEffect(() => {
+    fetchGuildData();
+  }, [fetchGuildData]);
+  
+  if (loading) {
+     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  }
+
+  const achievement = {
+    id: 'guild_founded',
+    title: 'Guild fundada',
+    description: 'Parabéns a nova guild que acabou de ser fundada',
+    icon: Castle,
+    points: 50,
+  };
 
   return (
     <div className="space-y-8">
@@ -45,44 +64,31 @@ function AchievementsPageContent() {
         title="Galeria de Conquistas"
         description="Aqui estão todos os feitos épicos que sua guilda pode alcançar. A glória aguarda!"
         icon={<Trophy className="h-8 w-8 text-primary" />}
-        // O botão de ação foi removido conforme solicitado.
       />
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {predefinedAchievements.map((ach) => {
-          const IconComponent = iconMap[ach.icon] || Trophy;
-          const isLocked = ach.status === 'locked';
-
-          return (
-            <Card key={ach.id} className={cn(
-              "card-bg flex flex-col text-center transition-all duration-300",
-              isLocked && "grayscale opacity-70 hover:grayscale-0 hover:opacity-100"
-            )}>
+      <div className="flex justify-center">
+        <div className="w-full max-w-sm">
+           <Card key={achievement.id} className="card-bg flex flex-col text-center transition-all duration-300">
               <CardHeader className="pt-6">
-                <div className={cn(
-                  "mx-auto bg-primary/10 p-4 rounded-full border-2 border-primary/30",
-                  isLocked && "bg-muted/10 border-muted/30"
-                )}>
-                  <IconComponent size={48} className={cn("text-primary", isLocked && "text-muted-foreground")} />
+                <div className="mx-auto bg-amber-500/10 p-4 rounded-full border-2 border-amber-500/30">
+                  <achievement.icon size={48} className="text-amber-500" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow pt-4">
-                <CardTitle className={cn("text-xl text-foreground", isLocked && "text-muted-foreground")}>{ach.title}</CardTitle>
-                <CardDescription className="mt-2 text-muted-foreground">{ach.description}</CardDescription>
+              <CardContent className="flex-grow pt-4 flex flex-col items-center justify-center">
+                <CardTitle className="text-xl text-foreground">{achievement.title}</CardTitle>
+                <CardDescription className="mt-2 text-muted-foreground">{achievement.description}</CardDescription>
+                <div className="mt-4 flex items-center justify-center gap-2 font-semibold text-foreground">
+                    <Award className="h-5 w-5 text-amber-500" />
+                    <span>{achievement.points} Pontos</span>
+                </div>
               </CardContent>
               <CardFooter className="flex justify-center border-t border-border/50 pt-3 pb-4">
-                {isLocked ? (
-                  <p className="text-xs text-amber-500 font-semibold flex items-center gap-1.5">
-                    <Lock className="h-3 w-3" />
-                    Bloqueada
-                  </p>
-                ) : (
-                  <p className="text-xs text-green-500 font-semibold">Conquistada</p>
-                )}
+                <p className="text-xs text-green-400 font-semibold">
+                    Conquistado em: {guild?.createdAt instanceof Timestamp ? format(guild.createdAt.toDate(), 'dd/MM/yyyy', { locale: ptBR }) : 'Data Indisponível'}
+                </p>
               </CardFooter>
             </Card>
-          );
-        })}
+        </div>
       </div>
     </div>
   );
@@ -95,3 +101,4 @@ export default function AchievementsPage() {
       </Suspense>
     );
 }
+
