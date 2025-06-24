@@ -934,11 +934,13 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
 
     return (
         <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
-            <CardHeader className="p-2 text-center min-h-[56px] flex justify-center items-center">
-              <h3 className="font-semibold text-white text-sm leading-tight break-words">{item.itemName}</h3>
+            <CardHeader className="p-2 text-center flex justify-center items-center flex-grow">
+              <h3 className="font-semibold text-white text-sm leading-tight break-words whitespace-normal">
+                  {item.itemName}
+              </h3>
             </CardHeader>
 
-            <CardContent className="p-2 flex-grow flex flex-col">
+            <CardContent className="p-2 flex-grow-[2] flex flex-col">
                 <div className="w-full aspect-square bg-gradient-to-br from-purple-900/40 to-black/40 rounded-lg flex items-center justify-center p-2 border border-purple-400/50 relative mb-2">
                     <Image
                         src={item.imageUrl}
@@ -982,7 +984,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                     <p className="text-muted-foreground text-left">
+                    <p className="text-muted-foreground text-left">
                         <span className="font-bold text-white">Trait:</span> {item.trait}
                     </p>
                     <p className="text-muted-foreground text-left">
@@ -1155,7 +1157,7 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                                                     <div className="w-10 h-10 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                                       <Image src={itemData.imageUrl} alt={itemData.name} width={32} height={32} className="object-contain" data-ai-hint="game item"/>
                                                     </div>
-                                                    <FormLabel className="font-normal cursor-pointer flex-1 break-words">{itemData.name}</FormLabel>
+                                                    <FormLabel className="font-normal cursor-pointer flex-1 whitespace-normal">{itemData.name}</FormLabel>
                                                 </FormItem>
                                             ))
                                         ) : (
@@ -1349,11 +1351,11 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                 <TableRow key={auction.id}>
                                     <TableCell><Checkbox /></TableCell>
                                     <TableCell>
-                                        <div className="flex items-start gap-2">
+                                        <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                                 <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
                                             </div>
-                                            <span className="font-medium">{auction.item.itemName}</span>
+                                            <span className="font-medium whitespace-normal">{auction.item.itemName}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>{auction.item.trait || 'N/A'}</TableCell>
@@ -1793,6 +1795,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
