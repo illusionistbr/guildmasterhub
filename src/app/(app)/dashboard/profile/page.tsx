@@ -201,7 +201,7 @@ function ProfilePageContent() {
                     <FormControl>
                         <div className="relative flex items-center">
                          <UserIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                         <Input {...field} placeholder="Seu nome de usuário" className="form-input pl-10" />
+                         <Input {...field} value={field.value || ""} placeholder="Seu nome de usuário" className="form-input pl-10" />
                         </div>
                     </FormControl>
                     <FormMessage />
@@ -217,7 +217,7 @@ function ProfilePageContent() {
                     <FormControl>
                       <div className="relative flex items-center">
                         <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input {...field} placeholder="https://i.imgur.com/..." className="form-input pl-10" disabled={!!form.watch("photoFile")} />
+                        <Input {...field} value={field.value || ""} placeholder="https://i.imgur.com/..." className="form-input pl-10" disabled={!!form.watch("photoFile")} />
                       </div>
                     </FormControl>
                     <FormMessage />
