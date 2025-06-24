@@ -992,15 +992,15 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
                     
-                     <p className="text-muted-foreground break-words text-left">
+                    <p className="text-muted-foreground break-words">
                         <span className="font-bold text-white">Trait: </span>
                         {item.trait}
                     </p>
-                    <p className="text-muted-foreground text-left">
+                    <p className="text-muted-foreground">
                         <span className="font-bold text-white">Drop: </span>
                         {item.droppedByMemberName || 'N/A'}
                     </p>
-                    <p className="text-muted-foreground text-left">
+                    <p className="text-muted-foreground">
                         <span className="font-bold text-white">Data: </span>
                         {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
                     </p>
@@ -1526,7 +1526,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         startBid: 1,
         minIncrement: 1,
         startTime: new Date(),
-        endTime: addHours(new Date(), 24),
+        durationHours: 24,
         roleRestriction: 'Geral' as TLRole | 'Geral',
         weaponRestriction: 'Geral' as TLWeapon | 'Geral',
     });
@@ -1538,7 +1538,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
             startBid: 1,
             minIncrement: 1,
             startTime: new Date(),
-            endTime: addHours(new Date(), 24),
+            durationHours: 24,
             roleRestriction: 'Geral',
             weaponRestriction: 'Geral',
         });
@@ -1566,6 +1566,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         if (!guildId || !currentUser || !selectedItem) return;
         setIsSubmitting(true);
         
+        const calculatedEndTime = addHours(config.startTime, config.durationHours);
         const batch = writeBatch(db);
         const auctionRef = doc(collection(db, `guilds/${guildId}/auctions`));
         const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
@@ -1583,7 +1584,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                 currentBid: config.startBid,
                 bids: [],
                 startTime: Timestamp.fromDate(config.startTime),
-                endTime: Timestamp.fromDate(config.endTime),
+                endTime: Timestamp.fromDate(calculatedEndTime),
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
                 isDistributed: false,
@@ -1672,13 +1673,13 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div>
+                             <div>
                                 <Label>Data e Hora de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
                                             <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.startTime ? format(config.startTime, "PP") : <span>Data de início</span>}
+                                            {config.startTime ? format(config.startTime, "PPpp", { locale: ptBR }) : <span>Escolha uma data</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -1687,18 +1688,18 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                 </Popover>
                             </div>
                              <div>
-                                <Label>Data e Hora de Término</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.endTime ? format(config.endTime, "PP") : <span>Data de fim</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar mode="single" selected={config.endTime} onSelect={(d) => d && setConfig(c => ({...c, endTime: d}))} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
+                                <Label>Duração do Leilão</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({ ...c, durationHours: Number(value) }))} value={String(config.durationHours)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="6">6 horas</SelectItem>
+                                        <SelectItem value="12">12 horas</SelectItem>
+                                        <SelectItem value="24">24 horas</SelectItem>
+                                        <SelectItem value="36">36 horas</SelectItem>
+                                        <SelectItem value="48">48 horas</SelectItem>
+                                        <SelectItem value="72">72 horas</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                       </div>
@@ -1709,6 +1710,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                     </>
                   );
             case 'confirm':
+                const calculatedEndTime = addHours(config.startTime, config.durationHours);
                 return <>
                     <DialogHeader>
                         <DialogTitle>Passo 3: Confirmar e Criar Leilão</DialogTitle>
@@ -1720,6 +1722,8 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                         <p><strong>Incremento Mínimo:</strong> {config.minIncrement} DKP</p>
                         <p><strong>Restrição de Função:</strong> {config.roleRestriction}</p>
                         <p><strong>Restrição de Arma:</strong> {config.weaponRestriction}</p>
+                        <p><strong>Início do leilão:</strong> {format(config.startTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</p>
+                        <p><strong>Término do leilão:</strong> {format(calculatedEndTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })} ({config.durationHours} horas)</p>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
@@ -1746,6 +1750,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
