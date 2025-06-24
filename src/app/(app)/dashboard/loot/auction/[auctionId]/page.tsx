@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp } from '@/lib/firebase';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo } from '@/types/guildmaster';
-import { hasPermission, GuildPermission } from '@/lib/permissions';
+import { GuildPermission } from '@/types/guildmaster';
+import { hasPermission } from '@/lib/permissions';
 
 
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -20,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Gem, ArrowLeft, Info, Minus, Plus, RefreshCw, Gavel, Bell, Edit, MoreHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -178,7 +179,7 @@ function AuctionPageContent() {
      return <div className="text-center py-10">Leilão não encontrado.</div>;
   }
   
-  const getStatusBadgeProps = (status: AuctionStatus) => {
+  const getStatusBadgeProps = (status: Auction['status']) => {
     switch (status) {
         case 'active': return { text: 'Aberto', className: 'bg-green-600/80' };
         case 'scheduled': return { text: 'Agendado', className: 'bg-yellow-600/80 text-yellow-foreground' };
