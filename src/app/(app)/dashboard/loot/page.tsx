@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment, deleteField, getDocs as getFirestoreDocs, where, ref as storageFirebaseRef, uploadBytes, getDownloadURL, deleteDoc as deleteFirestoreDoc } from '@/lib/firebase';
-import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember } from '@/types/guildmaster';
+import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember, LootRoll, LootRollStatus } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -76,7 +76,7 @@ const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Encerrado': 'bg-gray-500/20 text-gray-400 border-gray-500/50',
   'Distribuído': 'bg-purple-500/20 text-purple-600 border-purple-500/50',
   'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
-  'Em rolagem': 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50',
+  'Em rolagem': 'bg-yellow-600/20 text-yellow-600 border-yellow-500/50',
   'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50',
   'Aguardando rolagem': 'bg-amber-500/20 text-amber-600 border-amber-500/50',
 };
@@ -1857,5 +1857,3 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
-
-

@@ -288,6 +288,10 @@ export enum AuditActionType {
   MANUAL_CONFIRMATION_REJECTED = "MANUAL_CONFIRMATION_REJECTED",
   AUCTION_FINALIZED = "AUCTION_FINALIZED",
   AUCTION_ITEM_DISTRIBUTED = "AUCTION_ITEM_DISTRIBUTED",
+  LOOT_ROLL_CREATED = "LOOT_ROLL_CREATED",
+  LOOT_ROLL_DELETED = "LOOT_ROLL_DELETED",
+  LOOT_ROLL_FINALIZED = "LOOT_ROLL_FINALIZED",
+  LOOT_ROLL_ITEM_DISTRIBUTED = "LOOT_ROLL_ITEM_DISTRIBUTED",
 }
 
 export interface AuditLogDetails {
@@ -321,6 +325,10 @@ export interface AuditLogDetails {
   auctionId?: string;
   auctionWinnerId?: string;
   auctionWinningBid?: number;
+  rollId?: string;
+  rollCost?: number;
+  rollWinnerId?: string;
+  rollWinningValue?: number;
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
@@ -421,3 +429,32 @@ export interface Auction {
   weaponRestriction?: TLWeapon | 'Geral';
 }
 
+export type LootRollStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
+
+export interface LootRollEntry {
+  rollerId: string;
+  rollerName: string;
+  rollValue: number;
+  timestamp: Timestamp;
+}
+
+export interface LootRoll {
+  id: string;
+  guildId: string;
+  item: Omit<BankItem, 'id' | 'status' | 'createdAt'>;
+  bankItemId: string;
+  status: LootRollStatus;
+  cost: number;
+  rolls: LootRollEntry[];
+  startTime: Timestamp;
+  endTime: Timestamp;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp;
+  isDistributed?: boolean;
+  roleRestriction?: TLRole | 'Geral';
+  weaponRestriction?: TLWeapon | 'Geral';
+  refundDkpToLosers: boolean;
+  winnerId?: string;
+  winningRoll?: number;
+}
