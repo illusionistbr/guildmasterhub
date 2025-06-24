@@ -1,0 +1,313 @@
+
+"use client";
+
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp } from '@/lib/firebase';
+import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo } from '@/types/guildmaster';
+import { hasPermission, GuildPermission } from '@/lib/permissions';
+
+
+import { PageTitle } from '@/components/shared/PageTitle';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2, Gem, ArrowLeft, Info, Minus, Plus, RefreshCw, Gavel, Bell, Edit, MoreHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format, formatDistanceToNowStrict } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useHeader } from '@/contexts/HeaderContext';
+
+function AuctionPageContent() {
+  const { user: currentUser, loading: authLoading } = useAuth();
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { setHeaderTitle } = useHeader();
+
+  const auctionId = params.auctionId as string;
+  const guildId = searchParams.get('guildId');
+
+  const [auction, setAuction] = useState<Auction | null>(null);
+  const [guild, setGuild] = useState<Guild | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bidAmount, setBidAmount] = useState(1);
+  const [isBidding, setIsBidding] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState("");
+
+  const currentUserRoleInfo = useMemo(() => {
+    if (!currentUser || !guild || !guild.roles) return null;
+    return guild.roles[currentUser.uid];
+  }, [currentUser, guild]);
+  
+  const canEditAuction = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(
+      currentUserRoleInfo.roleName,
+      guild.customRoles,
+      GuildPermission.MANAGE_LOOT_AUCTIONS_EDIT
+    );
+  }, [currentUserRoleInfo, guild]);
+
+  useEffect(() => {
+    if (!guildId) {
+      toast({ title: "Erro", description: "ID da guilda não encontrado.", variant: "destructive" });
+      router.push('/dashboard/loot');
+      return;
+    }
+    if (!auctionId) {
+      toast({ title: "Erro", description: "ID do leilão não encontrado.", variant: "destructive" });
+      router.push(`/dashboard/loot?guildId=${guildId}`);
+      return;
+    }
+
+    const guildDocRef = doc(db, 'guilds', guildId);
+    const unsubGuild = onSnapshot(guildDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const guildData = { id: docSnap.id, ...docSnap.data() } as Guild;
+            setGuild(guildData);
+            setHeaderTitle(`Leilão: ${guildData.name}`);
+        } else {
+            toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
+            router.push('/guild-selection');
+        }
+    });
+
+    const auctionDocRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+    const unsubAuction = onSnapshot(auctionDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const auctionData = { id: docSnap.id, ...docSnap.data() } as Auction;
+        setAuction(auctionData);
+        const minBid = auctionData.currentBid + auctionData.minBidIncrement;
+        setBidAmount(minBid);
+        setLoading(false);
+      } else {
+        toast({ title: "Erro", description: "Leilão não encontrado.", variant: "destructive" });
+        router.push(`/dashboard/loot?guildId=${guildId}`);
+      }
+    });
+
+    return () => {
+      unsubGuild();
+      unsubAuction();
+      setHeaderTitle(null);
+    };
+  }, [guildId, auctionId, router, toast, setHeaderTitle]);
+
+  useEffect(() => {
+    if (auction?.endTime) {
+      const interval = setInterval(() => {
+        const now = new Date();
+        const end = auction.endTime.toDate();
+        if (now > end) {
+          setTimeRemaining("Leilão encerrado");
+          clearInterval(interval);
+        } else {
+          setTimeRemaining(formatDistanceToNowStrict(end, { locale: ptBR, addSuffix: true }));
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [auction?.endTime]);
+
+  const handlePlaceBid = async () => {
+    if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
+        toast({ title: "Erro", description: "Dados insuficientes para fazer o lance.", variant: "destructive" });
+        return;
+    }
+    if (auction.status !== 'active') {
+        toast({ title: "Leilão não está ativo.", variant: "destructive" });
+        return;
+    }
+    if (bidAmount <= auction.currentBid) {
+        toast({ title: "Lance Baixo", description: `Seu lance deve ser maior que ${auction.currentBid}.`, variant: "destructive" });
+        return;
+    }
+    if (bidAmount < auction.currentBid + auction.minBidIncrement) {
+        toast({ title: "Incremento Mínimo", description: `O lance mínimo deve ser de pelo menos ${auction.currentBid + auction.minBidIncrement} DKP.`, variant: "destructive" });
+        return;
+    }
+    const userDkp = currentUserRoleInfo.dkpBalance || 0;
+    if (userDkp < bidAmount) {
+        toast({ title: "DKP Insuficiente", description: `Você não tem DKP suficiente para este lance.`, variant: "destructive" });
+        return;
+    }
+
+    setIsBidding(true);
+    try {
+        const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+        const newBid: AuctionBid = {
+            bidderId: currentUser.uid,
+            bidderName: currentUserRoleInfo.characterNickname || currentUser.displayName || 'Desconhecido',
+            amount: bidAmount,
+            timestamp: Timestamp.now(),
+        };
+
+        await updateDoc(auctionRef, {
+            bids: arrayUnion(newBid),
+            currentBid: bidAmount,
+            currentWinnerId: currentUser.uid,
+        });
+
+        toast({ title: "Lance Feito!", description: `Seu lance de ${bidAmount} DKP foi registrado com sucesso.` });
+        setBidAmount(bidAmount + auction.minBidIncrement);
+    } catch (error) {
+        console.error("Error placing bid:", error);
+        toast({ title: "Erro ao Fazer Lance", variant: "destructive" });
+    } finally {
+        setIsBidding(false);
+    }
+  };
+  
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  }
+  
+  if (!auction) {
+     return <div className="text-center py-10">Leilão não encontrado.</div>;
+  }
+  
+  const getStatusBadgeProps = (status: AuctionStatus) => {
+    switch (status) {
+        case 'active': return { text: 'Aberto', className: 'bg-green-600/80' };
+        case 'scheduled': return { text: 'Agendado', className: 'bg-yellow-600/80 text-yellow-foreground' };
+        case 'ended': return { text: 'Encerrado', className: 'bg-gray-500/80' };
+        case 'cancelled': return { text: 'Cancelado', className: 'bg-red-600/80' };
+        default: return { text: status, className: 'bg-muted' };
+    }
+  };
+
+  const statusProps = getStatusBadgeProps(auction.status);
+  const userDkp = currentUserRoleInfo?.dkpBalance || 0;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+            <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4"/> Voltar</Button>
+            <div className="flex gap-2">
+                <Button variant="outline"><Bell className="mr-2 h-4 w-4"/> Notificação</Button>
+                {canEditAuction && <Button><Edit className="mr-2 h-4 w-4"/> Editar Leilão</Button>}
+            </div>
+        </div>
+        
+        <Card className="static-card-container">
+            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1 flex justify-center items-center">
+                    <div className="w-48 h-48 p-2 rounded-lg flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
+                        <Image src={auction.item.imageUrl} alt={auction.item.itemName || "Item"} width={160} height={160} className="object-contain" data-ai-hint="auctioned item"/>
+                    </div>
+                </div>
+                <div className="md:col-span-2 space-y-4">
+                    <div>
+                        <h2 className="text-3xl font-bold text-foreground">{auction.item.itemName}</h2>
+                        <p className="text-md text-muted-foreground">{auction.item.trait}</p>
+                        <Badge variant="outline" className="mt-2 border-purple-500 text-purple-400">Épico</Badge>
+                    </div>
+                     <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="text-muted-foreground">Lance Inicial</p>
+                            <p className="text-lg font-semibold flex items-center gap-1">{auction.startingBid} <Gem className="h-4 w-4 text-primary"/></p>
+                        </div>
+                         <div>
+                            <p className="text-muted-foreground">Incremento Mínimo</p>
+                            <p className="text-lg font-semibold flex items-center gap-1">{auction.minBidIncrement} <Gem className="h-4 w-4 text-primary"/></p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Início</p>
+                            <p className="text-lg font-semibold">{format(auction.startTime.toDate(), "dd/MM/yy, HH:mm zzz", { locale: ptBR })}</p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Término</p>
+                            <p className="text-lg font-semibold">{format(auction.endTime.toDate(), "dd/MM/yy, HH:mm zzz", { locale: ptBR })}</p>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+        
+        <Card className="static-card-container">
+            <CardContent className="p-4 grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge variant="default" className={cn("text-lg", statusProps.className)}>{statusProps.text}</Badge>
+                </div>
+                <div>
+                    <p className="text-sm text-muted-foreground">Tempo Restante</p>
+                    <p className="text-lg font-semibold text-primary">{timeRemaining}</p>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card className="static-card-container">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl"><Gavel className="h-5 w-5 text-green-500"/> Lances ao Vivo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm font-medium">DKP Disponível: <span className="text-primary font-bold">{userDkp}</span></p>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={() => setBidAmount(Math.max(auction.currentBid + auction.minBidIncrement, bidAmount - auction.minBidIncrement))}><Minus/></Button>
+                        <Input type="number" value={bidAmount} onChange={e => setBidAmount(Number(e.target.value))} className="w-24 text-center"/>
+                        <Button variant="outline" size="icon" onClick={() => setBidAmount(bidAmount + auction.minBidIncrement)}><Plus/></Button>
+                        <Button onClick={handlePlaceBid} disabled={isBidding || auction.status !== 'active'}>
+                            {isBidding ? <Loader2 className="animate-spin"/> : 'Dar Lance'}
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Valor</TableHead>
+                                <TableHead>Membro</TableHead>
+                                <TableHead>Data</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {auction.bids && auction.bids.length > 0 ? (
+                                [...auction.bids].sort((a,b) => b.timestamp.toMillis() - a.timestamp.toMillis()).map((bid, index) => (
+                                    <TableRow key={index} className={cn(index === 0 && "bg-primary/10")}>
+                                        <TableCell className="font-semibold text-primary">{bid.amount} DKP</TableCell>
+                                        <TableCell>{bid.bidderName}</TableCell>
+                                        <TableCell>{formatDistanceToNowStrict(bid.timestamp.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">Nenhum lance ainda.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <p className="text-xs text-muted-foreground">Lances são priorizados por valor e depois por data.</p>
+            </CardFooter>
+        </Card>
+
+    </div>
+  );
+}
+
+
+export default function AuctionPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+            <AuctionPageContent />
+        </Suspense>
+    );
+}
+

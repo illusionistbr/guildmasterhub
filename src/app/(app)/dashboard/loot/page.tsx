@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment as firebaseIncrement, deleteField, getDocs as getFirestoreDocs, where, ref as storageFirebaseRef, uploadBytes, getDownloadURL, deleteDoc as deleteFirestoreDoc } from '@/lib/firebase';
 import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember } from '@/types/guildmaster';
@@ -934,7 +935,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
 
     return (
         <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
-            <CardHeader className="p-2 text-center flex justify-center items-center flex-grow">
+            <CardHeader className="p-2 text-center flex justify-center items-center flex-grow min-h-[3rem]">
               <h3 className="font-semibold text-white text-sm leading-tight break-words whitespace-normal">
                   {item.itemName}
               </h3>
@@ -984,13 +985,13 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                    <p className="text-muted-foreground text-left">
+                    <p className="text-muted-foreground text-center">
                         <span className="font-bold text-white">Trait:</span> {item.trait}
                     </p>
-                    <p className="text-muted-foreground text-left">
+                    <p className="text-muted-foreground text-center">
                         <span className="font-bold text-white">Drop:</span> {item.droppedByMemberName || 'N/A'}
                     </p>
-                    <p className="text-muted-foreground text-left">
+                    <p className="text-muted-foreground text-center">
                         <span className="font-bold text-white">Data:</span> {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
                     </p>
                 </div>
@@ -1297,10 +1298,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
 
   return (
     <div className="space-y-6">
-        <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">Leilões Ativos</h2>
-        </div>
-        
         <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-2">
                 <Input placeholder="Buscar por nome..." className="w-48" />
@@ -1331,13 +1328,12 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                         <TableHead>Data de Fim</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Distribuído</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {auctions.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
                                 Nenhum leilão ativo ou agendado no momento.
                             </TableCell>
                         </TableRow>
@@ -1351,12 +1347,12 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                 <TableRow key={auction.id}>
                                     <TableCell><Checkbox /></TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
+                                        <Link href={`/dashboard/loot/auction/${auction.id}?guildId=${guildId}`} className="flex items-center gap-2 group">
                                             <div className="w-8 h-8 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                                 <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
                                             </div>
-                                            <span className="font-medium whitespace-normal">{auction.item.itemName}</span>
-                                        </div>
+                                            <span className="font-medium whitespace-normal group-hover:text-primary group-hover:underline">{auction.item.itemName}</span>
+                                        </Link>
                                     </TableCell>
                                     <TableCell>{auction.item.trait || 'N/A'}</TableCell>
                                     <TableCell>{auction.startingBid}</TableCell>
@@ -1367,10 +1363,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                     <TableCell>{format(auction.endTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                                     <TableCell><Badge variant="default" className={statusProps.className}>{statusProps.text}</Badge></TableCell>
                                     <TableCell>{auction.isDistributed ? 'Sim' : 'Não'}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                                    </TableCell>
                                 </TableRow>
                             )
                         })
@@ -1687,7 +1679,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                             </div>
 
                              <div className="col-span-2 grid grid-cols-1 gap-y-2">
-                                <Label>Data e Hora de Fim</Label>
+                                <Label>Data e Hora de Término</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
@@ -1795,6 +1787,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
