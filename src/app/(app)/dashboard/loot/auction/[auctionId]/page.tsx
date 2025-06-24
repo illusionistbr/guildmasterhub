@@ -8,8 +8,8 @@ import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, increment as firebaseIncrement } from '@/lib/firebase';
-import { GuildPermission } from '@/types/guildmaster';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
+import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { logGuildActivity } from '@/lib/auditLogService';
 
@@ -63,6 +63,15 @@ function AuctionPageContent() {
       GuildPermission.MANAGE_LOOT_AUCTIONS_EDIT
     );
   }, [currentUserRoleInfo, guild]);
+  
+  const winner = useMemo(() => {
+    if (!auction || auction.status !== 'ended' || !auction.currentWinnerId || !auction.bids || auction.bids.length === 0) {
+        return null;
+    }
+    const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
+    return winningBid || null;
+  }, [auction]);
+
 
   useEffect(() => {
     if (!guildId) {
@@ -120,19 +129,24 @@ function AuctionPageContent() {
 
 
   useEffect(() => {
-    if (auction?.endTime) {
-      const interval = setInterval(() => {
-        const now = new Date();
-        const end = auction.endTime.toDate();
-        if (now > end) {
-          setTimeRemaining(auction.status === 'ended' ? "Leilão Encerrado" : "Finalizado");
-          clearInterval(interval);
-        } else {
-          setTimeRemaining(formatDistanceToNowStrict(end, { locale: ptBR, addSuffix: true }));
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }
+    if (!auction?.endTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const end = auction.endTime.toDate();
+      const diffInSeconds = Math.floor((end.getTime() - now.getTime()) / 1000);
+
+      if (diffInSeconds <= 0) {
+        setTimeRemaining(auction.status === 'ended' ? "Leilão Encerrado" : "Finalizando...");
+        clearInterval(interval);
+      } else if (diffInSeconds <= 60) {
+        setTimeRemaining(`Termina em ${diffInSeconds}s`);
+      } else {
+        setTimeRemaining(formatDistanceToNowStrict(end, { locale: ptBR, addSuffix: true }));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [auction?.endTime, auction?.status]);
 
   useEffect(() => {
@@ -254,6 +268,22 @@ function AuctionPageContent() {
             updatePayload.currentWinnerId = currentUser.uid;
         }
         
+        // Anti-sniping logic
+        const now = new Date();
+        const end = auction.endTime.toDate();
+        const diffInSeconds = (end.getTime() - now.getTime()) / 1000;
+
+        if (diffInSeconds > 0 && diffInSeconds <= 60) {
+            const newEndTime = new Date(now.getTime() + 60000); // Add 1 minute
+            updatePayload.endTime = Timestamp.fromDate(newEndTime);
+            
+            toast({
+                title: "Tempo Estendido!",
+                description: "Lance no último minuto. O leilão foi estendido por 1 minuto.",
+                variant: "default"
+            });
+        }
+        
         batch.update(auctionRef, updatePayload);
         
         await batch.commit();
@@ -267,14 +297,6 @@ function AuctionPageContent() {
         setIsBidding(false);
     }
   };
-  
-  const winner = useMemo(() => {
-    if (!auction || auction.status !== 'ended' || !auction.currentWinnerId || !auction.bids || auction.bids.length === 0) {
-        return null;
-    }
-    const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
-    return winningBid || null;
-  }, [auction]);
   
   if (loading) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
