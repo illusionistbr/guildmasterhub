@@ -39,6 +39,7 @@ function ProfilePageContent() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: "",
+      photoFile: undefined,
     },
   });
 
@@ -208,7 +209,7 @@ function ProfilePageContent() {
                 <FormField
                   control={form.control}
                   name="photoFile"
-                  render={({ field: { onChange, ...rest } }) => (
+                  render={({ field: { value, onChange, ...rest } }) => (
                     <FormItem>
                       <FormLabel>Fazer Upload da Foto (Máx 2MB)</FormLabel>
                       <FormControl>
