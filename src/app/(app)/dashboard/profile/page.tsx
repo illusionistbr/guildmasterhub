@@ -7,7 +7,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, updateDoc, firebaseUpdateProfile } from '@/lib/firebase';
+import { db, doc, setDoc, firebaseUpdateProfile } from '@/lib/firebase';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,10 +75,10 @@ function ProfilePageContent() {
 
       // Update Firestore user document
       const userDocRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userDocRef, {
+      await setDoc(userDocRef, {
         displayName: data.displayName,
         photoURL: finalPhotoUrl,
-      });
+      }, { merge: true });
       
       toast({ title: "Perfil Atualizado!", description: "Suas informações foram salvas com sucesso." });
       
@@ -208,5 +208,3 @@ export default function ProfilePage() {
       </Suspense>
     );
   }
-
-    
