@@ -373,7 +373,7 @@ export interface AppNotification {
   isRead?: boolean;
 }
 
-export type BankItemStatus = 'Disponível' | 'Distribuído' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
+export type BankItemStatus = 'Disponível' | 'Encerrado' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
 
 export interface BankItem {
   id: string; // Document ID from Firestore
@@ -420,3 +420,4 @@ export interface Auction {
   roleRestriction?: TLRole | 'Geral';
   weaponRestriction?: TLWeapon | 'Geral';
 }
+
