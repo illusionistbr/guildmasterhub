@@ -85,19 +85,17 @@ function AuctionPageContent() {
       return;
     }
 
-    const guildDocRef = doc(db, 'guilds', guildId);
-    const unsubGuild = onSnapshot(guildDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const guildData = { id: docSnap.id, ...docSnap.data() } as Guild;
-            setGuild(guildData);
-        } else {
-            toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
-            router.push('/guild-selection');
-        }
+    const unsubGuild = onSnapshot(doc(db, 'guilds', guildId), (docSnap) => {
+      if (docSnap.exists()) {
+        const guildData = { id: docSnap.id, ...docSnap.data() } as Guild;
+        setGuild(guildData);
+      } else {
+        toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
+        router.push('/guild-selection');
+      }
     });
 
-    const auctionDocRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
-    const unsubAuction = onSnapshot(auctionDocRef, (docSnap) => {
+    const unsubAuction = onSnapshot(doc(db, `guilds/${guildId}/auctions`, auctionId), (docSnap) => {
       if (docSnap.exists()) {
         const auctionData = { id: docSnap.id, ...docSnap.data() } as Auction;
         setAuction(auctionData);
@@ -139,8 +137,6 @@ function AuctionPageContent() {
       if (diffInSeconds <= 0) {
         setTimeRemaining(auction.status === 'ended' ? "Leilão Encerrado" : "Finalizando...");
         clearInterval(interval);
-      } else if (diffInSeconds <= 60) {
-        setTimeRemaining(`Termina em ${diffInSeconds}s`);
       } else {
         setTimeRemaining(formatDistanceToNowStrict(end, { locale: ptBR, addSuffix: true }));
       }
@@ -150,20 +146,35 @@ function AuctionPageContent() {
   }, [auction?.endTime, auction?.status]);
 
   useEffect(() => {
-    const handleAutomaticFinalization = async () => {
-        if (!currentUser || !guild || !auction || !guildId || !auction.bankItemId) return;
+    const runFinalizationCheck = async () => {
+        if (!canEditAuction || !guildId || !auctionId) return;
+
+        // Fetch the latest state of the auction to avoid race conditions
+        const currentAuctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+        const auctionSnap = await getDoc(currentAuctionRef);
+        if (!auctionSnap.exists()) return;
+        
+        const currentAuctionData = auctionSnap.data() as Auction;
+        
+        if (currentAuctionData.status === 'active' && new Date() > currentAuctionData.endTime.toDate()) {
+            handleAutomaticFinalization(currentAuctionData);
+        }
+    };
+    
+    const handleAutomaticFinalization = async (auctionToFinalize: Auction) => {
+        if (!currentUser || !guild || !auctionToFinalize.bankItemId) return;
 
         setIsFinalizing(true);
         toast({ title: "Finalizando leilão...", description: "O tempo do leilão acabou, processando os resultados." });
 
         const batch = writeBatch(db);
-        const guildRef = doc(db, "guilds", guildId);
-        const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
-        const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, auction.bankItemId);
+        const guildRef = doc(db, "guilds", guildId as string);
+        const auctionRef = doc(db, `guilds/${guildId as string}/auctions`, auctionId);
+        const bankItemRef = doc(db, `guilds/${guildId as string}/bankItems`, auctionToFinalize.bankItemId);
 
         try {
-            const bids = auction.bids || [];
-            const winnerId = auction.currentWinnerId;
+            const bids = auctionToFinalize.bids || [];
+            const winnerId = auctionToFinalize.currentWinnerId;
 
             const highestBidsByBidder = bids.reduce((acc, bid) => {
                 if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
@@ -185,15 +196,15 @@ function AuctionPageContent() {
             await batch.commit();
 
             await logGuildActivity(
-                guildId,
+                guildId as string,
                 'system', // Attributed to system as it's automatic
                 'Sistema',
                 'AUCTION_FINALIZED' as AuditActionType,
                 {
-                    itemName: auction.item.itemName,
-                    auctionId: auction.id,
+                    itemName: auctionToFinalize.item.itemName,
+                    auctionId: auctionToFinalize.id,
                     auctionWinnerId: winnerId,
-                    auctionWinningBid: auction.currentBid
+                    auctionWinningBid: auctionToFinalize.currentBid
                 }
             );
             
@@ -205,23 +216,10 @@ function AuctionPageContent() {
             setIsFinalizing(false);
         }
     };
-
-    const runFinalizationCheck = async () => {
-        if (!auction || !guildId) return;
-
-        // Fetch the latest state of the auction to avoid race conditions
-        const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
-        const auctionSnap = await getDoc(auctionRef);
-        if (!auctionSnap.exists()) return;
-        const currentAuctionData = auctionSnap.data() as Auction;
-        
-        if (currentAuctionData.status === 'active' && new Date() > currentAuctionData.endTime.toDate() && canEditAuction) {
-            await handleAutomaticFinalization();
-        }
-    };
-
+    
     runFinalizationCheck();
-  }, [auction, canEditAuction, currentUser, guild, guildId, toast, auctionId]);
+
+  }, [timeRemaining, canEditAuction, currentUser, guild, guildId, auctionId, toast]);
 
   const handlePlaceBid = async () => {
     if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
@@ -467,7 +465,7 @@ function AuctionPageContent() {
                         Confirmar Distribuição do Item
                     </CardTitle>
                     <CardDescription>
-                        Após entregar o item fisicamente ao vencedor do leilão, marque-o como distribuído para finalizar o processo e atualizar o status no banco da guilda.
+                        Após entregar o item ao vencedor do leilão, marque-o como distribuído para finalizar o processo e atualizar o status no banco da guilda.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="flex justify-end">

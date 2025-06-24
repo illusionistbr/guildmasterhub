@@ -75,7 +75,7 @@ const ITEMS_PER_PAGE = 15;
 const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Disponível': 'bg-green-500/20 text-green-600 border-green-500/50',
   'Encerrado': 'bg-gray-500/20 text-gray-400 border-gray-500/50',
-  'Distribuído': 'bg-purple-500/20 text-purple-600 border-purple-500/50',
+  'Distribuído': 'bg-gray-500/20 text-gray-400 border-gray-500/50',
   'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
   'Em rolagem': 'bg-yellow-600/20 text-yellow-600 border-yellow-500/50',
   'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50',
@@ -977,7 +977,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
     };
 
     return (
-        <Card className="static-card-container bg-card/80 flex flex-col group transition-all duration-300">
+        <Card className={cn("static-card-container bg-card/80 flex flex-col group transition-all duration-300", item.status === 'Distribuído' && 'opacity-60 hover:opacity-100')}>
             <CardHeader className="p-2 text-center flex justify-center items-center flex-grow min-h-[3rem]">
               <h3 className="font-semibold text-white text-sm leading-tight break-words whitespace-normal">
                   {item.itemName}
