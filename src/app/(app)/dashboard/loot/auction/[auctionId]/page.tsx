@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp } from '@/lib/firebase';
+import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, increment as firebaseIncrement } from '@/lib/firebase';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -90,8 +90,6 @@ function AuctionPageContent() {
       if (docSnap.exists()) {
         const auctionData = { id: docSnap.id, ...docSnap.data() } as Auction;
         setAuction(auctionData);
-        const minBid = auctionData.currentBid + auctionData.minBidIncrement;
-        setBidAmount(minBid);
         setLoading(false);
       } else {
         toast({ title: "Erro", description: "Leilão não encontrado.", variant: "destructive" });
@@ -105,6 +103,18 @@ function AuctionPageContent() {
       setHeaderTitle(null);
     };
   }, [guildId, auctionId, router, toast, setHeaderTitle]);
+  
+  useEffect(() => {
+    if (auction) {
+        const minNextBid = auction.currentBid > 0 
+            ? auction.currentBid + auction.minBidIncrement 
+            : auction.startingBid;
+        if (bidAmount < minNextBid) {
+            setBidAmount(minNextBid);
+        }
+    }
+  }, [auction]);
+
 
   useEffect(() => {
     if (auction?.endTime) {
@@ -139,6 +149,10 @@ function AuctionPageContent() {
         toast({ title: "Incremento Mínimo", description: `O lance mínimo deve ser de pelo menos ${auction.currentBid + auction.minBidIncrement} DKP.`, variant: "destructive" });
         return;
     }
+    if (auction.currentWinnerId === currentUser.uid) {
+        toast({ title: "Ação inválida", description: "Você já é o licitante com o maior lance.", variant: "default" });
+        return;
+    }
     const userDkp = currentUserRoleInfo.dkpBalance || 0;
     if (userDkp < bidAmount) {
         toast({ title: "DKP Insuficiente", description: `Você não tem DKP suficiente para este lance.`, variant: "destructive" });
@@ -146,26 +160,41 @@ function AuctionPageContent() {
     }
 
     setIsBidding(true);
+    const batch = writeBatch(db);
     try {
+        const guildRef = doc(db, "guilds", guildId);
         const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+
+        // 1. Refund DKP to the previous highest bidder, if there is one.
+        if (auction.currentWinnerId && auction.currentBid > 0) {
+            const previousWinnerPath = `roles.${auction.currentWinnerId}.dkpBalance`;
+            batch.update(guildRef, { [previousWinnerPath]: firebaseIncrement(auction.currentBid) });
+        }
+
+        // 2. Deduct DKP from the new bidder.
+        const newBidderPath = `roles.${currentUser.uid}.dkpBalance`;
+        batch.update(guildRef, { [newBidderPath]: firebaseIncrement(-bidAmount) });
+
+        // 3. Update the auction document with the new bid.
         const newBid: AuctionBid = {
             bidderId: currentUser.uid,
             bidderName: currentUserRoleInfo.characterNickname || currentUser.displayName || 'Desconhecido',
             amount: bidAmount,
             timestamp: Timestamp.now(),
         };
-
-        await updateDoc(auctionRef, {
+        batch.update(auctionRef, {
             bids: arrayUnion(newBid),
             currentBid: bidAmount,
             currentWinnerId: currentUser.uid,
         });
+        
+        await batch.commit();
 
-        toast({ title: "Lance Feito!", description: `Seu lance de ${bidAmount} DKP foi registrado com sucesso.` });
-        setBidAmount(bidAmount + auction.minBidIncrement);
+        toast({ title: "Lance Feito!", description: `Seu lance de ${bidAmount} DKP foi registrado e o valor foi retido.` });
+        
     } catch (error) {
         console.error("Error placing bid:", error);
-        toast({ title: "Erro ao Fazer Lance", variant: "destructive" });
+        toast({ title: "Erro ao Fazer Lance", description: "Ocorreu um erro. Seu DKP não foi alterado.", variant: "destructive" });
     } finally {
         setIsBidding(false);
     }
