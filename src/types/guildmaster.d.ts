@@ -286,6 +286,7 @@ export enum AuditActionType {
   MANUAL_CONFIRMATION_SUBMITTED = "MANUAL_CONFIRMATION_SUBMITTED",
   MANUAL_CONFIRMATION_APPROVED = "MANUAL_CONFIRMATION_APPROVED",
   MANUAL_CONFIRMATION_REJECTED = "MANUAL_CONFIRMATION_REJECTED",
+  AUCTION_FINALIZED = "AUCTION_FINALIZED",
 }
 
 export interface AuditLogDetails {
@@ -315,6 +316,10 @@ export interface AuditLogDetails {
   permissions?: GuildPermission[];
   manualConfirmationId?: string;
   screenshotUrl?: string;
+  itemName?: string;
+  auctionId?: string;
+  auctionWinnerId?: string;
+  auctionWinningBid?: number;
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
