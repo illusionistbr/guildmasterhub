@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { UserCog, Loader2, Save, ArrowLeft, Link2 as LinkIcon, UploadCloud, User as UserIcon } from 'lucide-react';
+import { UserCog, Loader2, Save, ArrowLeft, UploadCloud, User as UserIcon } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, "O nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
-  photoURL: z.string().url("URL da foto inválida. Use Imgur, etc.").max(250, "URL muito longa.").optional().or(z.literal('')),
   photoFile: z.instanceof(File).optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -40,7 +39,6 @@ function ProfilePageContent() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: "",
-      photoURL: "",
     },
   });
 
@@ -53,7 +51,6 @@ function ProfilePageContent() {
     if (currentUser) {
       form.reset({
         displayName: currentUser.displayName || "",
-        photoURL: currentUser.photoURL || "",
       });
       setPhotoPreview(currentUser.photoURL || null);
     }
@@ -77,7 +74,6 @@ function ProfilePageContent() {
         return;
       }
       form.setValue("photoFile", file);
-      form.setValue("photoURL", ""); // Clear URL when file is chosen
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
@@ -98,7 +94,7 @@ function ProfilePageContent() {
       return;
     }
     setIsSubmitting(true);
-    let finalPhotoUrl = data.photoURL || null;
+    let finalPhotoUrl = currentUser.photoURL || null;
 
     try {
       if (data.photoFile) {
@@ -208,23 +204,7 @@ function ProfilePageContent() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="photoURL"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL da Foto de Perfil (Ex: Imgur)</FormLabel>
-                    <FormControl>
-                      <div className="relative flex items-center">
-                        <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input {...field} value={field.value || ""} placeholder="https://i.imgur.com/..." className="form-input pl-10" disabled={!!form.watch("photoFile")} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <div className="text-center text-sm text-muted-foreground my-2">OU</div>
+              
                 <FormField
                   control={form.control}
                   name="photoFile"
@@ -239,7 +219,6 @@ function ProfilePageContent() {
                             accept="image/png, image/jpeg, image/gif, image/webp"
                             onChange={handlePhotoFileChange}
                             className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                            disabled={!!form.watch("photoURL")}
                             {...rest}
                           />
                         </div>
