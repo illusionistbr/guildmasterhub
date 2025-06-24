@@ -57,38 +57,6 @@ function ProfilePageContent() {
     }
   }, [currentUser, form]);
 
-  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
-        form.setValue("photoFile", undefined);
-        setPhotoPreview(currentUser?.photoURL || null);
-        e.target.value = "";
-        return;
-      }
-      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
-        toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
-        form.setValue("photoFile", undefined);
-        setPhotoPreview(currentUser?.photoURL || null);
-        e.target.value = "";
-        return;
-      }
-      form.setValue("photoFile", file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setPhotoPreview(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    } else {
-      form.setValue("photoFile", undefined);
-      setPhotoPreview(currentUser?.photoURL || null);
-    }
-  };
-
-
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     if (!currentUser || !auth.currentUser) {
       toast({ title: "Erro", description: "Usuário não autenticado.", variant: "destructive" });
@@ -203,27 +171,56 @@ function ProfilePageContent() {
                 )}
               />
               
-                <FormField
-                  control={form.control}
-                  name="photoFile"
-                  render={({ field: { onChange, ...rest } }) => (
+              <FormField
+                control={form.control}
+                name="photoFile"
+                render={({ field: { onChange, ...fieldProps } }) => (
                     <FormItem>
-                      <FormLabel>Fazer Upload da Foto (Máx 2MB)</FormLabel>
-                      <FormControl>
+                    <FormLabel>Fazer Upload da Foto (Máx 2MB)</FormLabel>
+                    <FormControl>
                         <div className="relative flex items-center">
-                          <UploadCloud className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                          <Input
+                        <UploadCloud className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
                             type="file"
                             accept="image/png, image/jpeg, image/gif, image/webp"
-                            onChange={handlePhotoFileChange}
+                            {...fieldProps}
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    if (file.size > 2 * 1024 * 1024) {
+                                    toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
+                                    onChange(undefined);
+                                    setPhotoPreview(currentUser?.photoURL || null);
+                                    e.target.value = "";
+                                    return;
+                                    }
+                                    if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+                                    toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
+                                    onChange(undefined);
+                                    setPhotoPreview(currentUser?.photoURL || null);
+                                    e.target.value = "";
+                                    return;
+                                    }
+                                    onChange(file);
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                    if (typeof reader.result === 'string') {
+                                        setPhotoPreview(reader.result);
+                                    }
+                                    };
+                                    reader.readAsDataURL(file);
+                                } else {
+                                    onChange(undefined);
+                                    setPhotoPreview(currentUser?.photoURL || null);
+                                }
+                            }}
                             className="form-input pl-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                            {...rest}
-                          />
+                        />
                         </div>
-                      </FormControl>
-                      <FormMessage />
+                    </FormControl>
+                    <FormMessage />
                     </FormItem>
-                  )}
+                )}
                 />
             </CardContent>
             <CardFooter>
