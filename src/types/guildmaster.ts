@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 export enum GuildPermission {
@@ -286,6 +287,7 @@ export enum AuditActionType {
   MANUAL_CONFIRMATION_APPROVED = "MANUAL_CONFIRMATION_APPROVED",
   MANUAL_CONFIRMATION_REJECTED = "MANUAL_CONFIRMATION_REJECTED",
   AUCTION_FINALIZED = "AUCTION_FINALIZED",
+  AUCTION_ITEM_DISTRIBUTED = "AUCTION_ITEM_DISTRIBUTED",
 }
 
 export interface AuditLogDetails {
@@ -371,7 +373,7 @@ export interface AppNotification {
   isRead?: boolean;
 }
 
-export type BankItemStatus = 'Disponível' | 'Encerrado' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem';
+export type BankItemStatus = 'Disponível' | 'Encerrado' | 'Em leilão' | 'Em rolagem' | 'Aguardando leilão' | 'Aguardando rolagem' | 'Distribuído';
 
 export interface BankItem {
   id: string; // Document ID from Firestore
@@ -418,3 +420,4 @@ export interface Auction {
   roleRestriction?: TLRole | 'Geral';
   weaponRestriction?: TLWeapon | 'Geral';
 }
+

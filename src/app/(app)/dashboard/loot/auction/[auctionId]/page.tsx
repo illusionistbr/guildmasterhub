@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, getDoc, increment as firebaseIncrement } from '@/lib/firebase';
+import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, getDoc, increment } from '@/lib/firebase';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, ArrowLeft, Info, Minus, Plus, RefreshCw, Gavel, Bell, Edit, MoreHorizontal, Trophy } from 'lucide-react';
+import { Loader2, Gem, ArrowLeft, Info, Minus, Plus, RefreshCw, Gavel, Bell, Edit, MoreHorizontal, Trophy, CheckSquare } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -183,11 +183,11 @@ function AuctionPageContent() {
                 if (bidderId !== winnerId) {
                     const refundAmount = highestBidsByBidder[bidderId];
                     const bidderPath = `roles.${bidderId}.dkpBalance`;
-                    batch.update(guildRef, { [bidderPath]: firebaseIncrement(refundAmount) });
+                    batch.update(guildRef, { [bidderPath]: increment(refundAmount) });
                 }
             }
             
-            batch.update(auctionRef, { status: 'ended', isDistributed: true });
+            batch.update(auctionRef, { status: 'ended', isDistributed: false });
             batch.update(bankItemRef, { status: 'Encerrado' });
             await batch.commit();
 
@@ -259,7 +259,7 @@ function AuctionPageContent() {
         }
         
         const bidderPath = `roles.${currentUser.uid}.dkpBalance`;
-        batch.update(guildRef, { [bidderPath]: firebaseIncrement(-dkpToAdjust) });
+        batch.update(guildRef, { [bidderPath]: increment(-dkpToAdjust) });
 
         const newBid: AuctionBid = {
             bidderId: currentUser.uid,
@@ -304,6 +304,46 @@ function AuctionPageContent() {
         toast({ title: "Erro ao Fazer Lance", description: "Ocorreu um erro. Seu DKP não foi alterado.", variant: "destructive" });
     } finally {
         setIsBidding(false);
+    }
+  };
+
+    const handleMarkAsDistributed = async () => {
+    if (!currentUser || !guild || !auction || !guildId || !canEditAuction || !auction.bankItemId) {
+      toast({ title: "Erro", description: "Dados insuficientes ou permissão negada.", variant: "destructive" });
+      return;
+    }
+
+    setIsFinalizing(true);
+    const batch = writeBatch(db);
+    const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+    const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, auction.bankItemId);
+
+    try {
+      batch.update(auctionRef, { isDistributed: true });
+      batch.update(bankItemRef, { status: 'Distribuído' });
+      await batch.commit();
+
+      const winnerInfo = auction.bids.find(b => b.bidderId === auction.currentWinnerId);
+      
+      await logGuildActivity(
+        guildId,
+        currentUser.uid,
+        currentUser.displayName,
+        'AUCTION_ITEM_DISTRIBUTED' as AuditActionType,
+        {
+          auctionId: auction.id,
+          itemName: auction.item.itemName,
+          targetUserId: auction.currentWinnerId,
+          targetUserDisplayName: winnerInfo?.bidderName || 'N/A'
+        }
+      );
+
+      toast({ title: "Item Distribuído!", description: `${auction.item.itemName} foi marcado como distribuído.` });
+    } catch (error) {
+      console.error("Error marking as distributed:", error);
+      toast({ title: "Erro", description: "Ocorreu um erro ao marcar o item como distribuído.", variant: "destructive" });
+    } finally {
+      setIsFinalizing(false);
     }
   };
   
@@ -404,6 +444,25 @@ function AuctionPageContent() {
                     O leilão terminou. Finalizando lances e atualizando o status.
                 </AlertDescription>
             </Alert>
+        )}
+
+        {auction.status === 'ended' && !auction.isDistributed && canEditAuction && (
+            <Card className="static-card-container border-amber-500/50">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <CheckSquare className="h-5 w-5 text-amber-500"/>
+                        Confirmar Distribuição do Item
+                    </CardTitle>
+                    <CardDescription>
+                        Após entregar o item fisicamente ao vencedor do leilão, marque-o como distribuído para finalizar o processo e atualizar o status no banco da guilda.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter className="flex justify-end">
+                    <Button onClick={handleMarkAsDistributed} disabled={isFinalizing} className="btn-gradient btn-style-secondary">
+                        {isFinalizing ? <Loader2 className="animate-spin"/> : 'Marcar como Distribuído'}
+                    </Button>
+                </CardFooter>
+            </Card>
         )}
 
         <Card className="static-card-container">

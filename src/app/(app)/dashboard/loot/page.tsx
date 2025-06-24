@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, storage, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment as firebaseIncrement, deleteField, getDocs as getFirestoreDocs, where, ref as storageFirebaseRef, uploadBytes, getDownloadURL, deleteDoc as deleteFirestoreDoc } from '@/lib/firebase';
+import { db, storage, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment, deleteField, getDocs as getFirestoreDocs, where, ref as storageFirebaseRef, uploadBytes, getDownloadURL, deleteDoc as deleteFirestoreDoc } from '@/lib/firebase';
 import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -73,6 +73,7 @@ const ITEMS_PER_PAGE = 15;
 const statusBadgeClasses: Record<BankItemStatus, string> = {
   'Disponível': 'bg-green-500/20 text-green-600 border-green-500/50',
   'Encerrado': 'bg-gray-500/20 text-gray-400 border-gray-500/50',
+  'Distribuído': 'bg-purple-500/20 text-purple-600 border-purple-500/50',
   'Em leilão': 'bg-blue-500/20 text-blue-600 border-blue-500/50',
   'Em rolagem': 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50',
   'Aguardando leilão': 'bg-sky-500/20 text-sky-600 border-sky-500/50',
@@ -771,7 +772,7 @@ function LootPageContent() {
     return <PageTitle title="Loot" icon={<Gem className="h-8 w-8 text-primary" />}><div className="text-center py-10">Guilda não encontrada.</div></PageTitle>;
   }
 
-  const statusOptions: (BankItemStatus | 'all')[] = ['all', 'Disponível', 'Encerrado', 'Em leilão', 'Em rolagem', 'Aguardando leilão', 'Aguardando rolagem'];
+  const statusOptions: (BankItemStatus | 'all')[] = ['all', 'Disponível', 'Encerrado', 'Distribuído', 'Em leilão', 'Em rolagem', 'Aguardando leilão', 'Aguardando rolagem'];
 
   return (
     <div className="space-y-8">
@@ -1387,7 +1388,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                     <TableCell>{format(auction.startTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                                     <TableCell>{format(auction.endTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                                     <TableCell><Badge variant="outline" className={statusProps.className}>{statusProps.text}</Badge></TableCell>
-                                    <TableCell>{auction.isDistributed ? 'Sim' : 'Não'}</TableCell>
+                                    <TableCell>{auction.status === 'ended' ? (auction.isDistributed ? 'Sim' : 'Não') : 'N/A'}</TableCell>
                                 </TableRow>
                             )
                         })
