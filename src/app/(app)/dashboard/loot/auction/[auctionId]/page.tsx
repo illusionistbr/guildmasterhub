@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, getDoc, increment } from '@/lib/firebase';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
-import { GuildPermission } from '@/types/guildmaster';
+import { GuildPermission, BidType } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { logGuildActivity } from '@/lib/auditLogService';
 
@@ -30,6 +30,8 @@ import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 function AuctionPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -49,6 +51,7 @@ function AuctionPageContent() {
   const [isBidding, setIsBidding] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("");
+  const [bidType, setBidType] = useState<BidType>(BidType.Market);
 
   const winner = useMemo(() => {
     if (!auction || auction.status !== 'ended' || !auction.currentWinnerId || !auction.bids || auction.bids.length === 0) {
@@ -173,21 +176,23 @@ function AuctionPageContent() {
         const bankItemRef = doc(db, `guilds/${guildId as string}/bankItems`, auctionToFinalize.bankItemId);
 
         try {
-            const bids = auctionToFinalize.bids || [];
-            const winnerId = auctionToFinalize.currentWinnerId;
-
-            const highestBidsByBidder = bids.reduce((acc, bid) => {
-                if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
-                    acc[bid.bidderId] = bid.amount;
-                }
-                return acc;
-            }, {} as Record<string, number>);
-
-            for (const bidderId in highestBidsByBidder) {
-                if (bidderId !== winnerId) {
-                    const refundAmount = highestBidsByBidder[bidderId];
-                    const bidderPath = `roles.${bidderId}.dkpBalance`;
-                    batch.update(guildRef, { [bidderPath]: increment(refundAmount) });
+            if (auctionToFinalize.refundDkpToLosers) {
+                const bids = auctionToFinalize.bids || [];
+                const winnerId = auctionToFinalize.currentWinnerId;
+    
+                const highestBidsByBidder = bids.reduce((acc, bid) => {
+                    if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
+                        acc[bid.bidderId] = bid.amount;
+                    }
+                    return acc;
+                }, {} as Record<string, number>);
+    
+                for (const bidderId in highestBidsByBidder) {
+                    if (bidderId !== winnerId) {
+                        const refundAmount = highestBidsByBidder[bidderId];
+                        const bidderPath = `roles.${bidderId}.dkpBalance`;
+                        batch.update(guildRef, { [bidderPath]: increment(refundAmount) });
+                    }
                 }
             }
             
@@ -203,12 +208,12 @@ function AuctionPageContent() {
                 {
                     itemName: auctionToFinalize.item.itemName,
                     auctionId: auctionToFinalize.id,
-                    auctionWinnerId: winnerId,
+                    auctionWinnerId: auctionToFinalize.currentWinnerId,
                     auctionWinningBid: auctionToFinalize.currentBid
                 }
             );
             
-            toast({ title: "Leilão Finalizado!", description: "DKP dos perdedores foi reembolsado." });
+            toast({ title: "Leilão Finalizado!", description: auctionToFinalize.refundDkpToLosers ? "DKP dos perdedores foi reembolsado." : "O leilão terminou." });
         } catch (error) {
             console.error("Error finalizing auction:", error);
             toast({ title: "Erro ao Finalizar", description: "Ocorreu um erro ao finalizar o leilão.", variant: "destructive" });
@@ -220,6 +225,28 @@ function AuctionPageContent() {
     runFinalizationCheck();
 
   }, [timeRemaining, canEditAuction, currentUser, guild, guildId, auctionId, toast]);
+
+    const availableBidTypes = useMemo(() => {
+        const allTypes = [BidType.Upgrade, BidType.Trait, BidType.Market];
+        if (!auction?.currentHighestBidType) {
+            return allTypes;
+        }
+        switch (auction.currentHighestBidType) {
+            case BidType.Upgrade:
+                return [BidType.Upgrade];
+            case BidType.Trait:
+                return [BidType.Upgrade, BidType.Trait];
+            case BidType.Market:
+            default:
+                return allTypes;
+        }
+    }, [auction?.currentHighestBidType]);
+
+    useEffect(() => {
+        if (!availableBidTypes.includes(bidType)) {
+            setBidType(availableBidTypes[0]);
+        }
+    }, [availableBidTypes, bidType]);
 
   const handlePlaceBid = async () => {
     if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
@@ -240,6 +267,11 @@ function AuctionPageContent() {
     }
     if (auction.currentWinnerId === currentUser.uid) {
         toast({ title: "Ação inválida", description: "Você já é o licitante com o maior lance.", variant: "default" });
+        return;
+    }
+
+    if (!availableBidTypes.includes(bidType)) {
+        toast({ title: "Tipo de Lance Inválido", description: `Lances do tipo "${bidType}" não são mais permitidos neste leilão.`, variant: "destructive" });
         return;
     }
 
@@ -269,6 +301,7 @@ function AuctionPageContent() {
             bidderName: currentUserRoleInfo.characterNickname || currentUser.displayName || 'Desconhecido',
             amount: bidAmount,
             timestamp: Timestamp.now(),
+            type: bidType,
         };
         
         const updatePayload: any = {
@@ -278,6 +311,16 @@ function AuctionPageContent() {
         if (bidAmount > auction.currentBid) {
             updatePayload.currentBid = bidAmount;
             updatePayload.currentWinnerId = currentUser.uid;
+
+            const priority = { [BidType.Upgrade]: 2, [BidType.Trait]: 1, [BidType.Market]: 0 };
+            const currentPriority = priority[auction.currentHighestBidType || BidType.Market];
+            const newPriority = priority[bidType];
+
+            if (newPriority > currentPriority) {
+                updatePayload.currentHighestBidType = bidType;
+            } else {
+                 updatePayload.currentHighestBidType = auction.currentHighestBidType || bidType;
+            }
         }
         
         // Anti-sniping logic
@@ -442,7 +485,7 @@ function AuctionPageContent() {
                 <Trophy className="h-5 w-5" />
                 <AlertTitle className="font-bold text-amber-400">Leilão Encerrado!</AlertTitle>
                 <AlertDescription className="text-amber-300">
-                    O vencedor é <strong>{winner.bidderName}</strong> com um lance de <strong>{winner.amount} DKP</strong>.
+                    O vencedor é <strong>{winner.bidderName}</strong> com um lance de <strong>{winner.amount} DKP</strong> ({winner.type}).
                 </AlertDescription>
             </Alert>
         )}
@@ -484,10 +527,20 @@ function AuctionPageContent() {
             <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg">
                     <p className="text-sm font-medium">DKP Disponível: <span className="text-primary font-bold">{userDkp}</span></p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
                         <Button variant="outline" size="icon" onClick={() => setBidAmount(Math.max(auction.currentBid + auction.minBidIncrement, bidAmount - auction.minBidIncrement))} disabled={auction.status !== 'active'}><Minus/></Button>
                         <Input type="number" value={bidAmount} onChange={e => setBidAmount(Number(e.target.value))} className="w-24 text-center" disabled={auction.status !== 'active'}/>
                         <Button variant="outline" size="icon" onClick={() => setBidAmount(bidAmount + auction.minBidIncrement)} disabled={auction.status !== 'active'}><Plus/></Button>
+                        <Select value={bidType} onValueChange={(value) => setBidType(value as BidType)} disabled={auction.status !== 'active'}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Tipo de Lance" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableBidTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <Button onClick={handlePlaceBid} disabled={isBidding || auction.status !== 'active'} className="btn-gradient btn-style-secondary">
                             {isBidding ? <Loader2 className="animate-spin"/> : 'Dar Lance'}
                         </Button>
@@ -500,6 +553,7 @@ function AuctionPageContent() {
                             <TableRow>
                                 <TableHead>Valor</TableHead>
                                 <TableHead>Membro</TableHead>
+                                <TableHead>Tipo</TableHead>
                                 <TableHead>Data</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -509,12 +563,13 @@ function AuctionPageContent() {
                                     <TableRow key={index} className={cn(index === 0 && "bg-primary/10")}>
                                         <TableCell className="font-semibold text-primary">{bid.amount} DKP</TableCell>
                                         <TableCell>{bid.bidderName}</TableCell>
+                                        <TableCell>{bid.type}</TableCell>
                                         <TableCell>{formatDistanceToNowStrict(bid.timestamp.toDate(), { locale: ptBR, addSuffix: true })}</TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">Nenhum lance ainda.</TableCell>
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">Nenhum lance ainda.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -522,7 +577,7 @@ function AuctionPageContent() {
                 </div>
             </CardContent>
             <CardFooter>
-                 <p className="text-xs text-muted-foreground">Lances são priorizados por valor e depois por data.</p>
+                 <p className="text-xs text-muted-foreground">Lances são priorizados por Tipo, depois por Valor, e então por Data.</p>
             </CardFooter>
         </Card>
 

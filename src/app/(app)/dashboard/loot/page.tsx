@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage, doc, getDoc, collection, addDoc, serverTimestamp, query as firestoreQuery, Timestamp, onSnapshot, orderBy, writeBatch, updateDoc, arrayUnion, increment, deleteField, getDocs as getFirestoreDocs, where, ref as storageFirebaseRef, uploadBytes, getDownloadURL, deleteDoc as deleteFirestoreDoc } from '@/lib/firebase';
-import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember, LootRoll, LootRollStatus } from '@/types/guildmaster';
+import type { Guild, UserProfile, BankItem, BankItemStatus, GuildMemberRoleInfo, Auction, AuctionStatus, AuctionBid, RecruitmentQuestion, GuildMember, LootRoll, LootRollStatus, BidType } from '@/types/guildmaster';
 import { GuildPermission, TLRole, TLWeapon } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -1724,6 +1724,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         durationHours: initialDuration,
         roleRestriction: 'Geral' as TLRole | 'Geral',
         weaponRestriction: 'Geral' as TLWeapon | 'Geral',
+        refundDkpToLosers: false,
     });
 
     useEffect(() => {
@@ -1748,6 +1749,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
             durationHours: newDuration,
             roleRestriction: 'Geral',
             weaponRestriction: 'Geral',
+            refundDkpToLosers: false,
         });
         onOpenChange(false);
     };
@@ -1796,6 +1798,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                 isDistributed: false,
                 roleRestriction: config.roleRestriction,
                 weaponRestriction: config.weaponRestriction,
+                refundDkpToLosers: config.refundDkpToLosers,
             };
 
             batch.set(auctionRef, { ...newAuctionData, createdAt: serverTimestamp() as Timestamp });
@@ -1943,6 +1946,16 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div className="col-span-2">
+                                <Label>Devolver DKP aos perdedores?</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({...c, refundDkpToLosers: value === 'yes'}))} value={config.refundDkpToLosers ? 'yes' : 'no'}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="yes">Sim</SelectItem>
+                                        <SelectItem value="no">Não</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="col-span-2 grid grid-cols-1 gap-y-2">
                                 <Label>Data e Hora de Início</Label>
                                 <Popover>
@@ -2064,6 +2077,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                         <p><strong>Incremento Mínimo:</strong> {config.minIncrement} DKP</p>
                         <p><strong>Restrição de Função:</strong> {config.roleRestriction}</p>
                         <p><strong>Restrição de Arma:</strong> {config.weaponRestriction}</p>
+                        <p><strong>Devolver DKP aos perdedores?:</strong> {config.refundDkpToLosers ? 'Sim' : 'Não'}</p>
                         <p><strong>Início do leilão:</strong> {format(config.startTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</p>
                         <p><strong>Término do leilão:</strong> {format(config.endTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })} ({config.durationHours} horas)</p>
                     </div>
@@ -2285,145 +2299,142 @@ function LootRollCreationWizard({ isOpen, onOpenChange, guild, guildId, currentU
                         <DialogTitle>Passo 2: Detalhes da Rolagem</DialogTitle>
                         <DialogDescription>Configure custo, restrições e duração para o item "{selectedItem?.itemName}".</DialogDescription>
                       </DialogHeader>
-                      <div className="py-4 space-y-4">
+                       <div className="py-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Custo da Rolagem (DKP)</Label>
-                            <Input type="number" value={config.cost} onChange={(e) => setConfig((c) => ({ ...c, cost: Number(e.target.value) }))} min="0"/>
-                          </div>
-                          <div>
-                            <Label>Devolver DKP aos perdedores?</Label>
-                            <Select value={config.refundDkpToLosers ? 'yes' : 'no'} onValueChange={(val) => setConfig(c => ({...c, refundDkpToLosers: val === 'yes'}))}>
-                              <SelectTrigger><SelectValue/></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="yes">Sim</SelectItem>
-                                <SelectItem value="no">Não</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                              <Label>Restrição de Função (Opcional)</Label>
-                              <Select onValueChange={(value) => setConfig(c => ({...c, roleRestriction: value as TLRole | 'Geral'}))} value={config.roleRestriction}>
+                            <div>
+                                <Label>Custo da Rolagem (DKP)</Label>
+                                <Input type="number" value={config.cost} onChange={(e) => setConfig((c) => ({ ...c, cost: Number(e.target.value) }))} min="0" />
+                            </div>
+                            <div>
+                                <Label>Devolver DKP aos perdedores?</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({...c, refundDkpToLosers: value === 'yes'}))} value={config.refundDkpToLosers ? 'yes' : 'no'}>
                                   <SelectTrigger><SelectValue/></SelectTrigger>
                                   <SelectContent>
-                                      <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todos)</div></SelectItem>
-                                      <SelectItem value={TLRole.Tank}><div className="flex items-center gap-2"><ShieldLucideIcon className="h-4 w-4 text-sky-500"/>{TLRole.Tank}</div></SelectItem>
-                                      <SelectItem value={TLRole.DPS}><div className="flex items-center gap-2"><Swords className="h-4 w-4 text-rose-500"/>{TLRole.DPS}</div></SelectItem>
-                                      <SelectItem value={TLRole.Healer}><div className="flex items-center gap-2"><Heart className="h-4 w-4 text-emerald-500"/>{TLRole.Healer}</div></SelectItem>
+                                    <SelectItem value="yes">Sim</SelectItem>
+                                    <SelectItem value="no">Não</SelectItem>
                                   </SelectContent>
-                              </Select>
-                          </div>
-                          <div>
-                              <Label>Restrição de Arma (Opcional)</Label>
-                              <Select onValueChange={(value) => setConfig(c => ({...c, weaponRestriction: value as TLWeapon | 'Geral'}))} value={config.weaponRestriction}>
-                                  <SelectTrigger><SelectValue/></SelectTrigger>
-                                  <SelectContent>
-                                      <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todas)</div></SelectItem>
-                                      {Object.values(TLWeapon).map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
-                                  </SelectContent>
-                              </Select>
-                          </div>
-                          <div className="col-span-2 grid grid-cols-1 gap-y-2">
-                              <Label>Data e Hora de Início</Label>
-                              <Popover>
-                                  <PopoverTrigger asChild>
-                                      <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
-                                          <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                          {config.startTime ? format(config.startTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
-                                      </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                          mode="single"
-                                          selected={config.startTime}
-                                          onSelect={handleStartDateChange}
-                                          initialFocus
-                                          locale={ptBR}
-                                      />
-                                      <div className="p-4 border-t border-border">
-                                          <p className="text-sm font-medium mb-2 text-foreground">Horário de Início</p>
-                                          <div className="flex gap-2">
-                                              <Select
-                                                  value={String(config.startTime.getHours()).padStart(2, '0')}
-                                                  onValueChange={(h) => handleStartTimeChange('hour', h)}
-                                              >
-                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                                                  <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
-                                              </Select>
-                                              <Select
-                                                  value={String(config.startTime.getMinutes()).padStart(2, '0')}
-                                                  onValueChange={(m) => handleStartTimeChange('minute', m)}
-                                              >
-                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                                                  <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
-                                              </Select>
-                                          </div>
-                                      </div>
-                                  </PopoverContent>
-                              </Popover>
-                          </div>
-
-                           <div className="col-span-2 grid grid-cols-1 gap-y-2">
-                              <Label>Data e Hora de Término</Label>
-                              <Popover>
-                                  <PopoverTrigger asChild>
-                                      <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
-                                          <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                          {config.endTime ? format(config.endTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
-                                      </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                          mode="single"
-                                          selected={config.endTime}
-                                          onSelect={handleEndDateChange}
-                                          disabled={(date) => config.startTime ? date < config.startTime : false}
-                                          initialFocus
-                                          locale={ptBR}
-                                      />
-                                      <div className="p-4 border-t border-border">
-                                          <p className="text-sm font-medium mb-2 text-foreground">Horário de Fim</p>
-                                          <div className="flex gap-2">
-                                              <Select
-                                                  value={String(config.endTime.getHours()).padStart(2, '0')}
-                                                  onValueChange={(h) => handleEndTimeChange('hour', h)}
-                                              >
-                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                                                  <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
-                                              </Select>
-                                              <Select
-                                                  value={String(config.endTime.getMinutes()).padStart(2, '0')}
-                                                  onValueChange={(m) => handleEndTimeChange('minute', m)}
-                                              >
-                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                                                  <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
-                                              </Select>
-                                          </div>
-                                      </div>
-                                  </PopoverContent>
-                              </Popover>
-                          </div>
-
-                           <div className="col-span-2 flex items-center">
-                              <div className="flex-grow border-t border-border"></div>
-                              <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm">OU</span>
-                              <div className="flex-grow border-t border-border"></div>
-                          </div>
-                          
-                          <div className="col-span-2 grid grid-cols-1 gap-y-2">
-                              <Label>Duração da Rolagem</Label>
-                              <Select onValueChange={handleDurationChange} value={String(config.durationHours)}>
-                                  <SelectTrigger><SelectValue placeholder="Selecione uma duração..." /></SelectTrigger>
-                                  <SelectContent>
-                                      <SelectItem value="6">6 horas</SelectItem>
-                                      <SelectItem value="12">12 horas</SelectItem>
-                                      <SelectItem value="24">24 horas</SelectItem>
-                                      <SelectItem value="36">36 horas</SelectItem>
-                                      <SelectItem value="48">48 horas</SelectItem>
-                                      <SelectItem value="72">72 horas</SelectItem>
-                                  </SelectContent>
-                              </Select>
-                          </div>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label>Restrição de Função (Opcional)</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({...c, roleRestriction: value as TLRole | 'Geral'}))} value={config.roleRestriction}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todos)</div></SelectItem>
+                                        <SelectItem value={TLRole.Tank}><div className="flex items-center gap-2"><ShieldLucideIcon className="h-4 w-4 text-sky-500"/>{TLRole.Tank}</div></SelectItem>
+                                        <SelectItem value={TLRole.DPS}><div className="flex items-center gap-2"><Swords className="h-4 w-4 text-rose-500"/>{TLRole.DPS}</div></SelectItem>
+                                        <SelectItem value={TLRole.Healer}><div className="flex items-center gap-2"><Heart className="h-4 w-4 text-emerald-500"/>{TLRole.Healer}</div></SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label>Restrição de Arma (Opcional)</Label>
+                                <Select onValueChange={(value) => setConfig(c => ({...c, weaponRestriction: value as TLWeapon | 'Geral'}))} value={config.weaponRestriction}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todas)</div></SelectItem>
+                                        {Object.values(TLWeapon).map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                                <Label>Data e Hora de Início</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.startTime ? format(config.startTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={config.startTime}
+                                            onSelect={handleStartDateChange}
+                                            initialFocus
+                                            locale={ptBR}
+                                        />
+                                        <div className="p-4 border-t border-border">
+                                            <p className="text-sm font-medium mb-2 text-foreground">Horário de Início</p>
+                                            <div className="flex gap-2">
+                                                <Select
+                                                    value={String(config.startTime.getHours()).padStart(2, '0')}
+                                                    onValueChange={(h) => handleStartTimeChange('hour', h)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={String(config.startTime.getMinutes()).padStart(2, '0')}
+                                                    onValueChange={(m) => handleStartTimeChange('minute', m)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                                <Label>Data e Hora de Término</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.endTime ? format(config.endTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={config.endTime}
+                                            onSelect={handleEndDateChange}
+                                            disabled={(date) => config.startTime ? date < config.startTime : false}
+                                            initialFocus
+                                            locale={ptBR}
+                                        />
+                                        <div className="p-4 border-t border-border">
+                                            <p className="text-sm font-medium mb-2 text-foreground">Horário de Fim</p>
+                                            <div className="flex gap-2">
+                                                <Select
+                                                    value={String(config.endTime.getHours()).padStart(2, '0')}
+                                                    onValueChange={(h) => handleEndTimeChange('hour', h)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={String(config.endTime.getMinutes()).padStart(2, '0')}
+                                                    onValueChange={(m) => handleEndTimeChange('minute', m)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="col-span-2 flex items-center">
+                                <div className="flex-grow border-t border-border"></div>
+                                <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm">OU</span>
+                                <div className="flex-grow border-t border-border"></div>
+                            </div>
+                            <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                                <Label>Duração da Rolagem</Label>
+                                <Select onValueChange={handleDurationChange} value={String(config.durationHours)}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione uma duração..." /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="6">6 horas</SelectItem>
+                                        <SelectItem value="12">12 horas</SelectItem>
+                                        <SelectItem value="24">24 horas</SelectItem>
+                                        <SelectItem value="36">36 horas</SelectItem>
+                                        <SelectItem value="48">48 horas</SelectItem>
+                                        <SelectItem value="72">72 horas</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                       </div>
                       <DialogFooter>
