@@ -29,7 +29,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize App Check
+    // [App Prototyper Note]: Firebase App Check is required for features like file uploads to Firebase Storage.
+    // It has been temporarily disabled because it requires a reCAPTCHA v3 site key.
+    // To enable it, you need to:
+    // 1. Create a reCAPTCHA v3 site key in the Google Cloud or reCAPTCHA admin console.
+    // 2. Add it to a .env.local file in your project root: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=YOUR_KEY_HERE`
+    // 3. Uncomment the code block below.
+    /*
     if (typeof window !== 'undefined') {
       const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
       if (siteKey) {
@@ -40,17 +46,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
           console.log("Firebase App Check initialized.");
         } catch (e: any) {
-          // It's common for this to throw an error if already initialized.
-          // We only want to log other types of errors.
           if (e.name !== 'FirebaseError' || e.code !== 'appCheck/already-initialized') {
             console.error("Error initializing Firebase App Check:", e);
           }
         }
       } else {
-        console.error("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. App Check will not be initialized.");
+        console.warn("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. App Check is required for some Firebase features like file uploads.");
       }
     }
-
+    */
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentFirebaseUser: FirebaseUser | null) => {
       if (currentFirebaseUser) {
         const userDocRef = doc(db, "users", currentFirebaseUser.uid);
