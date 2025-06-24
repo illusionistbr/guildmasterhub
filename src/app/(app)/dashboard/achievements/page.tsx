@@ -5,35 +5,35 @@ import React, { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Trophy, Castle, Award, User, Lock } from 'lucide-react';
+import { Loader2, Trophy, Castle, Award, User, Lock, Gavel } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { db, doc, getDoc, Timestamp } from '@/lib/firebase';
-import type { Guild } from '@/types/guildmaster';
+import type { Guild, Achievement } from '@/types/guildmaster';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  points: number;
-  color: 'amber' | 'silver' | 'orange';
-  requiredMembers: number;
-}
-
 const allAchievements: Achievement[] = [
-    { id: 'guild_founded', title: 'Guild fundada', description: 'Parabéns a nova guild que acabou de ser fundada.', icon: Castle, points: 50, color: 'amber', requiredMembers: 1 },
-    { id: 'one_member', title: 'Guild com 1 membro', description: 'Toda grande jornada começa com um único passo. E o primeiro membro!', icon: User, points: 10, color: 'orange', requiredMembers: 1 },
-    { id: '10_members', title: 'Guild com 10 membros', description: 'Dez heróis unidos sob o mesmo estandarte.', icon: User, points: 100, color: 'orange', requiredMembers: 10 },
-    { id: '25_members', title: 'Guild com 25 membros', description: 'Um pelotão formado e pronto para a batalha.', icon: User, points: 250, color: 'orange', requiredMembers: 25 },
-    { id: '50_members', title: 'Guild com 50 membros', description: 'Meio exército! A guilda se torna uma força a ser reconhecida.', icon: User, points: 500, color: 'orange', requiredMembers: 50 },
-    { id: '100_members', title: 'Guild com 100 membros', description: 'Uma legião inteira! Seu nome ecoa pelos reinos.', icon: User, points: 1000, color: 'silver', requiredMembers: 100 },
-    { id: '150_members', title: 'Guild com 150 membros', description: 'A guilda cresce e se torna uma potência continental.', icon: User, points: 1500, color: 'silver', requiredMembers: 150 },
-    { id: '200_members', title: 'Guild com 200 membros', description: 'Uma força imparável, temida e respeitada por todos.', icon: User, points: 2000, color: 'amber', requiredMembers: 200 },
-    { id: '300_members', title: 'Guild com 300 membros', description: 'Um império de heróis! Sua lenda será contada por eras.', icon: User, points: 3000, color: 'amber', requiredMembers: 300 },
+    // Member achievements
+    { id: 'guild_founded', title: 'Guild fundada', description: 'Parabéns a nova guild que acabou de ser fundada.', icon: Castle, points: 50, color: 'amber', requiredCount: 1, type: 'members' },
+    { id: 'one_member', title: 'Guild com 1 membro', description: 'Toda grande jornada começa com um único passo. E o primeiro membro!', icon: User, points: 10, color: 'orange', requiredCount: 1, type: 'members' },
+    { id: '10_members', title: 'Guild com 10 membros', description: 'Dez heróis unidos sob o mesmo estandarte.', icon: User, points: 100, color: 'orange', requiredCount: 10, type: 'members' },
+    { id: '25_members', title: 'Guild com 25 membros', description: 'Um pelotão formado e pronto para a batalha.', icon: User, points: 250, color: 'orange', requiredCount: 25, type: 'members' },
+    { id: '50_members', title: 'Guild com 50 membros', description: 'Meio exército! A guilda se torna uma força a ser reconhecida.', icon: User, points: 500, color: 'orange', requiredCount: 50, type: 'members' },
+    { id: '100_members', title: 'Guild com 100 membros', description: 'Uma legião inteira! Seu nome ecoa pelos reinos.', icon: User, points: 1000, color: 'silver', requiredCount: 100, type: 'members' },
+    { id: '150_members', title: 'Guild com 150 membros', description: 'A guilda cresce e se torna uma potência continental.', icon: User, points: 1500, color: 'silver', requiredCount: 150, type: 'members' },
+    { id: '200_members', title: 'Guild com 200 membros', description: 'Uma força imparável, temida e respeitada por todos.', icon: User, points: 2000, color: 'amber', requiredCount: 200, type: 'members' },
+    { id: '300_members', title: 'Guild com 300 membros', description: 'Um império de heróis! Sua lenda será contada por eras.', icon: User, points: 3000, color: 'amber', requiredCount: 300, type: 'members' },
+
+    // Auction achievements
+    { id: '1_auction', title: 'Primeiro Leilão', description: 'A guilda realizou seu primeiro leilão de item.', icon: Gavel, points: 5, color: 'orange', requiredCount: 1, type: 'auctions'},
+    { id: '10_auctions', title: '10 Leilões Realizados', description: 'Uma dezena de itens já encontrou um novo dono.', icon: Gavel, points: 50, color: 'orange', requiredCount: 10, type: 'auctions'},
+    { id: '20_auctions', title: '20 Leilões Realizados', description: 'A guilda se torna um centro de comércio conhecido.', icon: Gavel, points: 200, color: 'orange', requiredCount: 20, type: 'auctions'},
+    { id: '50_auctions', title: '50 Leilões Realizados', description: 'Meia centena de tesouros distribuídos com sucesso.', icon: Gavel, points: 250, color: 'silver', requiredCount: 50, type: 'auctions'},
+    { id: '100_auctions', title: '100 Leilões Realizados', description: 'A marca de 100 leilões! Uma economia próspera.', icon: Gavel, points: 500, color: 'silver', requiredCount: 100, type: 'auctions'},
+    { id: '200_auctions', title: '200 Leilões Realizados', description: 'Centenas de itens fortalecendo os membros da guilda.', icon: Gavel, points: 1000, color: 'silver', requiredCount: 200, type: 'auctions'},
+    { id: '500_auctions', title: '500 Leilões Realizados', description: 'Um mercado lendário! A guilda é um poder econômico.', icon: Gavel, points: 2500, color: 'amber', requiredCount: 500, type: 'auctions'},
 ];
 
 function AchievementsPageContent() {
@@ -95,11 +95,23 @@ function AchievementsPageContent() {
   };
   
   const currentMemberCount = guild?.memberCount || 0;
-  const unlockedAchievements = allAchievements.filter(ach => currentMemberCount >= ach.requiredMembers);
-  const lockedAchievements = allAchievements.filter(ach => currentMemberCount < ach.requiredMembers);
+  const currentAuctionCount = guild?.auctionCount || 0;
+
+  const unlockedAchievements = allAchievements.filter(ach => {
+    if (ach.type === 'members') return currentMemberCount >= ach.requiredCount;
+    if (ach.type === 'auctions') return currentAuctionCount >= ach.requiredCount;
+    return false;
+  });
+  const lockedAchievements = allAchievements.filter(ach => {
+    if (ach.type === 'members') return currentMemberCount < ach.requiredCount;
+    if (ach.type === 'auctions') return currentAuctionCount < ach.requiredCount;
+    return true;
+  });
 
   const renderAchievementCard = (achievement: Achievement, locked: boolean) => {
     const colors = colorVariants[achievement.color] || colorVariants.amber;
+    const requirementText = achievement.type === 'members' ? 'membros' : 'leilões';
+
     return (
       <div className="w-full max-w-sm" key={achievement.id}>
         <Card className={cn("card-bg flex flex-col text-center transition-all duration-300 h-full", locked && "opacity-60")}>
@@ -119,7 +131,7 @@ function AchievementsPageContent() {
           <CardFooter className="flex justify-center border-t border-border/50 pt-3 pb-4">
             {locked ? (
               <p className="text-xs text-yellow-400 font-semibold flex items-center gap-1">
-                <Lock className="h-3 w-3"/> Requer {achievement.requiredMembers} membros
+                <Lock className="h-3 w-3"/> Requer {achievement.requiredCount} {requirementText}
               </p>
             ) : (
               <p className="text-xs text-green-400 font-semibold">

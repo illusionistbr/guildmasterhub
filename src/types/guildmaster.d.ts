@@ -122,6 +122,7 @@ export interface Guild {
   dkpDecayInitialDate?: Timestamp;
   lastDkpDecayTimestamp?: Timestamp;
   tlGuildFocus?: string[];
+  auctionCount?: number;
 }
 
 export interface Event {
@@ -163,13 +164,13 @@ export interface ManualConfirmation {
 
 export interface Achievement {
   id: string;
-  guildId: string;
   title: string;
   description: string;
-  icon: string;
-  dateAchieved: string;
-  category: string;
-  achievedByIds?: string[];
+  icon: React.ElementType;
+  points: number;
+  color: 'amber' | 'silver' | 'orange';
+  requiredCount: number;
+  type: 'members' | 'auctions';
 }
 
 export interface Application {

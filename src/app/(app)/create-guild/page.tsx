@@ -156,6 +156,7 @@ export default function CreateGuildPage() {
         dkpRedemptionWindow: { value: 24, unit: 'hours' },
         dkpDefaultsPerCategory: {},
         dkpDecayEnabled: false,
+        auctionCount: 0,
         // tlGuildFocus removed
     };
 

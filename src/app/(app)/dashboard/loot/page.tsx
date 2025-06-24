@@ -1778,6 +1778,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         const batch = writeBatch(db);
         const auctionRef = doc(collection(db, `guilds/${guildId}/auctions`));
         const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
+        const guildRef = doc(db, "guilds", guildId);
 
         try {
             const { id, status, createdAt, ...itemData } = selectedItem;
@@ -1803,6 +1804,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
 
             batch.set(auctionRef, { ...newAuctionData, createdAt: serverTimestamp() as Timestamp });
             batch.update(bankItemRef, { status: 'Em leilão' });
+            batch.update(guildRef, { auctionCount: increment(1) });
             
             await batch.commit();
             toast({ title: "Leilão Criado!", description: `O leilão para "${selectedItem.itemName}" foi agendado.` });
