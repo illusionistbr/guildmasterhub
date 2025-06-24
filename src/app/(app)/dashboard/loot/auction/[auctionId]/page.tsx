@@ -50,6 +50,15 @@ function AuctionPageContent() {
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("");
 
+  const winner = useMemo(() => {
+    if (!auction || auction.status !== 'ended' || !auction.currentWinnerId || !auction.bids || auction.bids.length === 0) {
+        return null;
+    }
+    const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
+    return winningBid || null;
+  }, [auction]);
+
+
   const currentUserRoleInfo = useMemo(() => {
     if (!currentUser || !guild || !guild.roles) return null;
     return guild.roles[currentUser.uid];
@@ -64,15 +73,6 @@ function AuctionPageContent() {
     );
   }, [currentUserRoleInfo, guild]);
   
-  const winner = useMemo(() => {
-    if (!auction || auction.status !== 'ended' || !auction.currentWinnerId || !auction.bids || auction.bids.length === 0) {
-        return null;
-    }
-    const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
-    return winningBid || null;
-  }, [auction]);
-
-
   useEffect(() => {
     if (!guildId) {
       toast({ title: "Erro", description: "ID da guilda não encontrado.", variant: "destructive" });
@@ -151,7 +151,7 @@ function AuctionPageContent() {
 
   useEffect(() => {
     const handleAutomaticFinalization = async () => {
-        if (!currentUser || !guild || !auction || !guildId) return;
+        if (!currentUser || !guild || !auction || !guildId || !auction.bankItemId) return;
 
         setIsFinalizing(true);
         toast({ title: "Finalizando leilão...", description: "O tempo do leilão acabou, processando os resultados." });
@@ -159,6 +159,7 @@ function AuctionPageContent() {
         const batch = writeBatch(db);
         const guildRef = doc(db, "guilds", guildId);
         const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+        const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, auction.bankItemId);
 
         try {
             const bids = auction.bids || [];
@@ -179,7 +180,8 @@ function AuctionPageContent() {
                 }
             }
             
-            batch.update(auctionRef, { status: 'ended' });
+            batch.update(auctionRef, { status: 'ended', isDistributed: true });
+            batch.update(bankItemRef, { status: 'Distribuído' });
             await batch.commit();
 
             await logGuildActivity(
