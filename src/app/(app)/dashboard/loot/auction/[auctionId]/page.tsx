@@ -218,29 +218,6 @@ function AuctionPageContent() {
     }
   }, [auction, canEditAuction, currentUser, guild, guildId, toast]);
 
-  useEffect(() => {
-    // This effect is for correcting inconsistent states.
-    // If an auction is 'ended' but its corresponding bank item is still 'Em leilão',
-    // this will update the bank item's status.
-    const correctInconsistentState = async () => {
-        if (!auction || !guildId || !canEditAuction) return;
-
-        if (auction.status === 'ended' && auction.bankItemId) {
-            const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, auction.bankItemId);
-            const bankItemSnap = await getDoc(bankItemRef);
-
-            if (bankItemSnap.exists() && bankItemSnap.data().status === 'Em leilão') {
-                console.log(`Correcting inconsistent state for item ${auction.bankItemId}`);
-                toast({ title: "Corrigindo status do item...", description: "Sincronizando o status do item com o leilão encerrado." });
-                await updateDoc(bankItemRef, { status: 'Distribuído' });
-            }
-        }
-    };
-
-    correctInconsistentState();
-  }, [auction, guildId, canEditAuction, toast]);
-
-
   const handlePlaceBid = async () => {
     if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
         toast({ title: "Erro", description: "Dados insuficientes para fazer o lance.", variant: "destructive" });
