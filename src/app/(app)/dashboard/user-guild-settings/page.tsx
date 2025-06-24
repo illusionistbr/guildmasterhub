@@ -27,7 +27,13 @@ const tlWeaponsList = Object.values(TLWeapon);
 
 const userGuildSettingsSchema = z.object({
   characterNickname: z.string().min(2, "Nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
-  gearScore: z.coerce.number().min(0, "Gearscore deve ser positivo.").max(10000, "Gearscore improvável.").optional(),
+  gearScore: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
+    z.number({ invalid_type_error: "Gearscore deve ser um número." })
+     .min(0, "Gearscore deve ser positivo.")
+     .max(10000, "Gearscore improvável.")
+     .optional()
+  ),
   gearScoreScreenshotUrl: z.string().url("URL inválida. Use Imgur, etc.").max(250, "URL muito longa.").optional().or(z.literal('')),
   gearBuildLink: z.string().url("URL inválida para Gear Build Link.").max(250, "URL do Gear Build Link muito longa.").optional().or(z.literal('')),
   skillBuildLink: z.string().url("URL inválida para Skill Build Link.").max(250, "URL do Skill Build Link muito longa.").optional().or(z.literal('')),
@@ -242,7 +248,7 @@ function UserGuildSettingsPageContent() {
                     <FormControl>
                       <div className="relative flex items-center">
                         <Hash className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input type="number" {...field} placeholder="Ex: 5200" className="form-input pl-10" />
+                        <Input type="text" inputMode="numeric" {...field} placeholder="Ex: 5200" className="form-input pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
