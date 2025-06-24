@@ -8,8 +8,8 @@ import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, increment as firebaseIncrement } from '@/lib/firebase';
-import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
+import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
 import { logGuildActivity } from '@/lib/auditLogService';
 
@@ -268,6 +268,14 @@ function AuctionPageContent() {
     }
   };
   
+  const winner = useMemo(() => {
+    if (!auction || auction.status !== 'ended' || !auction.currentWinnerId || !auction.bids || auction.bids.length === 0) {
+        return null;
+    }
+    const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
+    return winningBid || null;
+  }, [auction]);
+  
   if (loading) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
@@ -276,14 +284,6 @@ function AuctionPageContent() {
      return <div className="text-center py-10">Leilão não encontrado.</div>;
   }
 
-  const winner = useMemo(() => {
-    if (auction.status === 'ended' && auction.currentWinnerId && auction.bids.length > 0) {
-        const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
-        return winningBid;
-    }
-    return null;
-  }, [auction]);
-  
   const getStatusBadgeProps = (status: Auction['status']) => {
     switch (status) {
         case 'active': return { text: 'Aberto', className: 'bg-green-600/80' };
