@@ -1512,6 +1512,9 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
     const [step, setStep] = useState<'select' | 'details' | 'confirm'>('select');
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+    const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
     
     useEffect(() => {
         if (isOpen && initialItem) {
@@ -1607,6 +1610,31 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         }
     };
     
+    const handleStartTimeChange = (newTimePart: 'hour' | 'minute', value: string) => {
+        setConfig(c => {
+            const newDate = new Date(c.startTime);
+            if (newTimePart === 'hour') {
+                newDate.setHours(Number(value));
+            } else {
+                newDate.setMinutes(Number(value));
+            }
+            return { ...c, startTime: newDate };
+        });
+    };
+
+    const handleStartDateChange = (date: Date | undefined) => {
+        if (!date) return;
+        setConfig(c => {
+            const newDate = new Date(date);
+            const currentTime = new Date(c.startTime);
+            newDate.setHours(currentTime.getHours());
+            newDate.setMinutes(currentTime.getMinutes());
+            newDate.setSeconds(0);
+            newDate.setMilliseconds(0);
+            return { ...c, startTime: newDate };
+        });
+    };
+    
     const renderContent = () => {
         switch (step) {
             case 'select':
@@ -1673,21 +1701,46 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                     </SelectContent>
                                 </Select>
                             </div>
-                             <div>
+                             <div className="col-span-2 grid grid-cols-1 gap-y-2">
                                 <Label>Data e Hora de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
                                             <CalendarIconLucide className="mr-2 h-4 w-4" />
-                                            {config.startTime ? format(config.startTime, "PPpp", { locale: ptBR }) : <span>Escolha uma data</span>}
+                                            {config.startTime ? format(config.startTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar mode="single" selected={config.startTime} onSelect={(d) => d && setConfig(c => ({...c, startTime: d}))} initialFocus />
+                                        <Calendar
+                                            mode="single"
+                                            selected={config.startTime}
+                                            onSelect={handleStartDateChange}
+                                            initialFocus
+                                            locale={ptBR}
+                                        />
+                                        <div className="p-4 border-t border-border">
+                                            <p className="text-sm font-medium mb-2 text-foreground">Horário de Início</p>
+                                            <div className="flex gap-2">
+                                                <Select
+                                                    value={String(config.startTime.getHours()).padStart(2, '0')}
+                                                    onValueChange={(h) => handleStartTimeChange('hour', h)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={String(config.startTime.getMinutes()).padStart(2, '0')}
+                                                    onValueChange={(m) => handleStartTimeChange('minute', m)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                             <div>
+                             <div className="col-span-2 grid grid-cols-1 gap-y-2">
                                 <Label>Duração do Leilão</Label>
                                 <Select onValueChange={(value) => setConfig(c => ({ ...c, durationHours: Number(value) }))} value={String(config.durationHours)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1750,6 +1803,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
