@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -87,7 +88,7 @@ import type { DateRange } from "react-day-picker";
 import { cn } from '@/lib/utils';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Label } from '@/components/ui/label';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, isGuildOwner } from '@/lib/permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -240,12 +241,12 @@ function MembersListTabContent(
     setMembers(initialMembers); 
   }, [initialMembers]);
 
-  const canManageMemberRoles = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE), [currentUserRoleInfo, guild?.customRoles]);
-  const canKickMembers = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK), [currentUserRoleInfo, guild?.customRoles]);
-  const canManageMemberStatus = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS), [currentUserRoleInfo, guild?.customRoles]);
-  const canManageMemberNotes = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES), [currentUserRoleInfo, guild?.customRoles]);
-  const canViewDetailedMemberInfo = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO), [currentUserRoleInfo, guild?.customRoles]);
-  const canAdjustMemberDkp = useMemo(() => hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE), [currentUserRoleInfo, guild?.customRoles]);
+  const canManageMemberRoles = useMemo(() => isGuildOwner(currentUser?.uid, guild) || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE), [currentUser, guild, currentUserRoleInfo]);
+  const canKickMembers = useMemo(() => isGuildOwner(currentUser?.uid, guild) || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK), [currentUser, guild, currentUserRoleInfo]);
+  const canManageMemberStatus = useMemo(() => isGuildOwner(currentUser?.uid, guild) || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS), [currentUser, guild, currentUserRoleInfo]);
+  const canManageMemberNotes = useMemo(() => isGuildOwner(currentUser?.uid, guild) || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES), [currentUser, guild, currentUserRoleInfo]);
+  const canViewDetailedMemberInfo = useMemo(() => isGuildOwner(currentUser?.uid, guild) || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO), [currentUser, guild, currentUserRoleInfo]);
+  const canAdjustMemberDkp = useMemo(() => isGuildOwner(currentUser?.uid, guild) || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE), [currentUser, guild, currentUserRoleInfo]);
 
 
   const availableRoleNamesForChange = useMemo(() => {
@@ -1018,5 +1019,6 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
