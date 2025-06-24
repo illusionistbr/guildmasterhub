@@ -10,6 +10,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  Auth,
 } from 'firebase/auth';
 
 interface AuthContextType {
@@ -18,6 +19,7 @@ interface AuthContextType {
   login: (email?: string, password?: string) => Promise<string>; // Returns redirect path
   logout: () => Promise<void>;
   signup?: (nickname: string, email?: string, password?: string) => Promise<string>; // Returns redirect path
+  auth: Auth; // Expose the auth object
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -132,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, signup }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, signup, auth: firebaseAuth }}>
       {children}
     </AuthContext.Provider>
   );
@@ -145,4 +147,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

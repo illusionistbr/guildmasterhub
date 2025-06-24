@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, UserCircle, Settings, ShieldCheck } from "lucide-react";
+import { LogOut, UserCircle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export function UserNav() {
@@ -66,17 +65,8 @@ export function UserNav() {
               <span>Minhas Guildas</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configurações</span>
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">
+           <DropdownMenuItem asChild>
+            <Link href="/dashboard/profile">
               <UserCircle className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </Link>
@@ -91,4 +81,3 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
-
