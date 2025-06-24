@@ -982,13 +982,13 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                     <p className="text-muted-foreground">
+                     <p className="text-muted-foreground text-left">
                         <span className="font-bold text-white">Trait:</span> {item.trait}
                     </p>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-left">
                         <span className="font-bold text-white">Drop:</span> {item.droppedByMemberName || 'N/A'}
                     </p>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-left">
                         <span className="font-bold text-white">Data:</span> {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
                     </p>
                 </div>
@@ -1148,7 +1148,7 @@ function NewBankItemDialog({ guildId, currentUser, guildMembers }: { guildId: st
                                             Object.entries(currentItemOptions)
                                                 .sort(([, a], [, b]) => a.name.localeCompare(b.name))
                                                 .map(([key, itemData]) => (
-                                                <FormItem key={key} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted cursor-pointer has-[:checked]:bg-primary/20 has-[:checked]:border-primary border border-transparent">
+                                                <FormItem key={key} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted cursor-pointer has-[:checked]:bg-primary/20 has-[:checked]:border-primary border border-transparent" onClick={() => field.onChange(key)}>
                                                     <FormControl>
                                                         <RadioGroupItem value={key} />
                                                     </FormControl>
@@ -1349,11 +1349,11 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                 <TableRow key={auction.id}>
                                     <TableCell><Checkbox /></TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 p-1 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
+                                        <div className="flex items-start gap-2">
+                                            <div className="w-8 h-8 p-1 rounded-md flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-black/40 border border-purple-400/50">
                                                 <Image src={auction.item.imageUrl} alt={auction.item.itemName || ""} width={24} height={24} data-ai-hint="auctioned item icon" />
                                             </div>
-                                            <span className="font-medium truncate max-w-[150px]">{auction.item.itemName}</span>
+                                            <span className="font-medium">{auction.item.itemName}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>{auction.item.trait || 'N/A'}</TableCell>
@@ -1793,6 +1793,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
