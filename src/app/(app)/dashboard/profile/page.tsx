@@ -124,9 +124,6 @@ function ProfilePageContent() {
       
       toast({ title: "Perfil Atualizado!", description: "Suas informações foram salvas com sucesso." });
       
-      // Force a refresh of the page to get the latest user data in the context and UI
-      router.refresh();
-
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
       toast({ title: "Erro ao Salvar", description: "Não foi possível atualizar seu perfil.", variant: "destructive" });
@@ -209,7 +206,7 @@ function ProfilePageContent() {
                 <FormField
                   control={form.control}
                   name="photoFile"
-                  render={({ field: { value, onChange, ...rest } }) => (
+                  render={({ field: { onChange, ...rest } }) => (
                     <FormItem>
                       <FormLabel>Fazer Upload da Foto (Máx 2MB)</FormLabel>
                       <FormControl>
