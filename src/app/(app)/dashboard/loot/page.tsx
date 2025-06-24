@@ -1288,16 +1288,11 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   
   const getStatusBadgeProps = (status: AuctionStatus) => {
     switch (status) {
-        case 'active':
-            return { text: 'Aberto', className: 'bg-green-600/80' };
-        case 'scheduled':
-            return { text: 'Agendado', className: 'bg-yellow-600/80 text-yellow-foreground' };
-        case 'ended':
-            return { text: 'Encerrado', className: 'bg-gray-500/80' };
-        case 'cancelled':
-            return { text: 'Cancelado', className: 'bg-red-600/80' };
-        default:
-            return { text: status, className: 'bg-muted' };
+        case 'active': return { text: 'Aberto', className: 'bg-green-500/20 text-green-600 border-green-500/50' };
+        case 'scheduled': return { text: 'Agendado', className: 'bg-sky-500/20 text-sky-600 border-sky-500/50' };
+        case 'ended': return { text: 'Encerrado', className: 'bg-orange-500/20 text-orange-600 border-orange-500/50' };
+        case 'cancelled': return { text: 'Cancelado', className: 'bg-red-500/20 text-red-600 border-red-500/50' };
+        default: return { text: status, className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
     }
   };
 
@@ -1391,7 +1386,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                     <TableCell>DKP</TableCell>
                                     <TableCell>{format(auction.startTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                                     <TableCell>{format(auction.endTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
-                                    <TableCell><Badge variant="default" className={statusProps.className}>{statusProps.text}</Badge></TableCell>
+                                    <TableCell><Badge variant="outline" className={statusProps.className}>{statusProps.text}</Badge></TableCell>
                                     <TableCell>{auction.isDistributed ? 'Sim' : 'Não'}</TableCell>
                                 </TableRow>
                             )
@@ -1818,4 +1813,3 @@ const LootPageWrapper = () => {
 }
 export default LootPageWrapper;
 
-    

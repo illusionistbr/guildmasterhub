@@ -310,11 +310,11 @@ function AuctionPageContent() {
 
   const getStatusBadgeProps = (status: Auction['status']) => {
     switch (status) {
-        case 'active': return { text: 'Aberto', className: 'bg-green-600/80' };
-        case 'scheduled': return { text: 'Agendado', className: 'bg-yellow-600/80 text-yellow-foreground' };
-        case 'ended': return { text: 'Encerrado', className: 'bg-gray-500/80' };
-        case 'cancelled': return { text: 'Cancelado', className: 'bg-red-600/80' };
-        default: return { text: status, className: 'bg-muted' };
+        case 'active': return { text: 'Aberto', className: 'bg-green-500/20 text-green-600 border-green-500/50' };
+        case 'scheduled': return { text: 'Agendado', className: 'bg-sky-500/20 text-sky-600 border-sky-500/50' };
+        case 'ended': return { text: 'Encerrado', className: 'bg-orange-500/20 text-orange-600 border-orange-500/50' };
+        case 'cancelled': return { text: 'Cancelado', className: 'bg-red-500/20 text-red-600 border-red-500/50' };
+        default: return { text: status, className: 'bg-gray-500/20 text-gray-400 border-gray-500/50' };
     }
   };
 
@@ -370,7 +370,7 @@ function AuctionPageContent() {
             <CardContent className="p-4 grid grid-cols-2 gap-4 text-center">
                 <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge variant="default" className={cn("text-lg", statusProps.className)}>{statusProps.text}</Badge>
+                    <Badge variant="outline" className={cn("text-lg", statusProps.className)}>{statusProps.text}</Badge>
                 </div>
                 <div>
                     <p className="text-sm text-muted-foreground">Tempo Restante</p>
