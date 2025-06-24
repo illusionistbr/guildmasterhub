@@ -241,14 +241,14 @@ function MembersListTabContent(
     setMembers(initialMembers); 
   }, [initialMembers]);
 
-  // Simplified permission checks - no useMemo
+  // Viewer's permissions
   const isOwner = isGuildOwner(currentUser?.uid, guild);
-  const canManageMemberRoles = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE);
-  const canKickMembers = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK);
-  const canManageMemberStatus = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS);
-  const canManageMemberNotes = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES);
-  const canViewDetailedMemberInfo = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO);
-  const canAdjustMemberDkp = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
+  const canManageMemberRoles = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE);
+  const canKickMembers = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK);
+  const canManageMemberStatus = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS);
+  const canManageMemberNotes = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES);
+  const canViewDetailedMemberInfo = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO);
+  const canAdjustMemberDkp = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
 
 
   const availableRoleNamesForChange = useMemo(() => {
@@ -589,11 +589,21 @@ function MembersListTabContent(
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
               const displayName = member.characterNickname || member.displayName || member.email || member.uid;
 
-              const hasRoleActions = !isCurrentUserTarget && canManageMemberRoles && !(isGuildOwnerTarget && member.roleName === "Lider");
-              const hasStatusActions = !isCurrentUserTarget && canManageMemberStatus;
+              // Viewer's permissions are already checked in canManage... variables.
+              // These flags determine if an action type is available for the TARGET member.
+              
+              // Cannot change your own role, or the owner's role.
+              const hasRoleActions = !isCurrentUserTarget && canManageMemberRoles && !isGuildOwnerTarget;
+              
+              // Can change status, with restrictions inside the dropdown.
+              const hasStatusActions = canManageMemberStatus;
+              
+              // Cannot give DKP to yourself or the owner.
               const hasDkpActions = !isCurrentUserTarget && canAdjustMemberDkp && guild.dkpSystemEnabled && !isGuildOwnerTarget;
+              
+              // Cannot kick yourself or the owner.
               const hasKickAction = !isCurrentUserTarget && canKickMembers && !isGuildOwnerTarget;
-
+              
               const canPerformManagementActions = hasRoleActions || hasStatusActions || hasDkpActions || hasKickAction;
               
               return (
@@ -724,9 +734,9 @@ function GroupsTabContent(
 
   const canManageGroups = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
-    return hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
-           hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) ||
-           hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
+    return hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
+           hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) ||
+           hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
   }, [currentUserRoleInfo, guild?.customRoles]);
 
   useEffect(() => {
@@ -740,7 +750,7 @@ function GroupsTabContent(
   }, [guildId, toast]);
 
   const handleOpenGroupDialog = (groupToEdit: GuildGroup | null = null) => {
-    const canEdit = groupToEdit ? hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) : hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
+    const canEdit = groupToEdit ? hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) : hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
     if (!canEdit) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${groupToEdit ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
     setEditingGroup(groupToEdit);
     if (groupToEdit) { groupForm.reset({ name: groupToEdit.name, icon: groupToEdit.icon, headerColor: groupToEdit.headerColor, members: groupToEdit.members.map(m => ({ memberId: m.memberId, note: m.note || "" })), });
@@ -751,7 +761,7 @@ function GroupsTabContent(
   const onSubmitGroup: GroupSubmitHandler<GroupFormValues> = async (data) => {
     if (!currentUser || !guildId) return;
     const requiredPermission = editingGroup ? GuildPermission.MANAGE_GROUPS_EDIT : GuildPermission.MANAGE_GROUPS_CREATE;
-    if (!hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, requiredPermission)) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
+    if (!hasPermission(currentUserRoleInfo, guild?.customRoles, requiredPermission)) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
     setIsSubmittingGroup(true);
     const groupMembersData: GuildGroupMember[] = data.members.filter(m => m.memberId).map(m => { const memberProfile = guildMembers.find(gm => gm.uid === m.memberId); return { memberId: m.memberId, displayName: memberProfile?.displayName || 'Desconhecido', photoURL: memberProfile?.photoURL || null, note: m.note, }; });
     const groupDataPayload = { name: data.name, icon: data.icon, headerColor: data.headerColor, members: groupMembersData, guildId: guildId, };
@@ -771,7 +781,7 @@ function GroupsTabContent(
   };
 
   const handleDeleteGroup = async (groupToDeleteConfirmed: GuildGroup) => {
-    if (!groupToDeleteConfirmed || !currentUser || !guildId || !hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE)) { toast({title: "Permissão Negada", description: "Você não tem permissão para excluir grupos.", variant: "destructive"}); return; }
+    if (!groupToDeleteConfirmed || !currentUser || !guildId || !hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE)) { toast({title: "Permissão Negada", description: "Você não tem permissão para excluir grupos.", variant: "destructive"}); return; }
     setIsSubmittingGroup(true);
     try {
       await firestoreDeleteDoc(doc(db, `guilds/${guildId}/groups`, groupToDeleteConfirmed.id));
@@ -789,12 +799,12 @@ function GroupsTabContent(
   return (
     <div className="space-y-6 pt-6">
       <div className="flex justify-end">
-        {hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) && (
+        {hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) && (
           <Button onClick={() => handleOpenGroupDialog()} className="btn-gradient btn-style-secondary"> <PlusCircle className="mr-2 h-5 w-5" /> Novo Grupo </Button>
         )}
       </div>
       {groups.length === 0 ? (
-        <Card className="card-bg text-center py-10 max-w-lg mx-auto"> <CardHeader> <UsersRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" /> <CardTitle className="text-2xl">Nenhum Grupo Criado</CardTitle> </CardHeader> <CardContent> <p className="text-muted-foreground"> {hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ? "Crie o primeiro grupo para sua guilda!" : "Ainda não há grupos formados nesta guilda."} </p> </CardContent> </Card>
+        <Card className="card-bg text-center py-10 max-w-lg mx-auto"> <CardHeader> <UsersRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" /> <CardTitle className="text-2xl">Nenhum Grupo Criado</CardTitle> </CardHeader> <CardContent> <p className="text-muted-foreground"> {hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ? "Crie o primeiro grupo para sua guilda!" : "Ainda não há grupos formados nesta guilda."} </p> </CardContent> </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {groups.map(group => ( <GroupCard key={group.id} group={group} onEdit={handleOpenGroupDialog} onDelete={(g) => setGroupToDelete(g)} canManage={canManageGroups} /> ))}
@@ -832,7 +842,27 @@ function GroupsTabContent(
 }
 
 function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; }) {
+  const { user } = useAuth();
   const IconComponent = iconMap[group.icon] || ShieldIconLucide;
+  const [roleInfo, setRoleInfo] = useState<GuildMemberRoleInfo | null>(null);
+  const [customRoles, setCustomRoles] = useState<Record<string, CustomRole> | undefined>(undefined);
+
+  useEffect(() => {
+    if (user && group.guildId) {
+      const unsub = onSnapshot(doc(db, "guilds", group.guildId), (snap) => {
+        if(snap.exists()) {
+          const guildData = snap.data() as Guild;
+          setRoleInfo(guildData.roles?.[user.uid] || null);
+          setCustomRoles(guildData.customRoles);
+        }
+      });
+      return () => unsub();
+    }
+  }, [user, group.guildId]);
+
+  const canEdit = hasPermission(roleInfo, customRoles, GuildPermission.MANAGE_GROUPS_EDIT);
+  const canDelete = hasPermission(roleInfo, customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
+
   return (
     <Card className="static-card-container flex flex-col">
       <CardHeader className={cn("p-4 rounded-t-lg text-card-foreground", group.headerColor)}>
@@ -841,7 +871,7 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
             <IconComponent className="h-6 w-6" />
             <CardTitle className="text-lg font-headline truncate">{group.name}</CardTitle>
           </div>
-          {canManage && (
+          {(canEdit || canDelete) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-current hover:bg-white/20">
@@ -849,8 +879,8 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {hasPermission(useAuth().user && useAuth().user!.uid && group.guildId ? (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.roles?.[useAuth().user!.uid]) as unknown as GuildMemberRoleInfo) : null, (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.customRoles) as unknown as Record<string, CustomRole>), GuildPermission.MANAGE_GROUPS_EDIT) && <DropdownMenuItem onClick={() => onEdit(group)}><Edit2 className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
-                {hasPermission(useAuth().user && useAuth().user!.uid && group.guildId ? (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.roles?.[useAuth().user!.uid]) as unknown as GuildMemberRoleInfo) : null, (doc(db, "guilds", group.guildId).get().then(snap => snap.data() as Guild).then(g => g.customRoles) as unknown as Record<string, CustomRole>), GuildPermission.MANAGE_GROUPS_DELETE) && <DropdownMenuItem onClick={() => onDelete(group)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>}
+                {canEdit && <DropdownMenuItem onClick={() => onEdit(group)}><Edit2 className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
+                {canDelete && <DropdownMenuItem onClick={() => onDelete(group)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -1016,6 +1046,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
