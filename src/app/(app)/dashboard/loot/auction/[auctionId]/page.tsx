@@ -385,7 +385,7 @@ function AuctionPageContent() {
             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4"/> Voltar</Button>
             <div className="flex gap-2">
                 <Button variant="outline"><Bell className="mr-2 h-4 w-4"/> Notificação</Button>
-                {canEditAuction && <Button><Edit className="mr-2 h-4 w-4"/> Editar Leilão</Button>}
+                {canEditAuction && <Button className="btn-gradient btn-style-secondary"><Edit className="mr-2 h-4 w-4"/> Editar Leilão</Button>}
             </div>
         </div>
         
@@ -488,7 +488,7 @@ function AuctionPageContent() {
                         <Button variant="outline" size="icon" onClick={() => setBidAmount(Math.max(auction.currentBid + auction.minBidIncrement, bidAmount - auction.minBidIncrement))} disabled={auction.status !== 'active'}><Minus/></Button>
                         <Input type="number" value={bidAmount} onChange={e => setBidAmount(Number(e.target.value))} className="w-24 text-center" disabled={auction.status !== 'active'}/>
                         <Button variant="outline" size="icon" onClick={() => setBidAmount(bidAmount + auction.minBidIncrement)} disabled={auction.status !== 'active'}><Plus/></Button>
-                        <Button onClick={handlePlaceBid} disabled={isBidding || auction.status !== 'active'}>
+                        <Button onClick={handlePlaceBid} disabled={isBidding || auction.status !== 'active'} className="btn-gradient btn-style-secondary">
                             {isBidding ? <Loader2 className="animate-spin"/> : 'Dar Lance'}
                         </Button>
                     </div>
