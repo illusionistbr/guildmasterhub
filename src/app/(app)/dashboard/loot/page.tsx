@@ -991,7 +991,7 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                 
                 <div className="my-2 space-y-1 text-center text-xs px-1 flex-grow">
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
-                    
+                     
                     <p className="text-muted-foreground break-words">
                         <span className="font-bold text-white">Trait: </span>
                         {item.trait}
@@ -1516,6 +1516,19 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
     const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
     const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
     
+    const initialStartTime = new Date();
+    const initialDuration = 24;
+
+    const [config, setConfig] = useState({
+        startBid: 1,
+        minIncrement: 1,
+        startTime: initialStartTime,
+        endTime: addHours(initialStartTime, initialDuration),
+        durationHours: initialDuration,
+        roleRestriction: 'Geral' as TLRole | 'Geral',
+        weaponRestriction: 'Geral' as TLWeapon | 'Geral',
+    });
+
     useEffect(() => {
         if (isOpen && initialItem) {
             setSelectedItem(initialItem);
@@ -1525,23 +1538,17 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         }
     }, [isOpen, initialItem]);
 
-    const [config, setConfig] = useState({
-        startBid: 1,
-        minIncrement: 1,
-        startTime: new Date(),
-        durationHours: 24,
-        roleRestriction: 'Geral' as TLRole | 'Geral',
-        weaponRestriction: 'Geral' as TLWeapon | 'Geral',
-    });
-
     const resetWizard = () => {
+        const newStartTime = new Date();
+        const newDuration = 24;
         setStep('select');
         setSelectedItem(null);
         setConfig({
             startBid: 1,
             minIncrement: 1,
-            startTime: new Date(),
-            durationHours: 24,
+            startTime: newStartTime,
+            endTime: addHours(newStartTime, newDuration),
+            durationHours: newDuration,
             roleRestriction: 'Geral',
             weaponRestriction: 'Geral',
         });
@@ -1569,7 +1576,6 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
         if (!guildId || !currentUser || !selectedItem) return;
         setIsSubmitting(true);
         
-        const calculatedEndTime = addHours(config.startTime, config.durationHours);
         const batch = writeBatch(db);
         const auctionRef = doc(collection(db, `guilds/${guildId}/auctions`));
         const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, selectedItem.id);
@@ -1587,7 +1593,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                 currentBid: config.startBid,
                 bids: [],
                 startTime: Timestamp.fromDate(config.startTime),
-                endTime: Timestamp.fromDate(calculatedEndTime),
+                endTime: Timestamp.fromDate(config.endTime),
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || 'N/A',
                 isDistributed: false,
@@ -1612,26 +1618,65 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
     
     const handleStartTimeChange = (newTimePart: 'hour' | 'minute', value: string) => {
         setConfig(c => {
-            const newDate = new Date(c.startTime);
-            if (newTimePart === 'hour') {
-                newDate.setHours(Number(value));
-            } else {
-                newDate.setMinutes(Number(value));
-            }
-            return { ...c, startTime: newDate };
+            const newStartTime = new Date(c.startTime);
+            if (newTimePart === 'hour') newStartTime.setHours(Number(value));
+            else newStartTime.setMinutes(Number(value));
+            const newEndTime = addHours(newStartTime, c.durationHours);
+            return { ...c, startTime: newStartTime, endTime: newEndTime };
         });
     };
 
     const handleStartDateChange = (date: Date | undefined) => {
         if (!date) return;
         setConfig(c => {
-            const newDate = new Date(date);
+            const newStartTime = new Date(date);
             const currentTime = new Date(c.startTime);
-            newDate.setHours(currentTime.getHours());
-            newDate.setMinutes(currentTime.getMinutes());
-            newDate.setSeconds(0);
-            newDate.setMilliseconds(0);
-            return { ...c, startTime: newDate };
+            newStartTime.setHours(currentTime.getHours(), currentTime.getMinutes(), 0, 0);
+            const newEndTime = addHours(newStartTime, c.durationHours);
+            return { ...c, startTime: newStartTime, endTime: newEndTime };
+        });
+    };
+
+    const handleEndTimeChange = (newTimePart: 'hour' | 'minute', value: string) => {
+        setConfig(c => {
+            const newEndTime = new Date(c.endTime);
+            if (newTimePart === 'hour') newEndTime.setHours(Number(value));
+            else newEndTime.setMinutes(Number(value));
+
+            if (newEndTime < c.startTime) {
+                toast({ title: "Data Inválida", description: "A data de término não pode ser anterior à data de início.", variant: "destructive" });
+                return c;
+            }
+
+            const durationMs = Math.max(0, newEndTime.getTime() - c.startTime.getTime());
+            const durationHrs = Math.round(durationMs / (3600 * 1000));
+            return { ...c, endTime: newEndTime, durationHours: durationHrs };
+        });
+    };
+
+    const handleEndDateChange = (date: Date | undefined) => {
+        if (!date) return;
+        setConfig(c => {
+            const newEndTime = new Date(date);
+            const currentTime = new Date(c.endTime);
+            newEndTime.setHours(currentTime.getHours(), currentTime.getMinutes(), 0, 0);
+
+            if (newEndTime < c.startTime) {
+                toast({ title: "Data Inválida", description: "A data de término não pode ser anterior à data de início.", variant: "destructive" });
+                return c;
+            }
+
+            const durationMs = Math.max(0, newEndTime.getTime() - c.startTime.getTime());
+            const durationHrs = Math.round(durationMs / (3600 * 1000));
+            return { ...c, endTime: newEndTime, durationHours: durationHrs };
+        });
+    };
+
+    const handleDurationChange = (durationString: string) => {
+        const duration = Number(durationString);
+        setConfig(c => {
+            const newEndTime = addHours(c.startTime, duration);
+            return { ...c, durationHours: duration, endTime: newEndTime };
         });
     };
     
@@ -1701,7 +1746,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                     </SelectContent>
                                 </Select>
                             </div>
-                             <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                            <div className="col-span-2 grid grid-cols-1 gap-y-2">
                                 <Label>Data e Hora de Início</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -1740,10 +1785,58 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                                     </PopoverContent>
                                 </Popover>
                             </div>
+
                              <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                                <Label>Data e Hora de Fim</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                            {config.endTime ? format(config.endTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={config.endTime}
+                                            onSelect={handleEndDateChange}
+                                            disabled={(date) => date < config.startTime}
+                                            initialFocus
+                                            locale={ptBR}
+                                        />
+                                        <div className="p-4 border-t border-border">
+                                            <p className="text-sm font-medium mb-2 text-foreground">Horário de Fim</p>
+                                            <div className="flex gap-2">
+                                                <Select
+                                                    value={String(config.endTime.getHours()).padStart(2, '0')}
+                                                    onValueChange={(h) => handleEndTimeChange('hour', h)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={String(config.endTime.getMinutes()).padStart(2, '0')}
+                                                    onValueChange={(m) => handleEndTimeChange('minute', m)}
+                                                >
+                                                    <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                             <div className="col-span-2 flex items-center">
+                                <div className="flex-grow border-t border-border"></div>
+                                <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm">OU</span>
+                                <div className="flex-grow border-t border-border"></div>
+                            </div>
+                            
+                            <div className="col-span-2 grid grid-cols-1 gap-y-2">
                                 <Label>Duração do Leilão</Label>
-                                <Select onValueChange={(value) => setConfig(c => ({ ...c, durationHours: Number(value) }))} value={String(config.durationHours)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                <Select onValueChange={handleDurationChange} value={String(config.durationHours)}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione uma duração..." /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="6">6 horas</SelectItem>
                                         <SelectItem value="12">12 horas</SelectItem>
@@ -1763,7 +1856,6 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                     </>
                   );
             case 'confirm':
-                const calculatedEndTime = addHours(config.startTime, config.durationHours);
                 return <>
                     <DialogHeader>
                         <DialogTitle>Passo 3: Confirmar e Criar Leilão</DialogTitle>
@@ -1776,7 +1868,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                         <p><strong>Restrição de Função:</strong> {config.roleRestriction}</p>
                         <p><strong>Restrição de Arma:</strong> {config.weaponRestriction}</p>
                         <p><strong>Início do leilão:</strong> {format(config.startTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })}</p>
-                        <p><strong>Término do leilão:</strong> {format(calculatedEndTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })} ({config.durationHours} horas)</p>
+                        <p><strong>Término do leilão:</strong> {format(config.endTime, "dd/MM/yy 'às' HH:mm", { locale: ptBR })} ({config.durationHours} horas)</p>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
@@ -1803,6 +1895,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
