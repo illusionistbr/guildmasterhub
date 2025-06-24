@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import * as React from "react";
 import {
   Sidebar,
   SidebarHeader,
@@ -27,9 +28,11 @@ import {
   UserCog,
   KeyRound,
   Edit,
-  Gem, // Added Gem icon for Loot
+  Gem,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { db, doc, onSnapshot } from "@/lib/firebase";
+import type { Guild } from "@/types/guildmaster";
 
 const guildManagementNavItemsBase = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -78,6 +81,41 @@ export function AppSidebar() {
   const { logout, user } = useAuth();
 
   const guildId = searchParams.get('guildId');
+
+  const [dkpBalance, setDkpBalance] = React.useState<number | null>(null);
+  const [characterNickname, setCharacterNickname] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (user && guildId) {
+      const guildRef = doc(db, "guilds", guildId);
+      const unsubscribe = onSnapshot(guildRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const guildData = docSnap.data() as Guild;
+          const userRoleInfo = guildData.roles?.[user.uid];
+          if (userRoleInfo) {
+            setDkpBalance(userRoleInfo.dkpBalance ?? 0);
+            setCharacterNickname(userRoleInfo.characterNickname || user.displayName);
+          } else {
+            setDkpBalance(0);
+            setCharacterNickname(user.displayName);
+          }
+        } else {
+          setDkpBalance(null);
+          setCharacterNickname(null);
+        }
+      }, (error) => {
+        console.error("Error fetching guild data for sidebar:", error);
+        setDkpBalance(null);
+        setCharacterNickname(null);
+      });
+
+      return () => unsubscribe();
+    } else {
+        setDkpBalance(null);
+        setCharacterNickname(null);
+    }
+  }, [user, guildId]);
+
 
   const isActive = (href: string) => {
     const baseHref = href.split('?')[0];
@@ -178,6 +216,18 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
+          {guildId && characterNickname !== null && (
+            <div className="mt-4 px-2 group-data-[collapsible=icon]:hidden animate-in fade-in duration-300">
+                <div className="p-3 rounded-md bg-card/50 border border-primary/30 shadow-[0_0_8px_hsla(var(--primary),0.5)] text-center space-y-1">
+                    <p className="font-semibold text-sm text-foreground truncate" title={characterNickname || ""}>{characterNickname}</p>
+                    <div className="flex items-center justify-center gap-1">
+                        <Gem className="h-3 w-3 text-primary"/>
+                        <p className="text-xs text-muted-foreground"><span className="font-bold text-primary">{dkpBalance ?? 0}</span> DKP</p>
+                    </div>
+                </div>
+            </div>
+           )}
 
         </SidebarMenu>
       </SidebarContent>
