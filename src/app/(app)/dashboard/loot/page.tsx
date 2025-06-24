@@ -1266,6 +1266,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
   const [initialItemForWizard, setInitialItemForWizard] = useState<BankItem | null>(null);
   const [auctionNameFilter, setAuctionNameFilter] = useState("");
   const [auctionStatusFilter, setAuctionStatusFilter] = useState<'all' | AuctionStatus>('all');
+  const [auctionTraitFilter, setAuctionTraitFilter] = useState<'all' | string>('all');
 
   const availableBankItems = useMemo(() => bankItems.filter(item => item.status === 'Disponível'), [bankItems]);
 
@@ -1308,8 +1309,11 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     if (auctionStatusFilter !== 'all') {
         tempAuctions = tempAuctions.filter(auction => auction.status === auctionStatusFilter);
     }
+    if (auctionTraitFilter !== 'all') {
+        tempAuctions = tempAuctions.filter(auction => auction.item.trait === auctionTraitFilter);
+    }
     return tempAuctions;
-  }, [auctions, auctionNameFilter, auctionStatusFilter]);
+  }, [auctions, auctionNameFilter, auctionStatusFilter, auctionTraitFilter]);
 
   if (loading) {
     return <div className="flex justify-center items-center p-10"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
@@ -1356,7 +1360,19 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                     <SelectItem value="cancelled">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
-                 <Select defaultValue="all"><SelectTrigger className="w-36"><SelectValue placeholder="Trait" /></SelectTrigger><SelectContent><SelectItem value="all">Todos Traits</SelectItem></SelectContent></Select>
+                 <Select value={auctionTraitFilter} onValueChange={(value) => setAuctionTraitFilter(value as 'all' | string)}>
+                    <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Todos Traits" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos Traits</SelectItem>
+                        {TRAIT_OPTIONS.map((trait) => (
+                            <SelectItem key={trait} value={trait}>
+                                {trait}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="flex gap-2">
                 <Button variant="outline" disabled>Ações</Button>
@@ -1536,7 +1552,7 @@ function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUs
                 status: config.startTime <= new Date() ? 'active' : 'scheduled',
                 startingBid: config.startBid,
                 minBidIncrement: config.minIncrement,
-                currentBid: config.startBid,
+                currentBid: 0,
                 bids: [],
                 startTime: Timestamp.fromDate(config.startTime),
                 endTime: Timestamp.fromDate(config.endTime),
@@ -1841,4 +1857,5 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
