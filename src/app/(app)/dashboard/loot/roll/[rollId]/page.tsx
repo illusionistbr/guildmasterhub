@@ -328,7 +328,7 @@ function LootRollPageContent() {
         <div className="flex justify-between items-center">
             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4"/> Voltar</Button>
             <div className="flex gap-2">
-                {canEditRoll && <Button><Edit className="mr-2 h-4 w-4"/> Editar Rolagem</Button>}
+                {canEditRoll && <Button className="btn-gradient btn-style-secondary"><Edit className="mr-2 h-4 w-4"/> Editar Rolagem</Button>}
             </div>
         </div>
         
@@ -427,7 +427,7 @@ function LootRollPageContent() {
             <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg">
                     <p className="text-sm font-medium">DKP Disponível: <span className="text-primary font-bold">{userDkp}</span> / Custo: <span className="text-primary font-bold">{roll.cost}</span></p>
-                    <Button onClick={handleRollDice} disabled={isRolling || roll.status !== 'active' || userHasRolled || userDkp < roll.cost}>
+                    <Button onClick={handleRollDice} disabled={isRolling || roll.status !== 'active' || userHasRolled || userDkp < roll.cost} className="btn-gradient btn-style-secondary">
                         {isRolling ? <Loader2 className="animate-spin"/> : <Dices className="mr-2"/>}
                         {userHasRolled ? 'Você já rolou' : (userDkp < roll.cost ? 'DKP Insuficiente' : 'Rolar os Dados')}
                     </Button>
