@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Gem, ArrowLeft, Info, Minus, Plus, RefreshCw, Gavel, Bell, Edit, MoreHorizontal } from 'lucide-react';
+import { Loader2, Gem, ArrowLeft, Info, Minus, Plus, RefreshCw, Gavel, Bell, Edit, MoreHorizontal, Trophy } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,6 +29,7 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHeader } from '@/contexts/HeaderContext';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 function AuctionPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -124,7 +125,7 @@ function AuctionPageContent() {
         const now = new Date();
         const end = auction.endTime.toDate();
         if (now > end) {
-          setTimeRemaining(auction.status === 'ended' ? "Leilão Encerrado" : "Leilão Terminado");
+          setTimeRemaining(auction.status === 'ended' ? "Leilão Encerrado" : "Finalizado");
           clearInterval(interval);
         } else {
           setTimeRemaining(formatDistanceToNowStrict(end, { locale: ptBR, addSuffix: true }));
@@ -133,6 +134,66 @@ function AuctionPageContent() {
       return () => clearInterval(interval);
     }
   }, [auction?.endTime, auction?.status]);
+
+  useEffect(() => {
+    const handleAutomaticFinalization = async () => {
+        if (!currentUser || !guild || !auction || !guildId) return;
+
+        setIsFinalizing(true);
+        toast({ title: "Finalizando leilão...", description: "O tempo do leilão acabou, processando os resultados." });
+
+        const batch = writeBatch(db);
+        const guildRef = doc(db, "guilds", guildId);
+        const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+
+        try {
+            const bids = auction.bids || [];
+            const winnerId = auction.currentWinnerId;
+
+            const highestBidsByBidder = bids.reduce((acc, bid) => {
+                if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
+                    acc[bid.bidderId] = bid.amount;
+                }
+                return acc;
+            }, {} as Record<string, number>);
+
+            for (const bidderId in highestBidsByBidder) {
+                if (bidderId !== winnerId) {
+                    const refundAmount = highestBidsByBidder[bidderId];
+                    const bidderPath = `roles.${bidderId}.dkpBalance`;
+                    batch.update(guildRef, { [bidderPath]: firebaseIncrement(refundAmount) });
+                }
+            }
+            
+            batch.update(auctionRef, { status: 'ended' });
+            await batch.commit();
+
+            await logGuildActivity(
+                guildId,
+                'system', // Attributed to system as it's automatic
+                'Sistema',
+                'AUCTION_FINALIZED' as AuditActionType,
+                {
+                    itemName: auction.item.itemName,
+                    auctionId: auction.id,
+                    auctionWinnerId: winnerId,
+                    auctionWinningBid: auction.currentBid
+                }
+            );
+            
+            toast({ title: "Leilão Finalizado!", description: "DKP dos perdedores foi reembolsado." });
+        } catch (error) {
+            console.error("Error finalizing auction:", error);
+            toast({ title: "Erro ao Finalizar", description: "Ocorreu um erro ao finalizar o leilão.", variant: "destructive" });
+        } finally {
+            setIsFinalizing(false);
+        }
+    };
+
+    if (auction?.status === 'active' && new Date() > auction.endTime.toDate() && canEditAuction) {
+        handleAutomaticFinalization();
+    }
+  }, [auction, canEditAuction, currentUser, guild, guildId, toast]);
 
   const handlePlaceBid = async () => {
     if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
@@ -162,7 +223,6 @@ function AuctionPageContent() {
         const guildRef = doc(db, "guilds", guildId);
         const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
 
-        // Find the current user's previous highest bid to calculate the DKP difference
         const userPreviousBids = auction.bids?.filter(b => b.bidderId === currentUser.uid) || [];
         const userPreviousHighestBid = userPreviousBids.reduce((max, bid) => Math.max(max, bid.amount), 0);
 
@@ -175,11 +235,9 @@ function AuctionPageContent() {
             return;
         }
         
-        // Adjust the bidder's DKP by the difference
         const bidderPath = `roles.${currentUser.uid}.dkpBalance`;
         batch.update(guildRef, { [bidderPath]: firebaseIncrement(-dkpToAdjust) });
 
-        // Add the new bid to the auction history
         const newBid: AuctionBid = {
             bidderId: currentUser.uid,
             bidderName: currentUserRoleInfo.characterNickname || currentUser.displayName || 'Desconhecido',
@@ -191,7 +249,6 @@ function AuctionPageContent() {
             bids: arrayUnion(newBid),
         };
 
-        // If this new bid is the highest overall, update the current winner
         if (bidAmount > auction.currentBid) {
             updatePayload.currentBid = bidAmount;
             updatePayload.currentWinnerId = currentUser.uid;
@@ -211,69 +268,6 @@ function AuctionPageContent() {
     }
   };
   
-  const handleFinalizeAuction = async () => {
-    if (!currentUser || !guild || !auction || !canEditAuction || auction.status !== 'active') {
-        toast({ title: "Ação não permitida.", variant: "destructive" });
-        return;
-    }
-    if (new Date() < auction.endTime.toDate()) {
-         toast({ title: "Leilão ainda ativo", description: "Você só pode finalizar um leilão após o seu término.", variant: "destructive" });
-         return;
-    }
-
-    setIsFinalizing(true);
-    const batch = writeBatch(db);
-    const guildRef = doc(db, "guilds", guildId as string);
-    const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
-
-    try {
-        const bids = auction.bids || [];
-        const winnerId = auction.currentWinnerId;
-
-        // Group bids by bidder to find their highest bid
-        const highestBidsByBidder = bids.reduce((acc, bid) => {
-            if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
-                acc[bid.bidderId] = bid.amount;
-            }
-            return acc;
-        }, {} as Record<string, number>);
-
-        // Refund DKP for all losing bidders
-        for (const bidderId in highestBidsByBidder) {
-            if (bidderId !== winnerId) {
-                const refundAmount = highestBidsByBidder[bidderId];
-                const bidderPath = `roles.${bidderId}.dkpBalance`;
-                batch.update(guildRef, { [bidderPath]: firebaseIncrement(refundAmount) });
-            }
-        }
-        
-        // Update auction status to 'ended'
-        batch.update(auctionRef, { status: 'ended' });
-
-        await batch.commit();
-        
-        await logGuildActivity(
-            guildId as string,
-            currentUser.uid,
-            currentUser.displayName,
-            'AUCTION_FINALIZED' as AuditActionType, // Casting for now
-            {
-                itemName: auction.item.itemName,
-                auctionId: auction.id,
-                auctionWinnerId: winnerId,
-                auctionWinningBid: auction.currentBid
-            }
-        );
-        
-        toast({ title: "Leilão Finalizado!", description: "DKP dos perdedores foi reembolsado." });
-    } catch (error) {
-        console.error("Error finalizing auction:", error);
-        toast({ title: "Erro ao Finalizar", description: "Ocorreu um erro ao finalizar o leilão.", variant: "destructive" });
-    } finally {
-        setIsFinalizing(false);
-    }
-  };
-
   if (loading) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
@@ -281,6 +275,14 @@ function AuctionPageContent() {
   if (!auction) {
      return <div className="text-center py-10">Leilão não encontrado.</div>;
   }
+
+  const winner = useMemo(() => {
+    if (auction.status === 'ended' && auction.currentWinnerId && auction.bids.length > 0) {
+        const winningBid = [...auction.bids].sort((a, b) => b.amount - a.amount).find(bid => bid.bidderId === auction.currentWinnerId);
+        return winningBid;
+    }
+    return null;
+  }, [auction]);
   
   const getStatusBadgeProps = (status: Auction['status']) => {
     switch (status) {
@@ -352,33 +354,39 @@ function AuctionPageContent() {
                 </div>
             </CardContent>
         </Card>
-
-        {canEditAuction && auction.status === 'active' && new Date() > auction.endTime.toDate() && (
-            <Card className="mt-4 border-amber-500 bg-amber-500/10 static-card-container">
-                <CardHeader>
-                    <CardTitle className="text-amber-400">Ação do Administrador</CardTitle>
-                    <CardDescription>Este leilão terminou. Finalize-o para liquidar os lances de DKP e encerrá-lo oficialmente.</CardDescription>
-                </CardHeader>
-                <CardFooter>
-                    <Button onClick={handleFinalizeAuction} disabled={isFinalizing} variant="outline" className="border-amber-500 text-amber-500 hover:bg-amber-500/20">
-                        {isFinalizing ? <Loader2 className="animate-spin mr-2"/> : null}
-                        Finalizar Leilão e Reembolsar DKP
-                    </Button>
-                </CardFooter>
-            </Card>
+        
+        {auction.status === 'ended' && winner && (
+            <Alert variant="default" className="border-amber-500 bg-amber-500/10 text-amber-500">
+                <Trophy className="h-5 w-5" />
+                <AlertTitle className="font-bold text-amber-400">Leilão Encerrado!</AlertTitle>
+                <AlertDescription className="text-amber-300">
+                    O vencedor é <strong>{winner.bidderName}</strong> com um lance de <strong>{winner.amount} DKP</strong>.
+                </AlertDescription>
+            </Alert>
+        )}
+        
+        {isFinalizing && (
+             <Alert variant="default" className="border-blue-500 bg-blue-500/10 text-blue-400">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <AlertTitle className="font-bold text-blue-300">Processando...</AlertTitle>
+                <AlertDescription className="text-blue-400">
+                    O leilão terminou. Finalizando lances e atualizando o status.
+                </AlertDescription>
+            </Alert>
         )}
 
         <Card className="static-card-container">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl"><Gavel className="h-5 w-5 text-green-500"/> Lances ao Vivo</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-xl"><Gavel className={cn("h-5 w-5", auction.status === 'active' ? "text-green-500" : "text-gray-500")}/> Lances ao Vivo</CardTitle>
+                {auction.status !== 'active' && <CardDescription>Este leilão não está mais aceitando lances.</CardDescription>}
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg">
                     <p className="text-sm font-medium">DKP Disponível: <span className="text-primary font-bold">{userDkp}</span></p>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => setBidAmount(Math.max(auction.currentBid + auction.minBidIncrement, bidAmount - auction.minBidIncrement))}><Minus/></Button>
-                        <Input type="number" value={bidAmount} onChange={e => setBidAmount(Number(e.target.value))} className="w-24 text-center"/>
-                        <Button variant="outline" size="icon" onClick={() => setBidAmount(bidAmount + auction.minBidIncrement)}><Plus/></Button>
+                        <Button variant="outline" size="icon" onClick={() => setBidAmount(Math.max(auction.currentBid + auction.minBidIncrement, bidAmount - auction.minBidIncrement))} disabled={auction.status !== 'active'}><Minus/></Button>
+                        <Input type="number" value={bidAmount} onChange={e => setBidAmount(Number(e.target.value))} className="w-24 text-center" disabled={auction.status !== 'active'}/>
+                        <Button variant="outline" size="icon" onClick={() => setBidAmount(bidAmount + auction.minBidIncrement)} disabled={auction.status !== 'active'}><Plus/></Button>
                         <Button onClick={handlePlaceBid} disabled={isBidding || auction.status !== 'active'}>
                             {isBidding ? <Loader2 className="animate-spin"/> : 'Dar Lance'}
                         </Button>
