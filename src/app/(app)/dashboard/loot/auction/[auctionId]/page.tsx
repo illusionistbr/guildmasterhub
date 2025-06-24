@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, increment as firebaseIncrement } from '@/lib/firebase';
+import { db, doc, onSnapshot, updateDoc, arrayUnion, Timestamp, writeBatch, increment as firebaseIncrement, getDoc } from '@/lib/firebase';
 import type { Guild, Auction, AuctionBid, GuildMemberRoleInfo, AuditActionType } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { hasPermission } from '@/lib/permissions';
@@ -90,7 +90,11 @@ function AuctionPageContent() {
         if (docSnap.exists()) {
             const guildData = { id: docSnap.id, ...docSnap.data() } as Guild;
             setGuild(guildData);
-            setHeaderTitle(`Leilão: ${guildData.name}`);
+            if (auction) {
+              setHeaderTitle(`Leilão: ${auction.item.itemName}`);
+            } else {
+              setHeaderTitle(`Leilão`);
+            }
         } else {
             toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
             router.push('/guild-selection');
@@ -102,6 +106,9 @@ function AuctionPageContent() {
       if (docSnap.exists()) {
         const auctionData = { id: docSnap.id, ...docSnap.data() } as Auction;
         setAuction(auctionData);
+        if (guild) {
+          setHeaderTitle(`Leilão: ${auctionData.item.itemName}`);
+        }
         setLoading(false);
       } else {
         toast({ title: "Erro", description: "Leilão não encontrado.", variant: "destructive" });
@@ -114,7 +121,7 @@ function AuctionPageContent() {
       unsubAuction();
       setHeaderTitle(null);
     };
-  }, [guildId, auctionId, router, toast, setHeaderTitle]);
+  }, [guildId, auctionId, router, toast, setHeaderTitle, auction, guild]);
   
   useEffect(() => {
     if (auction) {
@@ -210,6 +217,29 @@ function AuctionPageContent() {
         handleAutomaticFinalization();
     }
   }, [auction, canEditAuction, currentUser, guild, guildId, toast]);
+
+  useEffect(() => {
+    // This effect is for correcting inconsistent states.
+    // If an auction is 'ended' but its corresponding bank item is still 'Em leilão',
+    // this will update the bank item's status.
+    const correctInconsistentState = async () => {
+        if (!auction || !guildId || !canEditAuction) return;
+
+        if (auction.status === 'ended' && auction.bankItemId) {
+            const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, auction.bankItemId);
+            const bankItemSnap = await getDoc(bankItemRef);
+
+            if (bankItemSnap.exists() && bankItemSnap.data().status === 'Em leilão') {
+                console.log(`Correcting inconsistent state for item ${auction.bankItemId}`);
+                toast({ title: "Corrigindo status do item...", description: "Sincronizando o status do item com o leilão encerrado." });
+                await updateDoc(bankItemRef, { status: 'Distribuído' });
+            }
+        }
+    };
+
+    correctInconsistentState();
+  }, [auction, guildId, canEditAuction, toast]);
+
 
   const handlePlaceBid = async () => {
     if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
