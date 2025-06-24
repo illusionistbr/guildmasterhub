@@ -59,12 +59,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import type { DateRange } from "react-day-picker";
-import { format, addHours, addDays, formatDistanceToNow, isAfter } from 'date-fns';
+import { format, addHours, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
@@ -993,16 +992,13 @@ function BankItemCard({ item, guildId, guild, currentUserRoleInfo }: { item: Ban
                      <Badge className={cn("text-xs w-full justify-center mb-2", statusBadgeClasses[item.status])}>{item.status}</Badge>
                      
                     <p className="text-muted-foreground">
-                       <span className="font-bold text-white">Trait: </span>
-                        {item.trait}
+                        <span className="font-bold text-white">Trait:</span> {item.trait}
                     </p>
                     <p className="text-muted-foreground">
-                        <span className="font-bold text-white">Drop: </span>
-                        {item.droppedByMemberName || 'N/A'}
+                        <span className="font-bold text-white">Drop:</span> {item.droppedByMemberName || 'N/A'}
                     </p>
                     <p className="text-muted-foreground">
-                        <span className="font-bold text-white">Data: </span>
-                        {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
+                        <span className="font-bold text-white">Data:</span> {item.createdAt ? format(item.createdAt.toDate(), "dd/MM/yy") : "N/A"}
                     </p>
                 </div>
                 
@@ -1282,8 +1278,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
     return <div className="flex justify-center items-center p-10"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
   }
   
-  const featuredAuction = auctions.find(a => a.status === 'active') || (auctions.length > 0 ? auctions[0] : null);
-
   const getStatusBadgeProps = (status: AuctionStatus) => {
     switch (status) {
         case 'active':
@@ -1314,8 +1308,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
             <h2 className="text-2xl font-bold text-foreground">Leilões Ativos</h2>
             <p className="text-sm text-muted-foreground">Última atualização: agora</p>
         </div>
-        
-        {featuredAuction && <FeaturedAuctionCard auction={featuredAuction} currentUser={currentUser} />}
         
         <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-2">
@@ -1421,90 +1413,6 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
       </AlertDialog>
     </div>
   );
-}
-
-function FeaturedAuctionCard({ auction, currentUser }: { auction: Auction, currentUser: UserProfile | null }) {
-  const [timeLeft, setTimeLeft] = useState("");
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const calculateTime = () => {
-      const now = new Date();
-      const endTime = auction.endTime.toDate();
-      const startTime = auction.startTime.toDate();
-      
-      if (isAfter(now, endTime)) {
-        setTimeLeft("Encerrado");
-        setProgress(100);
-        return;
-      }
-      
-      const totalDuration = endTime.getTime() - startTime.getTime();
-      const elapsedDuration = now.getTime() - startTime.getTime();
-      const currentProgress = Math.min(100, (elapsedDuration / totalDuration) * 100);
-      setProgress(currentProgress > 0 ? currentProgress : 0);
-      setTimeLeft(formatDistanceToNow(endTime, { locale: ptBR }));
-    };
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000 * 60); 
-    return () => clearInterval(interval);
-  }, [auction]);
-
-  const yourBid = useMemo(() => {
-    if (!currentUser) return undefined;
-    return auction.bids
-      .filter(b => b.bidderId === currentUser.uid)
-      .reduce((max, bid) => bid.amount > max ? bid.amount : max, 0);
-  }, [auction.bids, currentUser]);
-
-  const isWinning = auction.currentWinnerId === currentUser?.uid;
-
-  return (
-    <Card className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gradient-to-br from-card to-background/50">
-      <div className="md:col-span-1 flex items-center justify-center">
-        <div className={cn(
-          "w-48 h-48 p-3 rounded-lg flex items-center justify-center border-2",
-          rarityBackgrounds[auction.item.rarity]
-        )}>
-          <Image src={auction.item.imageUrl} alt={auction.item.itemName || "Item"} width={160} height={160} className="object-contain" data-ai-hint="auctioned item"/>
-        </div>
-      </div>
-      <div className="md:col-span-2 space-y-4">
-        <div className="flex justify-between items-start">
-          <h3 className="text-2xl font-bold text-foreground">{auction.item.itemName}</h3>
-          <Badge className={cn(auction.status === 'active' ? "bg-green-500/20 text-green-500 border-green-500/50" : "bg-muted text-muted-foreground")}>
-            {auction.status === 'active' ? 'Aberto' : auction.status.charAt(0).toUpperCase() + auction.status.slice(1)}
-          </Badge>
-        </div>
-        
-        <div>
-          <div className="flex justify-between items-baseline mb-1">
-            <span className="text-sm text-muted-foreground">Tempo restante</span>
-            <span className="text-sm font-semibold text-primary">{timeLeft}</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="space-y-1">
-            <p className="text-muted-foreground">Seu Lance</p>
-            <p className="text-lg font-bold text-foreground">{yourBid ? `${yourBid} DKP` : 'Nenhum lance'}</p>
-          </div>
-           <div className="space-y-1">
-            <p className="text-muted-foreground">Lance Mais Alto</p>
-            <p className="text-lg font-bold text-foreground">{auction.currentBid} DKP</p>
-          </div>
-        </div>
-
-        {isWinning && (
-          <div className="bg-green-500/10 text-green-500 text-sm font-semibold p-3 rounded-md text-center">
-            Você está ganhando este leilão!
-          </div>
-        )}
-      </div>
-    </Card>
-  )
 }
 
 function AuctionCreationWizard({ isOpen, onOpenChange, guild, guildId, currentUser, bankItems, initialItem }: { isOpen: boolean, onOpenChange: (open: boolean) => void, guild: Guild, guildId: string | null, currentUser: UserProfile | null, bankItems: BankItem[], initialItem: BankItem | null }) {
@@ -1895,6 +1803,7 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
 
 
 
