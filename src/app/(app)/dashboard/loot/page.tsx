@@ -2090,6 +2090,9 @@ function LootRollCreationWizard({ isOpen, onOpenChange, guild, guildId, currentU
     const [selectedItem, setSelectedItem] = useState<BankItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+    const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
     const initialStartTime = new Date();
     const initialDuration = 24;
 
@@ -2183,11 +2186,75 @@ function LootRollCreationWizard({ isOpen, onOpenChange, guild, guildId, currentU
             setIsSubmitting(false);
         }
     };
+
+    const handleStartTimeChange = (newTimePart: 'hour' | 'minute', value: string) => {
+        setConfig(c => {
+            const newStartTime = new Date(c.startTime);
+            if (newTimePart === 'hour') newStartTime.setHours(Number(value));
+            else newStartTime.setMinutes(Number(value));
+            const newEndTime = addHours(newStartTime, c.durationHours);
+            return { ...c, startTime: newStartTime, endTime: newEndTime };
+        });
+    };
+
+    const handleStartDateChange = (date: Date | undefined) => {
+        if (!date) return;
+        setConfig(c => {
+            const newStartTime = new Date(date);
+            const currentTime = new Date(c.startTime);
+            newStartTime.setHours(currentTime.getHours(), currentTime.getMinutes(), 0, 0);
+            const newEndTime = addHours(newStartTime, c.durationHours);
+            return { ...c, startTime: newStartTime, endTime: newEndTime };
+        });
+    };
+
+    const handleEndTimeChange = (newTimePart: 'hour' | 'minute', value: string) => {
+        setConfig(c => {
+            const newEndTime = new Date(c.endTime);
+            if (newTimePart === 'hour') newEndTime.setHours(Number(value));
+            else newEndTime.setMinutes(Number(value));
+
+            if (newEndTime < c.startTime) {
+                toast({ title: "Data Inválida", description: "A data de término não pode ser anterior à data de início.", variant: "destructive" });
+                return c;
+            }
+
+            const durationMs = Math.max(0, newEndTime.getTime() - c.startTime.getTime());
+            const durationHrs = Math.round(durationMs / (3600 * 1000));
+            return { ...c, endTime: newEndTime, durationHours: durationHrs };
+        });
+    };
+
+    const handleEndDateChange = (date: Date | undefined) => {
+        if (!date) return;
+        setConfig(c => {
+            const newEndTime = new Date(date);
+            const currentTime = new Date(c.endTime);
+            newEndTime.setHours(currentTime.getHours(), currentTime.getMinutes(), 0, 0);
+
+            if (newEndTime < c.startTime) {
+                toast({ title: "Data Inválida", description: "A data de término não pode ser anterior à data de início.", variant: "destructive" });
+                return c;
+            }
+
+            const durationMs = Math.max(0, newEndTime.getTime() - c.startTime.getTime());
+            const durationHrs = Math.round(durationMs / (3600 * 1000));
+            return { ...c, endTime: newEndTime, durationHours: durationHrs };
+        });
+    };
+
+    const handleDurationChange = (durationString: string) => {
+        const duration = Number(durationString);
+        setConfig(c => {
+            const newEndTime = addHours(c.startTime, duration);
+            return { ...c, durationHours: duration, endTime: newEndTime };
+        });
+    };
     
-    return (
-        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
-            <DialogContent className="sm:max-w-md bg-card border-border">
-                {step === 'select' && <>
+    const renderContent = () => {
+        switch (step) {
+            case 'select':
+                return <>
                     <DialogHeader>
                         <DialogTitle>Passo 1: Selecione um Item para Rolagem</DialogTitle>
                         <DialogDescription>Escolha um item com status "Disponível" para iniciar a rolagem de dados.</DialogDescription>
@@ -2210,42 +2277,184 @@ function LootRollCreationWizard({ isOpen, onOpenChange, guild, guildId, currentU
                             ))}
                         </div>
                     </ScrollArea>
-                </>}
-                 {step === 'details' && <>
+                </>;
+             case 'details':
+                 return (
+                    <>
                       <DialogHeader>
                         <DialogTitle>Passo 2: Detalhes da Rolagem</DialogTitle>
-                        <DialogDescription>Configure o custo e duração para o item "{selectedItem?.itemName}".</DialogDescription>
+                        <DialogDescription>Configure custo, restrições e duração para o item "{selectedItem?.itemName}".</DialogDescription>
                       </DialogHeader>
                       <div className="py-4 space-y-4">
-                        <div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
                             <Label>Custo da Rolagem (DKP)</Label>
                             <Input type="number" value={config.cost} onChange={(e) => setConfig((c) => ({ ...c, cost: Number(e.target.value) }))} min="0"/>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                           <Switch id="refund-dkp" checked={config.refundDkpToLosers} onCheckedChange={(checked) => setConfig(c => ({...c, refundDkpToLosers: checked}))} />
-                           <Label htmlFor="refund-dkp">Devolver DKP aos perdedores?</Label>
+                          </div>
+                          <div>
+                            <Label>Devolver DKP aos perdedores?</Label>
+                            <Select value={config.refundDkpToLosers ? 'yes' : 'no'} onValueChange={(val) => setConfig(c => ({...c, refundDkpToLosers: val === 'yes'}))}>
+                              <SelectTrigger><SelectValue/></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="yes">Sim</SelectItem>
+                                <SelectItem value="no">Não</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                              <Label>Restrição de Função (Opcional)</Label>
+                              <Select onValueChange={(value) => setConfig(c => ({...c, roleRestriction: value as TLRole | 'Geral'}))} value={config.roleRestriction}>
+                                  <SelectTrigger><SelectValue/></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todos)</div></SelectItem>
+                                      <SelectItem value={TLRole.Tank}><div className="flex items-center gap-2"><ShieldLucideIcon className="h-4 w-4 text-sky-500"/>{TLRole.Tank}</div></SelectItem>
+                                      <SelectItem value={TLRole.DPS}><div className="flex items-center gap-2"><Swords className="h-4 w-4 text-rose-500"/>{TLRole.DPS}</div></SelectItem>
+                                      <SelectItem value={TLRole.Healer}><div className="flex items-center gap-2"><Heart className="h-4 w-4 text-emerald-500"/>{TLRole.Healer}</div></SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div>
+                              <Label>Restrição de Arma (Opcional)</Label>
+                              <Select onValueChange={(value) => setConfig(c => ({...c, weaponRestriction: value as TLWeapon | 'Geral'}))} value={config.weaponRestriction}>
+                                  <SelectTrigger><SelectValue/></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="Geral"><div className="flex items-center gap-2"><Users className="h-4 w-4"/>Geral (Todas)</div></SelectItem>
+                                      {Object.values(TLWeapon).map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                              <Label>Data e Hora de Início</Label>
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                      <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.startTime && "text-muted-foreground")}>
+                                          <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                          {config.startTime ? format(config.startTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
+                                      </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                          mode="single"
+                                          selected={config.startTime}
+                                          onSelect={handleStartDateChange}
+                                          initialFocus
+                                          locale={ptBR}
+                                      />
+                                      <div className="p-4 border-t border-border">
+                                          <p className="text-sm font-medium mb-2 text-foreground">Horário de Início</p>
+                                          <div className="flex gap-2">
+                                              <Select
+                                                  value={String(config.startTime.getHours()).padStart(2, '0')}
+                                                  onValueChange={(h) => handleStartTimeChange('hour', h)}
+                                              >
+                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                  <SelectContent>{hoursArray.map(h => <SelectItem key={`start-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                                              </Select>
+                                              <Select
+                                                  value={String(config.startTime.getMinutes()).padStart(2, '0')}
+                                                  onValueChange={(m) => handleStartTimeChange('minute', m)}
+                                              >
+                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                  <SelectContent>{minutesArray.map(m => <SelectItem key={`start-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                                              </Select>
+                                          </div>
+                                      </div>
+                                  </PopoverContent>
+                              </Popover>
+                          </div>
+
+                           <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                              <Label>Data e Hora de Término</Label>
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                      <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !config.endTime && "text-muted-foreground")}>
+                                          <CalendarIconLucide className="mr-2 h-4 w-4" />
+                                          {config.endTime ? format(config.endTime, "dd/MM/yy, HH:mm", { locale: ptBR }) : <span>Escolha uma data e hora</span>}
+                                      </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                          mode="single"
+                                          selected={config.endTime}
+                                          onSelect={handleEndDateChange}
+                                          disabled={(date) => config.startTime ? date < config.startTime : false}
+                                          initialFocus
+                                          locale={ptBR}
+                                      />
+                                      <div className="p-4 border-t border-border">
+                                          <p className="text-sm font-medium mb-2 text-foreground">Horário de Fim</p>
+                                          <div className="flex gap-2">
+                                              <Select
+                                                  value={String(config.endTime.getHours()).padStart(2, '0')}
+                                                  onValueChange={(h) => handleEndTimeChange('hour', h)}
+                                              >
+                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                  <SelectContent>{hoursArray.map(h => <SelectItem key={`end-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                                              </Select>
+                                              <Select
+                                                  value={String(config.endTime.getMinutes()).padStart(2, '0')}
+                                                  onValueChange={(m) => handleEndTimeChange('minute', m)}
+                                              >
+                                                  <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                                                  <SelectContent>{minutesArray.map(m => <SelectItem key={`end-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                                              </Select>
+                                          </div>
+                                      </div>
+                                  </PopoverContent>
+                              </Popover>
+                          </div>
+
+                           <div className="col-span-2 flex items-center">
+                              <div className="flex-grow border-t border-border"></div>
+                              <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm">OU</span>
+                              <div className="flex-grow border-t border-border"></div>
+                          </div>
+                          
+                          <div className="col-span-2 grid grid-cols-1 gap-y-2">
+                              <Label>Duração da Rolagem</Label>
+                              <Select onValueChange={handleDurationChange} value={String(config.durationHours)}>
+                                  <SelectTrigger><SelectValue placeholder="Selecione uma duração..." /></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="6">6 horas</SelectItem>
+                                      <SelectItem value="12">12 horas</SelectItem>
+                                      <SelectItem value="24">24 horas</SelectItem>
+                                      <SelectItem value="36">36 horas</SelectItem>
+                                      <SelectItem value="48">48 horas</SelectItem>
+                                      <SelectItem value="72">72 horas</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          </div>
                         </div>
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={handlePrevStep}>Voltar</Button>
                         <Button onClick={handleNextStep}>Próximo</Button>
                       </DialogFooter>
-                 </>}
-                 {step === 'confirm' && <>
-                    <DialogHeader>
-                        <DialogTitle>Passo 3: Confirmar e Criar Rolagem</DialogTitle>
-                        <DialogDescription>Revise os detalhes abaixo antes de criar a rolagem.</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-3 text-sm">
-                        <p><strong>Item:</strong> {selectedItem?.itemName}</p>
-                        <p><strong>Custo para rolar:</strong> {config.cost} DKP</p>
-                        <p><strong>Devolver DKP aos perdedores:</strong> {config.refundDkpToLosers ? 'Sim' : 'Não'}</p>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
-                        <Button onClick={handleCreateRoll} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin" /> : 'Finalizar e Criar Rolagem'}</Button>
-                    </DialogFooter>
-                 </>}
+                    </>
+                  );
+                 case 'confirm':
+                    return <>
+                        <DialogHeader>
+                            <DialogTitle>Passo 3: Confirmar e Criar Rolagem</DialogTitle>
+                            <DialogDescription>Revise os detalhes abaixo antes de criar a rolagem.</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-3 text-sm">
+                            <p><strong>Item:</strong> {selectedItem?.itemName}</p>
+                            <p><strong>Custo para rolar:</strong> {config.cost} DKP</p>
+                            <p><strong>Devolver DKP aos perdedores:</strong> {config.refundDkpToLosers ? 'Sim' : 'Não'}</p>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={handlePrevStep} disabled={isSubmitting}>Voltar</Button>
+                            <Button onClick={handleCreateRoll} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="animate-spin" /> : 'Finalizar e Criar Rolagem'}</Button>
+                        </DialogFooter>
+                    </>;
+            }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetWizard(); else onOpenChange(open); }}>
+            <DialogContent className="sm:max-w-md bg-card border-border">
+                {renderContent()}
             </DialogContent>
         </Dialog>
     );
