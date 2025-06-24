@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
@@ -660,6 +661,7 @@ function LootPageContent() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<BankItemStatus | 'all'>('all');
+  const [traitFilter, setTraitFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -754,6 +756,9 @@ function LootPageContent() {
     if (statusFilter !== 'all') {
         items = items.filter(item => item.status === statusFilter);
     }
+    if (traitFilter !== 'all') {
+        items = items.filter(item => item.trait === traitFilter);
+    }
     if (dateFilter?.from) {
          const fromDateStartOfDay = new Date(dateFilter.from);
          fromDateStartOfDay.setHours(0,0,0,0);
@@ -765,7 +770,7 @@ function LootPageContent() {
         items = items.filter(item => item.createdAt && item.createdAt.toDate() <= toDateEndOfDay);
     }
     return items;
-  }, [bankItems, searchTerm, statusFilter, dateFilter]);
+  }, [bankItems, searchTerm, statusFilter, dateFilter, traitFilter]);
 
   const paginatedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -797,7 +802,7 @@ function LootPageContent() {
         <TabsContent value="banco" className="mt-6">
             <Card className="static-card-container mb-6">
                 <CardHeader><CardTitle>Filtros do Banco</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                    <div className="space-y-1">
                       <Label htmlFor="searchItemName">Buscar por Nome</Label>
                       <div className="relative">
@@ -815,6 +820,20 @@ function LootPageContent() {
                       </Select>
                    </div>
                    <div className="space-y-1">
+                        <Label htmlFor="traitFilter">Filtrar por Trait</Label>
+                        <Select value={traitFilter} onValueChange={(value) => setTraitFilter(value)}>
+                            <SelectTrigger id="traitFilter"><SelectValue placeholder="Todos Traits" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos Traits</SelectItem>
+                                {TRAIT_OPTIONS.map((trait) => (
+                                    <SelectItem key={trait} value={trait}>
+                                        {trait}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                   <div className="space-y-1">
                     <Label htmlFor="dateFilter">Filtrar por Data</Label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -830,7 +849,7 @@ function LootPageContent() {
                   </div>
                 </CardContent>
                  <CardFooter className="justify-end">
-                    <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); setDateFilter(undefined); setCurrentPage(1);}}>Limpar Filtros</Button>
+                    <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); setDateFilter(undefined); setTraitFilter('all'); setCurrentPage(1);}}>Limpar Filtros</Button>
                 </CardFooter>
             </Card>
 
@@ -863,7 +882,7 @@ function LootPageContent() {
                     <CardContent>
                         <p className="text-xl font-semibold text-foreground">O Banco da Guilda está Vazio</p>
                         <p className="text-muted-foreground mt-2">
-                            {searchTerm || statusFilter !== 'all' || dateFilter?.from
+                            {searchTerm || statusFilter !== 'all' || traitFilter !== 'all' || dateFilter?.from
                                 ? "Nenhum item encontrado com os filtros atuais."
                                 : "Adicione o primeiro item ao banco."}
                         </p>
@@ -1396,7 +1415,7 @@ function AuctionsTabContent({ guild, guildId, currentUser, canCreateAuctions, ba
                                     <TableCell>DKP</TableCell>
                                     <TableCell>{format(auction.startTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                                     <TableCell>{format(auction.endTime.toDate(), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
-                                    <TableCell><Badge variant="outline" className={statusProps.className}>{statusProps.text}</Badge></TableCell>
+                                    <TableCell><Badge variant="outline" className={cn("text-xs w-full justify-center mb-2", statusProps.className)}>{statusProps.text}</Badge></TableCell>
                                     <TableCell>{auction.status === 'ended' ? (auction.isDistributed ? 'Sim' : 'Não') : 'N/A'}</TableCell>
                                 </TableRow>
                             )
@@ -1822,3 +1841,4 @@ const LootPageWrapper = () => {
   );
 }
 export default LootPageWrapper;
+
