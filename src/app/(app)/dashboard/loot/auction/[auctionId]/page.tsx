@@ -90,11 +90,6 @@ function AuctionPageContent() {
         if (docSnap.exists()) {
             const guildData = { id: docSnap.id, ...docSnap.data() } as Guild;
             setGuild(guildData);
-            if (auction) {
-              setHeaderTitle(`Leilão: ${auction.item.itemName}`);
-            } else {
-              setHeaderTitle(`Leilão`);
-            }
         } else {
             toast({ title: "Erro", description: "Guilda não encontrada.", variant: "destructive" });
             router.push('/guild-selection');
@@ -106,9 +101,7 @@ function AuctionPageContent() {
       if (docSnap.exists()) {
         const auctionData = { id: docSnap.id, ...docSnap.data() } as Auction;
         setAuction(auctionData);
-        if (guild) {
-          setHeaderTitle(`Leilão: ${auctionData.item.itemName}`);
-        }
+        setHeaderTitle(`Leilão: ${auctionData.item.itemName}`);
         setLoading(false);
       } else {
         toast({ title: "Erro", description: "Leilão não encontrado.", variant: "destructive" });
@@ -121,7 +114,7 @@ function AuctionPageContent() {
       unsubAuction();
       setHeaderTitle(null);
     };
-  }, [guildId, auctionId, router, toast, setHeaderTitle, auction, guild]);
+  }, [guildId, auctionId, router, toast, setHeaderTitle]);
   
   useEffect(() => {
     if (auction) {
@@ -213,10 +206,22 @@ function AuctionPageContent() {
         }
     };
 
-    if (auction?.status === 'active' && new Date() > auction.endTime.toDate() && canEditAuction) {
-        handleAutomaticFinalization();
-    }
-  }, [auction, canEditAuction, currentUser, guild, guildId, toast]);
+    const runFinalizationCheck = async () => {
+        if (!auction || !guildId) return;
+
+        // Fetch the latest state of the auction to avoid race conditions
+        const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+        const auctionSnap = await getDoc(auctionRef);
+        if (!auctionSnap.exists()) return;
+        const currentAuctionData = auctionSnap.data() as Auction;
+        
+        if (currentAuctionData.status === 'active' && new Date() > currentAuctionData.endTime.toDate() && canEditAuction) {
+            await handleAutomaticFinalization();
+        }
+    };
+
+    runFinalizationCheck();
+  }, [auction, canEditAuction, currentUser, guild, guildId, toast, auctionId]);
 
   const handlePlaceBid = async () => {
     if (!currentUser || !guild || !auction || !currentUserRoleInfo || !guildId) {
@@ -317,6 +322,14 @@ function AuctionPageContent() {
     const batch = writeBatch(db);
     const auctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
     const bankItemRef = doc(db, `guilds/${guildId}/bankItems`, auction.bankItemId);
+    
+    // Safety check: ensure the corresponding item exists before updating.
+    const bankItemSnap = await getDoc(bankItemRef);
+    if (!bankItemSnap.exists()) {
+        toast({ title: "Erro", description: "O item correspondente no banco não foi encontrado.", variant: "destructive" });
+        setIsFinalizing(false);
+        return;
+    }
 
     try {
       batch.update(auctionRef, { isDistributed: true });
