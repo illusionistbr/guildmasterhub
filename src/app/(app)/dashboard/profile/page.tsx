@@ -53,7 +53,10 @@ function ProfilePageContent() {
       form.reset({
         displayName: currentUser.displayName || "",
       });
-      setPhotoPreview(currentUser.photoURL || null);
+      // Only set the photo preview from the user data if the user hasn't selected a new file
+      if (!form.getValues('photoFile')) {
+        setPhotoPreview(currentUser.photoURL || null);
+      }
     }
   }, [currentUser, form]);
 
@@ -163,7 +166,7 @@ function ProfilePageContent() {
                     <FormControl>
                         <div className="relative flex items-center">
                          <UserIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                         <Input {...field} value={field.value || ""} placeholder="Seu nome de usuário" className="form-input pl-10" />
+                         <Input {...field} value={field.value ?? ""} placeholder="Seu nome de usuário" className="form-input pl-10" />
                         </div>
                     </FormControl>
                     <FormMessage />
@@ -174,7 +177,7 @@ function ProfilePageContent() {
               <FormField
                 control={form.control}
                 name="photoFile"
-                render={({ field: { onChange, ...fieldProps } }) => (
+                render={({ field: { ref, name, onBlur } }) => ( // Destructure to avoid passing `value`
                     <FormItem>
                     <FormLabel>Fazer Upload da Foto (Máx 2MB)</FormLabel>
                     <FormControl>
@@ -183,25 +186,27 @@ function ProfilePageContent() {
                         <Input
                             type="file"
                             accept="image/png, image/jpeg, image/gif, image/webp"
-                            {...fieldProps}
+                            ref={ref}
+                            name={name}
+                            onBlur={onBlur}
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
                                     if (file.size > 2 * 1024 * 1024) {
                                     toast({ title: "Arquivo Muito Grande", description: "A imagem deve ter no máximo 2MB.", variant: "destructive" });
-                                    onChange(undefined);
+                                    form.setValue('photoFile', undefined);
                                     setPhotoPreview(currentUser?.photoURL || null);
-                                    e.target.value = "";
+                                    if (e.target) e.target.value = "";
                                     return;
                                     }
                                     if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
                                     toast({ title: "Formato Inválido", description: "Use PNG, JPG, GIF ou WEBP.", variant: "destructive" });
-                                    onChange(undefined);
+                                    form.setValue('photoFile', undefined);
                                     setPhotoPreview(currentUser?.photoURL || null);
-                                    e.target.value = "";
+                                    if (e.target) e.target.value = "";
                                     return;
                                     }
-                                    onChange(file);
+                                    form.setValue('photoFile', file);
                                     const reader = new FileReader();
                                     reader.onloadend = () => {
                                     if (typeof reader.result === 'string') {
@@ -210,7 +215,7 @@ function ProfilePageContent() {
                                     };
                                     reader.readAsDataURL(file);
                                 } else {
-                                    onChange(undefined);
+                                    form.setValue('photoFile', undefined);
                                     setPhotoPreview(currentUser?.photoURL || null);
                                 }
                             }}
@@ -244,3 +249,4 @@ export default function ProfilePage() {
       </Suspense>
     );
   }
+
