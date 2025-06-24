@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { UserProfile } from '@/types/guildmaster';
@@ -12,6 +11,7 @@ import {
   signOut as firebaseSignOut,
   Auth,
 } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -29,6 +29,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize App Check
+    if (typeof window !== 'undefined') {
+      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+      if (siteKey) {
+        try {
+          initializeAppCheck(firebaseAuth.app, {
+            provider: new ReCaptchaV3Provider(siteKey),
+            isTokenAutoRefreshEnabled: true,
+          });
+          console.log("Firebase App Check initialized.");
+        } catch (e: any) {
+          // It's common for this to throw an error if already initialized.
+          // We only want to log other types of errors.
+          if (e.name !== 'FirebaseError' || e.code !== 'appCheck/already-initialized') {
+            console.error("Error initializing Firebase App Check:", e);
+          }
+        }
+      } else {
+        console.error("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. App Check will not be initialized.");
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentFirebaseUser: FirebaseUser | null) => {
       if (currentFirebaseUser) {
         const userDocRef = doc(db, "users", currentFirebaseUser.uid);
