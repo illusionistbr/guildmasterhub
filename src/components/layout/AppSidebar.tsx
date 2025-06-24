@@ -29,6 +29,7 @@ import {
   KeyRound,
   Edit,
   Gem,
+  Trophy,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, doc, onSnapshot } from "@/lib/firebase";
@@ -51,9 +52,14 @@ const guildManagementNavItemsBase = [
     ]
   },
   {
-    label: "Loot", // New Loot menu item
+    label: "Loot",
     icon: Gem,
     baseHref: "/dashboard/loot",
+  },
+  {
+    label: "Conquistas",
+    icon: Trophy,
+    baseHref: "/dashboard/achievements",
   },
   {
     label: "Recrutamento",

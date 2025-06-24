@@ -166,6 +166,7 @@ export interface Achievement {
   guildId: string;
   title: string;
   description: string;
+  icon: string;
   dateAchieved: string;
   category: string;
   achievedByIds?: string[];
@@ -421,7 +422,7 @@ export interface Auction {
   id: string; // Firestore document ID
   guildId: string;
   item: Omit<BankItem, 'id' | 'status' | 'createdAt'>;
-  bankItemId?: string;
+  bankItemId: string;
   status: AuctionStatus;
   startingBid: number;
   minBidIncrement: number;
@@ -437,7 +438,7 @@ export interface Auction {
   isDistributed?: boolean;
   roleRestriction?: TLRole | 'Geral';
   weaponRestriction?: TLWeapon | 'Geral';
-  refundDkpToLosers?: boolean;
+  refundDkpToLosers: boolean;
 }
 
 export type LootRollStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';

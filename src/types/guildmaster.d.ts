@@ -166,6 +166,7 @@ export interface Achievement {
   guildId: string;
   title: string;
   description: string;
+  icon: string;
   dateAchieved: string;
   category: string;
   achievedByIds?: string[];
