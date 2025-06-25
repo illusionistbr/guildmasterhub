@@ -148,6 +148,7 @@ export default function CreateGuildPage() {
         dkpDefaultsPerCategory: {},
         dkpDecayEnabled: false,
         auctionCount: 0,
+        plan: 'free',
         // tlGuildFocus removed
     };
 

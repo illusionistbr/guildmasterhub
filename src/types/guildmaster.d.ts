@@ -34,6 +34,7 @@ export enum GuildPermission {
   MANAGE_LOOT_ROLLS_CREATE = "MANAGE_LOOT_ROLLS_CREATE",
   MANAGE_LOOT_ROLLS_MANAGE = "MANAGE_LOOT_ROLLS_MANAGE",
   MANAGE_LOOT_SETTINGS = "MANAGE_LOOT_SETTINGS",
+  MANAGE_BILLING = "MANAGE_BILLING",
 }
 
 export enum TLRole {
@@ -123,6 +124,8 @@ export interface Guild {
   lastDkpDecayTimestamp?: Timestamp;
   tlGuildFocus?: string[];
   auctionCount?: number;
+  plan?: 'free' | 'pro';
+  stripeCustomerId?: string;
 }
 
 export interface Event {

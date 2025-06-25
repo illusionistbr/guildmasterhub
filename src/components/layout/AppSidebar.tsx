@@ -30,6 +30,7 @@ import {
   Edit,
   Gem,
   Trophy,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, doc, onSnapshot } from "@/lib/firebase";
@@ -46,6 +47,7 @@ const guildManagementNavItemsBase = [
     label: "Calendário",
     icon: CalendarDays,
     baseHref: "/dashboard/calendar",
+    isPro: true,
     subItems: [
       { baseHref: "/dashboard/calendar/settings", label: "PIN Codes", icon: KeyRound },
       { baseHref: "/dashboard/calendar/manual-confirmation-approval", label: "Aprovar Confirmações", icon: Edit },
@@ -55,18 +57,20 @@ const guildManagementNavItemsBase = [
     label: "Loot",
     icon: Gem,
     baseHref: "/dashboard/loot",
+    isPro: true,
   },
   {
     label: "Conquistas",
     icon: Trophy,
     baseHref: "/dashboard/achievements",
+    isPro: true,
   },
   {
     label: "Recrutamento",
     icon: UserPlus,
     baseHref: "/dashboard/recruitment",
   },
-  { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList },
+  { baseHref: "/dashboard/audit-log", label: "Auditoria", icon: ClipboardList, isPro: true },
   {
     baseHref: "/dashboard/settings",
     label: "Config. da Guilda",
@@ -90,6 +94,7 @@ export function AppSidebar() {
 
   const [dkpBalance, setDkpBalance] = React.useState<number | null>(null);
   const [characterNickname, setCharacterNickname] = React.useState<string | null>(null);
+  const [guildPlan, setGuildPlan] = React.useState<'free' | 'pro'>('free');
 
   React.useEffect(() => {
     if (user && guildId) {
@@ -98,6 +103,8 @@ export function AppSidebar() {
         if (docSnap.exists()) {
           const guildData = docSnap.data() as Guild;
           const userRoleInfo = guildData.roles?.[user.uid];
+          setGuildPlan(guildData.plan || 'free');
+
           if (userRoleInfo) {
             setDkpBalance(userRoleInfo.dkpBalance ?? 0);
             setCharacterNickname(userRoleInfo.characterNickname || user.displayName);
@@ -108,17 +115,20 @@ export function AppSidebar() {
         } else {
           setDkpBalance(null);
           setCharacterNickname(null);
+          setGuildPlan('free');
         }
       }, (error) => {
         console.error("Error fetching guild data for sidebar:", error);
         setDkpBalance(null);
         setCharacterNickname(null);
+        setGuildPlan('free');
       });
 
       return () => unsubscribe();
     } else {
         setDkpBalance(null);
         setCharacterNickname(null);
+        setGuildPlan('free');
     }
   }, [user, guildId]);
 
@@ -138,20 +148,24 @@ export function AppSidebar() {
       const currentHref = generateHref(item.baseHref);
       const itemIsActive = isActive(currentHref);
       const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
+      const isFeatureDisabled = item.isPro && guildPlan === 'free';
+      const tooltipContent = isFeatureDisabled ? "Recurso Pro. Faça o upgrade para acessar." : item.label;
 
       return item.subItems ? (
         <SidebarGroup key={item.label} className="p-0">
           <SidebarMenuButton
             asChild={!!item.baseHref}
             href={item.baseHref ? currentHref : undefined}
-            tooltip={{ children: item.label, side: 'right', align: 'center' }}
+            tooltip={{ children: tooltipContent, side: 'right', align: 'center' }}
             isActive={itemIsActive || !!subItemsActive}
-            className="w-full justify-start"
+            className="w-full justify-start relative"
+            disabled={isFeatureDisabled}
           >
             {item.baseHref ? (
-               <Link href={currentHref}>
+               <Link href={isFeatureDisabled ? '#' : currentHref} className={cn(isFeatureDisabled && "pointer-events-none")}>
                 <item.icon />
                 <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                {isFeatureDisabled && <Zap className="h-3 w-3 text-yellow-400 absolute right-2 top-1/2 -translate-y-1/2 group-data-[collapsible=icon]:hidden" />}
               </Link>
             ) : (
               <>
@@ -160,31 +174,35 @@ export function AppSidebar() {
               </>
             )}
           </SidebarMenuButton>
-          <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
-            {item.subItems.map(subItem => {
-              const subItemHref = generateHref(subItem.baseHref);
-              const SubIcon = subItem.icon;
-              return (
-              <SidebarMenuItem key={subItem.baseHref} className="p-0">
-                <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
-                  {SubIcon && <SubIcon className="h-4 w-4"/>}
-                  <span>{subItem.label}</span>
-                </Link>
-              </SidebarMenuItem>
-              )
-            })}
-          </div>
+          {!isFeatureDisabled && (
+            <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
+              {item.subItems.map(subItem => {
+                const subItemHref = generateHref(subItem.baseHref);
+                const SubIcon = subItem.icon;
+                return (
+                <SidebarMenuItem key={subItem.baseHref} className="p-0">
+                  <Link href={subItemHref} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(subItemHref) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'}`}>
+                    {SubIcon && <SubIcon className="h-4 w-4"/>}
+                    <span>{subItem.label}</span>
+                  </Link>
+                </SidebarMenuItem>
+                )
+              })}
+            </div>
+          )}
         </SidebarGroup>
       ) : (
         <SidebarMenuItem key={item.baseHref}>
           <SidebarMenuButton
             asChild
-            tooltip={{ children: item.label, side: 'right', align: 'center' }}
+            tooltip={{ children: tooltipContent, side: 'right', align: 'center' }}
             isActive={isActive(currentHref)}
+            disabled={isFeatureDisabled}
           >
-            <Link href={currentHref}>
+            <Link href={isFeatureDisabled ? '#' : currentHref} className={cn("relative", isFeatureDisabled && "pointer-events-none")}>
               <item.icon />
               <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+              {isFeatureDisabled && <Zap className="h-3 w-3 text-yellow-400 absolute right-2 top-1/2 -translate-y-1/2 group-data-[collapsible=icon]:hidden" />}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
