@@ -36,6 +36,7 @@ export enum GuildPermission {
   MANAGE_LOOT_SETTINGS = "MANAGE_LOOT_SETTINGS",
   MANAGE_BILLING = "MANAGE_BILLING",
   MANAGE_GEAR_SCREENSHOT_REQUESTS = "MANAGE_GEAR_SCREENSHOT_REQUESTS",
+  MANAGE_VOD_REVIEWS = "MANAGE_VOD_REVIEWS",
 }
 
 export enum TLRole {
@@ -314,6 +315,7 @@ export enum AuditActionType {
   LOOT_ROLL_ITEM_DISTRIBUTED = "LOOT_ROLL_ITEM_DISTRIBUTED",
   LOOT_ROLL_PARTICIPATED = "LOOT_ROLL_PARTICIPATED",
   GEAR_SCREENSHOT_UPDATE_REQUESTED = "GEAR_SCREENSHOT_UPDATE_REQUESTED",
+  VOD_SUBMITTED = "VOD_SUBMITTED",
 }
 
 export interface AuditLogDetails {
@@ -352,11 +354,13 @@ export interface AuditLogDetails {
   rollWinnerId?: string;
   rollWinningValue?: number;
   rollValue?: number;
+  vodId?: string;
   details?: {
     joinMethod?: 'direct_public_non_tl' | 'public_form_join' | 'application_approved';
     questionnaireChangeSummary?: string;
     updatedFields?: string[];
     decayType?: 'on_demand' | 'scheduled';
+    vodUrl?: string;
   };
 }
 
@@ -490,4 +494,21 @@ export interface LootRoll {
   refundDkpToLosers: boolean;
   winnerId?: string;
   winningRoll?: number;
+}
+
+export interface VODSubmission {
+  id: string;
+  guildId: string;
+  submittedByUserId: string;
+  submittedByDisplayName: string;
+  submittedByUserPhotoUrl?: string | null;
+  youtubeUrl: string;
+  eventName: string;
+  eventDateTime: Timestamp;
+  submittedAt: Timestamp;
+  status: 'pending' | 'reviewed';
+  reviewerId?: string;
+  reviewerDisplayName?: string;
+  reviewedAt?: Timestamp;
+  feedback?: string;
 }

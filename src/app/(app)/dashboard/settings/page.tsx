@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair, MinusCircle, PlusCircle as PlusCircleIconLucide, Gem, Zap, CheckCircle } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair, MinusCircle, PlusCircle as PlusCircleIconLucide, Gem, Zap, CheckCircle, Lock } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -146,6 +146,7 @@ const permissionDescriptions: Record<string, { title: string; description: strin
   [GuildPermission.MANAGE_LOOT_SETTINGS]: { title: "Gerenciar Configurações de Loot", description: "Permite acessar e modificar as configurações do módulo de loot." },
   [GuildPermission.MANAGE_BILLING]: { title: "Gerenciar Plano e Cobrança", description: "Permite visualizar e alterar o plano de assinatura da guilda." },
   [GuildPermission.MANAGE_GEAR_SCREENSHOT_REQUESTS]: { title: "Solicitar Atualização de Screenshot de Gear", description: "Permite solicitar que um membro atualize seu screenshot de gearscore." },
+  [GuildPermission.MANAGE_VOD_REVIEWS]: { title: "Analisar VODs", description: "Permite visualizar e dar feedback em VODs enviados por membros." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -543,7 +544,7 @@ function GuildSettingsPageContent() {
         console.error("Erro ao salvar configurações de DKP:", error);
         toast({title: "Erro ao Salvar DKP", variant: "destructive"});
     } finally {
-        setIsSubmittingDkp(false);
+      setIsSubmittingDkp(false);
     }
   };
 
@@ -1548,10 +1549,10 @@ function GuildSettingsPageContent() {
                     <p className="text-3xl font-bold">R$19,90 <span className="text-sm font-normal text-muted-foreground">/mês</span></p>
                     <ul className="space-y-2 text-sm">
                         <li className="flex items-center gap-2 font-semibold"><CheckCircle className="h-4 w-4 text-green-500"/>Tudo do plano Gratuito, mais:</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><CheckCircle className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><CheckCircle className="h-4 w-4 text-yellow-400"/>Sistema de Loot e Leilões (DKP)</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><CheckCircle className="h-4 w-4 text-yellow-400"/>Galeria de Conquistas</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><CheckCircle className="h-4 w-4 text-yellow-400"/>Log de Auditoria Detalhado</li>
+                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
+                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Sistema de Loot e Leilões (DKP)</li>
+                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Galeria de Conquistas</li>
+                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Log de Auditoria Detalhado</li>
                     </ul>
                   </CardContent>
                   <CardFooter>
@@ -1578,5 +1579,6 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
 
 

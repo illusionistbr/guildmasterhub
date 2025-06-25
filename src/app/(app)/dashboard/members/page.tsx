@@ -7,8 +7,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs } from '@/lib/firebase';
-import type { Guild, GuildMember, UserProfile, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType } from '@/types/guildmaster';
+import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs, Timestamp } from '@/lib/firebase';
+import type { Guild, GuildMember, UserProfile, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType, VODSubmission } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -79,10 +79,10 @@ import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon,
-  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send
+  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
-import { format } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from "react-day-picker";
 import { cn } from '@/lib/utils';
@@ -132,6 +132,17 @@ const availableHeaderColors = [
   { label: 'Laranja', value: 'bg-orange-500 text-orange-50' },
   { label: 'Rosa', value: 'bg-pink-600 text-pink-50' },
 ];
+
+const YOUTUBE_URL_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+
+const vodSubmissionSchema = z.object({
+  youtubeUrl: z.string().regex(YOUTUBE_URL_REGEX, "Por favor, insira um link válido do YouTube."),
+  eventName: z.string().min(3, "O nome do evento é obrigatório."),
+  eventDateTime: z.date({
+    required_error: "A data e hora do evento são obrigatórias.",
+  }),
+});
+type VODSubmissionFormValues = z.infer<typeof vodSubmissionSchema>;
 
 
 // --- HELPER FUNCTIONS (SHARED OR SPECIFIC) ---
@@ -1006,6 +1017,201 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
   );
 }
 
+// --- VODS TAB CONTENT ---
+function VODsTabContent({ guild, guildId, currentUser, currentUserRoleInfo }: { guild: Guild; guildId: string; currentUser: UserProfile; currentUserRoleInfo: GuildMemberRoleInfo | null; }) {
+  const canReviewVods = hasPermission(currentUserRoleInfo, guild.customRoles, GuildPermission.MANAGE_VOD_REVIEWS);
+
+  return (
+    <div className="pt-6">
+      <Tabs defaultValue="submit">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="submit">Enviar VOD</TabsTrigger>
+          <TabsTrigger value="review" disabled={!canReviewVods}>
+            Analisar VODs
+            {!canReviewVods && <Lock className="ml-2 h-4 w-4" />}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="submit">
+          <SubmitVODForm guildId={guildId} currentUser={currentUser} />
+        </TabsContent>
+        <TabsContent value="review">
+          {canReviewVods ? (
+            <ReviewVODsList guildId={guildId} />
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Você não tem permissão para analisar VODs.</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function SubmitVODForm({ guildId, currentUser }: { guildId: string; currentUser: UserProfile; }) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const form = useForm<VODSubmissionFormValues>({
+    resolver: zodResolver(vodSubmissionSchema),
+  });
+
+  const onSubmit: SubmitHandler<VODSubmissionFormValues> = async (data) => {
+    setIsSubmitting(true);
+    try {
+      const newVod: Omit<VODSubmission, 'id'> = {
+        guildId,
+        submittedByUserId: currentUser.uid,
+        submittedByDisplayName: currentUser.displayName || "Usuário Desconhecido",
+        submittedByUserPhotoUrl: currentUser.photoURL,
+        youtubeUrl: data.youtubeUrl,
+        eventName: data.eventName,
+        eventDateTime: Timestamp.fromDate(data.eventDateTime),
+        submittedAt: serverTimestamp() as Timestamp,
+        status: 'pending',
+      };
+
+      const docRef = await addDoc(collection(db, `guilds/${guildId}/vods`), newVod);
+      
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.VOD_SUBMITTED, {
+        vodId: docRef.id,
+        eventName: data.eventName,
+        details: { vodUrl: data.youtubeUrl } as any,
+      });
+
+      toast({ title: "VOD Enviado!", description: "Seu vídeo foi enviado para análise." });
+      form.reset();
+    } catch (error) {
+      console.error("Erro ao enviar VOD:", error);
+      toast({ title: "Erro", description: "Não foi possível enviar seu VOD.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card className="static-card-container mt-6">
+      <CardHeader>
+        <CardTitle>Enviar VOD para Análise</CardTitle>
+        <CardDescription>Compartilhe suas gameplays para receber feedback da liderança.</CardDescription>
+      </CardHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <CardContent className="space-y-4">
+            <FormField control={form.control} name="youtubeUrl" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Link do YouTube</FormLabel>
+                <FormControl><Input {...field} placeholder="https://www.youtube.com/watch?v=..." /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
+            <FormField control={form.control} name="eventName" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome do Evento</FormLabel>
+                <FormControl><Input {...field} placeholder="Ex: Raide do Dragão, Partida Competitiva" /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
+            <FormField control={form.control} name="eventDateTime" render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data e Hora do Evento</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                        {field.value ? format(field.value, "PPP", {locale: ptBR}) : <span>Escolha uma data</span>}
+                        <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus locale={ptBR}/>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}/>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isSubmitting} className="ml-auto">
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "Enviar VOD"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
+    </Card>
+  );
+}
+
+function ReviewVODsList({ guildId }: { guildId: string; }) {
+  const [vods, setVods] = useState<VODSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, `guilds/${guildId}/vods`), orderBy("submittedAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setVods(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VODSubmission)));
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [guildId]);
+
+  const getYoutubeEmbedUrl = (url: string) => {
+    const videoIdMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return videoIdMatch ? `https://www.youtube.com/embed/${videoIdMatch[1]}` : null;
+  };
+
+  if (loading) return <div className="text-center py-10"><Loader2 className="animate-spin h-8 w-8 text-primary"/></div>;
+  if (vods.length === 0) return <div className="text-center py-10 text-muted-foreground">Nenhum VOD foi enviado ainda.</div>;
+
+  return (
+    <div className="space-y-4 mt-6">
+      {vods.map(vod => {
+        const embedUrl = getYoutubeEmbedUrl(vod.youtubeUrl);
+        return (
+          <Card key={vod.id} className="static-card-container">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{vod.eventName}</CardTitle>
+                  <CardDescription>
+                    Enviado por {vod.submittedByDisplayName} em {format(vod.eventDateTime.toDate(), "dd/MM/yyyy", {locale: ptBR})}
+                  </CardDescription>
+                </div>
+                <Badge variant={vod.status === 'pending' ? 'default' : 'secondary'}>{vod.status}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {embedUrl ? (
+                <div className="aspect-video">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={embedUrl}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-md"
+                  ></iframe>
+                </div>
+              ) : (
+                <p className="text-destructive">Link do YouTube inválido.</p>
+              )}
+            </CardContent>
+            <CardFooter className="justify-end">
+              <Button disabled>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Dar Feedback
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 
 // --- MAIN PAGE COMPONENT ---
 function MembersPageContainer() {
@@ -1132,7 +1338,7 @@ function MembersPageContainer() {
            <GearScreenshotsTabContent guild={guild} members={members} currentUser={currentUser} guildId={guildId} currentUserRoleInfo={currentUserRoleInfo} fetchGuildAndMembers={fetchGuildAndMembersData} />
         </TabsContent>
         <TabsContent value="vod">
-           <ComingSoon pageName="VODs dos Membros" icon={<Film className="h-8 w-8 text-primary"/>} />
+           <VODsTabContent guild={guild} guildId={guildId} currentUser={currentUser} currentUserRoleInfo={currentUserRoleInfo} />
         </TabsContent>
       </Tabs>
     </div>
