@@ -180,7 +180,7 @@ export default function CreateGuildPage() {
 
       if (!hasUsedTrial) {
         const userDocRef = doc(db, "users", user.uid);
-        batch.update(userDocRef, { proTrialUsed: true });
+        batch.set(userDocRef, { proTrialUsed: true }, { merge: true });
       }
 
       await batch.commit();
