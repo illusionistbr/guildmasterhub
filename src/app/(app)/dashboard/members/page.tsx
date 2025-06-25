@@ -598,8 +598,8 @@ function MembersListTabContent(
         <Table>
           <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {paginatedMembers.length === 0 && ( <TableRow key="no-members-row"><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> )}
-            {paginatedMembers.map((member) => {
+            {paginatedMembers.length === 0 ? ( <TableRow key="no-members-row"><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> ) : (
+            paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid;
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
               const displayName = member.characterNickname || member.displayName || member.email || member.uid;
@@ -650,7 +650,7 @@ function MembersListTabContent(
                   </div></TableCell>
                 </TableRow>
               );
-            })}
+            }))}
           </TableBody>
         </Table>
       </div>
@@ -778,7 +778,7 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                     </TableHeader>
                     <TableBody>
                         {members.length === 0 ? (
-                            <TableRow><TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell></TableRow>
+                            <TableRow key="no-screenshots-row"><TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell></TableRow>
                         ) : (
                             members.map((member) => (
                                 <TableRow key={member.uid}>
@@ -1056,7 +1056,7 @@ function SubmitVODForm({ guildId, currentUser }: { guildId: string; currentUser:
     resolver: zodResolver(vodSubmissionSchema),
   });
 
-  const onSubmit: SubmitHandler<VODSubmissionFormValues> = async (data) => {
+  const onSubmit: GroupSubmitHandler<VODSubmissionFormValues> = async (data) => {
     setIsSubmitting(true);
     try {
       const newVod: Omit<VODSubmission, 'id'> = {
@@ -1352,5 +1352,6 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
