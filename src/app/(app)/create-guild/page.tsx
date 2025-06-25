@@ -77,21 +77,12 @@ export default function CreateGuildPage() {
 
   const form = useForm<GuildFormValues>({
     resolver: zodResolver(guildSchema),
-    defaultValues: { name: "", game: "", password: "", socialFacebook: "", socialX: "", socialYoutube: "", socialDiscord: "", region: undefined, server: undefined }
+    defaultValues: { name: "", game: "Throne and Liberty", password: "", socialFacebook: "", socialX: "", socialYoutube: "", socialDiscord: "", region: undefined, server: undefined }
     // description and tlGuildFocus removed from defaultValues
   });
 
   const { handleSubmit, control, formState: { errors }, watch, setValue } = form;
-  const watchedGame = watch("game");
   const watchedRegion = watch("region");
-
-  useEffect(() => {
-    if (watchedGame !== "Throne and Liberty") {
-      setValue("region", undefined);
-      setValue("server", undefined);
-      // setValue("tlGuildFocus", []); // tlGuildFocus removed
-    }
-  }, [watchedGame, setValue]);
 
   useEffect(() => {
     setValue("server", undefined);
@@ -249,46 +240,69 @@ export default function CreateGuildPage() {
                 name="game"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jogo <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>Jogo</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                         <Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                         <Input {...field} readOnly disabled className="pl-10 bg-muted/30" />
+                      </div>
+                    </FormControl>
+                     <FormDescription>
+                      Atualmente, o suporte é exclusivo para Throne and Liberty.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={control}
+                name="region"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                     <div className="relative">
-                       <Gamepad2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger className="pl-10">
-                              <SelectValue placeholder="Selecione um jogo" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Throne and Liberty">Throne and Liberty</SelectItem>
-                            <SelectItem value="Chrono Odyssey">Chrono Odyssey</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger className="pl-10">
+                            <SelectValue placeholder="Selecione uma região" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tlRegions.map(region => (
+                            <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {watchedGame === "Throne and Liberty" && (
-                <>
-                  <FormField
+              {watchedRegion && tlServers[watchedRegion]?.length > 0 && (
+                   <FormField
                     control={control}
-                    name="region"
+                    name="server"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
+                        <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                         <div className="relative">
-                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                          <Select onValueChange={field.onChange} value={field.value || ""} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
                             <FormControl>
                               <SelectTrigger className="pl-10">
-                                <SelectValue placeholder="Selecione uma região" />
+                                <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {tlRegions.map(region => (
-                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
-                              ))}
+                              {tlServers[watchedRegion]?.length > 0 ? (
+                                tlServers[watchedRegion].map(server => (
+                                  <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -296,41 +310,9 @@ export default function CreateGuildPage() {
                       </FormItem>
                     )}
                   />
-                  {watchedRegion && tlServers[watchedRegion]?.length > 0 && (
-                       <FormField
-                        control={control}
-                        name="server"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                            <div className="relative">
-                              <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                              <Select onValueChange={field.onChange} value={field.value || ""} disabled={!watchedRegion || (tlServers[watchedRegion]?.length === 0)}>
-                                <FormControl>
-                                  <SelectTrigger className="pl-10">
-                                    <SelectValue placeholder={tlServers[watchedRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {tlServers[watchedRegion]?.length > 0 ? (
-                                    tlServers[watchedRegion].map(server => (
-                                      <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    {/* tlGuildFocus checkboxes removed */}
-                </>
-              )}
-
+                )}
+                {/* tlGuildFocus checkboxes removed */}
+              
               <div className="space-y-4 pt-4">
                 <h3 className="text-md font-medium text-foreground">Links Sociais (Opcional)</h3>
                 <FormField control={control} name="socialFacebook" render={({ field }) => ( <FormItem> <FormLabel>Facebook</FormLabel> <div className="relative"><Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl><Input {...field} placeholder="https://facebook.com/suaguilda" className="pl-10"/></FormControl></div> <FormMessage /> </FormItem> )}/>
