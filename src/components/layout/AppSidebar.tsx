@@ -35,6 +35,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { db, doc, onSnapshot } from "@/lib/firebase";
 import type { Guild } from "@/types/guildmaster";
+import { cn } from "@/lib/utils";
 
 const guildManagementNavItemsBase = [
   { baseHref: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
