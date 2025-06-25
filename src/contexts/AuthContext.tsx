@@ -144,6 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           createdAt: serverTimestamp(),
           guilds: [],
           lastNotificationsCheckedTimestamp: {},
+          proTrialUsed: false,
         };
         await setDoc(userDocRef, newUserProfile);
 

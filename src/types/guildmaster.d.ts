@@ -212,6 +212,7 @@ export interface UserProfile {
   lastNotificationsCheckedTimestamp?: {
     [guildId: string]: Timestamp;
   };
+  proTrialUsed?: boolean;
 }
 
 export interface GuildMember extends UserProfile {

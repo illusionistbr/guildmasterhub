@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon, Crosshair } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
+import { db, collection, addDoc, serverTimestamp, Timestamp, writeBatch, doc } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
@@ -101,6 +101,8 @@ export default function CreateGuildPage() {
       return;
     }
     setIsSubmitting(true);
+    
+    const hasUsedTrial = user.proTrialUsed === true;
 
     const socialLinks: NonNullable<Guild['socialLinks']> = {};
     if (data.socialFacebook && data.socialFacebook.trim() !== "") socialLinks.facebook = data.socialFacebook.trim();
@@ -149,11 +151,14 @@ export default function CreateGuildPage() {
         dkpDefaultsPerCategory: {},
         dkpDecayEnabled: false,
         auctionCount: 0,
-        plan: 'pro',
-        trialEndsAt: Timestamp.fromDate(addDays(new Date(), 7)),
-        // tlGuildFocus removed
+        plan: hasUsedTrial ? 'free' : 'pro',
+        // trialEndsAt will be added conditionally
     };
 
+    if (!hasUsedTrial) {
+        (guildData as Guild).trialEndsAt = Timestamp.fromDate(addDays(new Date(), 7));
+    }
+    
     if (data.game === "Throne and Liberty") {
         if (data.region) guildData.region = data.region;
         if (data.server) guildData.server = data.server;
@@ -168,19 +173,30 @@ export default function CreateGuildPage() {
     }
 
     try {
-      const newGuildRef = await addDoc(collection(db, "guilds"), guildData);
+      const batch = writeBatch(db);
+      const newGuildDocRef = doc(collection(db, "guilds"));
+
+      batch.set(newGuildDocRef, guildData);
+
+      if (!hasUsedTrial) {
+        const userDocRef = doc(db, "users", user.uid);
+        batch.update(userDocRef, { proTrialUsed: true });
+      }
+
+      await batch.commit();
+
       toast({
         title: "Guilda Criada com Sucesso!",
-        description: `${data.name} está pronta para a aventura! Detalhes como logo, foco (para TL) e eventos podem ser configurados no painel de controle.`,
+        description: `${data.name} está pronta para a aventura! ${!hasUsedTrial ? 'Seu teste Pro de 7 dias começou.' : ''}`.trim(),
         duration: 7000,
         action: (
-            <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${newGuildRef.id}`)}>
+            <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${newGuildDocRef.id}`)}>
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Ver Guilda
             </Button>
         )
       });
-      router.push(`/dashboard?guildId=${newGuildRef.id}`);
+      router.push(`/dashboard?guildId=${newGuildDocRef.id}`);
     } catch (error) {
       console.error("Erro ao criar guilda:", error);
       toast({ title: "Erro ao Criar Guilda", description: "Não foi possível criar a guilda. Tente novamente.", variant: "destructive" });
