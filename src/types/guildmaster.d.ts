@@ -125,6 +125,7 @@ export interface Guild {
   tlGuildFocus?: string[];
   auctionCount?: number;
   plan?: 'free' | 'pro';
+  trialEndsAt?: Timestamp;
   stripeCustomerId?: string;
 }
 

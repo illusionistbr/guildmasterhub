@@ -17,10 +17,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShieldPlus, Loader2, CheckCircle, Lock, Facebook, Twitter, Youtube, Link2 as LinkIcon, AlertCircle, Gamepad2, ArrowLeft, Globe, Server as ServerIcon, Crosshair } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
+import { db, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, CustomRole } from '@/types/guildmaster';
 import { GuildPermission } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
+import { addDays } from 'date-fns';
 
 const tlRegions = [
   { value: "Korea", label: "Coreia" },
@@ -148,7 +149,8 @@ export default function CreateGuildPage() {
         dkpDefaultsPerCategory: {},
         dkpDecayEnabled: false,
         auctionCount: 0,
-        plan: 'free',
+        plan: 'pro',
+        trialEndsAt: Timestamp.fromDate(addDays(new Date(), 7)),
         // tlGuildFocus removed
     };
 

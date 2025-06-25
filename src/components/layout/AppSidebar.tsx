@@ -31,6 +31,7 @@ import {
   Gem,
   Trophy,
   Zap,
+  Hourglass
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, doc, onSnapshot } from "@/lib/firebase";
@@ -96,16 +97,50 @@ export function AppSidebar() {
   const [dkpBalance, setDkpBalance] = React.useState<number | null>(null);
   const [characterNickname, setCharacterNickname] = React.useState<string | null>(null);
   const [guildPlan, setGuildPlan] = React.useState<'free' | 'pro'>('free');
+  const [trialTimeRemaining, setTrialTimeRemaining] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    
     if (user && guildId) {
       const guildRef = doc(db, "guilds", guildId);
       const unsubscribe = onSnapshot(guildRef, (docSnap) => {
         if (docSnap.exists()) {
           const guildData = docSnap.data() as Guild;
-          const userRoleInfo = guildData.roles?.[user.uid];
-          setGuildPlan(guildData.plan || 'free');
+          let currentPlan = guildData.plan || 'free';
 
+          if (guildData.plan === 'pro' && guildData.trialEndsAt) {
+            const trialEndDate = guildData.trialEndsAt.toDate();
+            if (new Date() > trialEndDate) {
+              currentPlan = 'free'; // Downgrade for UI if trial expired
+              setTrialTimeRemaining("Expirado");
+            } else {
+              // Set up the countdown interval
+              if (intervalId) clearInterval(intervalId);
+              const updateCountdown = () => {
+                const now = new Date();
+                const distance = trialEndDate.getTime() - now.getTime();
+                if (distance < 0) {
+                  setTrialTimeRemaining("Expirado");
+                  setGuildPlan('free');
+                  if (intervalId) clearInterval(intervalId);
+                } else {
+                  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                  setTrialTimeRemaining(`${days}d ${hours}h ${minutes}m`);
+                }
+              };
+              updateCountdown(); // Initial call
+              intervalId = setInterval(updateCountdown, 60000); // Update every minute
+            }
+          } else {
+             setTrialTimeRemaining(null);
+          }
+
+          setGuildPlan(currentPlan);
+
+          const userRoleInfo = guildData.roles?.[user.uid];
           if (userRoleInfo) {
             setDkpBalance(userRoleInfo.dkpBalance ?? 0);
             setCharacterNickname(userRoleInfo.characterNickname || user.displayName);
@@ -117,19 +152,26 @@ export function AppSidebar() {
           setDkpBalance(null);
           setCharacterNickname(null);
           setGuildPlan('free');
+          setTrialTimeRemaining(null);
         }
       }, (error) => {
         console.error("Error fetching guild data for sidebar:", error);
         setDkpBalance(null);
         setCharacterNickname(null);
         setGuildPlan('free');
+        setTrialTimeRemaining(null);
       });
 
-      return () => unsubscribe();
+      return () => {
+        unsubscribe();
+        if (intervalId) clearInterval(intervalId);
+      };
     } else {
         setDkpBalance(null);
         setCharacterNickname(null);
         setGuildPlan('free');
+        setTrialTimeRemaining(null);
+        if (intervalId) clearInterval(intervalId);
     }
   }, [user, guildId]);
 
@@ -163,7 +205,7 @@ export function AppSidebar() {
             disabled={isFeatureDisabled}
           >
             {item.baseHref ? (
-               <Link href={isFeatureDisabled ? '#' : currentHref} className={cn(isFeatureDisabled && "pointer-events-none")}>
+               <Link href={isFeatureDisabled ? '#' : currentHref} className={cn("relative", isFeatureDisabled && "pointer-events-none")}>
                 <item.icon />
                 <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                 {isFeatureDisabled && <Zap className="h-3 w-3 text-yellow-400 absolute right-2 top-1/2 -translate-y-1/2 group-data-[collapsible=icon]:hidden" />}
@@ -241,6 +283,17 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
+          {guildId && guildPlan === 'pro' && trialTimeRemaining && trialTimeRemaining !== "Expirado" && (
+            <div className="mt-4 px-2 group-data-[collapsible=icon]:hidden animate-in fade-in duration-300">
+                <div className="p-3 rounded-md bg-card/50 border border-yellow-400/30 text-center space-y-1">
+                    <p className="font-semibold text-sm text-yellow-400 flex items-center justify-center gap-1.5"><Hourglass className="h-4 w-4"/>Teste Pro</p>
+                    <p className="text-xs text-muted-foreground">
+                        <span className="font-bold text-foreground">{trialTimeRemaining}</span> restantes
+                    </p>
+                </div>
+            </div>
+          )}
 
           {guildId && characterNickname !== null && (
             <div className="mt-4 px-2 group-data-[collapsible=icon]:hidden animate-in fade-in duration-300">
