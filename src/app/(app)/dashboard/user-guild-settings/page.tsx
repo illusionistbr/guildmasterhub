@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc } from '@/lib/firebase';
+import { db, doc, getDoc, updateDoc, deleteField, serverTimestamp, Timestamp } from '@/lib/firebase';
 import type { Guild, GuildMemberRoleInfo, UserProfile } from '@/types/guildmaster';
 import { AuditActionType, TLRole, TLWeapon } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -22,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { UserCog, Loader2, Save, Hash, ImageIcon, Shield, Swords, Wand2, ArrowLeft, Link2 as LinkIcon } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const tlWeaponsList = Object.values(TLWeapon);
 
@@ -134,52 +137,49 @@ function UserGuildSettingsPageContent() {
     setIsSubmitting(true);
 
     const updatedFields: string[] = [];
-    if (memberRoleInfo.characterNickname !== data.characterNickname) updatedFields.push('Nickname do Personagem');
-    if (memberRoleInfo.gearScore !== data.gearScore) updatedFields.push('Gearscore');
-    if (memberRoleInfo.gearScoreScreenshotUrl !== (data.gearScoreScreenshotUrl || null)) updatedFields.push('Screenshot do Gearscore');
-    if (memberRoleInfo.gearBuildLink !== (data.gearBuildLink || null)) updatedFields.push('Gear Build Link');
-    if (memberRoleInfo.skillBuildLink !== (data.skillBuildLink || null)) updatedFields.push('Skill Build Link');
+    const updatePayload: { [key: string]: any } = {};
 
-    const updatedRoleInfoForState: GuildMemberRoleInfo = {
-      ...memberRoleInfo,
-      characterNickname: data.characterNickname,
-      gearScore: data.gearScore,
-      gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
-      gearBuildLink: data.gearBuildLink || null,
-      skillBuildLink: data.skillBuildLink || null,
-    };
-
-    if (isTLGuild) {
-      updatedRoleInfoForState.tlRole = data.tlRole;
-      updatedRoleInfoForState.tlPrimaryWeapon = data.tlPrimaryWeapon;
-      updatedRoleInfoForState.tlSecondaryWeapon = data.tlSecondaryWeapon;
-      if (memberRoleInfo.tlRole !== data.tlRole) updatedFields.push('Função TL');
-      if (memberRoleInfo.tlPrimaryWeapon !== data.tlPrimaryWeapon) updatedFields.push('Arma Primária TL');
-      if (memberRoleInfo.tlSecondaryWeapon !== data.tlSecondaryWeapon) updatedFields.push('Arma Secundária TL');
-    }
-
-    // Create a separate payload for Firestore and clean it of undefined values.
-    const firestorePayload = { ...updatedRoleInfoForState };
-    Object.keys(firestorePayload).forEach(keyStr => {
-        const key = keyStr as keyof GuildMemberRoleInfo;
-        if (firestorePayload[key] === undefined) {
-            delete firestorePayload[key];
+    const hasNewScreenshot = data.gearScoreScreenshotUrl && (memberRoleInfo.gearScoreScreenshotUrl !== data.gearScoreScreenshotUrl);
+    
+    // Construct a payload with only the changed fields
+    for (const key of Object.keys(data) as Array<keyof UserGuildSettingsFormValues>) {
+        if (data[key] !== memberRoleInfo[key as keyof GuildMemberRoleInfo]) {
+            updatePayload[key] = data[key] === '' ? null : data[key]; // Store null for empty strings
+            updatedFields.push(key);
         }
-    });
+    }
+    
+    // If a new screenshot URL was provided, add timestamp and clear request
+    if (hasNewScreenshot) {
+        updatePayload.gearScreenshotUpdatedAt = serverTimestamp();
+        updatePayload.gearScreenshotUpdateRequest = deleteField();
+    }
+    
+    // Nothing to update
+    if (Object.keys(updatePayload).length === 0) {
+        toast({ title: "Nenhuma alteração detectada." });
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
       const guildRef = doc(db, "guilds", guildId);
-      await updateDoc(guildRef, {
-        [`roles.${currentUser.uid}`]: firestorePayload,
-      });
+      const firestoreUpdateObject: { [key: string]: any } = {};
+      for(const key in updatePayload) {
+          firestoreUpdateObject[`roles.${currentUser.uid}.${key}`] = updatePayload[key];
+      }
+
+      await updateDoc(guildRef, firestoreUpdateObject);
 
       await logGuildActivity(guildId, currentUser.uid, data.characterNickname || currentUser.displayName, AuditActionType.MEMBER_GUILD_PROFILE_UPDATED, {
          targetUserId: currentUser.uid,
          targetUserDisplayName: data.characterNickname || currentUser.displayName || currentUser.email || "Usuário",
          details: { updatedFields }
       });
+      
+      // Manually merge state to reflect changes instantly
+      setMemberRoleInfo(prev => ({...prev!, ...updatePayload}));
 
-      setMemberRoleInfo(updatedRoleInfoForState);
       toast({ title: "Informações Atualizadas!", description: "Suas configurações na guilda foram salvas." });
     } catch (error) {
       console.error("Erro ao atualizar informações:", error);
@@ -188,6 +188,7 @@ function UserGuildSettingsPageContent() {
       setIsSubmitting(false);
     }
   };
+
 
   if (loadingData || authLoading) {
     return (
@@ -386,3 +387,4 @@ export default function UserGuildSettingsPage() {
     </Suspense>
   );
 }
+

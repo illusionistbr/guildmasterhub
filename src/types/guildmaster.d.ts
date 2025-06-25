@@ -35,6 +35,7 @@ export enum GuildPermission {
   MANAGE_LOOT_ROLLS_MANAGE = "MANAGE_LOOT_ROLLS_MANAGE",
   MANAGE_LOOT_SETTINGS = "MANAGE_LOOT_SETTINGS",
   MANAGE_BILLING = "MANAGE_BILLING",
+  MANAGE_GEAR_SCREENSHOT_REQUESTS = "MANAGE_GEAR_SCREENSHOT_REQUESTS",
 }
 
 export enum TLRole {
@@ -69,6 +70,12 @@ export interface GuildMemberRoleInfo {
   notes?: string;
   status?: MemberStatus;
   dkpBalance?: number;
+  gearScreenshotUpdatedAt?: Timestamp;
+  gearScreenshotUpdateRequest?: {
+    requestedBy: string;
+    requestedByDisplayName: string;
+    requestedAt: Timestamp;
+  } | null;
 }
 
 export interface CustomRole {
@@ -229,6 +236,12 @@ export interface GuildMember extends UserProfile {
   weapons?: { mainHandIconUrl?: string; offHandIconUrl?: string };
   dkpBalance?: number;
   status?: MemberStatus;
+  gearScreenshotUpdatedAt?: Timestamp;
+  gearScreenshotUpdateRequest?: {
+    requestedBy: string;
+    requestedByDisplayName: string;
+    requestedAt: Timestamp;
+  } | null;
 }
 
 export type GroupIconType = 'shield' | 'sword' | 'heart';
@@ -300,6 +313,7 @@ export enum AuditActionType {
   LOOT_ROLL_FINALIZED = "LOOT_ROLL_FINALIZED",
   LOOT_ROLL_ITEM_DISTRIBUTED = "LOOT_ROLL_ITEM_DISTRIBUTED",
   LOOT_ROLL_PARTICIPATED = "LOOT_ROLL_PARTICIPATED",
+  GEAR_SCREENSHOT_UPDATE_REQUESTED = "GEAR_SCREENSHOT_UPDATE_REQUESTED",
 }
 
 export interface AuditLogDetails {

@@ -79,7 +79,7 @@ import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon,
-  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins
+  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format } from 'date-fns';
@@ -166,6 +166,8 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       gearBuildLink: guildRoleInfo.gearBuildLink || null,
       skillBuildLink: guildRoleInfo.skillBuildLink || null,
       status: guildRoleInfo.status || 'Ativo', dkpBalance: guildRoleInfo.dkpBalance ?? 0,
+      gearScreenshotUpdatedAt: guildRoleInfo.gearScreenshotUpdatedAt,
+      gearScreenshotUpdateRequest: guildRoleInfo.gearScreenshotUpdateRequest,
     };
   } else {
     specificRoleInfo.characterNickname = memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid;
@@ -181,6 +183,8 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
     gearBuildLink: specificRoleInfo.gearBuildLink, skillBuildLink: specificRoleInfo.skillBuildLink,
     tlRole: specificRoleInfo.tlRole, tlPrimaryWeapon: specificRoleInfo.tlPrimaryWeapon, tlSecondaryWeapon: specificRoleInfo.tlSecondaryWeapon,
     notes: specificRoleInfo.notes, status: specificRoleInfo.status, dkpBalance: specificRoleInfo.dkpBalance,
+    gearScreenshotUpdatedAt: specificRoleInfo.gearScreenshotUpdatedAt,
+    gearScreenshotUpdateRequest: specificRoleInfo.gearScreenshotUpdateRequest,
     weapons: {
       mainHandIconUrl: specificRoleInfo.tlPrimaryWeapon ? getWeaponIconPath(specificRoleInfo.tlPrimaryWeapon) : undefined,
       offHandIconUrl: specificRoleInfo.tlSecondaryWeapon ? getWeaponIconPath(specificRoleInfo.tlSecondaryWeapon) : undefined
@@ -703,6 +707,112 @@ function MembersListTabContent(
   );
 }
 
+// --- GEAR SCREENSHOTS TAB CONTENT ---
+function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser, guildId, currentUserRoleInfo, fetchGuildAndMembers }: { guild: Guild; members: GuildMember[]; currentUser: UserProfile; guildId: string; currentUserRoleInfo: GuildMemberRoleInfo | null; fetchGuildAndMembers: () => void;}) {
+    const { toast } = useToast();
+    const [members, setMembers] = useState<GuildMember[]>(initialMembers);
+    const [requestingUpdateFor, setRequestingUpdateFor] = useState<string | null>(null);
+
+    useEffect(() => {
+      setMembers(initialMembers);
+    }, [initialMembers]);
+
+    const canRequestUpdate = useMemo(() => {
+        return hasPermission(currentUserRoleInfo, guild.customRoles, GuildPermission.MANAGE_GEAR_SCREENSHOT_REQUESTS);
+    }, [currentUserRoleInfo, guild.customRoles]);
+
+    const handleRequestScreenshotUpdate = async (targetMember: GuildMember) => {
+        if (!canRequestUpdate || !guildId || !currentUser) {
+            toast({ title: "Permissão Negada", variant: "destructive" });
+            return;
+        }
+        setRequestingUpdateFor(targetMember.uid);
+        try {
+            const guildRef = doc(db, "guilds", guildId);
+            const requestPayload = {
+                requestedBy: currentUser.uid,
+                requestedByDisplayName: currentUser.displayName || currentUser.email || "Líder",
+                requestedAt: serverTimestamp(),
+            };
+            await updateDoc(guildRef, {
+                [`roles.${targetMember.uid}.gearScreenshotUpdateRequest`]: requestPayload,
+            });
+
+            await logGuildActivity(guildId, currentUser.uid, currentUser.displayName, AuditActionType.GEAR_SCREENSHOT_UPDATE_REQUESTED, {
+                targetUserId: targetMember.uid,
+                targetUserDisplayName: targetMember.characterNickname || targetMember.displayName
+            });
+
+            toast({ title: "Solicitação Enviada", description: `Uma solicitação de atualização de gear foi enviada para ${targetMember.characterNickname || targetMember.displayName}.` });
+            fetchGuildAndMembers();
+        } catch (error) {
+            console.error("Erro ao solicitar atualização:", error);
+            toast({ title: "Erro ao Enviar Solicitação", variant: "destructive" });
+        } finally {
+            setRequestingUpdateFor(null);
+        }
+    };
+
+    return (
+        <div className="space-y-6 pt-6">
+            <div className="overflow-x-auto bg-card p-2 rounded-lg shadow">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Membro</TableHead>
+                            <TableHead>Screenshot do Gear</TableHead>
+                            <TableHead>Última Atualização</TableHead>
+                            <TableHead className="text-right">Ação</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {members.length === 0 ? (
+                            <TableRow><TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell></TableRow>
+                        ) : (
+                            members.map((member) => (
+                                <TableRow key={member.uid}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 font-medium">
+                                            <Avatar className="h-8 w-8"><AvatarImage src={member.photoURL || undefined} alt={member.displayName || ""} data-ai-hint="user avatar"/><AvatarFallback>{member.displayName?.substring(0, 2).toUpperCase() || 'M'}</AvatarFallback></Avatar>
+                                            {member.characterNickname || member.displayName}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {member.gearScoreScreenshotUrl ? (
+                                            <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer">
+                                                <Image src={member.gearScoreScreenshotUrl} alt={`Gear de ${member.characterNickname}`} width={100} height={60} className="rounded-md object-cover hover:scale-110 transition-transform" data-ai-hint="gear screenshot"/>
+                                            </a>
+                                        ) : (
+                                            <span className="text-muted-foreground text-xs">Não enviado</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {member.gearScreenshotUpdatedAt ? format(member.gearScreenshotUpdatedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR }) : <span className="text-muted-foreground text-xs">Nunca</span>}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {canRequestUpdate && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleRequestScreenshotUpdate(member)}
+                                                disabled={requestingUpdateFor === member.uid || !!member.gearScreenshotUpdateRequest}
+                                            >
+                                                {requestingUpdateFor === member.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : (member.gearScreenshotUpdateRequest ? "Solicitado" : <Send className="h-4 w-4 mr-2"/>)}
+                                                {requestingUpdateFor !== member.uid && !member.gearScreenshotUpdateRequest && "Solicitar Atualização"}
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
+}
+
+
 // --- GROUPS TAB CONTENT ---
 function GroupsTabContent(
   { guild, guildMembers, currentUser, guildId, currentUserRoleInfo }:
@@ -915,7 +1025,7 @@ function MembersPageContainer() {
 
   useEffect(() => {
     const currentTab = searchParams.get('tab');
-    if (currentTab && ["members", "groups", "screenshots", "vod"].includes(currentTab)) {
+    if (currentTab && ["members", "groups", "screenshots-gear", "vod"].includes(currentTab)) {
       setActiveTab(currentTab);
     } else {
       setActiveTab("members"); 
@@ -1009,7 +1119,7 @@ function MembersPageContainer() {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="members">Membros</TabsTrigger>
           <TabsTrigger value="groups">Grupos</TabsTrigger>
-          <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
+          <TabsTrigger value="screenshots-gear">Screenshots Gear</TabsTrigger>
           <TabsTrigger value="vod">VOD</TabsTrigger>
         </TabsList>
         <TabsContent value="members">
@@ -1018,8 +1128,8 @@ function MembersPageContainer() {
         <TabsContent value="groups">
           <GroupsTabContent guild={guild} guildMembers={guildMembersForGroups} currentUser={currentUser} guildId={guildId} currentUserRoleInfo={currentUserRoleInfo} />
         </TabsContent>
-        <TabsContent value="screenshots">
-           <ComingSoon pageName="Screenshots dos Membros" icon={<ImageIconLucide className="h-8 w-8 text-primary"/>} />
+        <TabsContent value="screenshots-gear">
+           <GearScreenshotsTabContent guild={guild} members={members} currentUser={currentUser} guildId={guildId} currentUserRoleInfo={currentUserRoleInfo} fetchGuildAndMembers={fetchGuildAndMembersData} />
         </TabsContent>
         <TabsContent value="vod">
            <ComingSoon pageName="VODs dos Membros" icon={<Film className="h-8 w-8 text-primary"/>} />
@@ -1036,3 +1146,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
@@ -144,6 +145,7 @@ const permissionDescriptions: Record<string, { title: string; description: strin
   [GuildPermission.MANAGE_LOOT_ROLLS_MANAGE]: { title: "Gerenciar Rolagens de Loot", description: "Permite gerenciar, fechar e resolver rolagens de dados em andamento." },
   [GuildPermission.MANAGE_LOOT_SETTINGS]: { title: "Gerenciar Configurações de Loot", description: "Permite acessar e modificar as configurações do módulo de loot." },
   [GuildPermission.MANAGE_BILLING]: { title: "Gerenciar Plano e Cobrança", description: "Permite visualizar e alterar o plano de assinatura da guilda." },
+  [GuildPermission.MANAGE_GEAR_SCREENSHOT_REQUESTS]: { title: "Solicitar Atualização de Screenshot de Gear", description: "Permite solicitar que um membro atualize seu screenshot de gearscore." },
 };
 const allPermissionsList = Object.values(GuildPermission);
 
@@ -1576,4 +1578,5 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
 

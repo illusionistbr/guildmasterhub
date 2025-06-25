@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from 'next/image';
-import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart, CalendarDays, Newspaper, Construction } from "lucide-react";
+import { Users, UserPlus, Edit, UploadCloud, Link2, ImagePlus, AlertTriangle, Edit3, ShieldX, Loader2, Shield, Swords, Heart, CalendarDays, Newspaper, Construction, Send } from "lucide-react";
 import type { Guild, AuditActionType, Application, GuildMemberRoleInfo, Event as GuildEventType } from '@/types/guildmaster';
 import { TLRole } from '@/types/guildmaster';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -20,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, getDocs as getFirestoreDocs, limit, onSnapshot, deleteField } from "firebase/firestore";
 import { db, storage, ref as storageFirebaseRef, uploadBytes, getDownloadURL } from "@/lib/firebase";
 import { StatCard } from '@/components/shared/StatCard';
 import { useHeader } from '@/contexts/HeaderContext';
@@ -45,6 +46,8 @@ function DashboardPageContent() {
   const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
   const [roleCounts, setRoleCounts] = useState({ tank: 0, dps: 0, healer: 0 });
+  const [showGearUpdateRequest, setShowGearUpdateRequest] = useState(false);
+  const [gearUpdateRequestor, setGearUpdateRequestor] = useState<string | null>(null);
 
   const { toast } = useToast();
 
@@ -87,6 +90,13 @@ function DashboardPageContent() {
                 setHeaderTitle(guildToSet.name);
                 setCurrentBannerUrl(guildData.bannerUrl || "https://placehold.co/1200x300.png");
                 setCurrentLogoUrl(guildData.logoUrl || "https://placehold.co/150x150.png");
+
+                // Check for gear update request
+                const userRoleInfo = guildToSet.roles?.[user.uid];
+                if (userRoleInfo?.gearScreenshotUpdateRequest) {
+                    setGearUpdateRequestor(userRoleInfo.gearScreenshotUpdateRequest.requestedByDisplayName);
+                    setShowGearUpdateRequest(true);
+                }
 
                 if (guildToSet.game === "Throne and Liberty" && guildToSet.roles) {
                   let tanks = 0;
@@ -409,6 +419,16 @@ function DashboardPageContent() {
     }
   };
 
+  const handleAcknowledgeGearRequest = async () => {
+    if (user && currentGuild?.id) {
+        const guildRef = doc(db, "guilds", currentGuild.id);
+        await updateDoc(guildRef, {
+            [`roles.${user.uid}.gearScreenshotUpdateRequest`]: deleteField()
+        });
+        setShowGearUpdateRequest(false);
+    }
+  };
+
   const pageLoading = authLoading || loadingGuild;
 
   if (pageLoading) {
@@ -449,6 +469,25 @@ function DashboardPageContent() {
 
   return (
     <div className="space-y-8">
+      <Dialog open={showGearUpdateRequest}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-primary">
+                    <Send className="h-6 w-6"/>
+                    Solicitação de Atualização de Gear
+                </DialogTitle>
+                <DialogDescription>
+                    {gearUpdateRequestor || "A liderança"} solicitou que você atualize sua screenshot de gearscore. Por favor, vá para suas configurações para atualizar.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:justify-end">
+                <Button variant="outline" onClick={handleAcknowledgeGearRequest}>Lembre-me Mais Tarde</Button>
+                <Button asChild className="btn-gradient btn-style-secondary" onClick={handleAcknowledgeGearRequest}>
+                    <Link href={`/dashboard/user-guild-settings?guildId=${guildIdForLinks}`}>Atualizar Perfil</Link>
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="relative w-full h-48 md:h-60 rounded-lg shadow-lg group z-0">
         <Image
           src={currentBannerUrl}
@@ -730,3 +769,4 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+
