@@ -79,7 +79,7 @@ import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon,
-  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle
+  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle, Lock
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -90,7 +90,7 @@ import { useHeader } from '@/contexts/HeaderContext';
 import { Label } from '@/components/ui/label';
 import { hasPermission, isGuildOwner } from '@/lib/permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm, type SubmitHandler as GroupSubmitHandler, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -598,7 +598,7 @@ function MembersListTabContent(
         <Table>
           <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {paginatedMembers.length === 0 && ( <TableRow><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> )}
+            {paginatedMembers.length === 0 && ( <TableRow key="no-members-row"><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> )}
             {paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid;
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
@@ -1352,4 +1352,5 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
