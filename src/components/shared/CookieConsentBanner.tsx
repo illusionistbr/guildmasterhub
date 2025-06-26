@@ -37,8 +37,8 @@ export function CookieConsentBanner() {
         <div className="flex items-start gap-3">
           <Cookie className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
           <p className="text-sm text-card-foreground">
-            Nosso site utiliza cookies essenciais para garantir o funcionamento adequado e cookies de análise para entender como você interage com ele. Nenhum dado de rastreamento é coletado sem o seu consentimento.
-            {/* Future Link: <Link href="/privacy-policy" className="underline hover:text-primary">Leia mais</Link>. */}
+            Nosso site utiliza cookies essenciais para garantir o funcionamento adequado e cookies de análise para entender como você interage com ele. Nenhum dado de rastreamento é coletado sem o seu consentimento.{" "}
+            <Link href="/privacy-policy" className="underline hover:text-primary">Leia mais em nossa Política de Privacidade</Link>.
           </p>
         </div>
         <div className="flex gap-3 flex-shrink-0 w-full sm:w-auto">
