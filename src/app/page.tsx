@@ -236,7 +236,10 @@ export default function LandingPage() {
       <footer className="w-full py-6 px-8 md:px-16 border-t border-border/20 mt-12">
           <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center text-center sm:text-left gap-4">
               <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} GuildMasterHub. Todos os direitos reservados.</p>
-              <nav>
+              <nav className="flex gap-4">
+                  <Link href="/terms-of-service" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Termos de Serviço
+                  </Link>
                   <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                       Política de Privacidade
                   </Link>
