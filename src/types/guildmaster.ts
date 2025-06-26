@@ -8,6 +8,7 @@ export enum GuildPermission {
   MANAGE_MEMBERS_EDIT_STATUS = "MANAGE_MEMBERS_EDIT_STATUS",
   MANAGE_MEMBERS_EDIT_NOTES = "MANAGE_MEMBERS_EDIT_NOTES",
   MANAGE_MEMBERS_KICK = "MANAGE_MEMBERS_KICK",
+  MANAGE_MEMBERS_ASSIGN_SUB_GUILD = "MANAGE_MEMBERS_ASSIGN_SUB_GUILD",
   MANAGE_EVENTS_CREATE = "MANAGE_EVENTS_CREATE",
   MANAGE_EVENTS_EDIT = "MANAGE_EVENTS_EDIT",
   MANAGE_EVENTS_DELETE = "MANAGE_EVENTS_DELETE",
@@ -15,6 +16,7 @@ export enum GuildPermission {
   MANAGE_GUILD_SETTINGS_GENERAL = "MANAGE_GUILD_SETTINGS_GENERAL",
   MANAGE_GUILD_SETTINGS_APPEARANCE = "MANAGE_GUILD_SETTINGS_APPEARANCE",
   MANAGE_ROLES_PERMISSIONS = "MANAGE_ROLES_PERMISSIONS",
+  MANAGE_SUB_GUILDS = "MANAGE_SUB_GUILDS",
   MANAGE_GROUPS_CREATE = "MANAGE_GROUPS_CREATE",
   MANAGE_GROUPS_EDIT = "MANAGE_GROUPS_EDIT",
   MANAGE_GROUPS_DELETE = "MANAGE_GROUPS_DELETE",
@@ -77,6 +79,7 @@ export interface GuildMemberRoleInfo {
     requestedByDisplayName: string;
     requestedAt: Timestamp;
   } | null;
+  subGuildId?: string;
 }
 
 export interface CustomRole {
@@ -125,6 +128,8 @@ export interface Guild {
   tlGuildFocus?: string[];
   plan?: 'free' | 'pro';
   stripeCustomerId?: string;
+  subGuildsEnabled?: boolean;
+  subGuilds?: { id: string; name: string }[];
 }
 
 export interface Event {
@@ -231,6 +236,7 @@ export interface GuildMember extends UserProfile {
     requestedByDisplayName: string;
     requestedAt: Timestamp;
   } | null;
+  subGuildId?: string;
 }
 
 export type GroupIconType = 'shield' | 'sword' | 'heart';
@@ -262,6 +268,7 @@ export enum AuditActionType {
   MEMBER_LEFT = "MEMBER_LEFT",
   MEMBER_NOTE_UPDATED = "MEMBER_NOTE_UPDATED",
   MEMBER_GUILD_PROFILE_UPDATED = "MEMBER_GUILD_PROFILE_UPDATED",
+  MEMBER_ASSIGNED_TO_SUB_GUILD = "MEMBER_ASSIGNED_TO_SUB_GUILD",
   DKP_AWARDED_VIA_PIN = "DKP_AWARDED_VIA_PIN",
   DKP_SETTINGS_UPDATED = "DKP_SETTINGS_UPDATED",
   DKP_DECAY_SETTINGS_UPDATED = "DKP_DECAY_SETTINGS_UPDATED",
@@ -275,6 +282,11 @@ export enum AuditActionType {
   GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED",
   GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED",
   GUILD_DELETED = "GUILD_DELETED",
+  SUB_GUILDS_ENABLED = "SUB_GUILDS_ENABLED",
+  SUB_GUILDS_DISABLED = "SUB_GUILDS_DISABLED",
+  SUB_GUILD_CREATED = "SUB_GUILD_CREATED",
+  SUB_GUILD_UPDATED = "SUB_GUILD_UPDATED",
+  SUB_GUILD_DELETED = "SUB_GUILD_DELETED",
   EVENT_CREATED = "EVENT_CREATED",
   EVENT_UPDATED = "EVENT_UPDATED",
   EVENT_DELETED = "EVENT_DELETED",
@@ -329,6 +341,8 @@ export interface AuditLogDetails {
   affectedMembersCount?: number;
   groupId?: string;
   groupName?: string;
+  subGuildId?: string;
+  subGuildName?: string;
   roleName?: string;
   permissions?: GuildPermission[];
   manualConfirmationId?: string;

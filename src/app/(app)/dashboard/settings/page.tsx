@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair, MinusCircle, PlusCircle as PlusCircleIconLucide, Gem, Zap, CheckCircle, Lock } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldAlert, Loader2, Trash2, Save, KeyRound, VenetianMask, ListChecks, PlusCircle, Coins, TrendingDown, Percent, CalendarDays as CalendarIcon, AlertCircle, Crosshair, MinusCircle, PlusCircle as PlusCircleIconLucide, Gem, Zap, CheckCircle, Lock, UsersRound } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { useHeader } from '@/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
@@ -118,6 +118,7 @@ const permissionDescriptions: Record<string, { title: string; description: strin
   [GuildPermission.MANAGE_MEMBERS_EDIT_STATUS]: { title: "Gerenciar Status de Membros", description: "Permite alterar o status de atividade dos membros (Ativo, Inativo, Licença)." },
   [GuildPermission.MANAGE_MEMBERS_EDIT_NOTES]: { title: "Gerenciar Notas de Membros", description: "Permite adicionar ou editar notas administrativas sobre membros." },
   [GuildPermission.MANAGE_MEMBERS_KICK]: { title: "Expulsar Membros", description: "Permite remover membros da guilda." },
+  [GuildPermission.MANAGE_MEMBERS_ASSIGN_SUB_GUILD]: { title: "Atribuir Membros a Sub-Guildas", description: "Permite mover membros entre as sub-guildas criadas." },
   [GuildPermission.MANAGE_EVENTS_CREATE]: { title: "Criar Eventos/Atividades", description: "Permite adicionar novos eventos ao calendário da guilda." },
   [GuildPermission.MANAGE_EVENTS_EDIT]: { title: "Editar Eventos/Atividades", description: "Permite modificar detalhes de eventos existentes." },
   [GuildPermission.MANAGE_EVENTS_DELETE]: { title: "Excluir Eventos/Atividades", description: "Permite remover eventos do calendário." },
@@ -125,6 +126,7 @@ const permissionDescriptions: Record<string, { title: string; description: strin
   [GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL]: { title: "Gerenciar Config. Gerais da Guilda", description: "Permite modificar nome, senha e outras configurações básicas da guilda." },
   [GuildPermission.MANAGE_GUILD_SETTINGS_APPEARANCE]: { title: "Gerenciar Aparência da Guilda", description: "Permite alterar logo e banner da guilda." },
   [GuildPermission.MANAGE_ROLES_PERMISSIONS]: { title: "Gerenciar Cargos e Permissões", description: "Permite criar, editar, excluir cargos e definir suas permissões (acesso a esta aba)." },
+  [GuildPermission.MANAGE_SUB_GUILDS]: { title: "Gerenciar Sub-Guildas", description: "Permite habilitar, criar, editar e excluir sub-guildas." },
   [GuildPermission.MANAGE_GROUPS_CREATE]: { title: "Criar Grupos/Parties", description: "Permite formar e nomear grupos (parties) de membros." },
   [GuildPermission.MANAGE_GROUPS_EDIT]: { title: "Editar Grupos/Parties", description: "Permite modificar a composição e detalhes de grupos existentes." },
   [GuildPermission.MANAGE_GROUPS_DELETE]: { title: "Excluir Grupos/Parties", description: "Permite dissolver grupos (parties)." },
@@ -175,6 +177,10 @@ function GuildSettingsPageContent() {
   const [showOnDemandDecayDialog, setShowOnDemandDecayDialog] = useState(false);
   const [isProcessingOnDemandDecay, setIsProcessingOnDemandDecay] = useState(false);
   const [dkpDecayLogs, setDkpDecayLogs] = useState<DkpDecayLogEntry[]>([]); 
+
+  const [isSubmittingSubGuilds, setIsSubmittingSubGuilds] = useState(false);
+  const [subGuilds, setSubGuilds] = useState<{ id: string; name: string }[]>([]);
+  const [newSubGuildName, setNewSubGuildName] = useState('');
 
   const guildId = searchParams.get('guildId');
 
@@ -227,6 +233,12 @@ function GuildSettingsPageContent() {
       GuildPermission.MANAGE_GUILD_SETTINGS_GENERAL
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
+
+  const canManageSubGuilds = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(currentUserRoleInfo.roleName, guild.customRoles, GuildPermission.MANAGE_SUB_GUILDS);
+  }, [currentUserRoleInfo, guild?.customRoles]);
+
 
   const canManageRolesAndPermissionsPage = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
@@ -305,6 +317,7 @@ function GuildSettingsPageContent() {
         nameForm.reset({ name: guildData.name });
         passwordForm.reset({ password: guildData.password || "" });
         focusForm.reset({ tlGuildFocus: guildData.tlGuildFocus || [] });
+        setSubGuilds(guildData.subGuilds || []);
         dkpForm.reset({
           dkpSystemEnabled: guildData.dkpSystemEnabled || false,
           dkpRedemptionWindowValue: guildData.dkpRedemptionWindow?.value || 24,
@@ -378,6 +391,43 @@ function GuildSettingsPageContent() {
       setIsSubmittingName(false);
     }
   };
+
+  const handleSubGuildSettingsSave = async () => {
+    if (!guild || !currentUser || !canManageSubGuilds) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para gerenciar sub-guildas.", variant: "destructive"});
+        return;
+    }
+    setIsSubmittingSubGuilds(true);
+    try {
+        const guildRef = doc(db, "guilds", guild.id);
+        const enabled = guild?.subGuildsEnabled || false;
+        await updateDoc(guildRef, { subGuildsEnabled: enabled, subGuilds: subGuilds });
+
+        await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, enabled ? AuditActionType.SUB_GUILDS_ENABLED : AuditActionType.SUB_GUILDS_DISABLED, {
+            details: { changedField: 'subGuilds' } as any,
+        });
+        toast({ title: "Configurações de Sub-Guilda Salvas!", description: "As alterações foram salvas com sucesso." });
+    } catch (error) {
+        console.error("Erro ao salvar configurações de sub-guilda:", error);
+        toast({ title: "Erro ao Salvar", variant: "destructive" });
+    } finally {
+        setIsSubmittingSubGuilds(false);
+    }
+  };
+
+  const handleAddSubGuild = () => {
+    if (newSubGuildName.trim() === "") {
+        toast({ title: "Nome Inválido", description: "O nome da sub-guilda não pode estar vazio.", variant: "destructive" });
+        return;
+    }
+    setSubGuilds([...subGuilds, { id: `sg_${Date.now()}`, name: newSubGuildName.trim() }]);
+    setNewSubGuildName("");
+  };
+
+  const handleDeleteSubGuild = (id: string) => {
+    setSubGuilds(subGuilds.filter(sg => sg.id !== id));
+  };
+
 
   const handlePasswordSubmit: SubmitHandler<GuildPasswordFormValues> = async (data) => {
      if (!guild || !currentUser || !canManageGeneralSettings) {
@@ -874,6 +924,69 @@ function GuildSettingsPageContent() {
                 </CardFooter>
               </form>
             </Form>
+          </Card>
+
+          <Card className="static-card-container">
+            <CardHeader><CardTitle className="flex items-center"><UsersRound className="mr-2 h-5 w-5 text-primary" />Sub-Guildas</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                name="subGuildsEnabled"
+                render={() => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <FormLabel className="text-base">Habilitar Sistema de Sub-Guildas</FormLabel>
+                        <FormDescription>Permite dividir membros em diferentes sub-guildas dentro da guilda principal.</FormDescription>
+                    </div>
+                    <FormControl>
+                        <Switch
+                            checked={guild?.subGuildsEnabled || false}
+                            onCheckedChange={(checked) => setGuild(prev => prev ? { ...prev, subGuildsEnabled: checked } : null)}
+                            disabled={!canManageSubGuilds || isSubmittingSubGuilds}
+                        />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {guild.subGuildsEnabled && (
+                <div className="space-y-4 pt-4">
+                  <div>
+                    <Label htmlFor="newSubGuildName">Nova Sub-Guilda</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        id="newSubGuildName"
+                        value={newSubGuildName}
+                        onChange={(e) => setNewSubGuildName(e.target.value)}
+                        placeholder="Nome da Sub-Guilda"
+                        className="form-input"
+                        disabled={!canManageSubGuilds || isSubmittingSubGuilds}
+                      />
+                      <Button onClick={handleAddSubGuild} disabled={!canManageSubGuilds || isSubmittingSubGuilds}><PlusCircle className="h-4 w-4 mr-2"/> Adicionar</Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sub-Guildas Atuais:</Label>
+                    {subGuilds.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nenhuma sub-guilda criada.</p>
+                    ) : (
+                      subGuilds.map((sg) => (
+                        <div key={sg.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                          <p>{sg.name}</p>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteSubGuild(sg.id)} disabled={!canManageSubGuilds || isSubmittingSubGuilds}>
+                            <Trash2 className="h-4 w-4"/>
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSubGuildSettingsSave} className="btn-gradient btn-style-secondary ml-auto" disabled={!canManageSubGuilds || isSubmittingSubGuilds}>
+                {isSubmittingSubGuilds ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
+                Salvar Configurações de Sub-Guildas
+              </Button>
+            </CardFooter>
           </Card>
 
           <Card className="static-card-container">
@@ -1579,6 +1692,7 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
 
 
 

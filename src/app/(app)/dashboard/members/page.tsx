@@ -179,6 +179,7 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       status: guildRoleInfo.status || 'Ativo', dkpBalance: guildRoleInfo.dkpBalance ?? 0,
       gearScreenshotUpdatedAt: guildRoleInfo.gearScreenshotUpdatedAt,
       gearScreenshotUpdateRequest: guildRoleInfo.gearScreenshotUpdateRequest,
+      subGuildId: guildRoleInfo.subGuildId,
     };
   } else {
     specificRoleInfo.characterNickname = memberBaseProfile.displayName || memberBaseProfile.email || memberBaseProfile.uid;
@@ -200,6 +201,7 @@ const enhanceMemberData = (memberBaseProfile: UserProfile, guildRoleInfo: GuildM
       mainHandIconUrl: specificRoleInfo.tlPrimaryWeapon ? getWeaponIconPath(specificRoleInfo.tlPrimaryWeapon) : undefined,
       offHandIconUrl: specificRoleInfo.tlSecondaryWeapon ? getWeaponIconPath(specificRoleInfo.tlSecondaryWeapon) : undefined
     },
+    subGuildId: specificRoleInfo.subGuildId,
   };
 };
 
@@ -261,6 +263,7 @@ function MembersListTabContent(
   const canManageMemberNotes = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES);
   const canViewDetailedMemberInfo = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO);
   const canAdjustMemberDkp = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
+  const canAssignSubGuild = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_ASSIGN_SUB_GUILD);
 
 
   const availableRoleNamesForChange = useMemo(() => {
@@ -301,6 +304,36 @@ function MembersListTabContent(
     } catch (error) { console.error("Erro ao mudar cargo:", error); toast({ title: "Erro ao Mudar Cargo", variant: "destructive" });
     } finally { setIsProcessingAction(false); }
   };
+
+  const handleAssignSubGuild = async (member: GuildMember, subGuildId: string | null) => {
+    if (!guildId || !currentUser || !canAssignSubGuild) return;
+    setIsProcessingAction(true);
+    const oldSubGuildId = member.subGuildId || null;
+    const oldSubGuildName = guild.subGuilds?.find(sg => sg.id === oldSubGuildId)?.name || "Nenhuma";
+    const newSubGuildName = subGuildId ? (guild.subGuilds?.find(sg => sg.id === subGuildId)?.name || "Nenhuma") : "Nenhuma";
+
+    try {
+        const guildRef = doc(db, "guilds", guildId);
+        const updatePayload = subGuildId ? { subGuildId: subGuildId } : { subGuildId: firestoreDeleteField() };
+        await updateDoc(guildRef, { [`roles.${member.uid}`]: { ...guild.roles?.[member.uid], ...updatePayload } });
+
+        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
+            targetUserId: member.uid,
+            targetUserDisplayName: member.characterNickname || member.displayName,
+            oldValue: oldSubGuildName,
+            newValue: newSubGuildName,
+        });
+
+        toast({ title: "Sub-Guilda Atribuída!", description: `${member.characterNickname} foi movido para ${newSubGuildName}.` });
+        fetchGuildAndMembers();
+    } catch (error) {
+        console.error("Erro ao atribuir sub-guilda:", error);
+        toast({ title: "Erro ao Atribuir", variant: "destructive" });
+    } finally {
+        setIsProcessingAction(false);
+    }
+  };
+
 
   const handleChangeStatus = async (memberToUpdate?: GuildMember, newStatus?: MemberStatus) => {
     const targetMember = memberToUpdate || actionUser; const statusToSet = newStatus || selectedNewStatus;
@@ -558,25 +591,28 @@ function MembersListTabContent(
       </div>
       <div className="overflow-x-auto bg-card p-2 rounded-lg shadow">
         <Table>
-          <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Sub-Guilda</TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {paginatedMembers.length === 0 ? ( <TableRow key="no-members-row"><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 10 : 9) : (canManageMemberNotes ? 9 : 8)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> ) : (
+            {paginatedMembers.length === 0 ? ( <TableRow key="no-members-row"><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> ) : (
             paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid;
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
               const displayName = member.characterNickname || member.displayName || member.email || member.uid;
+              const subGuildName = guild.subGuildsEnabled ? guild.subGuilds?.find(sg => sg.id === member.subGuildId)?.name || "N/A" : "N/A";
               
               const hasRoleActions = canManageMemberRoles && !isGuildOwnerTarget;
               const hasStatusActions = canManageMemberStatus;
               const showDkpActions = guild.dkpSystemEnabled && canAdjustMemberDkp && (!isCurrentUserTarget || isOwner);
               const hasKickAction = canKickMembers && !isGuildOwnerTarget;
+              const hasSubGuildAction = canAssignSubGuild && guild.subGuildsEnabled;
               
-              const canPerformManagementActions = hasRoleActions || hasStatusActions || showDkpActions || hasKickAction;
+              const canPerformManagementActions = hasRoleActions || hasStatusActions || showDkpActions || hasKickAction || hasSubGuildAction;
               
               return (
                 <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
                   <TableCell><div className="flex items-center"><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${displayName}`}/></div></TableCell>
                   <TableCell><div className={cn("flex items-center gap-2 font-medium", canViewDetailedMemberInfo && "cursor-pointer hover:text-primary transition-colors")} onClick={() => canViewDetailedMemberInfo && handleViewMemberDetails(member)} title={canViewDetailedMemberInfo ? "Ver detalhes do membro" : "" }><Avatar className="h-8 w-8"><AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${displayName?.substring(0,1) || 'M'}`} alt={displayName || 'Avatar'} data-ai-hint="user avatar"/><AvatarFallback>{displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback></Avatar>{displayName}</div></TableCell>
+                  <TableCell>{subGuildName}</TableCell>
                   {isTLGuild && ( <TableCell><div className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>{getTLRoleIcon(member.tlRole)}{member.tlRole || "N/A"}</div></TableCell> )}
                   <TableCell><div className="flex items-center gap-1">{member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}{member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}</div></TableCell>
                   <TableCell><div className="flex items-center gap-1">{member.gearScore}{member.gearScoreScreenshotUrl && <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" title="Ver screenshot do gearscore"><Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" /></a>}</div></TableCell>
@@ -590,9 +626,25 @@ function MembersListTabContent(
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /><span className="sr-only">Ações do membro</span></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 {hasRoleActions && ( <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")}><UserCog className="mr-2 h-4 w-4" /> Alterar Cargo</DropdownMenuItem> )}
+                                {hasSubGuildAction && guild.subGuilds && guild.subGuilds.length > 0 && (
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger><UsersRound className="mr-2 h-4 w-4" />Atribuir Sub-Guilda</DropdownMenuSubTrigger>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuSubContent>
+                                                <DropdownMenuItem onSelect={() => handleAssignSubGuild(member, null)}>Nenhuma</DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                {guild.subGuilds.map(sg => (
+                                                    <DropdownMenuItem key={sg.id} onSelect={() => handleAssignSubGuild(member, sg.id)} disabled={member.subGuildId === sg.id}>
+                                                        {sg.name}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuSubContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                )}
                                 {hasStatusActions && ( <DropdownMenuSub><DropdownMenuSubTrigger><UserCog className="mr-2 h-4 w-4" />Alterar Status</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent>{(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => ( <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }} disabled={isGuildOwnerTarget && statusOption === 'Inativo'}>{getStatusIcon(statusOption)}{displayMemberStatus(statusOption)}</DropdownMenuItem> ))}</DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub> )}
                                 
-                                { (hasRoleActions || hasStatusActions) && showDkpActions && <DropdownMenuSeparator /> }
+                                { (hasRoleActions || hasStatusActions || hasSubGuildAction) && showDkpActions && <DropdownMenuSeparator /> }
 
                                 {showDkpActions && (
                                     <>
@@ -601,7 +653,7 @@ function MembersListTabContent(
                                     </>
                                 )}
                                 
-                                { (showDkpActions || hasRoleActions || hasStatusActions) && hasKickAction && <DropdownMenuSeparator /> }
+                                { (showDkpActions || hasRoleActions || hasStatusActions || hasSubGuildAction) && hasKickAction && <DropdownMenuSeparator /> }
 
                                 {hasKickAction && ( 
                                     <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem>
@@ -1314,6 +1366,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
