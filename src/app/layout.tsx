@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
+import { CookieConsentBanner } from '@/components/shared/CookieConsentBanner';
 
 export const metadata: Metadata = {
   title: 'GuildMasterHub',
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
+          <CookieConsentBanner />
         </AuthProvider>
       </body>
     </html>
