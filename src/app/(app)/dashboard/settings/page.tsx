@@ -929,24 +929,18 @@ function GuildSettingsPageContent() {
           <Card className="static-card-container">
             <CardHeader><CardTitle className="flex items-center"><UsersRound className="mr-2 h-5 w-5 text-primary" />Sub-Guildas</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                name="subGuildsEnabled"
-                render={() => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <FormLabel className="text-base">Habilitar Sistema de Sub-Guildas</FormLabel>
-                        <FormDescription>Permite dividir membros em diferentes sub-guildas dentro da guilda principal.</FormDescription>
-                    </div>
-                    <FormControl>
-                        <Switch
-                            checked={guild?.subGuildsEnabled || false}
-                            onCheckedChange={(checked) => setGuild(prev => prev ? { ...prev, subGuildsEnabled: checked } : null)}
-                            disabled={!canManageSubGuilds || isSubmittingSubGuilds}
-                        />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="subguild-switch" className="text-base">Habilitar Sistema de Sub-Guildas</Label>
+                  <p className="text-sm text-muted-foreground">Permite dividir membros em diferentes sub-guildas dentro da guilda principal.</p>
+                </div>
+                <Switch
+                  id="subguild-switch"
+                  checked={guild?.subGuildsEnabled || false}
+                  onCheckedChange={(checked) => setGuild(prev => prev ? { ...prev, subGuildsEnabled: checked } : null)}
+                  disabled={!canManageSubGuilds || isSubmittingSubGuilds}
+                />
+              </div>
               {guild.subGuildsEnabled && (
                 <div className="space-y-4 pt-4">
                   <div>
@@ -1692,6 +1686,7 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
 
 
 
