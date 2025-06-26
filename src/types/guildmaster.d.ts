@@ -186,6 +186,8 @@ export interface Application {
   applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -194,11 +196,14 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  applicantTlRegion?: string; 
-  applicantTlServer?: string; 
-  applicantTlGameFocus?: string[]; 
-  knowsSomeoneInGuild?: string; 
-  additionalNotes?: string; 
+  applicantTlRegion?: string;
+  applicantTlServer?: string;
+  applicantTlGameFocus?: string[];
+  playHoursPerDay?: number;
+  playDaysOfWeek?: string[];
+  playPeriod?: string[];
+  knowsSomeoneInGuild?: string;
+  additionalNotes?: string;
 }
 
 export interface UserProfile {

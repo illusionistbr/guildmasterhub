@@ -38,8 +38,8 @@ const userGuildSettingsSchema = z.object({
      .optional()
   ),
   gearScoreScreenshotUrl: z.string().url("URL inválida. Use Imgur, etc.").max(250, "URL muito longa.").optional().or(z.literal('')),
-  gearBuildLink: z.string().url("URL inválida para Gear Build Link.").max(250, "URL do Gear Build Link muito longa.").optional().or(z.literal('')),
-  skillBuildLink: z.string().url("URL inválida para Skill Build Link.").max(250, "URL do Skill Build Link muito longa.").optional().or(z.literal('')),
+  gearBuildLink: z.string().url("URL inválida para Gear Build.").max(250, "URL do Gear Build muito longa.").optional().or(z.literal('')),
+  skillBuildLink: z.string().url("URL inválida para Skill Build.").max(250, "URL do Skill Build muito longa.").optional().or(z.literal('')),
   tlRole: z.nativeEnum(TLRole).optional(),
   tlPrimaryWeapon: z.nativeEnum(TLWeapon).optional(),
   tlSecondaryWeapon: z.nativeEnum(TLWeapon).optional(),
@@ -277,15 +277,14 @@ function UserGuildSettingsPageContent() {
                 name="gearBuildLink"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gear Build Link (Ex: Questlog.gg)</FormLabel>
+                    <FormLabel>Link da sua Build de Equipamentos (Opcional)</FormLabel>
                     <FormControl>
                       <div className="relative flex items-center">
                         <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input {...field} placeholder="https://questlog.gg/..." className="form-input pl-10" />
+                        <Input {...field} placeholder="https://..." className="form-input pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
-                     <p className="text-xs text-muted-foreground mt-1">Insira o link para sua build de equipamentos.</p>
                   </FormItem>
                 )}
               />
@@ -294,15 +293,14 @@ function UserGuildSettingsPageContent() {
                 name="skillBuildLink"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Skill Build Link (Ex: Questlog.gg)</FormLabel>
+                    <FormLabel>Link da sua Build de Habilidades (Opcional)</FormLabel>
                     <FormControl>
                       <div className="relative flex items-center">
                         <LinkIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                        <Input {...field} placeholder="https://questlog.gg/..." className="form-input pl-10" />
+                        <Input {...field} placeholder="https://..." className="form-input pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
-                     <p className="text-xs text-muted-foreground mt-1">Insira o link para sua build de habilidades.</p>
                   </FormItem>
                 )}
               />
@@ -387,4 +385,3 @@ export default function UserGuildSettingsPage() {
     </Suspense>
   );
 }
-

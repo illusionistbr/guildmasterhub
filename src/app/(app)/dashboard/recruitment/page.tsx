@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
@@ -16,10 +17,10 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info } from 'lucide-react';
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info, Clock, PlayCircle, Sun, Moon, BrainCircuit } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logGuildActivity } from '@/lib/auditLogService';
 import {
@@ -262,7 +263,8 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                 characterNickname: application.applicantName,
                 gearScore: application.gearScore,
                 gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || null,
-                // No gearBuildLink or skillBuildLink from application form when accepting
+                gearBuildLink: application.gearBuildLink || null,
+                skillBuildLink: application.skillBuildLink || null,
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
@@ -362,7 +364,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
       {pendingApplications.length > 0 && (
         <div>
           <h3 className="text-xl font-headline text-primary mb-4">Candidaturas Pendentes ({pendingApplications.length})</h3>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             {pendingApplications.map(app => (
               <Card key={app.id} className="static-card-container flex flex-col">
                 <CardHeader>
@@ -382,8 +384,12 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                     {app.gearScoreScreenshotUrl &&
                       <Button variant="link" size="sm" asChild className="p-0 ml-1 h-auto"><Link href={app.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer">(Ver Print)</Link></Button>}
                   </p>
+                  <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
+                   {app.knowsSomeoneInGuild && <p className="text-sm"><strong>Conhece:</strong> {app.knowsSomeoneInGuild}</p>}
+                   {app.additionalNotes && <p className="text-sm italic text-muted-foreground"><strong>Notas:</strong> "{app.additionalNotes}"</p>}
+
                   {guild?.game === "Throne and Liberty" && (
-                    <>
+                    <div className="border-t border-border pt-3 mt-3 space-y-3">
                         <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
                         <div className="text-sm"><strong>Armas:</strong>
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -392,9 +398,15 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                                 {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span className="text-muted-foreground text-xs">N/A</span>}
                             </div>
                         </div>
-                    </>
+                        {app.gearBuildLink && <p className="text-sm"><strong>Build de Gear:</strong> <Button variant="link" size="sm" asChild className="p-0 h-auto"><Link href={app.gearBuildLink} target="_blank" rel="noopener noreferrer">Ver Link</Link></Button></p>}
+                        {app.skillBuildLink && <p className="text-sm"><strong>Build de Skill:</strong> <Button variant="link" size="sm" asChild className="p-0 h-auto"><Link href={app.skillBuildLink} target="_blank" rel="noopener noreferrer">Ver Link</Link></Button></p>}
+                        {app.playHoursPerDay && <p className="text-sm flex items-center gap-1.5"><Clock className="h-4 w-4"/> {app.playHoursPerDay} horas/dia</p>}
+                        {app.playDaysOfWeek && app.playDaysOfWeek.length > 0 && <p className="text-sm flex items-center gap-1.5"><CalendarIconLucide className="h-4 w-4"/> {app.playDaysOfWeek.join(', ')}</p>}
+                        {app.playPeriod && app.playPeriod.length > 0 && <p className="text-sm flex items-center gap-1.5"><PlayCircle className="h-4 w-4"/> {app.playPeriod.join(', ')}</p>}
+                        {app.applicantTlGameFocus && app.applicantTlGameFocus.length > 0 && <p className="text-sm flex items-center gap-1.5"><BrainCircuit className="h-4 w-4"/> Foco: {app.applicantTlGameFocus.join(', ')}</p>}
+                    </div>
                   )}
-                  <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
+
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => openConfirmationDialog(app, 'reject')} disabled={processingApplicationId === app.id || !canProcessApplications}>
@@ -429,23 +441,8 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
-                  <p className="text-sm"><strong>GS:</strong> {app.gearScore}
-                    {app.gearScoreScreenshotUrl &&
-                      <Button variant="link" size="sm" asChild className="p-0 ml-1 h-auto"><Link href={app.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer">(Ver Print)</Link></Button>}
-                  </p>
-                  {guild?.game === "Throne and Liberty" && (
-                     <>
-                        <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
-                        <div className="text-sm"><strong>Armas:</strong>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
-                                {app.tlSecondaryWeapon && <Image src={getWeaponIconPath(app.tlSecondaryWeapon)} alt={app.tlSecondaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
-                                 {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span className="text-muted-foreground text-xs">N/A</span>}
-                            </div>
-                        </div>
-                    </>
-                  )}
-                  <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
+                   <p className="text-sm"><strong>GS:</strong> {app.gearScore}</p>
+                   <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
                    <Badge variant={app.status === 'approved' || app.status === 'auto_approved' ? 'default' : 'destructive'} className={app.status === 'approved' || app.status === 'auto_approved' ? 'bg-green-600/80' : 'bg-red-600/80'}>
                     {app.status === 'approved' ? 'Aprovado' : (app.status === 'auto_approved' ? 'Entrada Automática' : 'Rejeitado')}
                   </Badge>
