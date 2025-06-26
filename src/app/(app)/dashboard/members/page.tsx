@@ -231,9 +231,6 @@ function MembersListTabContent(
   const [rankFilter, setRankFilter] = useState<string | "all">(searchParams.get('rankFilter') || "all");
   const [dkpSortOrder, setDkpSortOrder] = useState<DkpSortOrder>("default");
   const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">((searchParams.get('statusFilter') as MemberStatus | "all" | null) || "all");
-  const [activityDateRange, setActivityDateRange] = useState<DateRange | undefined>({ from: undefined, to: undefined });
-  const [timeFromFilter, setTimeFromFilter] = useState("00:00");
-  const [timeToFilter, setTimeToFilter] = useState("23:59");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
@@ -482,10 +479,8 @@ function MembersListTabContent(
     if (statusFilter !== "all") { tempMembers = tempMembers.filter(member => member.status === statusFilter); }
     if (gearSortOrder !== "default") { tempMembers.sort((a, b) => { const gearA = a.gearScore || 0; const gearB = b.gearScore || 0; return gearSortOrder === "asc" ? gearA - gearB : gearB - gearA; }); }
     if (dkpSortOrder !== "default") { tempMembers.sort((a, b) => { const dkpA = a.dkpBalance || 0; const dkpB = b.dkpBalance || 0; return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - dkpA; }); }
-    if (activityDateRange?.from) {
-    }
     return tempMembers;
-  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game, activityDateRange, timeFromFilter, timeToFilter]);
+  }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game]);
 
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -498,8 +493,8 @@ function MembersListTabContent(
 
   return (
     <div className="space-y-6 pt-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-card rounded-lg shadow items-end">
-        <div className="xl:col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-card rounded-lg shadow items-end">
+        <div className="xl:col-span-1">
           <Label htmlFor="usernameFilter" className="block text-sm font-medium text-muted-foreground mb-1">Usuário</Label>
           <Input id="usernameFilter" placeholder="Filtrar por nome..." value={usernameFilter} onChange={(e) => {setUsernameFilter(e.target.value); setCurrentPage(1);}} className="form-input"/>
         </div>
@@ -535,39 +530,6 @@ function MembersListTabContent(
             <SelectContent> <SelectItem value="all">Todos</SelectItem> {(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).map(statusVal => <SelectItem key={statusVal} value={statusVal}>{displayMemberStatus(statusVal)}</SelectItem>)} </SelectContent>
           </Select>
         </div>
-        <div className="xl:col-span-3">
-          <Label htmlFor="activityDateRange" className="block text-sm font-medium text-muted-foreground mb-1">Intervalo de Atividade</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="activityDateRange"
-                variant="outline"
-                className={cn("w-full justify-start text-left font-normal form-input",!activityDateRange?.from && "text-muted-foreground")}
-              >
-                <CalendarDays className="mr-2 h-4 w-4" />
-                {activityDateRange?.from && activityDateRange.from instanceof Date
-                  ? activityDateRange.to && activityDateRange.to instanceof Date
-                    ? <>{format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })} - {format(activityDateRange.to, "dd/MM/yy", { locale: ptBR })}</>
-                    : format(activityDateRange.from, "dd/MM/yy", { locale: ptBR })
-                  : <span>Escolha um intervalo</span>
-                }
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-card" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={activityDateRange?.from}
-                selected={activityDateRange}
-                onSelect={(range) => { setActivityDateRange(range || undefined); setCurrentPage(1); }}
-                numberOfMonths={2}
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="grid grid-cols-2 gap-2 xl:col-span-2"> <div> <Label htmlFor="timeFromFilter" className="block text-sm font-medium text-muted-foreground mb-1">De</Label> <Input id="timeFromFilter" type="time" value={timeFromFilter} onChange={e => { setTimeFromFilter(e.target.value); setCurrentPage(1); }} className="form-input" /> </div> <div> <Label htmlFor="timeToFilter" className="block text-sm font-medium text-muted-foreground mb-1">Até</Label> <Input id="timeToFilter" type="time" value={timeToFilter} onChange={e => { setTimeToFilter(e.target.value); setCurrentPage(1);}} className="form-input" /> </div> </div>
-        <div className="xl:col-span-1 flex justify-end items-end gap-2"> <Button variant="outline" disabled className="w-full"><Filter className="mr-2 h-4 w-4" /> Aplicar</Button> </div>
       </div>
       <div className="flex items-center justify-between p-4 bg-card rounded-lg shadow">
         <div className="flex items-center gap-2">
@@ -1352,6 +1314,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
