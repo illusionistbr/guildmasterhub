@@ -90,7 +90,7 @@ import { useHeader } from '@/contexts/HeaderContext';
 import { Label } from '@/components/ui/label';
 import { hasPermission, isGuildOwner } from '@/lib/permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm, type SubmitHandler as GroupSubmitHandler, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -1352,6 +1352,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
