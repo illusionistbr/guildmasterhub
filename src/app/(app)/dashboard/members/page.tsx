@@ -593,8 +593,7 @@ function MembersListTabContent(
         <Table>
           <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Sub-Guilda</TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {paginatedMembers.length === 0 ? ( <TableRow key="no-members-row"><TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24"> Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."} </TableCell></TableRow> ) : (
-            paginatedMembers.map((member) => {
+            {paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid;
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
               const displayName = member.characterNickname || member.displayName || member.email || member.uid;
@@ -664,7 +663,14 @@ function MembersListTabContent(
                   </div></TableCell>
                 </TableRow>
               );
-            }))}
+            })}
+            {paginatedMembers.length === 0 && (
+              <TableRow key="no-members-row">
+                <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
+                  Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -791,44 +797,45 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {members.length === 0 ? (
-                            <TableRow key="no-screenshots-row"><TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell></TableRow>
-                        ) : (
-                            members.map((member) => (
-                                <TableRow key={member.uid}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 font-medium">
-                                            <Avatar className="h-8 w-8"><AvatarImage src={member.photoURL || undefined} alt={member.displayName || ""} data-ai-hint="user avatar"/><AvatarFallback>{member.displayName?.substring(0, 2).toUpperCase() || 'M'}</AvatarFallback></Avatar>
-                                            {member.characterNickname || member.displayName}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {member.gearScoreScreenshotUrl ? (
-                                            <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer">
-                                                <Image src={member.gearScoreScreenshotUrl} alt={`Gear de ${member.characterNickname}`} width={100} height={60} className="rounded-md object-cover hover:scale-110 transition-transform" data-ai-hint="gear screenshot"/>
-                                            </a>
-                                        ) : (
-                                            <span className="text-muted-foreground text-xs">Não enviado</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {member.gearScreenshotUpdatedAt ? format(member.gearScreenshotUpdatedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR }) : <span className="text-muted-foreground text-xs">Nunca</span>}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {canRequestUpdate && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleRequestScreenshotUpdate(member)}
-                                                disabled={requestingUpdateFor === member.uid || !!member.gearScreenshotUpdateRequest}
-                                            >
-                                                {requestingUpdateFor === member.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : (member.gearScreenshotUpdateRequest ? "Solicitado" : <Send className="h-4 w-4 mr-2"/>)}
-                                                {requestingUpdateFor !== member.uid && !member.gearScreenshotUpdateRequest && "Solicitar Atualização"}
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                        {members.map((member) => (
+                            <TableRow key={member.uid}>
+                                <TableCell>
+                                    <div className="flex items-center gap-2 font-medium">
+                                        <Avatar className="h-8 w-8"><AvatarImage src={member.photoURL || undefined} alt={member.displayName || ""} data-ai-hint="user avatar"/><AvatarFallback>{member.displayName?.substring(0, 2).toUpperCase() || 'M'}</AvatarFallback></Avatar>
+                                        {member.characterNickname || member.displayName}
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    {member.gearScoreScreenshotUrl ? (
+                                        <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer">
+                                            <Image src={member.gearScoreScreenshotUrl} alt={`Gear de ${member.characterNickname}`} width={100} height={60} className="rounded-md object-cover hover:scale-110 transition-transform" data-ai-hint="gear screenshot"/>
+                                        </a>
+                                    ) : (
+                                        <span className="text-muted-foreground text-xs">Não enviado</span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {member.gearScreenshotUpdatedAt ? format(member.gearScreenshotUpdatedAt.toDate(), "dd/MM/yyyy HH:mm", { locale: ptBR }) : <span className="text-muted-foreground text-xs">Nunca</span>}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {canRequestUpdate && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleRequestScreenshotUpdate(member)}
+                                            disabled={requestingUpdateFor === member.uid || !!member.gearScreenshotUpdateRequest}
+                                        >
+                                            {requestingUpdateFor === member.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : (member.gearScreenshotUpdateRequest ? "Solicitado" : <Send className="h-4 w-4 mr-2"/>)}
+                                            {requestingUpdateFor !== member.uid && !member.gearScreenshotUpdateRequest && "Solicitar Atualização"}
+                                        </Button>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {members.length === 0 && (
+                          <TableRow key="no-screenshots-row">
+                            <TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell>
+                          </TableRow>
                         )}
                     </TableBody>
                 </Table>
@@ -1366,6 +1373,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
