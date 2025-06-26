@@ -188,6 +188,8 @@ export interface Application {
   applicantPhotoURL?: string | null;
   gearScore: number;
   gearScoreScreenshotUrl: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
@@ -329,7 +331,7 @@ export interface AuditLogDetails {
   eventId?: string;
   achievementName?: string;
   achievementId?: string;
-  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory' | 'dkpDecayEnabled' | 'dkpDecayPercentage' | 'dkpDecayIntervalDays' | 'dkpDecayInitialDate' | 'tlGuildFocus';
+  changedField?: 'name' | 'password' | 'description' | 'visibility' | 'game' | 'socialLinks' | 'notes' | 'tlRole' | 'tlPrimaryWeapon' | 'tlSecondaryWeapon' | 'status' | 'roleName' | 'customRoles' | 'recruitmentQuestions' | 'characterNickname' | 'gearScore' | 'gearScoreScreenshotUrl' | 'gearBuildLink' | 'skillBuildLink' | 'region' | 'server' | 'dkpSystemEnabled' | 'dkpRedemptionWindow' | 'dkpDefaultsPerCategory' | 'dkpDecayEnabled' | 'dkpDecayPercentage' | 'dkpDecayIntervalDays' | 'dkpDecayInitialDate' | 'tlGuildFocus' | 'subGuildsEnabled';
   noteSummary?: string;
   applicationId?: string;
   dkpValueAwarded?: number; // Existing

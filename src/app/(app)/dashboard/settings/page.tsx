@@ -8,7 +8,7 @@ import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment, deleteField } from '@/lib/firebase'; 
+import { db, doc, getDoc, updateDoc, deleteDoc, collection, getDocs as getFirestoreDocs, writeBatch, Timestamp, increment, deleteField, arrayUnion, arrayRemove } from '@/lib/firebase'; 
 import type { Guild, GuildMemberRoleInfo, CustomRole, GuildPermission as PermissionEnum, DkpDecayLogEntry } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -394,38 +394,90 @@ function GuildSettingsPageContent() {
 
   const handleSubGuildSettingsSave = async () => {
     if (!guild || !currentUser || !canManageSubGuilds) {
-        toast({ title: "Permissão Negada", description: "Você não tem permissão para gerenciar sub-guildas.", variant: "destructive"});
-        return;
+      toast({ title: "Permissão Negada", description: "Você não tem permissão para gerenciar sub-guildas.", variant: "destructive" });
+      return;
     }
     setIsSubmittingSubGuilds(true);
+    const enabled = guild?.subGuildsEnabled || false;
+    try {
+      const guildRef = doc(db, "guilds", guild.id);
+      await updateDoc(guildRef, { subGuildsEnabled: enabled });
+
+      await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, enabled ? AuditActionType.SUB_GUILDS_ENABLED : AuditActionType.SUB_GUILDS_DISABLED, {
+        changedField: 'subGuildsEnabled',
+      });
+
+      toast({ title: "Configuração Salva!", description: `O sistema de sub-guildas foi ${enabled ? 'habilitado' : 'desabilitado'}.` });
+    } catch (error) {
+      console.error("Erro ao salvar configuração de sub-guilda:", error);
+      toast({ title: "Erro ao Salvar", variant: "destructive" });
+    } finally {
+      setIsSubmittingSubGuilds(false);
+    }
+  };
+
+  const handleAddSubGuild = async () => {
+    if (!guild || !currentUser || !canManageSubGuilds) return;
+    const trimmedName = newSubGuildName.trim();
+    if (trimmedName === "") {
+        toast({ title: "Nome Inválido", description: "O nome da sub-guilda não pode estar vazio.", variant: "destructive" });
+        return;
+    }
+    if (subGuilds.some(sg => sg.name.toLowerCase() === trimmedName.toLowerCase())) {
+        toast({ title: "Nome Duplicado", description: "Já existe uma sub-guilda com este nome.", variant: "destructive" });
+        return;
+    }
+
+    setIsSubmittingSubGuilds(true);
+    const newSubGuild = { id: `sg_${Date.now()}`, name: trimmedName };
     try {
         const guildRef = doc(db, "guilds", guild.id);
-        const enabled = guild?.subGuildsEnabled || false;
-        await updateDoc(guildRef, { subGuildsEnabled: enabled, subGuilds: subGuilds });
-
-        await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, enabled ? AuditActionType.SUB_GUILDS_ENABLED : AuditActionType.SUB_GUILDS_DISABLED, {
-            details: { changedField: 'subGuilds' } as any,
+        await updateDoc(guildRef, {
+            subGuilds: arrayUnion(newSubGuild)
         });
-        toast({ title: "Configurações de Sub-Guilda Salvas!", description: "As alterações foram salvas com sucesso." });
+        
+        setSubGuilds([...subGuilds, newSubGuild]);
+
+        await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.SUB_GUILD_CREATED, {
+            subGuildName: newSubGuild.name
+        });
+        
+        toast({ title: "Sub-Guilda Adicionada!", description: `"${newSubGuild.name}" foi adicionada.` });
+        setNewSubGuildName("");
     } catch (error) {
-        console.error("Erro ao salvar configurações de sub-guilda:", error);
-        toast({ title: "Erro ao Salvar", variant: "destructive" });
+        console.error("Erro ao adicionar sub-guilda:", error);
+        toast({ title: "Erro ao Adicionar", variant: "destructive" });
     } finally {
         setIsSubmittingSubGuilds(false);
     }
   };
 
-  const handleAddSubGuild = () => {
-    if (newSubGuildName.trim() === "") {
-        toast({ title: "Nome Inválido", description: "O nome da sub-guilda não pode estar vazio.", variant: "destructive" });
-        return;
-    }
-    setSubGuilds([...subGuilds, { id: `sg_${Date.now()}`, name: newSubGuildName.trim() }]);
-    setNewSubGuildName("");
-  };
+  const handleDeleteSubGuild = async (id: string) => {
+    if (!guild || !currentUser || !canManageSubGuilds) return;
 
-  const handleDeleteSubGuild = (id: string) => {
-    setSubGuilds(subGuilds.filter(sg => sg.id !== id));
+    const subGuildToDelete = subGuilds.find(sg => sg.id === id);
+    if (!subGuildToDelete) return;
+
+    setIsSubmittingSubGuilds(true);
+    try {
+        const guildRef = doc(db, "guilds", guild.id);
+        await updateDoc(guildRef, {
+            subGuilds: arrayRemove(subGuildToDelete)
+        });
+
+        setSubGuilds(subGuilds.filter(sg => sg.id !== id));
+
+        await logGuildActivity(guild.id, currentUser.uid, currentUser.displayName, AuditActionType.SUB_GUILD_DELETED, {
+            subGuildName: subGuildToDelete.name
+        });
+
+        toast({ title: "Sub-Guilda Removida!", description: `"${subGuildToDelete.name}" foi removida.` });
+    } catch (error) {
+        console.error("Erro ao remover sub-guilda:", error);
+        toast({ title: "Erro ao Remover", variant: "destructive" });
+    } finally {
+        setIsSubmittingSubGuilds(false);
+    }
   };
 
 
@@ -978,7 +1030,7 @@ function GuildSettingsPageContent() {
             <CardFooter>
               <Button onClick={handleSubGuildSettingsSave} className="btn-gradient btn-style-secondary ml-auto" disabled={!canManageSubGuilds || isSubmittingSubGuilds}>
                 {isSubmittingSubGuilds ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
-                Salvar Configurações de Sub-Guildas
+                Salvar Configuração
               </Button>
             </CardFooter>
           </Card>
@@ -1686,6 +1738,7 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+
 
 
 
