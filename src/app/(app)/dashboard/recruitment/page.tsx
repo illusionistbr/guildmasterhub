@@ -7,19 +7,16 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp, updateDoc } from '@/lib/firebase';
-import type { Guild, Application, GuildMemberRoleInfo, UserProfile, RecruitmentQuestion } from '@/types/guildmaster';
+import type { Guild, Application, GuildMemberRoleInfo, UserProfile } from '@/types/guildmaster';
 import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, PlusCircle as PlusCircleIcon, Trash2, Save, Info } from 'lucide-react';
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -79,70 +76,10 @@ const fixedApplicationFields: FixedFormFieldDisplay[] = [
 ];
 
 
-function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { guild: Guild | null; guildId: string | null; currentUser: UserProfile | null }) {
-  const { toast } = useToast();
-  const [customQuestions, setCustomQuestions] = useState<RecruitmentQuestion[]>([]);
-  const [newCustomQuestionText, setNewCustomQuestionText] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-
+function RecruitmentQuestionnaireSettings({ guild }: { guild: Guild | null; }) {
   const isTLGuild = guild?.game === "Throne and Liberty";
 
-  useEffect(() => {
-    if (guild && guild.recruitmentQuestions) {
-      setCustomQuestions(guild.recruitmentQuestions.filter(q => q.type === 'custom'));
-    } else {
-      setCustomQuestions([]);
-    }
-  }, [guild]);
-
-  const handleAddCustomQuestion = () => {
-    if (newCustomQuestionText.trim() === "") {
-      toast({ title: "Pergunta Vazia", description: "O texto da pergunta personalizada não pode estar vazio.", variant: "destructive" });
-      return;
-    }
-    const newQuestion: RecruitmentQuestion = {
-      id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      text: newCustomQuestionText.trim(),
-      type: 'custom',
-      isEnabled: true,
-    };
-    setCustomQuestions(prev => [...prev, newQuestion]);
-    setNewCustomQuestionText("");
-    toast({ title: "Pergunta Adicionada", description: "Nova pergunta personalizada adicionada localmente. Lembre-se de salvar." });
-  };
-
-  const handleDeleteCustomQuestion = (id: string) => {
-    setCustomQuestions(prev => prev.filter(q => q.id !== id));
-  };
-
-  const handleSaveQuestionnaire = async () => {
-    if (!guildId || !currentUser) {
-      toast({ title: "Erro", description: "Guilda ou usuário não autenticado.", variant: "destructive"});
-      return;
-    }
-    setIsSaving(true);
-    try {
-      const guildRef = doc(db, "guilds", guildId);
-      await updateDoc(guildRef, { recruitmentQuestions: customQuestions });
-
-      await logGuildActivity(
-        guildId,
-        currentUser.uid,
-        currentUser.displayName,
-        AuditActionType.RECRUITMENT_QUESTIONNAIRE_UPDATED,
-        { changedField: 'recruitmentQuestions', details: { questionnaireChangeSummary: `${customQuestions.length} perguntas personalizadas configuradas.` } }
-      );
-
-      toast({ title: "Questionário Salvo!", description: "As configurações do questionário de recrutamento foram salvas." });
-    } catch (error) {
-      console.error("Erro ao salvar questionário:", error);
-      toast({ title: "Erro ao Salvar", description: "Não foi possível salvar o questionário.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (!guild || !guildId) {
+  if (!guild) {
     return <div className="text-center py-10">Carregando configurações do questionário...</div>;
   }
 
@@ -150,11 +87,11 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
     <Card className="static-card-container mt-8">
       <CardHeader>
         <CardTitle className="flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" />Questionário de Recrutamento</CardTitle>
-        <CardDescription>Revise os campos padrão do formulário e adicione perguntas personalizadas se desejar.</CardDescription>
+        <CardDescription>Abaixo estão os campos padrão que os candidatos preencherão ao se candidatarem à sua guilda.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h4 className="text-lg font-semibold text-foreground mb-3">Campos Padrão do Formulário (Informativo)</h4>
+          <h4 className="text-lg font-semibold text-foreground mb-3">Campos Padrão do Formulário</h4>
           <div className="space-y-2">
             {fixedApplicationFields.filter(field => !field.isTLSpecific || isTLGuild).map(field => (
               <div key={field.id} className="flex items-center p-3 bg-muted/30 rounded-md border border-input">
@@ -163,46 +100,9 @@ function RecruitmentQuestionnaireSettings({ guild, guildId, currentUser }: { gui
               </div>
             ))}
           </div>
-           <p className="text-xs text-muted-foreground mt-3">Estes campos já fazem parte do formulário de aplicação padrão e não podem ser removidos ou desativados.</p>
-        </div>
-
-        <div>
-          <h4 className="text-lg font-semibold text-foreground mb-3">Perguntas Personalizadas</h4>
-          {customQuestions.map(question => (
-            <div key={question.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-2 border border-input">
-              <p className="text-sm text-foreground flex-1">{question.text}</p>
-              <Button variant="ghost" size="icon" onClick={() => handleDeleteCustomQuestion(question.id)} className="text-destructive hover:bg-destructive/10 h-7 w-7">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          {customQuestions.length === 0 && (
-             <p className="text-sm text-muted-foreground mb-3">Nenhuma pergunta personalizada adicionada. Adicione abaixo se desejar.</p>
-          )}
-          <div className="flex items-end gap-2 mt-3">
-            <div className="flex-grow">
-              <Label htmlFor="newCustomQuestionText" className="text-sm text-muted-foreground">Nova Pergunta Personalizada</Label>
-              <Textarea
-                id="newCustomQuestionText"
-                placeholder="Digite o texto da sua pergunta personalizada..."
-                value={newCustomQuestionText}
-                onChange={(e) => setNewCustomQuestionText(e.target.value)}
-                rows={2}
-                className="form-input mt-1"
-              />
-            </div>
-            <Button onClick={handleAddCustomQuestion} variant="outline" className="shrink-0 btn-gradient btn-style-secondary">
-              <PlusCircleIcon className="mr-2 h-4 w-4" /> Adicionar
-            </Button>
-          </div>
+           <p className="text-xs text-muted-foreground mt-3">Estes campos fazem parte do formulário de aplicação padrão e não podem ser removidos.</p>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleSaveQuestionnaire} disabled={isSaving} className="btn-gradient btn-style-primary ml-auto">
-          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Salvar Questionário
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
@@ -258,7 +158,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
           </p>
         </CardContent>
       </Card>
-      {canManageQuestionnaire && <RecruitmentQuestionnaireSettings guild={guild} guildId={guildId} currentUser={currentUser} />}
+      {canManageQuestionnaire && <RecruitmentQuestionnaireSettings guild={guild} />}
     </div>
   );
 }
@@ -723,4 +623,3 @@ export default function RecruitmentPageWrapper() {
     </Suspense>
   );
 }
-

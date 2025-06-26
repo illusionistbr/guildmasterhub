@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, updateDoc, arrayUnion, increment as firebaseIncrement, writeBatch } from '@/lib/firebase';
-import type { Guild, Application, GuildMemberRoleInfo, RecruitmentQuestion } from '@/types/guildmaster';
+import type { Guild, Application, GuildMemberRoleInfo } from '@/types/guildmaster';
 import { TLRole, TLWeapon, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ const tlGuildFocusOptions = [
 ];
 
 
-const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: RecruitmentQuestion[] = []) => {
+const getBaseApplicationSchema = (isTLGuild: boolean) => {
   let schemaObject: any = {
     characterNickname: z.string().min(2, "Nickname do personagem deve ter pelo menos 2 caracteres.").max(50),
     gearScore: z.coerce.number().min(0, "Gearscore deve ser um número positivo.").max(10000, "Gearscore improvável."),
@@ -64,10 +64,6 @@ const getBaseApplicationSchema = (isTLGuild: boolean, customQuestions: Recruitme
     applicantTlServer: z.string().optional(),
     applicantTlGameFocus: z.array(z.string()).optional(),
   };
-
-  customQuestions.forEach(q => {
-    schemaObject[q.id] = z.string().max(500, "Resposta muito longa.").optional();
-  });
 
   const baseSchema = z.object(schemaObject);
 
@@ -112,12 +108,11 @@ function ApplyPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [successMessage, setSuccessMessage] = useState<string>("");
-  const [activeCustomQuestions, setActiveCustomQuestions] = useState<RecruitmentQuestion[]>([]);
 
   const guildId = searchParams.get('guildId');
   const isTLGuild = guild?.game === "Throne and Liberty";
 
-  const applicationSchema = getBaseApplicationSchema(isTLGuild, activeCustomQuestions);
+  const applicationSchema = getBaseApplicationSchema(isTLGuild);
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
@@ -186,11 +181,8 @@ function ApplyPageContent() {
         }
 
         setGuild(guildData);
-        const currentIsTLGuild = guildData.game === "Throne and Liberty";
-        const enabledCustomQuestions = guildData.recruitmentQuestions?.filter(q => q.isEnabled && q.type === 'custom') || [];
-        setActiveCustomQuestions(enabledCustomQuestions);
 
-        let defaultFormValues: ApplicationFormValues = {
+        let defaultFormValues: Partial<ApplicationFormValues> = {
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
             gearScoreScreenshotUrl: "",
@@ -205,9 +197,6 @@ function ApplyPageContent() {
             applicantTlGameFocus: [],
         };
 
-        enabledCustomQuestions.forEach(q => {
-            (defaultFormValues as any)[q.id] = "";
-        });
         form.reset(defaultFormValues);
 
       } catch (error) {
@@ -244,13 +233,6 @@ function ApplyPageContent() {
     setIsSubmitting(true);
     setSubmissionStatus('idle');
 
-    const customAnswers: { [questionId: string]: string } = {};
-    activeCustomQuestions.forEach(q => {
-        if (data[q.id as keyof ApplicationFormValues] !== undefined) {
-            customAnswers[q.id] = data[q.id as keyof ApplicationFormValues] as string;
-        }
-    });
-
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
       applicantId: currentUser.uid,
@@ -269,7 +251,6 @@ function ApplyPageContent() {
           applicantTlServer: data.applicantTlServer,
           applicantTlGameFocus: data.applicantTlGameFocus,
       }),
-      ...(Object.keys(customAnswers).length > 0 && { customAnswers: customAnswers }),
     };
 
     try {
@@ -561,29 +542,6 @@ function ApplyPageContent() {
               <FormField control={form.control} name="knowsSomeoneInGuild" render={({ field }) => ( <FormItem> <FormLabel>Conhece alguém na guilda? (Opcional)</FormLabel> <div className="relative mt-1"> <UsersIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="Nick do(s) amigo(s)" className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
               <FormField control={form.control} name="additionalNotes" render={({ field }) => ( <FormItem> <FormLabel>Algo mais a acrescentar? (Opcional)</FormLabel> <FormControl> <Textarea {...field} placeholder="Qualquer informação adicional que queira compartilhar..." rows={3}/> </FormControl> <FormMessage /> </FormItem> )}/>
 
-              {activeCustomQuestions.length > 0 && (
-                <div className="pt-4 space-y-5 border-t border-border">
-                  <h3 className="text-lg font-semibold text-primary">Perguntas Adicionais da Guilda</h3>
-                  {activeCustomQuestions.map((question) => (
-                    <FormField
-                      key={question.id}
-                      control={form.control}
-                      name={question.id as keyof ApplicationFormValues}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{question.text}</FormLabel>
-                          <div className="relative mt-1">
-                             <FormControl>
-                                <Input {...field} placeholder="Sua resposta..."/>
-                             </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              )}
             </CardContent>
             <CardFooter className="p-0 pt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
@@ -613,4 +571,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-

@@ -84,14 +84,6 @@ export interface CustomRole {
   description?: string;
 }
 
-export interface RecruitmentQuestion {
-  id: string;
-  text: string;
-  type: 'default' | 'custom';
-  isEnabled: boolean;
-}
-
-
 export interface Guild {
   id: string;
   name: string;
@@ -117,7 +109,6 @@ export interface Guild {
   };
   roles?: { [userId: string]: GuildMemberRoleInfo };
   customRoles?: { [roleName: string]: CustomRole };
-  recruitmentQuestions?: RecruitmentQuestion[];
   dkpSystemEnabled?: boolean;
   dkpRedemptionWindow?: {
     value: number;
@@ -200,7 +191,6 @@ export interface Application {
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  customAnswers?: { [questionId: string]: string };
   applicantTlRegion?: string; 
   applicantTlServer?: string; 
   applicantTlGameFocus?: string[]; 
