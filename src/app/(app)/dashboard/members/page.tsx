@@ -518,7 +518,7 @@ function MembersListTabContent(
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedMembers, currentPage]);
+  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
@@ -1366,6 +1366,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
