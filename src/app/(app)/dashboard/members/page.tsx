@@ -316,12 +316,16 @@ function MembersListTabContent(
       const guildRef = doc(db, "guilds", guildId);
       const fieldPath = `roles.${member.uid}.subGuildId`;
 
+      const existingRoleInfo = guild.roles?.[member.uid] || { roleName: member.roleName, status: 'Ativo', dkpBalance: 0 };
+      let updatedRoleInfoPayload: GuildMemberRoleInfo = { ...existingRoleInfo };
       if (subGuildId) {
-        await updateDoc(guildRef, { [fieldPath]: subGuildId });
+        updatedRoleInfoPayload.subGuildId = subGuildId;
       } else {
-        await updateDoc(guildRef, { [fieldPath]: firestoreDeleteField() });
+        delete updatedRoleInfoPayload.subGuildId;
       }
-
+      
+      await updateDoc(guildRef, { [`roles.${member.uid}`]: updatedRoleInfoPayload });
+      
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
         targetUserId: member.uid,
         targetUserDisplayName: member.characterNickname || member.displayName,
@@ -598,78 +602,79 @@ function MembersListTabContent(
         <Table>
           <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Sub-Guilda</TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {paginatedMembers.length > 0 && paginatedMembers.map((member) => {
-              const isCurrentUserTarget = member.uid === currentUser?.uid;
-              const isGuildOwnerTarget = member.uid === guild?.ownerId;
-              const displayName = member.characterNickname || member.displayName || member.email || member.uid;
-              const subGuildName = guild.subGuildsEnabled ? guild.subGuilds?.find(sg => sg.id === member.subGuildId)?.name || "N/A" : "N/A";
-              
-              const hasRoleActions = canManageMemberRoles && !isGuildOwnerTarget;
-              const hasStatusActions = canManageMemberStatus;
-              const showDkpActions = guild.dkpSystemEnabled && canAdjustMemberDkp && (!isCurrentUserTarget || isOwner);
-              const hasKickAction = canKickMembers && !isGuildOwnerTarget;
-              const hasSubGuildAction = canAssignSubGuild && guild.subGuildsEnabled;
-              
-              const canPerformManagementActions = hasRoleActions || hasStatusActions || showDkpActions || hasKickAction || hasSubGuildAction;
-              
-              return (
-                <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
-                  <TableCell><div className="flex items-center"><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${displayName}`}/></div></TableCell>
-                  <TableCell><div className={cn("flex items-center gap-2 font-medium", canViewDetailedMemberInfo && "cursor-pointer hover:text-primary transition-colors")} onClick={() => canViewDetailedMemberInfo && handleViewMemberDetails(member)} title={canViewDetailedMemberInfo ? "Ver detalhes do membro" : "" }><Avatar className="h-8 w-8"><AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${displayName?.substring(0,1) || 'M'}`} alt={displayName || 'Avatar'} data-ai-hint="user avatar"/><AvatarFallback>{displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback></Avatar>{displayName}</div></TableCell>
-                  <TableCell>{subGuildName}</TableCell>
-                  {isTLGuild && ( <TableCell><div className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>{getTLRoleIcon(member.tlRole)}{member.tlRole || "N/A"}</div></TableCell> )}
-                  <TableCell><div className="flex items-center gap-1">{member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}{member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}</div></TableCell>
-                  <TableCell><div className="flex items-center gap-1">{member.gearScore}{member.gearScoreScreenshotUrl && <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" title="Ver screenshot do gearscore"><Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" /></a>}</div></TableCell>
-                  <TableCell><div className="flex items-center gap-1">{getRoleIcon(member.roleName)}{member.roleName}</div></TableCell>
-                  <TableCell><div className="flex items-center gap-1">{member.dkpBalance ?? 0}<Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" /></div></TableCell>
-                  {canManageMemberNotes && ( <TableCell><div className="flex items-center"><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenNotesDialog(member)}><FileText className="h-4 w-4" /><span className="sr-only">Ver/Editar Nota</span></Button></div></TableCell> )}
-                  <TableCell><Badge variant="outline" className={cn("text-xs", getStatusBadgeClass(member.status))}><div className="flex items-center gap-1">{getStatusIcon(member.status)}{displayMemberStatus(member.status)}</div></Badge></TableCell>
-                  <TableCell className="text-right"><div className="flex items-center justify-end gap-1">
-                    {canPerformManagementActions && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /><span className="sr-only">Ações do membro</span></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {hasRoleActions && ( <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")}><UserCog className="mr-2 h-4 w-4" /> Alterar Cargo</DropdownMenuItem> )}
-                                {hasSubGuildAction && guild.subGuilds && guild.subGuilds.length > 0 && (
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger><UsersRound className="mr-2 h-4 w-4" />Atribuir Sub-Guilda</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem onSelect={() => handleAssignSubGuild(member, null)}>Nenhuma</DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                {guild.subGuilds.map(sg => (
-                                                    <DropdownMenuItem key={sg.id} onSelect={() => handleAssignSubGuild(member, sg.id)} disabled={member.subGuildId === sg.id}>
-                                                        {sg.name}
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                )}
-                                {hasStatusActions && ( <DropdownMenuSub><DropdownMenuSubTrigger><UserCog className="mr-2 h-4 w-4" />Alterar Status</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent>{(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => ( <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }} disabled={isGuildOwnerTarget && statusOption === 'Inativo'}>{getStatusIcon(statusOption)}{displayMemberStatus(statusOption)}</DropdownMenuItem> ))}</DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub> )}
-                                
-                                { (hasRoleActions || hasStatusActions || hasSubGuildAction) && showDkpActions && <DropdownMenuSeparator /> }
+            {paginatedMembers.length > 0 ? (
+              paginatedMembers.map((member) => {
+                const isCurrentUserTarget = member.uid === currentUser?.uid;
+                const isGuildOwnerTarget = member.uid === guild?.ownerId;
+                const displayName = member.characterNickname || member.displayName || member.email || member.uid;
+                const subGuildName = guild.subGuildsEnabled ? guild.subGuilds?.find(sg => sg.id === member.subGuildId)?.name || "N/A" : "N/A";
+                
+                const hasRoleActions = canManageMemberRoles && !isGuildOwnerTarget;
+                const hasStatusActions = canManageMemberStatus;
+                const showDkpActions = guild.dkpSystemEnabled && canAdjustMemberDkp && (!isCurrentUserTarget || isOwner);
+                const hasKickAction = canKickMembers && !isGuildOwnerTarget;
+                const hasSubGuildAction = canAssignSubGuild && guild.subGuildsEnabled;
+                
+                const canPerformManagementActions = hasRoleActions || hasStatusActions || showDkpActions || hasKickAction || hasSubGuildAction;
+                
+                return (
+                  <TableRow key={member.uid} data-state={selectedRows[member.uid] ? "selected" : ""}>
+                    <TableCell><div className="flex items-center"><Checkbox checked={selectedRows[member.uid] || false} onCheckedChange={(checked) => handleSelectRow(member.uid, Boolean(checked))} aria-label={`Selecionar ${displayName}`}/></div></TableCell>
+                    <TableCell><div className={cn("flex items-center gap-2 font-medium", canViewDetailedMemberInfo && "cursor-pointer hover:text-primary transition-colors")} onClick={() => canViewDetailedMemberInfo && handleViewMemberDetails(member)} title={canViewDetailedMemberInfo ? "Ver detalhes do membro" : "" }><Avatar className="h-8 w-8"><AvatarImage src={member.photoURL || `https://placehold.co/40x40.png?text=${displayName?.substring(0,1) || 'M'}`} alt={displayName || 'Avatar'} data-ai-hint="user avatar"/><AvatarFallback>{displayName?.substring(0,2).toUpperCase() || 'M'}</AvatarFallback></Avatar>{displayName}</div></TableCell>
+                    <TableCell>{subGuildName}</TableCell>
+                    {isTLGuild && ( <TableCell><div className={cn("flex items-center gap-1", getTLRoleStyling(member.tlRole))}>{getTLRoleIcon(member.tlRole)}{member.tlRole || "N/A"}</div></TableCell> )}
+                    <TableCell><div className="flex items-center gap-1">{member.weapons?.mainHandIconUrl && <Image src={member.weapons.mainHandIconUrl} alt={member.tlPrimaryWeapon || "Arma Principal"} width={24} height={24} data-ai-hint="weapon sword"/>}{member.weapons?.offHandIconUrl && <Image src={member.weapons.offHandIconUrl} alt={member.tlSecondaryWeapon || "Arma Secundária"} width={24} height={24} data-ai-hint="weapon shield"/>}</div></TableCell>
+                    <TableCell><div className="flex items-center gap-1">{member.gearScore}{member.gearScoreScreenshotUrl && <a href={member.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" title="Ver screenshot do gearscore"><Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" /></a>}</div></TableCell>
+                    <TableCell><div className="flex items-center gap-1">{getRoleIcon(member.roleName)}{member.roleName}</div></TableCell>
+                    <TableCell><div className="flex items-center gap-1">{member.dkpBalance ?? 0}<Eye className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" /></div></TableCell>
+                    {canManageMemberNotes && ( <TableCell><div className="flex items-center"><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenNotesDialog(member)}><FileText className="h-4 w-4" /><span className="sr-only">Ver/Editar Nota</span></Button></div></TableCell> )}
+                    <TableCell><Badge variant="outline" className={cn("text-xs", getStatusBadgeClass(member.status))}><div className="flex items-center gap-1">{getStatusIcon(member.status)}{displayMemberStatus(member.status)}</div></Badge></TableCell>
+                    <TableCell className="text-right"><div className="flex items-center justify-end gap-1">
+                      {canPerformManagementActions && (
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /><span className="sr-only">Ações do membro</span></Button></DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                  {hasRoleActions && ( <DropdownMenuItem onSelect={() => openActionDialog(member, "changeRole")}><UserCog className="mr-2 h-4 w-4" /> Alterar Cargo</DropdownMenuItem> )}
+                                  {hasSubGuildAction && guild.subGuilds && guild.subGuilds.length > 0 && (
+                                      <DropdownMenuSub>
+                                          <DropdownMenuSubTrigger><UsersRound className="mr-2 h-4 w-4" />Atribuir Sub-Guilda</DropdownMenuSubTrigger>
+                                          <DropdownMenuPortal>
+                                              <DropdownMenuSubContent>
+                                                  <DropdownMenuItem onSelect={() => handleAssignSubGuild(member, null)}>Nenhuma</DropdownMenuItem>
+                                                  <DropdownMenuSeparator />
+                                                  {guild.subGuilds.map(sg => (
+                                                      <DropdownMenuItem key={sg.id} onSelect={() => handleAssignSubGuild(member, sg.id)} disabled={member.subGuildId === sg.id}>
+                                                          {sg.name}
+                                                      </DropdownMenuItem>
+                                                  ))}
+                                              </DropdownMenuSubContent>
+                                          </DropdownMenuPortal>
+                                      </DropdownMenuSub>
+                                  )}
+                                  {hasStatusActions && ( <DropdownMenuSub><DropdownMenuSubTrigger><UserCog className="mr-2 h-4 w-4" />Alterar Status</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent>{(['Ativo', 'Inativo', 'Licenca'] as MemberStatus[]).filter(s => s !== member.status).map(statusOption => ( <DropdownMenuItem key={statusOption} onSelect={() => { setSelectedNewStatus(statusOption); handleChangeStatus(member, statusOption); }} disabled={isGuildOwnerTarget && statusOption === 'Inativo'}>{getStatusIcon(statusOption)}{displayMemberStatus(statusOption)}</DropdownMenuItem> ))}</DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub> )}
+                                  
+                                  { (hasRoleActions || hasStatusActions || hasSubGuildAction) && showDkpActions && <DropdownMenuSeparator /> }
 
-                                {showDkpActions && (
-                                    <>
-                                        <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'add')}><PlusCircleIconLucide className="mr-2 h-4 w-4 text-green-500"/> Dar DKP</DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'remove')}><MinusCircle className="mr-2 h-4 w-4 text-red-500"/> Retirar DKP</DropdownMenuItem>
-                                    </>
-                                )}
-                                
-                                { (showDkpActions || hasRoleActions || hasStatusActions || hasSubGuildAction) && hasKickAction && <DropdownMenuSeparator /> }
+                                  {showDkpActions && (
+                                      <>
+                                          <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'add')}><PlusCircleIconLucide className="mr-2 h-4 w-4 text-green-500"/> Dar DKP</DropdownMenuItem>
+                                          <DropdownMenuItem onSelect={() => handleOpenDkpDialog(member, 'remove')}><MinusCircle className="mr-2 h-4 w-4 text-red-500"/> Retirar DKP</DropdownMenuItem>
+                                      </>
+                                  )}
+                                  
+                                  { (showDkpActions || hasRoleActions || hasStatusActions || hasSubGuildAction) && hasKickAction && <DropdownMenuSeparator /> }
 
-                                {hasKickAction && ( 
-                                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                  </div></TableCell>
-                </TableRow>
-              );
-            })}
-            {paginatedMembers.length === 0 && (
+                                  {hasKickAction && ( 
+                                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => openActionDialog(member, "kick")}><UserX className="mr-2 h-4 w-4" /> Remover da Guilda</DropdownMenuItem>
+                                  )}
+                              </DropdownMenuContent>
+                          </DropdownMenu>
+                      )}
+                    </div></TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
               <TableRow key="no-members-row">
                 <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
                   Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
@@ -1379,6 +1384,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
