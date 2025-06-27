@@ -315,16 +315,15 @@ function MembersListTabContent(
     try {
       const guildRef = doc(db, "guilds", guildId);
       const fieldPath = `roles.${member.uid}.subGuildId`;
-
-      const existingRoleInfo = guild.roles?.[member.uid] || { roleName: member.roleName, status: 'Ativo', dkpBalance: 0 };
-      let updatedRoleInfoPayload: GuildMemberRoleInfo = { ...existingRoleInfo };
-      if (subGuildId) {
-        updatedRoleInfoPayload.subGuildId = subGuildId;
-      } else {
-        delete updatedRoleInfoPayload.subGuildId;
-      }
       
-      await updateDoc(guildRef, { [`roles.${member.uid}`]: updatedRoleInfoPayload });
+      const updatePayload: { [key: string]: any } = {};
+      if (subGuildId) {
+        updatePayload[fieldPath] = subGuildId;
+      } else {
+        updatePayload[fieldPath] = firestoreDeleteField();
+      }
+
+      await updateDoc(guildRef, updatePayload);
       
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
         targetUserId: member.uid,
@@ -675,7 +674,7 @@ function MembersListTabContent(
                 );
               })
             ) : (
-              <TableRow key="no-members-row">
+              <TableRow>
                 <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
                   Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
                 </TableCell>
@@ -844,7 +843,7 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                             </TableRow>
                             ))
                         ) : (
-                          <TableRow key="no-screenshots-row">
+                          <TableRow>
                             <TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell>
                           </TableRow>
                         )}
@@ -1049,7 +1048,7 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
   );
 }
 
-// --- VODS TAB CONTENT ---
+// --- VODs TAB CONTENT ---
 function VODsTabContent({ guild, guildId, currentUser, currentUserRoleInfo }: { guild: Guild; guildId: string; currentUser: UserProfile; currentUserRoleInfo: GuildMemberRoleInfo | null; }) {
   const canReviewVods = hasPermission(currentUserRoleInfo, guild.customRoles, GuildPermission.MANAGE_VOD_REVIEWS);
 
@@ -1290,8 +1289,12 @@ function MembersPageContainer() {
       setGuild(guildData);
       setHeaderTitle(`Membros: ${guildData.name}`);
 
-      let memberIdsToFetch = guildData.memberIds || [];
-      if (guildData.ownerId && !memberIdsToFetch.includes(guildData.ownerId)) { memberIdsToFetch = [...new Set([...memberIdsToFetch, guildData.ownerId])]; }
+      // Ensure memberIds are unique and the owner is included.
+      const memberIdSet = new Set(guildData.memberIds || []);
+      if (guildData.ownerId) {
+        memberIdSet.add(guildData.ownerId);
+      }
+      const memberIdsToFetch = Array.from(memberIdSet);
 
       if (memberIdsToFetch.length > 0) {
         const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
@@ -1384,14 +1387,3 @@ export default function MembersPage() {
     </Suspense>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
