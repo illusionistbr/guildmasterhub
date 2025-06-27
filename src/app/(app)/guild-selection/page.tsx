@@ -12,35 +12,47 @@ import { db, collection, query, where, getDocs } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 export default function GuildSelectionPage() {
   const { user, loading: authLoading } = useAuth();
   const [ownedGuilds, setOwnedGuilds] = useState<Guild[]>([]);
   const [memberGuilds, setMemberGuilds] = useState<Guild[]>([]);
   const [loadingGuilds, setLoadingGuilds] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user && !authLoading) {
       const fetchGuilds = async () => {
         setLoadingGuilds(true);
         try {
-          // Fetch owned guilds
-          const ownedQuery = query(collection(db, "guilds"), where("ownerId", "==", user.uid));
-          const ownedSnapshot = await getDocs(ownedQuery);
-          const fetchedOwnedGuilds = ownedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Guild));
-          setOwnedGuilds(fetchedOwnedGuilds);
+          // Perform a single query to get all guilds the user is associated with.
+          // This is more efficient and aligns better with Firestore security rules.
+          const guildsQuery = query(collection(db, "guilds"), where("memberIds", "array-contains", user.uid));
+          const querySnapshot = await getDocs(guildsQuery);
 
-          // Fetch member guilds (excluding those already owned)
-          const memberQuery = query(collection(db, "guilds"), where("memberIds", "array-contains", user.uid));
-          const memberSnapshot = await getDocs(memberQuery);
-          const fetchedMemberGuilds = memberSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Guild))
-            .filter(guild => guild.ownerId !== user.uid); // Exclude guilds where user is owner
+          const fetchedOwnedGuilds: Guild[] = [];
+          const fetchedMemberGuilds: Guild[] = [];
+
+          querySnapshot.forEach(doc => {
+            const guild = { id: doc.id, ...doc.data() } as Guild;
+            if (guild.ownerId === user.uid) {
+              fetchedOwnedGuilds.push(guild);
+            } else {
+              fetchedMemberGuilds.push(guild);
+            }
+          });
+
+          setOwnedGuilds(fetchedOwnedGuilds);
           setMemberGuilds(fetchedMemberGuilds);
 
         } catch (error) {
           console.error("Error fetching guilds:", error);
-          // Potentially set an error state here and show a toast
+          toast({
+            title: "Erro ao buscar guildas",
+            description: "Não foi possível carregar suas guildas. Verifique suas permissões de acesso ou tente novamente.",
+            variant: "destructive",
+          });
         } finally {
           setLoadingGuilds(false);
         }
@@ -49,7 +61,7 @@ export default function GuildSelectionPage() {
     } else if (!authLoading && !user) {
         setLoadingGuilds(false);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, toast]);
 
   const isLoading = authLoading || loadingGuilds;
 
@@ -161,4 +173,3 @@ export default function GuildSelectionPage() {
     </div>
   );
 }
-
