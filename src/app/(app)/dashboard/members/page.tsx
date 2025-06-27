@@ -306,31 +306,36 @@ function MembersListTabContent(
   };
 
   const handleAssignSubGuild = async (member: GuildMember, subGuildId: string | null) => {
-    if (!guildId || !currentUser || !canAssignSubGuild) return;
+    if (!guildId || !currentUser || !canAssignSubGuild || !guild) return;
     setIsProcessingAction(true);
     const oldSubGuildId = member.subGuildId || null;
     const oldSubGuildName = guild.subGuilds?.find(sg => sg.id === oldSubGuildId)?.name || "Nenhuma";
     const newSubGuildName = subGuildId ? (guild.subGuilds?.find(sg => sg.id === subGuildId)?.name || "Nenhuma") : "Nenhuma";
 
     try {
-        const guildRef = doc(db, "guilds", guildId);
-        const updatePayload = subGuildId ? { subGuildId: subGuildId } : { subGuildId: firestoreDeleteField() };
-        await updateDoc(guildRef, { [`roles.${member.uid}`]: { ...guild.roles?.[member.uid], ...updatePayload } });
+      const guildRef = doc(db, "guilds", guildId);
+      const fieldPath = `roles.${member.uid}.subGuildId`;
 
-        await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
-            targetUserId: member.uid,
-            targetUserDisplayName: member.characterNickname || member.displayName,
-            oldValue: oldSubGuildName,
-            newValue: newSubGuildName,
-        });
+      if (subGuildId) {
+        await updateDoc(guildRef, { [fieldPath]: subGuildId });
+      } else {
+        await updateDoc(guildRef, { [fieldPath]: firestoreDeleteField() });
+      }
 
-        toast({ title: "Sub-Guilda Atribuída!", description: `${member.characterNickname} foi movido para ${newSubGuildName}.` });
-        fetchGuildAndMembers();
+      await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
+        targetUserId: member.uid,
+        targetUserDisplayName: member.characterNickname || member.displayName,
+        oldValue: oldSubGuildName,
+        newValue: newSubGuildName,
+      });
+
+      toast({ title: "Sub-Guilda Atribuída!", description: `${member.characterNickname} foi movido para ${newSubGuildName}.` });
+      fetchGuildAndMembers();
     } catch (error) {
-        console.error("Erro ao atribuir sub-guilda:", error);
-        toast({ title: "Erro ao Atribuir", variant: "destructive" });
+      console.error("Erro ao atribuir sub-guilda:", error);
+      toast({ title: "Erro ao Atribuir", variant: "destructive" });
     } finally {
-        setIsProcessingAction(false);
+      setIsProcessingAction(false);
     }
   };
 
@@ -518,7 +523,7 @@ function MembersListTabContent(
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
+  }, [filteredAndSortedMembers, currentPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
@@ -593,7 +598,7 @@ function MembersListTabContent(
         <Table>
           <TableHeader><TableRow><TableHead className="w-[50px]"><Checkbox checked={paginatedMembers.length > 0 && numSelectedRows === paginatedMembers.length} onCheckedChange={(checked) => handleSelectAllRows(Boolean(checked))} aria-label="Selecionar todas as linhas visíveis" disabled={paginatedMembers.length === 0}/></TableHead><TableHead>Usuário <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Sub-Guilda</TableHead>{isTLGuild && <TableHead>Função <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>}<TableHead>Armas</TableHead><TableHead>Gear <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Cargo <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead>Balanço DKP <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead>{canManageMemberNotes && <TableHead>Nota</TableHead>}<TableHead>Status <ArrowUpDown className="inline ml-1 h-3 w-3" /></TableHead><TableHead className="text-right w-[120px]">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {paginatedMembers.map((member) => {
+            {paginatedMembers.length > 0 && paginatedMembers.map((member) => {
               const isCurrentUserTarget = member.uid === currentUser?.uid;
               const isGuildOwnerTarget = member.uid === guild?.ownerId;
               const displayName = member.characterNickname || member.displayName || member.email || member.uid;
@@ -797,7 +802,8 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {members.map((member) => (
+                       {members.length > 0 ? (
+                            members.map((member) => (
                             <TableRow key={member.uid}>
                                 <TableCell>
                                     <div className="flex items-center gap-2 font-medium">
@@ -831,8 +837,8 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                                     )}
                                 </TableCell>
                             </TableRow>
-                        ))}
-                        {members.length === 0 && (
+                            ))
+                        ) : (
                           <TableRow key="no-screenshots-row">
                             <TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell>
                           </TableRow>
@@ -1373,6 +1379,7 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
 
 
 
