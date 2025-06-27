@@ -674,7 +674,7 @@ function MembersListTabContent(
                 );
               })
             ) : (
-              <TableRow>
+              <TableRow key="no-members-row">
                 <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
                   Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
                 </TableCell>
@@ -806,7 +806,7 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                       {members.length > 0 ? (
+                        {members.length > 0 ? (
                             members.map((member) => (
                             <TableRow key={member.uid}>
                                 <TableCell>
@@ -843,9 +843,9 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
                             </TableRow>
                             ))
                         ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell>
-                          </TableRow>
+                            <TableRow key="no-screenshots-row">
+                                <TableCell colSpan={4} className="h-24 text-center">Nenhum membro encontrado.</TableCell>
+                            </TableRow>
                         )}
                     </TableBody>
                 </Table>
@@ -1289,7 +1289,6 @@ function MembersPageContainer() {
       setGuild(guildData);
       setHeaderTitle(`Membros: ${guildData.name}`);
 
-      // Ensure memberIds are unique and the owner is included.
       const memberIdSet = new Set(guildData.memberIds || []);
       if (guildData.ownerId) {
         memberIdSet.add(guildData.ownerId);
@@ -1299,17 +1298,46 @@ function MembersPageContainer() {
       if (memberIdsToFetch.length > 0) {
         const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
         const userProfileSnaps = await Promise.all(userProfilesPromises);
-        const processedMembers: GuildMember[] = []; const processedGuildMembersForGroups: GuildMember[] = [];
+        const processedMembers: GuildMember[] = [];
+        const processedGuildMembersForGroups: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
-          const uid = memberIdsToFetch[i]; const userProfileSnap = userProfileSnaps[i];
+          const uid = memberIdsToFetch[i];
+          const userProfileSnap = userProfileSnaps[i];
           let baseProfile: UserProfile;
-          if (userProfileSnap && userProfileSnap.exists()) { baseProfile = userProfileSnap.data() as UserProfile;
-          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) { baseProfile = { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`, photoURL: currentUser.photoURL, guilds: [], lastNotificationsCheckedTimestamp: {} };
-          } else { console.warn(`User profile not found for UID: ${uid}, skipping member.`); continue; }
+
+          if (userProfileSnap && userProfileSnap.exists()) {
+            const firestoreData = userProfileSnap.data();
+            baseProfile = {
+              uid: userProfileSnap.id,
+              email: firestoreData.email || null,
+              displayName: firestoreData.displayName || null,
+              photoURL: firestoreData.photoURL || null,
+              guilds: firestoreData.guilds || [],
+              lastNotificationsCheckedTimestamp: firestoreData.lastNotificationsCheckedTimestamp || {},
+            };
+          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) {
+            baseProfile = {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
+              photoURL: currentUser.photoURL,
+              guilds: [],
+              lastNotificationsCheckedTimestamp: {}
+            };
+          } else {
+            console.warn(`User profile not found for UID: ${uid}, skipping member.`);
+            continue;
+          }
+          
           const roleInfoSource = guildData.roles?.[uid];
           const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
           processedMembers.push(enhancedMember);
-          processedGuildMembersForGroups.push({ uid: baseProfile.uid, displayName: baseProfile.displayName || 'Desconhecido', photoURL: baseProfile.photoURL, email: baseProfile.email } as GuildMember);
+          processedGuildMembersForGroups.push({
+            uid: baseProfile.uid,
+            displayName: baseProfile.displayName || 'Desconhecido',
+            photoURL: baseProfile.photoURL,
+            email: baseProfile.email
+          } as GuildMember);
         }
         processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid));
         setMembers(processedMembers);
@@ -1317,14 +1345,25 @@ function MembersPageContainer() {
       } else {
          if (guildData.ownerId === currentUser.uid) {
             const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
-            const ownerBaseProfile: UserProfile = { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`, photoURL: currentUser.photoURL, guilds: [], lastNotificationsCheckedTimestamp: {} };
+            const ownerBaseProfile: UserProfile = {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
+              photoURL: currentUser.photoURL,
+              guilds: [],
+              lastNotificationsCheckedTimestamp: {}
+            };
             const ownerEnhanced = enhanceMemberData(ownerBaseProfile, ownerRoleInfoSource, guildData);
             setMembers([ownerEnhanced]);
             setGuildMembersForGroups([ownerEnhanced]);
          } else { setMembers([]); setGuildMembersForGroups([]); }
       }
-    } catch (error) { console.error("Erro ao buscar dados da guilda e membros:", error); toast({ title: "Erro ao carregar dados", description: "Não foi possível carregar os membros da guilda.", variant: "destructive" });
-    } finally { setLoadingGuildData(false); }
+    } catch (error) {
+      console.error("Erro ao buscar dados da guilda e membros:", error);
+      toast({ title: "Erro ao carregar dados", description: "Não foi possível carregar os membros da guilda.", variant: "destructive" });
+    } finally {
+      setLoadingGuildData(false);
+    }
   }, [guildId, currentUser, router, toast, setHeaderTitle]);
 
   useEffect(() => {
