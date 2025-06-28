@@ -613,7 +613,7 @@ function MembersListTabContent(
                 
                 const hasRoleActions = canManageMemberRoles && !isGuildOwnerTarget;
                 const hasStatusActions = canManageMemberStatus;
-                const showDkpActions = guild.dkpSystemEnabled && canAdjustMemberDkp && (!isCurrentUserTarget || isOwner);
+                const showDkpActions = guild.dkpSystemEnabled && canAdjustMemberDkp;
                 const hasKickAction = canKickMembers && !isGuildOwnerTarget;
                 const hasSubGuildAction = canAssignSubGuild && guild.subGuildsEnabled;
                 
@@ -1045,76 +1045,6 @@ function GroupsTabContent(
       </Dialog>
       <AlertDialog open={!!groupToDelete} onOpenChange={() => setGroupToDelete(null)}> <AlertDialogContent> <AlertDialogHeader> <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle> <AlertDialogDescription> Tem certeza que deseja excluir o grupo "{groupToDelete?.name}"? Esta ação não pode ser desfeita. </AlertDialogDescription> </AlertDialogHeader> <AlertDialogFooter> <AlertDialogCancel onClick={() => setGroupToDelete(null)} disabled={isSubmittingGroup}>Cancelar</AlertDialogCancel> <AlertDialogAction onClick={() => groupToDelete && handleDeleteGroup(groupToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isSubmittingGroup}> {isSubmittingGroup ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4" />} Excluir </AlertDialogAction> </AlertDialogFooter> </AlertDialogContent> </AlertDialog>
     </div>
-  );
-}
-
-function GroupCard({ group, onEdit, onDelete, canManage, guild }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; guild: Guild | null; }) {
-  const { user } = useAuth();
-  const IconComponent = iconMap[group.icon] || ShieldIconLucide;
-  const [roleInfo, setRoleInfo] = useState<GuildMemberRoleInfo | null>(null);
-  const [customRoles, setCustomRoles] = useState<Record<string, CustomRole> | undefined>(undefined);
-
-  const subGuildName = guild?.subGuilds?.find(sg => sg.id === group.subGuildId)?.name;
-
-  useEffect(() => {
-    if (user && group.guildId) {
-      const unsub = onSnapshot(doc(db, "guilds", group.guildId), (snap) => {
-        if(snap.exists()) {
-          const guildData = snap.data() as Guild;
-          setRoleInfo(guildData.roles?.[user.uid] || null);
-          setCustomRoles(guildData.customRoles);
-        }
-      });
-      return () => unsub();
-    }
-  }, [user, group.guildId]);
-
-  const canEdit = hasPermission(roleInfo?.roleName, customRoles, GuildPermission.MANAGE_GROUPS_EDIT);
-  const canDelete = hasPermission(roleInfo?.roleName, customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
-
-  return (
-    <Card className="static-card-container flex flex-col">
-      <CardHeader className={cn("p-4 rounded-t-lg text-card-foreground", group.headerColor)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <IconComponent className="h-6 w-6 shrink-0" />
-            <div className='flex-1 overflow-hidden'>
-                <CardTitle className="text-lg font-headline truncate">{group.name}</CardTitle>
-                {subGuildName && <CardDescription className="text-xs text-white/80 truncate">({subGuildName})</CardDescription>}
-            </div>
-          </div>
-          {(canEdit || canDelete) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-current hover:bg-white/20">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canEdit && <DropdownMenuItem onClick={() => onEdit(group)}><Edit2 className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>}
-                {canDelete && <DropdownMenuItem onClick={() => onDelete(group)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 space-y-2 flex-grow">
-        {group.members.length > 0 ? (
-          group.members.map(member => (
-            <div key={member.memberId} className="flex items-center gap-2 text-sm">
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={member.photoURL || undefined} alt={member.displayName || "Membro"} data-ai-hint="user avatar"/>
-                <AvatarFallback>{member.displayName?.substring(0,1).toUpperCase() || 'M'}</AvatarFallback>
-              </Avatar>
-              <span className="text-foreground truncate flex-1">{member.displayName}</span>
-              {member.note && <span className="text-xs text-muted-foreground truncate italic">({member.note})</span>}
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-2">Nenhum membro neste grupo.</p>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
