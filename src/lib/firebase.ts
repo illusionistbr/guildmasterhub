@@ -41,6 +41,11 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Add a check to ensure the API key is not a placeholder
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_")) {
+  throw new Error("Chave de API do Firebase ausente ou é um placeholder. Verifique seu arquivo .env e substitua o valor de exemplo por sua chave real.");
+}
+
 let app: FirebaseApp;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);

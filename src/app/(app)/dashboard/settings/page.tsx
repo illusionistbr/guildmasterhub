@@ -696,7 +696,7 @@ function GuildSettingsPageContent() {
   };
 
   const handleInitiateOnDemandDecay = async () => {
-    if (!guild || !currentUser || !canManageDkpDecaySettings || !guild.dkpDecayEnabled || guild.dkpDecayPercentage === undefined || guild.dkpDecayPercentage <= 0) {
+    if (!guild || !currentUser || !canManageDkpDecaySettings || !guild.dkpDecayEnabled || guild.dkpDecayPercentage === undefined || guild.dkpDecayPercentage <= 0 || !guildId) {
       toast({ title: "Ação Inválida", description: "O decaimento DKP não está habilitado, a porcentagem é zero ou você não tem permissão.", variant: "destructive" });
       setShowOnDemandDecayDialog(false);
       return;
@@ -704,7 +704,7 @@ function GuildSettingsPageContent() {
     setIsProcessingOnDemandDecay(true);
     try {
       const decayPercentage = guild.dkpDecayPercentage / 100;
-      const guildRef = doc(db, guildId as string);
+      const guildRef = doc(db, 'guilds', guildId);
       const guildSnapshot = await getDoc(guildRef); 
       if (!guildSnapshot.exists()) {
         throw new Error("Guilda não encontrada para o decaimento.");
