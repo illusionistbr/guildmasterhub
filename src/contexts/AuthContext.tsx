@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UserProfile } from '@/types/guildmaster';
@@ -57,7 +58,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     */
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentFirebaseUser: FirebaseUser | null) => {
       if (currentFirebaseUser) {
-        // IMPORTANT: Replace with your actual admin UID(s) in a real application.
+        // ======================================================================
+        // INSTRUÇÃO IMPORTANTE PARA O ADMINISTRADOR
+        // Para ter acesso ao painel de administração, você precisa adicionar
+        // seu User ID (UID) do Firebase a esta lista.
+        //
+        // COMO FAZER:
+        // 1. Vá para o Firebase Console > Authentication > Users.
+        // 2. Encontre sua conta de usuário e copie o "User UID".
+        // 3. Cole o UID dentro das aspas abaixo, substituindo o texto de exemplo.
+        //
+        // Exemplo: const ADMIN_UIDS = ['AbCdeFgHiJkLmNoPqRsTuVwXyZ12345'];
+        // Você pode adicionar mais administradores separando por vírgula:
+        // Exemplo: const ADMIN_UIDS = ['UID_ADMIN_1', 'UID_ADMIN_2'];
+        // ======================================================================
         const ADMIN_UIDS = ['YOUR_ADMIN_UID_HERE'];
         const isAdmin = ADMIN_UIDS.includes(currentFirebaseUser.uid);
         
