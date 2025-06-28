@@ -491,47 +491,39 @@ function ApplyPageContent() {
                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                   </div>
-                  <FormField
+                   <FormField
                     control={form.control}
                     name="applicantTlGameFocus"
-                    render={() => (
+                    render={({ field }) => (
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos de jogo que te interessam.</FormDescription>
                         </div>
                         {tlGuildFocusOptions.map((item) => (
-                          <FormField
+                          <FormItem
                             key={item.id}
-                            control={form.control}
-                            name="applicantTlGameFocus"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(item.id)}
-                                      onCheckedChange={(checked) => {
-                                        const currentValues = field.value || [];
-                                        return checked
-                                          ? field.onChange([...currentValues, item.id])
-                                          : field.onChange(
-                                              currentValues.filter(
-                                                (value: string) => value !== item.id
-                                              )
-                                            );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {item.label}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
+                            className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = field.value || [];
+                                  return checked
+                                    ? field.onChange([...currentValues, item.id])
+                                    : field.onChange(
+                                        currentValues.filter(
+                                          (value: string) => value !== item.id
+                                        )
+                                      );
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal cursor-pointer">
+                              {item.label}
+                            </FormLabel>
+                          </FormItem>
                         ))}
                         <FormMessage />
                       </FormItem>
@@ -571,3 +563,4 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
