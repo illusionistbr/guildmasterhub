@@ -401,8 +401,6 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                         {app.gearBuildLink && <p className="text-sm"><strong>Build de Gear:</strong> <Button variant="link" size="sm" asChild className="p-0 h-auto"><Link href={app.gearBuildLink} target="_blank" rel="noopener noreferrer">Ver Link</Link></Button></p>}
                         {app.skillBuildLink && <p className="text-sm"><strong>Build de Skill:</strong> <Button variant="link" size="sm" asChild className="p-0 h-auto"><Link href={app.skillBuildLink} target="_blank" rel="noopener noreferrer">Ver Link</Link></Button></p>}
                         {app.playHoursPerDay && <p className="text-sm flex items-center gap-1.5"><Clock className="h-4 w-4"/> {app.playHoursPerDay} horas/dia</p>}
-                        {app.playDaysOfWeek && app.playDaysOfWeek.length > 0 && <p className="text-sm flex items-center gap-1.5"><CalendarIconLucide className="h-4 w-4"/> {app.playDaysOfWeek.join(', ')}</p>}
-                        {app.playPeriod && app.playPeriod.length > 0 && <p className="text-sm flex items-center gap-1.5"><PlayCircle className="h-4 w-4"/> {app.playPeriod.join(', ')}</p>}
                     </div>
                   )}
 
@@ -619,4 +617,3 @@ export default function RecruitmentPageWrapper() {
     </Suspense>
   );
 }
-

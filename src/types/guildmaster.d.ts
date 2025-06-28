@@ -204,8 +204,6 @@ export interface Application {
   applicantTlRegion?: string;
   applicantTlServer?: string;
   playHoursPerDay?: number;
-  playDaysOfWeek?: string[];
-  playPeriod?: string[];
   knowsSomeoneInGuild?: string;
   additionalNotes?: string;
 }

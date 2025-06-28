@@ -49,8 +49,6 @@ const getBaseApplicationSchema = (isTLGuild: boolean) => {
     knowsSomeoneInGuild: z.string().max(100, "Limite de 100 caracteres atingido.").optional(),
     additionalNotes: z.string().max(500, "Limite de 500 caracteres atingido.").optional(),
     playHoursPerDay: z.coerce.number().min(0, "Deve ser um número positivo.").optional(),
-    playDaysOfWeek: z.array(z.string()).optional(),
-    playPeriod: z.array(z.string()).optional(),
     tlRole: z.nativeEnum(TLRole).optional(),
     tlPrimaryWeapon: z.nativeEnum(TLWeapon).optional(),
     tlSecondaryWeapon: z.nativeEnum(TLWeapon).optional(),
@@ -114,8 +112,6 @@ function ApplyPageContent() {
       knowsSomeoneInGuild: "",
       additionalNotes: "",
       playHoursPerDay: undefined,
-      playDaysOfWeek: [],
-      playPeriod: [],
       tlRole: undefined,
       tlPrimaryWeapon: undefined,
       tlSecondaryWeapon: undefined,
@@ -182,8 +178,6 @@ function ApplyPageContent() {
             knowsSomeoneInGuild: "",
             additionalNotes: "",
             playHoursPerDay: undefined,
-            playDaysOfWeek: [],
-            playPeriod: [],
             tlRole: undefined,
             tlPrimaryWeapon: undefined,
             tlSecondaryWeapon: undefined,
@@ -237,8 +231,6 @@ function ApplyPageContent() {
       knowsSomeoneInGuild: data.knowsSomeoneInGuild || "",
       additionalNotes: data.additionalNotes || "",
       playHoursPerDay: data.playHoursPerDay,
-      playDaysOfWeek: data.playDaysOfWeek,
-      playPeriod: data.playPeriod,
       status: 'pending',
       ...(isTLGuild && {
           tlRole: data.tlRole,
@@ -487,8 +479,7 @@ function ApplyPageContent() {
                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
+                  <FormField
                       control={form.control}
                       name="playHoursPerDay"
                       render={({ field }) => (
@@ -497,87 +488,6 @@ function ApplyPageContent() {
                           <div className="relative mt-1">
                             <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                             <FormControl><Input type="number" {...field} placeholder="Ex: 4" className="pl-10"/></FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="playPeriod"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>Período de Jogo (Opcional)</FormLabel>
-                          <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
-                            {(['Manhã', 'Tarde', 'Noite', 'Madrugada'] as const).map((period) => (
-                              <FormField
-                                key={period}
-                                control={form.control}
-                                name="playPeriod"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem key={period} className="flex flex-row items-center space-x-2 space-y-0">
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(period)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...(field.value || []), period])
-                                              : field.onChange(
-                                                  (field.value || []).filter(
-                                                    (value) => value !== period
-                                                  )
-                                                );
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="font-normal text-sm">{period}</FormLabel>
-                                    </FormItem>
-                                  );
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                   <FormField
-                      control={form.control}
-                      name="playDaysOfWeek"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>Dias de Jogo (Opcional)</FormLabel>
-                          <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
-                            {(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'] as const).map((day) => (
-                               <FormField
-                                key={day}
-                                control={form.control}
-                                name="playDaysOfWeek"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem key={day} className="flex flex-row items-center space-x-1.5 space-y-0">
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(day)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...(field.value || []), day])
-                                              : field.onChange(
-                                                  (field.value || []).filter(
-                                                    (value) => value !== day
-                                                  )
-                                                );
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="text-sm font-normal">{day}</FormLabel>
-                                    </FormItem>
-                                  );
-                                }}
-                              />
-                            ))}
                           </div>
                           <FormMessage />
                         </FormItem>
