@@ -494,36 +494,44 @@ function ApplyPageContent() {
                    <FormField
                     control={form.control}
                     name="applicantTlGameFocus"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <div className="mb-2">
                           <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <FormDescription>Selecione um ou mais focos de jogo que te interessam.</FormDescription>
                         </div>
                         {tlGuildFocusOptions.map((item) => (
-                          <FormItem
+                          <FormField
                             key={item.id}
-                            className="flex flex-row items-start space-x-3 space-y-0 mb-2"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  const currentValues = field.value || [];
-                                  return checked
-                                    ? field.onChange([...currentValues, item.id])
-                                    : field.onChange(
-                                        currentValues.filter(
-                                          (value: string) => value !== item.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              {item.label}
-                            </FormLabel>
-                          </FormItem>
+                            control={form.control}
+                            name="applicantTlGameFocus"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(item.id)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = field.value || [];
+                                        return checked
+                                          ? field.onChange([...currentValues, item.id])
+                                          : field.onChange(
+                                              currentValues.filter(
+                                                (value) => value !== item.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    {item.label}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
                         ))}
                         <FormMessage />
                       </FormItem>
