@@ -265,6 +265,7 @@ export interface GuildGroup {
   createdAt: Timestamp;
   createdBy: string;
   guildId: string;
+  subGuildId?: string;
 }
 
 

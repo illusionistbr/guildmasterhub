@@ -113,6 +113,7 @@ const groupFormSchema = z.object({
   name: z.string().min(3, "Nome do grupo deve ter pelo menos 3 caracteres.").max(50, "Nome do grupo deve ter no máximo 50 caracteres."),
   icon: z.enum(['shield', 'sword', 'heart'], { required_error: "Ícone é obrigatório." }),
   headerColor: z.string().min(1, "Cor do cabeçalho é obrigatória."),
+  subGuildId: z.string().optional(),
   members: z.array(groupMemberSchema).min(1, "Adicione pelo menos 1 membro.").max(6, "Máximo de 6 membros por grupo."),
 });
 type GroupFormValues = z.infer<typeof groupFormSchema>;
@@ -313,26 +314,26 @@ function MembersListTabContent(
     const newSubGuildName = subGuildId ? (guild.subGuilds?.find(sg => sg.id === subGuildId)?.name || "Nenhuma") : "Nenhuma";
 
     try {
-        const guildRef = doc(db, "guilds", guildId);
-        const fieldPath = `roles.${member.uid}.subGuildId`;
-        const updatePayload: { [key: string]: any } = {};
+      const guildRef = doc(db, "guilds", guildId);
+      const fieldPath = `roles.${member.uid}.subGuildId`;
+      const updatePayload: { [key: string]: any } = {};
 
-        if (subGuildId) {
-            updatePayload[fieldPath] = subGuildId;
-        } else {
-            updatePayload[fieldPath] = firestoreDeleteField();
-        }
+      if (subGuildId) {
+          updatePayload[fieldPath] = subGuildId;
+      } else {
+          updatePayload[fieldPath] = firestoreDeleteField();
+      }
 
-        await updateDoc(guildRef, updatePayload);
+      await updateDoc(guildRef, updatePayload);
       
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
         targetUserId: member.uid,
-        targetUserDisplayName: member.characterNickname || member.displayName,
+        targetUserDisplayName: member.characterNickname || member.displayName || "N/A",
         oldValue: oldSubGuildName,
         newValue: newSubGuildName,
       });
 
-      toast({ title: "Sub-Guilda Atribuída!", description: `${member.characterNickname} foi movido para ${newSubGuildName}.` });
+      toast({ title: "Sub-Guilda Atribuída!", description: `${member.characterNickname || member.displayName} foi movido para ${newSubGuildName}.` });
       fetchGuildAndMembers();
     } catch (error) {
       console.error("Erro ao atribuir sub-guilda:", error);
@@ -870,9 +871,23 @@ function GroupsTabContent(
 
   const groupForm = useForm<GroupFormValues>({
     resolver: zodResolver(groupFormSchema),
-    defaultValues: { name: "", icon: "shield", headerColor: availableHeaderColors[0].value, members: [{ memberId: "", note: "" }], },
+    defaultValues: { name: "", icon: "shield", headerColor: availableHeaderColors[0].value, subGuildId: undefined, members: [{ memberId: "", note: "" }], },
   });
   const { fields: groupMembersFields, append: appendGroupMember, remove: removeGroupMember } = useFieldArray({ control: groupForm.control, name: "members", });
+
+  const watchedSubGuildId = groupForm.watch('subGuildId');
+
+  useEffect(() => {
+    groupForm.setValue('members', [{ memberId: "", note: "" }]);
+  }, [watchedSubGuildId, groupForm]);
+
+  const availableMembersForDropdown = useMemo(() => {
+      const subGuildIdFilter = groupForm.getValues('subGuildId');
+      if (!subGuildIdFilter) {
+          return guildMembers;
+      }
+      return guildMembers.filter(member => member.subGuildId === subGuildIdFilter);
+  }, [guildMembers, watchedSubGuildId, groupForm]);
 
   const canCreateGroups = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
@@ -900,8 +915,8 @@ function GroupsTabContent(
     const canEdit = groupToEdit ? hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) : hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
     if (!canEdit) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${groupToEdit ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
     setEditingGroup(groupToEdit);
-    if (groupToEdit) { groupForm.reset({ name: groupToEdit.name, icon: groupToEdit.icon, headerColor: groupToEdit.headerColor, members: groupToEdit.members.map(m => ({ memberId: m.memberId, note: m.note || "" })), });
-    } else { groupForm.reset({ name: "", icon: "shield", headerColor: availableHeaderColors[0].value, members: [{ memberId: "", note: "" }], }); }
+    if (groupToEdit) { groupForm.reset({ name: groupToEdit.name, icon: groupToEdit.icon, headerColor: groupToEdit.headerColor, subGuildId: groupToEdit.subGuildId || undefined, members: groupToEdit.members.map(m => ({ memberId: m.memberId, note: m.note || "" })), });
+    } else { groupForm.reset({ name: "", icon: "shield", headerColor: availableHeaderColors[0].value, subGuildId: undefined, members: [{ memberId: "", note: "" }], }); }
     setShowGroupDialog(true);
   };
 
@@ -911,7 +926,21 @@ function GroupsTabContent(
     if (!hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, requiredPermission)) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
     setIsSubmittingGroup(true);
     const groupMembersData: GuildGroupMember[] = data.members.filter(m => m.memberId).map(m => { const memberProfile = guildMembers.find(gm => gm.uid === m.memberId); return { memberId: m.memberId, displayName: memberProfile?.displayName || 'Desconhecido', photoURL: memberProfile?.photoURL || null, note: m.note, }; });
-    const groupDataPayload = { name: data.name, icon: data.icon, headerColor: data.headerColor, members: groupMembersData, guildId: guildId, };
+    
+    const groupDataPayload: Partial<GuildGroup> = { 
+        name: data.name, 
+        icon: data.icon, 
+        headerColor: data.headerColor, 
+        members: groupMembersData, 
+        guildId: guildId, 
+    };
+
+    if (data.subGuildId) {
+        groupDataPayload.subGuildId = data.subGuildId;
+    } else {
+        groupDataPayload.subGuildId = undefined; // ou delete, dependendo da sua preferência de dados limpos
+    }
+
     try {
       if (editingGroup) {
         const groupRef = doc(db, `guilds/${guildId}/groups`, editingGroup.id); await updateDoc(groupRef, groupDataPayload);
@@ -975,7 +1004,7 @@ function GroupsTabContent(
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {groups.map(group => ( <GroupCard key={group.id} group={group} onEdit={handleOpenGroupDialog} onDelete={(g) => setGroupToDelete(g)} canManage={canManageGroups} /> ))}
+            {groups.map(group => ( <GroupCard key={group.id} group={group} onEdit={handleOpenGroupDialog} onDelete={(g) => setGroupToDelete(g)} canManage={canManageGroups} guild={guild} /> ))}
           </div>
         </>
       )}
@@ -984,6 +1013,14 @@ function GroupsTabContent(
           <GroupDialogHeader className="p-6 pb-4 shrink-0 border-b border-border"> <GroupDialogTitle className="font-headline text-primary">{editingGroup ? "Editar Grupo" : "Criar Novo Grupo"}</GroupDialogTitle> <GroupDialogDescription>Preencha os detalhes para {editingGroup ? "atualizar o" : "configurar um novo"} grupo.</GroupDialogDescription> </GroupDialogHeader>
           <Form {...groupForm}>
             <form onSubmit={groupForm.handleSubmit(onSubmitGroup)} className="flex-grow overflow-y-auto px-6 py-4 space-y-5">
+              {guild.subGuildsEnabled && guild.subGuilds && guild.subGuilds.length > 0 && (
+                  <FormField control={groupForm.control} name="subGuildId" render={({ field }) => ( <FormItem> <FormLabel>Filtrar por Sub-Guilda (Opcional)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === 'all' ? undefined : value)} value={field.value || 'all'}>
+                        <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Todas as Sub-Guildas" /></SelectTrigger></FormControl>
+                        <SelectContent><SelectItem value="all">Todas as Sub-Guildas</SelectItem>{guild.subGuilds.map(sg => <SelectItem key={sg.id} value={sg.id}>{sg.name}</SelectItem>)}</SelectContent>
+                      </Select> <FormMessage /> </FormItem>
+                  )}/>
+              )}
               <FormField control={groupForm.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Nome do Grupo</FormLabel> <FormControl><Input {...field} placeholder="Ex: Grupo Alpha de Raide" className="form-input"/></FormControl> <FormMessage /> </FormItem> )}/>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={groupForm.control} name="icon" render={({ field }) => ( <FormItem> <FormLabel>Ícone do Grupo</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className="form-input"><SelectValue placeholder="Selecione um ícone" /></SelectTrigger></FormControl> <SelectContent> <SelectItem value="shield"><ShieldIconLucide className="inline mr-2 h-4 w-4"/> Escudo</SelectItem> <SelectItem value="sword"><Swords className="inline mr-2 h-4 w-4"/> Espada</SelectItem> <SelectItem value="heart"><Heart className="inline mr-2 h-4 w-4"/> Coração</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
@@ -992,7 +1029,7 @@ function GroupsTabContent(
               <div className="space-y-3"> <FormLabel>Membros do Grupo (Máximo 6)</FormLabel>
                 {groupMembersFields.map((item, index) => (
                   <div key={item.id} className="flex flex-col sm:flex-row items-start gap-2 p-3 border rounded-md bg-input/30">
-                    <div className="flex-grow w-full sm:w-auto"> <FormField control={groupForm.control} name={`members.${index}.memberId`} render={({ field }) => ( <FormItem> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className="form-input bg-background"><SelectValue placeholder="Selecione um membro" /></SelectTrigger></FormControl> <SelectContent> {guildMembers.map(member => ( <SelectItem key={member.uid} value={member.uid} disabled={groupMembersFields.some((f, i) => i !== index && f.memberId === member.uid)}> <div className="flex items-center gap-2"> <Avatar className="h-6 w-6"> <AvatarImage src={member.photoURL || undefined} alt={member.displayName || ""} data-ai-hint="user avatar"/> <AvatarFallback>{member.displayName?.substring(0,1).toUpperCase() || 'M'}</AvatarFallback> </Avatar> {member.displayName} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> </div>
+                    <div className="flex-grow w-full sm:w-auto"> <FormField control={groupForm.control} name={`members.${index}.memberId`} render={({ field }) => ( <FormItem> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className="form-input bg-background"><SelectValue placeholder="Selecione um membro" /></SelectTrigger></FormControl> <SelectContent> {availableMembersForDropdown.map(member => ( <SelectItem key={member.uid} value={member.uid} disabled={groupMembersFields.some((f, i) => i !== index && f.memberId === member.uid)}> <div className="flex items-center gap-2"> <Avatar className="h-6 w-6"> <AvatarImage src={member.photoURL || undefined} alt={member.displayName || ""} data-ai-hint="user avatar"/> <AvatarFallback>{member.displayName?.substring(0,1).toUpperCase() || 'M'}</AvatarFallback> </Avatar> {member.displayName} </div> </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/> </div>
                     <div className="flex-grow w-full sm:w-auto"> <FormField control={groupForm.control} name={`members.${index}.note`} render={({ field }) => ( <FormItem> <FormControl><Input {...field} placeholder="Nota (Ex: Tank Principal)" className="form-input bg-background"/></FormControl> <FormMessage /> </FormItem> )}/> </div>
                     {groupMembersFields.length > 1 && ( <Button type="button" variant="ghost" size="icon" onClick={() => removeGroupMember(index)} className="text-destructive hover:bg-destructive/10 h-9 w-9 mt-0 sm:mt-2 shrink-0"> <Trash2 className="h-4 w-4" /> </Button> )}
                   </div>
@@ -1010,11 +1047,13 @@ function GroupsTabContent(
   );
 }
 
-function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; }) {
+function GroupCard({ group, onEdit, onDelete, canManage, guild }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; guild: Guild | null; }) {
   const { user } = useAuth();
   const IconComponent = iconMap[group.icon] || ShieldIconLucide;
   const [roleInfo, setRoleInfo] = useState<GuildMemberRoleInfo | null>(null);
   const [customRoles, setCustomRoles] = useState<Record<string, CustomRole> | undefined>(undefined);
+
+  const subGuildName = guild?.subGuilds?.find(sg => sg.id === group.subGuildId)?.name;
 
   useEffect(() => {
     if (user && group.guildId) {
@@ -1036,9 +1075,12 @@ function GroupCard({ group, onEdit, onDelete, canManage }: { group: GuildGroup; 
     <Card className="static-card-container flex flex-col">
       <CardHeader className={cn("p-4 rounded-t-lg text-card-foreground", group.headerColor)}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <IconComponent className="h-6 w-6" />
-            <CardTitle className="text-lg font-headline truncate">{group.name}</CardTitle>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <IconComponent className="h-6 w-6 shrink-0" />
+            <div className='flex-1 overflow-hidden'>
+                <CardTitle className="text-lg font-headline truncate">{group.name}</CardTitle>
+                {subGuildName && <CardDescription className="text-xs text-white/80 truncate">({subGuildName})</CardDescription>}
+            </div>
           </div>
           {(canEdit || canDelete) && (
             <DropdownMenu>
@@ -1339,9 +1381,15 @@ function MembersPageContainer() {
             const roleInfoSource = guildData.roles?.[baseProfile.uid];
             const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
             processedMembers.push(enhancedMember);
-            processedGuildMembersForGroups.push({
-              ...baseProfile,
-            } as GuildMember);
+            
+            const simpleMemberProfile = {
+              uid: enhancedMember.uid,
+              displayName: enhancedMember.characterNickname || enhancedMember.displayName || "Membro",
+              photoURL: enhancedMember.photoURL,
+              subGuildId: enhancedMember.subGuildId,
+            } as GuildMember
+            processedGuildMembersForGroups.push(simpleMemberProfile);
+
           } else {
             console.warn(`User profile not found for UID: ${memberIdsToFetch[i]}, skipping member.`);
             continue;
