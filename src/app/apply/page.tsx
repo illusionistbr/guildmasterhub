@@ -22,7 +22,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Globe, Server as ServerIcon, Users as UsersIcon, Clock, PlayCircle } from 'lucide-react';
+import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Globe, Server as ServerIcon, Users as UsersIcon, Clock, PlayCircle, Link2 as LinkIcon } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
@@ -486,42 +486,46 @@ function ApplyPageContent() {
                       )}/>
                     )}
                   </div>
-                  <FormField control={form.control} name="tlRole" render={({ field }) => ( 
-                    <FormItem> 
-                        <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel> 
-                        <Select onValueChange={field.onChange} value={field.value || ""} > 
+                  <FormField control={form.control} name="tlRole" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""} >
                             <FormControl>
-                                <SelectTrigger> <SelectValue placeholder="Selecione sua função principal..." /> </SelectTrigger> 
+                                <SelectTrigger><SelectValue placeholder="Selecione sua função principal..." /></SelectTrigger>
                             </FormControl>
-                            <SelectContent> {Object.values(TLRole).map(role => ( <SelectItem key={role} value={role}>{role}</SelectItem> ))} </SelectContent> 
-                        </Select> 
-                        <FormMessage /> 
-                    </FormItem> 
+                            <SelectContent>
+                                {Object.values(TLRole).map(role => (
+                                    <SelectItem key={role} value={role}>{role}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
                   )}/>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( 
-                        <FormItem> 
-                            <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> 
-                            <Select onValueChange={field.onChange} value={field.value || ""} >
+                    <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                                 <FormControl>
                                      <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger>
                                 </FormControl>
-                                <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> 
+                                <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
                             </Select>
-                            <FormMessage /> 
-                        </FormItem> 
+                            <FormMessage />
+                        </FormItem>
                     )}/>
-                    <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( 
-                        <FormItem> 
-                            <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> 
+                    <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel>
                              <Select onValueChange={field.onChange} value={field.value || ""}>
                                 <FormControl>
                                     <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger>
                                 </FormControl>
                                 <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
                             </Select>
-                            <FormMessage /> 
-                        </FormItem> 
+                            <FormMessage />
+                        </FormItem>
                     )}/>
                   </div>
                   <FormField
@@ -572,4 +576,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-
