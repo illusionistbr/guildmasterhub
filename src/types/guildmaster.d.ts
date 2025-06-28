@@ -291,6 +291,7 @@ export enum AuditActionType {
   GUILD_BANNER_UPDATED = "GUILD_BANNER_UPDATED",
   GUILD_LOGO_UPDATED = "GUILD_LOGO_UPDATED",
   GUILD_DELETED = "GUILD_DELETED",
+  GUILD_PLAN_CHANGED = "GUILD_PLAN_CHANGED",
   SUB_GUILDS_ENABLED = "SUB_GUILDS_ENABLED",
   SUB_GUILDS_DISABLED = "SUB_GUILDS_DISABLED",
   SUB_GUILD_CREATED = "SUB_GUILD_CREATED",
@@ -370,6 +371,9 @@ export interface AuditLogDetails {
     questionnaireChangeSummary?: string;
     updatedFields?: string[];
     decayType?: 'on_demand' | 'scheduled';
+    daysAdded?: number;
+    newEndDate?: string;
+    type?: 'permanent';
     vodUrl?: string;
   };
 }

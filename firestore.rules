@@ -1,8 +1,9 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     function isAdmin() {
       // ======================================================================
       // INSTRUÇÃO IMPORTANTE PARA O ADMINISTRADOR
@@ -12,17 +13,16 @@ service cloud.firestore {
       // COMO FAZER:
       // 1. Vá para o Firebase Console > Authentication > Users.
       // 2. Encontre sua conta de usuário e copie o "User UID".
-      // 3. Cole o UID dentro das aspas abaixo, substituindo o texto de exemplo.
+      // 3. Cole o UID dentro das aspas abaixo.
       //
-      // Exemplo: const ADMIN_UIDS = ['AbCdeFgHiJkLmNoPqRsTuVwXyZ12345'];
+      // Exemplo: let adminUids = ['AbCdeFgHiJkLmNoPqRsTuVwXyZ12345'];
       // Você pode adicionar mais administradores separando por vírgula:
-      // Exemplo: const ADMIN_UIDS = ['UID_ADMIN_1', 'UID_ADMIN_2'];
+      // Exemplo: let adminUids = ['UID_ADMIN_1', 'UID_ADMIN_2'];
       // ======================================================================
-      return request.auth != null && request.auth.uid in [
-        'Y3W5w0EcrMQOtep8OzqxJnrbrdj2'
-      ];
+      let adminUids = ['Y3W5w0EcrMQOtep8OzqxJnrbrdj2'];
+      return request.auth != null && request.auth.uid in adminUids;
     }
-    
+
     // Helper function to check if a user is a member of the guild
     function isGuildMember(guildId) {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
@@ -51,26 +51,23 @@ service cloud.firestore {
               hasGuildPermission(guildId, "MANAGE_ROLES_PERMISSIONS"));
     }
 
-    // Admin can list all users
     match /users/{userId} {
-      // A user can read or update their own document
-      allow get, update: if request.auth != null && request.auth.uid == userId;
-      // A user can create their own document upon signup
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // An admin can list all users for the admin dashboard
+      allow get: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin();
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
     }
 
     match /guilds/{guildId} {
-      // An admin can list all guilds
-      allow list: if isAdmin();
-      // An authenticated user can read a specific guild document (e.g., for application page)
-      allow get: if request.auth != null;
-      
+      allow read: if request.auth != null; // Public listing, but sub-collections are protected
+      allow list: if isAdmin(); // Only admin can list all guilds
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
       allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
 
       allow update: if request.auth != null && (
+        // Condition 0: Site Admin can do anything
+        isAdmin() ||
+
         // Condition 1: Guild Owner can do anything
         request.auth.uid == resource.data.ownerId ||
 
@@ -157,15 +154,15 @@ service cloud.firestore {
 
       match /auditLogs/{logId} {
         allow read: if hasGuildPermission(guildId, "VIEW_AUDIT_LOG");
-        allow create: if isGuildMember(guildId);
-        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
+        allow create: if isGuildMember(guildId) || isAdmin();
+        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId || isAdmin();
       }
 
       match /applications/{applicationId} {
         allow read: if hasGuildPermission(guildId, "MANAGE_RECRUITMENT_VIEW_APPLICATIONS") || request.auth.uid == resource.data.applicantId;
         allow create: if request.auth.uid == request.resource.data.applicantId;
         allow update: if hasGuildPermission(guildId, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS");
-        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
+        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId || isAdmin();
       }
 
       match /events/{eventId} {
@@ -178,7 +175,7 @@ service cloud.firestore {
           allow read: if request.auth.uid == userId || hasGuildPermission(guildId, "MANAGE_MANUAL_CONFIRMATIONS_APPROVE");
           allow create: if request.auth.uid == userId && request.resource.data.userId == userId;
           allow update: if hasGuildPermission(guildId, "MANAGE_MANUAL_CONFIRMATIONS_APPROVE");
-          allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
+          allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId || isAdmin();
         }
       }
 
@@ -193,13 +190,13 @@ service cloud.firestore {
         allow read: if isGuildMember(guildId);
         allow create: if isGuildMember(guildId);
         allow update: if isGuildAdminEquivalent(guildId);
-        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
+        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId || isAdmin();
       }
 
       match /dkpDecayLogs/{logId} {
          allow read: if hasGuildPermission(guildId, "MANAGE_DKP_DECAY_SETTINGS");
          allow create: if isGuildAdminEquivalent(guildId);
-         allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
+         allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId || isAdmin();
       }
       
       match /bankItems/{itemId} {
@@ -227,7 +224,7 @@ service cloud.firestore {
         allow read: if isGuildMember(guildId);
         allow create: if request.auth.uid == request.resource.data.submittedByUserId;
         allow update: if hasGuildPermission(guildId, "MANAGE_VOD_REVIEWS");
-        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
+        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId || isAdmin();
       }
     }
   }
