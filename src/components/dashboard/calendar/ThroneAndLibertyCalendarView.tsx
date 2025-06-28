@@ -106,9 +106,7 @@ const TL_ACTIVITIES: Record<string, string[]> = {
     'Exodus', 'Grand Aelon', 'Grimturg', 'Junobote', 'Kowazan', 'Leviathan', 'Malakar',
     'Manticus Brothers', 'Minezerok', 'Morokai', 'Nirma', 'Pakilo Naru', 'Talus', 'Tevent',
   ],
-  arch_boss: [
-    'Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy', 'Queen Bellandir Frenzied Flame', "Courte's Wraith Tevent Frenzied flames",
-  ],
+  arch_boss: ['Queen Bellandir', "Courte's Wraith Tevent", 'Deluzhnoa', 'Giant Cordy', 'Queen Bellandir Frenzied Flame', "Courte's Wraith Tevent Frenzied Flame"],
   boonstone: [
     'Abandoned Mason', 'Akidu Valley', 'Blackhowl Plains', 'Crimson Forest',
     'Dawncoast', 'Fonos Basin', 'Golden Rye Pastures',
@@ -214,7 +212,7 @@ const ACTIVITY_ICONS: Record<string, string> = {
   'Giant Cordy': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WB_WB_GiantBroork_On_Sprite.webp",
   'Deluzhnoa': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_WB_DelugeNoah_On_Sprite.webp",
   'Queen Bellandir Frenzied Flame': 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_BWB_QueenBlendy_On_Sprite.webp',
-  "Courte's Wraith Tevent Frenzied flames": 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_BWB_Tevent_On_Sprite.webp',
+  "Courte's Wraith Tevent Frenzied Flame": 'https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_BWB_Tevent_On_Sprite.webp',
   'Excavator-9': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/WM_FB_KingmineBoom_Target.webp",
   'Vienta Village': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/DE/IMG_WoodBeckTaxDelivery_Sprite.webp",
   'Stonegard Castle': "https://cdn.questlog.gg/throne-and-liberty/assets/Game/Image/MapIcon/Siege/WM_Siege_Stongard_Sprite.webp",
@@ -1036,4 +1034,5 @@ export function ThroneAndLibertyCalendarView({ guildId, guildName, guild }: Thro
 
 // Export TL_EVENT_CATEGORIES so it can be imported by settings page
 export { TL_EVENT_CATEGORIES as defaultTLEventCategories };
+
 
