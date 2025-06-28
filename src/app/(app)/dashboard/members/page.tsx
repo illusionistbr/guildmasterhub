@@ -258,13 +258,13 @@ function MembersListTabContent(
 
   // Viewer's permissions
   const isOwner = isGuildOwner(currentUser?.uid, guild);
-  const canManageMemberRoles = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE);
-  const canKickMembers = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK);
-  const canManageMemberStatus = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS);
-  const canManageMemberNotes = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES);
-  const canViewDetailedMemberInfo = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO);
-  const canAdjustMemberDkp = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
-  const canAssignSubGuild = isOwner || hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_ASSIGN_SUB_GUILD);
+  const canManageMemberRoles = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_ROLE);
+  const canKickMembers = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_KICK);
+  const canManageMemberStatus = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_STATUS);
+  const canManageMemberNotes = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_EDIT_NOTES);
+  const canViewDetailedMemberInfo = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.VIEW_MEMBER_DETAILED_INFO);
+  const canAdjustMemberDkp = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBER_DKP_BALANCE);
+  const canAssignSubGuild = isOwner || hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_MEMBERS_ASSIGN_SUB_GUILD);
 
 
   const availableRoleNamesForChange = useMemo(() => {
@@ -526,7 +526,7 @@ function MembersListTabContent(
 
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
+    return filteredAndSortedMembers.slice(startIndex, startIndex + filteredAndSortedMembers.length);
   }, [filteredAndSortedMembers, currentPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
@@ -759,7 +759,7 @@ function GearScreenshotsTabContent({ guild, members: initialMembers, currentUser
     }, [initialMembers]);
 
     const canRequestUpdate = useMemo(() => {
-        return hasPermission(currentUserRoleInfo?.roleName, guild.customRoles, GuildPermission.MANAGE_GEAR_SCREENSHOT_REQUESTS);
+        return hasPermission(currentUserRoleInfo, guild.customRoles, GuildPermission.MANAGE_GEAR_SCREENSHOT_REQUESTS);
     }, [currentUserRoleInfo, guild.customRoles]);
 
     const handleRequestScreenshotUpdate = async (targetMember: GuildMember) => {
@@ -890,15 +890,13 @@ function GroupsTabContent(
   }, [guildMembers, watchedSubGuildId, groupForm]);
 
   const canCreateGroups = useMemo(() => {
-    if (!currentUserRoleInfo || !guild?.customRoles) return false;
-    return hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
+    return hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
   }, [currentUserRoleInfo, guild?.customRoles]);
 
   const canManageGroups = useMemo(() => {
-    if (!currentUserRoleInfo || !guild?.customRoles) return false;
-    return hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
-           hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) ||
-           hasPermission(currentUserRoleInfo.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
+    return hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
+           hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) ||
+           hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
   }, [currentUserRoleInfo, guild?.customRoles]);
 
   useEffect(() => {
@@ -912,7 +910,7 @@ function GroupsTabContent(
   }, [guildId, toast]);
 
   const handleOpenGroupDialog = (groupToEdit: GuildGroup | null = null) => {
-    const canEdit = groupToEdit ? hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) : hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
+    const canEdit = groupToEdit ? hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_EDIT) : hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
     if (!canEdit) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${groupToEdit ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
     setEditingGroup(groupToEdit);
     if (groupToEdit) { groupForm.reset({ name: groupToEdit.name, icon: groupToEdit.icon, headerColor: groupToEdit.headerColor, subGuildId: groupToEdit.subGuildId || undefined, members: groupToEdit.members.map(m => ({ memberId: m.memberId, note: m.note || "" })), });
@@ -923,11 +921,11 @@ function GroupsTabContent(
   const onSubmitGroup: GroupSubmitHandler<GroupFormValues> = async (data) => {
     if (!currentUser || !guildId) return;
     const requiredPermission = editingGroup ? GuildPermission.MANAGE_GROUPS_EDIT : GuildPermission.MANAGE_GROUPS_CREATE;
-    if (!hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, requiredPermission)) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
+    if (!hasPermission(currentUserRoleInfo, guild?.customRoles, requiredPermission)) { toast({title: "Permissão Negada", description: `Você não tem permissão para ${editingGroup ? 'editar' : 'criar'} grupos.`, variant: "destructive"}); return; }
     setIsSubmittingGroup(true);
     const groupMembersData: GuildGroupMember[] = data.members.filter(m => m.memberId).map(m => { const memberProfile = guildMembers.find(gm => gm.uid === m.memberId); return { memberId: m.memberId, displayName: memberProfile?.displayName || 'Desconhecido', photoURL: memberProfile?.photoURL || null, note: m.note, }; });
     
-    const groupDataPayload: Partial<GuildGroup> = { 
+    const groupDataPayload: { [key: string]: any } = { 
         name: data.name, 
         icon: data.icon, 
         headerColor: data.headerColor, 
@@ -937,13 +935,14 @@ function GroupsTabContent(
 
     if (data.subGuildId) {
         groupDataPayload.subGuildId = data.subGuildId;
-    } else {
-        groupDataPayload.subGuildId = undefined; // ou delete, dependendo da sua preferência de dados limpos
+    } else if (editingGroup) {
+        groupDataPayload.subGuildId = firestoreDeleteField();
     }
 
     try {
       if (editingGroup) {
-        const groupRef = doc(db, `guilds/${guildId}/groups`, editingGroup.id); await updateDoc(groupRef, groupDataPayload);
+        const groupRef = doc(db, `guilds/${guildId}/groups`, editingGroup.id); 
+        await updateDoc(groupRef, groupDataPayload);
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.GROUP_UPDATED, { groupId: editingGroup.id, groupName: data.name });
         toast({ title: "Grupo Atualizado!", description: `O grupo "${data.name}" foi atualizado com sucesso.` });
       } else {
@@ -957,7 +956,7 @@ function GroupsTabContent(
   };
 
   const handleDeleteGroup = async (groupToDeleteConfirmed: GuildGroup) => {
-    if (!groupToDeleteConfirmed || !currentUser || !guildId || !hasPermission(currentUserRoleInfo?.roleName, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE)) { toast({title: "Permissão Negada", description: "Você não tem permissão para excluir grupos.", variant: "destructive"}); return; }
+    if (!groupToDeleteConfirmed || !currentUser || !guildId || !hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_DELETE)) { toast({title: "Permissão Negada", description: "Você não tem permissão para excluir grupos.", variant: "destructive"}); return; }
     setIsSubmittingGroup(true);
     try {
       await firestoreDeleteDoc(doc(db, `guilds/${guildId}/groups`, groupToDeleteConfirmed.id));
@@ -1068,8 +1067,8 @@ function GroupCard({ group, onEdit, onDelete, canManage, guild }: { group: Guild
     }
   }, [user, group.guildId]);
 
-  const canEdit = hasPermission(roleInfo?.roleName, customRoles, GuildPermission.MANAGE_GROUPS_EDIT);
-  const canDelete = hasPermission(roleInfo?.roleName, customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
+  const canEdit = hasPermission(roleInfo, customRoles, GuildPermission.MANAGE_GROUPS_EDIT);
+  const canDelete = hasPermission(roleInfo, customRoles, GuildPermission.MANAGE_GROUPS_DELETE);
 
   return (
     <Card className="static-card-container flex flex-col">
@@ -1119,7 +1118,7 @@ function GroupCard({ group, onEdit, onDelete, canManage, guild }: { group: Guild
 
 // --- VODs TAB CONTENT ---
 function VODsTabContent({ guild, guildId, currentUser, currentUserRoleInfo }: { guild: Guild; guildId: string; currentUser: UserProfile; currentUserRoleInfo: GuildMemberRoleInfo | null; }) {
-  const canReviewVods = hasPermission(currentUserRoleInfo?.roleName, guild.customRoles, GuildPermission.MANAGE_VOD_REVIEWS);
+  const canReviewVods = hasPermission(currentUserRoleInfo, guild.customRoles, GuildPermission.MANAGE_VOD_REVIEWS);
 
   return (
     <div className="pt-6">
@@ -1367,18 +1366,19 @@ function MembersPageContainer() {
         const processedGuildMembersForGroups: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
           const userProfileSnap = userProfileSnaps[i];
+          const uid = memberIdsToFetch[i];
 
           if (userProfileSnap && userProfileSnap.exists()) {
             const firestoreData = userProfileSnap.data();
             const baseProfile: UserProfile = {
-              uid: userProfileSnap.id,
+              uid: uid,
               email: firestoreData.email || null,
               displayName: firestoreData.displayName || null,
               photoURL: firestoreData.photoURL || null,
               guilds: firestoreData.guilds || [],
               lastNotificationsCheckedTimestamp: firestoreData.lastNotificationsCheckedTimestamp || {},
             };
-            const roleInfoSource = guildData.roles?.[baseProfile.uid];
+            const roleInfoSource = guildData.roles?.[uid];
             const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
             processedMembers.push(enhancedMember);
             
@@ -1391,7 +1391,7 @@ function MembersPageContainer() {
             processedGuildMembersForGroups.push(simpleMemberProfile);
 
           } else {
-            console.warn(`User profile not found for UID: ${memberIdsToFetch[i]}, skipping member.`);
+            console.warn(`User profile not found for UID: ${uid}, skipping member.`);
             continue;
           }
         }
@@ -1470,3 +1470,4 @@ export default function MembersPage() {
     </Suspense>
   );
 }
+
