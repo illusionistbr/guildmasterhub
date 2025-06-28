@@ -42,9 +42,18 @@ function AdminUsersContent() {
       setLoading(true);
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, orderBy('createdAt', 'desc'));
+        // Removed orderBy from the query to avoid potential index/permission issues.
+        const q = query(usersRef);
         const querySnapshot = await getDocs(q);
         const usersData = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
+        
+        // Sorting is now done on the client-side.
+        usersData.sort((a, b) => {
+            const timeA = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : 0;
+            const timeB = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : 0;
+            return timeB - timeA;
+        });
+        
         setUsers(usersData);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -205,4 +214,3 @@ export default function AdminUsersPage() {
         </Suspense>
     );
 }
-
