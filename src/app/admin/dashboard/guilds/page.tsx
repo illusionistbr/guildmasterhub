@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense, Fragment } from 'react';
 import { db, collection, getDocs, query, Timestamp, updateDoc, doc, deleteField } from '@/lib/firebase';
-import type { Guild, AuditActionType } from '@/types/guildmaster';
+import { type Guild, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Shield, MoreHorizontal, Search, Users, Gamepad2, Award, Zap, CalendarPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -138,7 +138,7 @@ function AdminGuildsContent() {
                 if (newTrialEndDate) {
                     updatedGuild.trialEndsAt = Timestamp.fromDate(newTrialEndDate);
                 } else if (planAction !== 'add') {
-                    delete updatedGuild.trialEndsAt;
+                    delete (updatedGuild as any).trialEndsAt;
                 }
                 return updatedGuild;
             }
