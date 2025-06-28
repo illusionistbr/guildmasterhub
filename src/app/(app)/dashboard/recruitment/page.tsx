@@ -61,21 +61,6 @@ const getTLRoleIcon = (role?: TLRole) => {
     }
 };
 
-const getFocusIcon = (focus: string) => {
-    if (focus.startsWith('PvE')) return <HardHat className="h-4 w-4 text-green-500"/>
-    if (focus.startsWith('PvP')) return <Swords className="h-4 w-4 text-red-500"/>
-    if (focus.startsWith('PvPe')) return <Footprints className="h-4 w-4 text-yellow-500"/>
-    return <Info className="h-4 w-4 text-muted-foreground"/>
-}
-
-const getPlayPeriodIcon = (period: string) => {
-    if (period.includes('Manhã')) return <Sun className="h-4 w-4 text-amber-500"/>
-    if (period.includes('Noite')) return <Moon className="h-4 w-4 text-indigo-400"/>
-    if (period.includes('Tarde')) return <Clock className="h-4 w-4 text-cyan-500"/>
-    return <PlayCircle className="h-4 w-4 text-muted-foreground"/>
-}
-
-
 function RecruitmentQuestionnaireSettings({ guild }: { guild: Guild | null; }) {
     if (!guild) {
         return <div className="text-center py-10">Carregando configurações do questionário...</div>;
@@ -231,14 +216,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
       const batch = writeBatch(db);
 
       if (action === 'accept') {
-        const applicantProfileRef = doc(db, "users", application.applicantId);
-        const applicantProfileSnap = await getDoc(applicantProfileRef);
-        if (!applicantProfileSnap.exists()) {
-            toast({title: "Erro ao Aceitar", description: "Perfil do candidato não encontrado no sistema.", variant: "destructive"});
-            setProcessingApplicationId(null);
-            return;
-        }
-
+        
         if (guild.memberIds?.includes(application.applicantId)) {
            toast({ title: "Já é Membro", description: `${application.characterNickname} já faz parte da guilda. Marcando como aprovada.`, variant: "default" });
            batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
@@ -377,8 +355,6 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                         
                         <div className="border-t border-border pt-3 mt-3 space-y-3">
                           <p className="text-sm flex items-center gap-2"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
-                          <p className="text-sm flex items-center gap-2"><strong>Foco:</strong> {getFocusIcon(app.gameFocus)} {app.gameFocus}</p>
-                          <p className="text-sm flex items-center gap-2"><strong>Período:</strong> {getPlayPeriodIcon(app.playPeriod)} {app.playPeriod} ({app.playTimePerDay})</p>
                           <div className="text-sm flex items-center gap-2"><strong>Armas:</strong>
                               <div className="flex items-center gap-1.5">
                                   {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
