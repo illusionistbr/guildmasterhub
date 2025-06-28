@@ -78,26 +78,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDocRef = doc(db, "users", currentFirebaseUser.uid);
         const userDocSnap = await getFirestoreDoc(userDocRef);
 
-        let profileData: UserProfile = {
-          uid: currentFirebaseUser.uid,
-          email: currentFirebaseUser.email,
-          displayName: currentFirebaseUser.displayName,
-          photoURL: currentFirebaseUser.photoURL,
-          // Initialize potentially missing fields to ensure type consistency
-          guilds: [],
-          lastNotificationsCheckedTimestamp: {},
-          isAdmin: isAdmin,
-        };
+        let profileData: UserProfile;
 
         if (userDocSnap.exists()) {
           const firestoreData = userDocSnap.data();
           profileData = {
-            ...profileData, // Base data from auth
-            ...firestoreData, // Override with Firestore data
-            // Ensure nested objects are properly merged or initialized
-            lastNotificationsCheckedTimestamp: firestoreData.lastNotificationsCheckedTimestamp || {},
+            uid: currentFirebaseUser.uid,
+            email: currentFirebaseUser.email,
+            displayName: currentFirebaseUser.displayName,
+            photoURL: currentFirebaseUser.photoURL,
+            ...firestoreData, // Firestore data overrides auth data
             isAdmin: isAdmin, // Ensure admin status from code overrides DB
           } as UserProfile;
+        } else {
+           // If the user doc doesn't exist, create it.
+           // This handles cases where a user was created in Auth but not Firestore.
+           const newProfileData: Omit<UserProfile, 'isAdmin'> = {
+              uid: currentFirebaseUser.uid,
+              email: currentFirebaseUser.email,
+              displayName: currentFirebaseUser.displayName,
+              photoURL: currentFirebaseUser.photoURL,
+              createdAt: serverTimestamp(), // Add creation timestamp
+              guilds: [],
+              lastNotificationsCheckedTimestamp: {},
+              proTrialUsed: false
+           };
+           await setDoc(userDocRef, newProfileData);
+           profileData = { ...newProfileData, isAdmin } as UserProfile;
         }
         setUser(profileData);
       } else {
