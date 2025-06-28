@@ -130,6 +130,9 @@ export interface Guild {
   plan?: 'free' | 'pro';
   trialEndsAt?: Timestamp;
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  stripeCurrentPeriodEnd?: Date | Timestamp;
   subGuildsEnabled?: boolean;
   subGuilds?: { id: string; name: string }[];
 }

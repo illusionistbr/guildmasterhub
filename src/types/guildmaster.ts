@@ -27,7 +27,7 @@ export enum GuildPermission {
   MANAGE_DKP_SETTINGS = "MANAGE_DKP_SETTINGS",
   MANAGE_DKP_DECAY_SETTINGS = "MANAGE_DKP_DECAY_SETTINGS",
   MANAGE_MANUAL_CONFIRMATIONS_APPROVE = "MANAGE_MANUAL_CONFIRMATIONS_APPROVE",
-  MANAGE_MEMBER_DKP_BALANCE = "MANAGE_MEMBER_DKP_BALANCE",
+  MANAGE_MEMBER_DKP_BALANCE = "MANAGE_MEMBER_DKP_BALANCE", // New for DKP adjustment
   MANAGE_LOOT_BANK_ADD = "MANAGE_LOOT_BANK_ADD",
   MANAGE_LOOT_BANK_MANAGE = "MANAGE_LOOT_BANK_MANAGE",
   MANAGE_LOOT_AUCTIONS_CREATE = "MANAGE_LOOT_AUCTIONS_CREATE",
@@ -128,6 +128,9 @@ export interface Guild {
   tlGuildFocus?: string[];
   plan?: 'free' | 'pro';
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  stripeCurrentPeriodEnd?: Date | Timestamp;
   subGuildsEnabled?: boolean;
   subGuilds?: { id: string; name: string }[];
 }

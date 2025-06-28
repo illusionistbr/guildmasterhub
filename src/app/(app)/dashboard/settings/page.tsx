@@ -249,15 +249,6 @@ function GuildSettingsPageContent() {
     );
   }, [currentUserRoleInfo, guild?.customRoles]);
   
-  const canManageBilling = useMemo(() => {
-    if (!currentUserRoleInfo || !guild?.customRoles) return false;
-    return hasPermission(
-      currentUserRoleInfo.roleName,
-      guild.customRoles,
-      GuildPermission.MANAGE_BILLING
-    );
-  }, [currentUserRoleInfo, guild?.customRoles]);
-
   const canManageDkpSettings = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
     return hasPermission(
@@ -882,12 +873,11 @@ function GuildSettingsPageContent() {
       <div className="space-y-8 p-4 md:p-6">
         <PageTitle title="Configurações da Guilda" icon={<SettingsIcon className="h-8 w-8 text-primary" />} />
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-5"> 
+          <TabsList className="grid w-full grid-cols-4"> 
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="permissions" disabled>Cargos e Permissões</TabsTrigger>
             <TabsTrigger value="dkp" disabled>DKP</TabsTrigger>
-            <TabsTrigger value="dkpDecay" disabled>Decaimento DKP</TabsTrigger> 
-            <TabsTrigger value="billing" disabled>Plano e Cobrança</TabsTrigger>
+            <TabsTrigger value="dkpDecay" disabled>Decaimento DKP</TabsTrigger>
           </TabsList>
           <TabsContent value="general" className="mt-6">
             <Skeleton className="h-48 w-full mb-6" />
@@ -937,12 +927,11 @@ function GuildSettingsPageContent() {
       />
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-5"> 
+        <TabsList className="grid w-full grid-cols-4"> 
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="permissions" disabled={!canManageRolesAndPermissionsPage}>Cargos e Permissões</TabsTrigger>
           <TabsTrigger value="dkp" disabled={!canManageDkpSettings}>DKP</TabsTrigger>
           <TabsTrigger value="dkpDecay" disabled={!canManageDkpDecaySettings}>Decaimento DKP</TabsTrigger>
-          <TabsTrigger value="billing" disabled={!canManageBilling}>Plano e Cobrança</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-8">
@@ -1657,75 +1646,6 @@ function GuildSettingsPageContent() {
             )}
         </TabsContent>
 
-        <TabsContent value="billing" className="mt-6">
-            <Card className="static-card-container">
-              <CardHeader>
-                <CardTitle>Plano e Cobrança</CardTitle>
-                <CardDescription>
-                  Visualize seu plano atual e gerencie sua assinatura.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid md:grid-cols-2 gap-8 pt-2">
-                {/* Free Plan */}
-                <Card className={cn(
-                    "flex flex-col",
-                    guild.plan === 'free' ? 'border-primary ring-2 ring-primary' : 'border-border'
-                )}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Gem className="h-6 w-6 text-muted-foreground"/>
-                        Plano Gratuito
-                    </CardTitle>
-                    <CardDescription>Para guildas que estão começando.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow space-y-4">
-                    <p className="text-3xl font-bold">R$0 <span className="text-sm font-normal text-muted-foreground">/mês</span></p>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/>Dashboard da Guilda</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/>Gerenciamento de Membros</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/>Sistema de Recrutamento</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/>Configurações da Guilda</li>
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Button variant="outline" className="w-full" disabled>Seu Plano Atual</Button>
-                  </CardFooter>
-                </Card>
-
-                {/* Pro Plan */}
-                <Card className={cn(
-                    "flex flex-col bg-gradient-to-br from-primary/10 to-card",
-                    guild.plan === 'pro' ? 'border-primary ring-2 ring-primary' : 'border-border'
-                )}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Zap className="h-6 w-6 text-yellow-400"/>
-                        Plano Pro
-                    </CardTitle>
-                    <CardDescription>Para guildas que buscam a dominação.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow space-y-4">
-                    <p className="text-3xl font-bold">R$19,90 <span className="text-sm font-normal text-muted-foreground">/mês</span></p>
-                    <ul className="space-y-2 text-sm">
-                        <li className="flex items-center gap-2 font-semibold"><CheckCircle className="h-4 w-4 text-green-500"/>Tudo do plano Gratuito, mais:</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Sistema de Loot e Leilões (DKP)</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Galeria de Conquistas</li>
-                        <li className="flex items-center gap-2 text-muted-foreground pl-4"><Lock className="h-4 w-4 text-yellow-400"/>Log de Auditoria Detalhado</li>
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    {guild.plan === 'pro' ? (
-                       <Button variant="outline" className="w-full" disabled>Seu Plano Atual</Button>
-                    ) : (
-                       <Button className="w-full btn-gradient btn-style-primary">Upgrade para Pro</Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
       </Tabs>
     </div>
   );
@@ -1738,11 +1658,3 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
-
-
-
-
-
-
-
-

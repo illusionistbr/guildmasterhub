@@ -31,7 +31,8 @@ import {
   Gem,
   Trophy,
   Zap,
-  Hourglass
+  Hourglass,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, doc, onSnapshot } from "@/lib/firebase";
@@ -77,6 +78,11 @@ const guildManagementNavItemsBase = [
     baseHref: "/dashboard/settings",
     label: "Config. da Guilda",
     icon: Settings,
+  },
+  {
+    baseHref: "/dashboard/billing",
+    label: "Plano e Cobrança",
+    icon: CreditCard,
   },
 ];
 
@@ -186,11 +192,11 @@ export function AppSidebar() {
     return guildId ? `${baseHref}?guildId=${guildId}` : baseHref;
   };
 
-  const renderNavItems = (items: typeof guildManagementNavItemsBase) => {
+  const renderNavItems = (items: any[]) => {
     return items.map((item) => {
       const currentHref = generateHref(item.baseHref);
       const itemIsActive = isActive(currentHref);
-      const subItemsActive = item.subItems?.some(sub => isActive(generateHref(sub.baseHref)));
+      const subItemsActive = item.subItems?.some((sub: any) => isActive(generateHref(sub.baseHref)));
       const isFeatureDisabled = item.isPro && guildPlan === 'free';
       const tooltipContent = isFeatureDisabled ? "Recurso Pro. Faça o upgrade para acessar." : item.label;
 
@@ -219,7 +225,7 @@ export function AppSidebar() {
           </SidebarMenuButton>
           {!isFeatureDisabled && (
             <div className="group-data-[collapsible=icon]:hidden ml-4 mt-1 space-y-1">
-              {item.subItems.map(subItem => {
+              {item.subItems.map((subItem: any) => {
                 const subItemHref = generateHref(subItem.baseHref);
                 const SubIcon = subItem.icon;
                 return (
