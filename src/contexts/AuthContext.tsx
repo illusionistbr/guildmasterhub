@@ -57,6 +57,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     */
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentFirebaseUser: FirebaseUser | null) => {
       if (currentFirebaseUser) {
+        // IMPORTANT: Replace with your actual admin UID(s) in a real application.
+        const ADMIN_UIDS = ['YOUR_ADMIN_UID_HERE'];
+        const isAdmin = ADMIN_UIDS.includes(currentFirebaseUser.uid);
+        
         const userDocRef = doc(db, "users", currentFirebaseUser.uid);
         const userDocSnap = await getFirestoreDoc(userDocRef);
 
@@ -68,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Initialize potentially missing fields to ensure type consistency
           guilds: [],
           lastNotificationsCheckedTimestamp: {},
+          isAdmin: isAdmin,
         };
 
         if (userDocSnap.exists()) {
@@ -77,6 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             ...firestoreData, // Override with Firestore data
             // Ensure nested objects are properly merged or initialized
             lastNotificationsCheckedTimestamp: firestoreData.lastNotificationsCheckedTimestamp || {},
+            isAdmin: isAdmin, // Ensure admin status from code overrides DB
           } as UserProfile;
         }
         setUser(profileData);

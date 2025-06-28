@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, UserCircle, ShieldCheck } from "lucide-react";
+import { LogOut, UserCircle, ShieldCheck, Settings } from "lucide-react";
 import Link from "next/link";
 
 export function UserNav() {
@@ -71,6 +71,14 @@ export function UserNav() {
               <span>Perfil</span>
             </Link>
           </DropdownMenuItem>
+           {user.isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin/dashboard">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>

@@ -221,6 +221,7 @@ export interface UserProfile {
     [guildId: string]: Timestamp;
   };
   proTrialUsed?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface GuildMember extends UserProfile {

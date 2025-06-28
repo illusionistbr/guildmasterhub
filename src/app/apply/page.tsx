@@ -21,10 +21,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { ShieldEllipsis, CheckCircle, AlertTriangle, Loader2, ArrowLeft, ArrowRight, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide, Hourglass } from 'lucide-react';
-import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
-const playPeriods: Application['playPeriod'][] = ['Manhã', 'Tarde', 'Noite', 'Manhã e Tarde', 'Manhã e Noite', 'Tarde e Noite', 'Dia todo'];
 
 const applicationSchema = z.object({
   characterNickname: z.string().min(2, "Nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
@@ -37,7 +35,6 @@ const applicationSchema = z.object({
   tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
   gameFocus: z.string().min(1, "O foco de jogo é obrigatório."),
   playTimePerDay: z.string().min(1, "O tempo de jogo é obrigatório."),
-  playPeriod: z.enum(playPeriods, { required_error: "O período de jogo é obrigatório."}),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
@@ -65,7 +62,7 @@ function ApplyPageContent() {
     mode: "onChange",
     defaultValues: {
       characterNickname: "",
-      gearScore: 0,
+      gearScore: undefined, // Start as undefined to be controlled
       gearScoreScreenshotUrl: "",
       gearBuildLink: "",
       skillBuildLink: "",
@@ -74,7 +71,6 @@ function ApplyPageContent() {
       tlSecondaryWeapon: undefined,
       gameFocus: "",
       playTimePerDay: "",
-      playPeriod: undefined,
     },
   });
 
@@ -143,7 +139,6 @@ function ApplyPageContent() {
       case 5: fieldsToValidate = ['tlPrimaryWeapon', 'tlSecondaryWeapon']; break;
       case 6: fieldsToValidate = ['gameFocus']; break;
       case 7: fieldsToValidate = ['playTimePerDay']; break;
-      case 8: fieldsToValidate = ['playPeriod']; break;
     }
     
     const isValid = await form.trigger(fieldsToValidate);
@@ -257,31 +252,33 @@ function ApplyPageContent() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-6 min-h-[250px] flex flex-col justify-center">
-                {step === 1 && <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Qual seu nick in-game?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
-                {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? 0} /></FormControl><FormMessage /> </FormItem> )}/>}
+                {step === 1 && <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Qual seu nick in-game?</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /> </FormItem> )}/>}
+                {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 3 && <div className="space-y-4">
-                    <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://imgur.com/..." /></FormControl><FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua build (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link das suas skills (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="https://imgur.com/..." /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua build (Opcional)</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link das suas skills (Opcional)</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
                 </div>}
-                {step === 4 && <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Qual sua role?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{Object.values(TLRole).map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
+                {step === 4 && <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Qual sua role?</FormLabel><FormControl><Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{Object.values(TLRole).map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 5 && <div className="space-y-4">
-                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma primária</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
-                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma secundária</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
+                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma primária</FormLabel><FormControl><Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select></FormControl><FormMessage /> </FormItem> )}/>
+                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma secundária</FormLabel><FormControl><Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select></FormControl><FormMessage /> </FormItem> )}/>
                 </div>}
-                {step === 6 && <FormField control={form.control} name="gameFocus" render={({ field }) => (<FormItem><FormLabel>Qual seu foco no jogo?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>
-                    <SelectItem value="PvE Casual">PvE Casual</SelectItem>
-                    <SelectItem value="PvE Semi-hardcore">PvE Semi-hardcore</SelectItem>
-                    <SelectItem value="PvE Hardcore">PvE Hardcore</SelectItem>
-                    <SelectItem value="PvP Casual">PvP Casual</SelectItem>
-                    <SelectItem value="PvP Semi-hardcore">PvP Semi-hardcore</SelectItem>
-                    <SelectItem value="PvP Hardcore">PvP Hardcore</SelectItem>
-                    <SelectItem value="PvPe Casual">PvPe Casual</SelectItem>
-                    <SelectItem value="PvPe Semi-hardcore">PvPe Semi-hardcore</SelectItem>
-                    <SelectItem value="PvPe Hardcore">PvPe Hardcore</SelectItem>
-                </SelectContent></Select><FormMessage /></FormItem>)}/>}
-                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem><FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />}
-                {step === 8 && <FormField control={form.control} name="playPeriod" render={({ field }) => ( <FormItem><FormLabel>Período em que joga?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{playPeriods.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>}
+                {step === 6 && <FormField control={form.control} name="gameFocus" render={({ field }) => (<FormItem><FormLabel>Qual seu foco no jogo?</FormLabel><FormControl><Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="PvE Casual">PvE Casual</SelectItem>
+                        <SelectItem value="PvE Semi-hardcore">PvE Semi-hardcore</SelectItem>
+                        <SelectItem value="PvE Hardcore">PvE Hardcore</SelectItem>
+                        <SelectItem value="PvP Casual">PvP Casual</SelectItem>
+                        <SelectItem value="PvP Semi-hardcore">PvP Semi-hardcore</SelectItem>
+                        <SelectItem value="PvP Hardcore">PvP Hardcore</SelectItem>
+                        <SelectItem value="PvPe Casual">PvPe Casual</SelectItem>
+                        <SelectItem value="PvPe Semi-hardcore">PvPe Semi-hardcore</SelectItem>
+                        <SelectItem value="PvPe Hardcore">PvPe Hardcore</SelectItem>
+                    </SelectContent>
+                </Select></FormControl><FormMessage /></FormItem>)}/>}
+                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem><FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />}
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
