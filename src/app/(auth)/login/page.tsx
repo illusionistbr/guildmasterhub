@@ -30,9 +30,15 @@ export default function LoginPage() {
       toast({ title: "Login bem-sucedido!", description: "Redirecionando..." });
       router.push(redirectPath);
     } catch (err: any) {
-      setError("Falha ao fazer login. Verifique suas credenciais.");
+      let errorMessage = "Falha ao fazer login. Verifique suas credenciais.";
+      if (err.code === 'auth/invalid-api-key') {
+        errorMessage = "A chave de API do Firebase é inválida. Verifique a configuração no seu arquivo .env.";
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        errorMessage = "E-mail ou senha incorretos. Por favor, tente novamente.";
+      }
+      setError(errorMessage);
       console.error(err);
-      toast({ title: "Erro no Login", description: err.message || "Verifique suas credenciais.", variant: "destructive" });
+      toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -96,4 +102,3 @@ export default function LoginPage() {
     </>
   );
 }
-

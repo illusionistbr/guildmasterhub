@@ -50,6 +50,8 @@ export default function SignupPage() {
         errorMessage = "Este e-mail já está em uso. Tente outro.";
       } else if (err.code === 'auth/weak-password') {
         errorMessage = "A senha é muito fraca. Use pelo menos 6 caracteres.";
+      } else if (err.code === 'auth/invalid-api-key') {
+        errorMessage = "A chave de API do Firebase é inválida. Verifique a configuração no seu arquivo .env.";
       }
       setError(errorMessage);
       toast({ title: "Erro no Cadastro", description: errorMessage, variant: "destructive" });
@@ -144,4 +146,3 @@ export default function SignupPage() {
     </>
   );
 }
-
