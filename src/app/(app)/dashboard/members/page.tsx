@@ -323,7 +323,7 @@ function MembersListTabContent(
         updatePayload[fieldPath] = firestoreDeleteField();
       }
 
-      await updateDoc(guildRef, updatePayload);
+      await updateDoc(guildRef, { [fieldPath]: updatePayload[fieldPath] });
       
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
         targetUserId: member.uid,
@@ -676,7 +676,7 @@ function MembersListTabContent(
             ) : (
               <TableRow key="no-members-row">
                 <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
-                  Nenhum membro encontrado {usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "com os filtros aplicados." : "nesta guilda."}
+                  {paginatedMembers.length > 0 ? paginatedMembers.map((member) => (<div key={member.uid}>Membro</div>)) : (usernameFilter || tlRoleFilter !== "all" || rankFilter !== "all" || statusFilter !== "all" ? "Nenhum membro encontrado com os filtros aplicados." : "Nenhum membro nesta guilda.")}
                 </TableCell>
               </TableRow>
             )}
@@ -874,6 +874,11 @@ function GroupsTabContent(
   });
   const { fields: groupMembersFields, append: appendGroupMember, remove: removeGroupMember } = useFieldArray({ control: groupForm.control, name: "members", });
 
+  const canCreateGroups = useMemo(() => {
+    if (!currentUserRoleInfo || !guild?.customRoles) return false;
+    return hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE);
+  }, [currentUserRoleInfo, guild?.customRoles]);
+
   const canManageGroups = useMemo(() => {
     if (!currentUserRoleInfo || !guild?.customRoles) return false;
     return hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ||
@@ -940,17 +945,39 @@ function GroupsTabContent(
 
   return (
     <div className="space-y-6 pt-6">
-      <div className="flex justify-end">
-        {hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) && (
-          <Button onClick={() => handleOpenGroupDialog()} className="btn-gradient btn-style-secondary"> <PlusCircle className="mr-2 h-5 w-5" /> Novo Grupo </Button>
-        )}
-      </div>
       {groups.length === 0 ? (
-        <Card className="card-bg text-center py-10 max-w-lg mx-auto"> <CardHeader> <UsersRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" /> <CardTitle className="text-2xl">Nenhum Grupo Criado</CardTitle> </CardHeader> <CardContent> <p className="text-muted-foreground"> {hasPermission(currentUserRoleInfo, guild?.customRoles, GuildPermission.MANAGE_GROUPS_CREATE) ? "Crie o primeiro grupo para sua guilda!" : "Ainda não há grupos formados nesta guilda."} </p> </CardContent> </Card>
+        <Card className="card-bg text-center py-10 max-w-lg mx-auto">
+          <CardHeader>
+            <UsersRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+            <CardTitle className="text-2xl">Nenhum Grupo Criado</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Ainda não há grupos formados nesta guilda.
+              {canCreateGroups && " Crie o primeiro para começar a organizar seus membros."}
+            </p>
+          </CardContent>
+          {canCreateGroups && (
+            <CardFooter className="flex justify-center">
+              <Button onClick={() => handleOpenGroupDialog()} className="btn-gradient btn-style-secondary mt-4">
+                <PlusCircle className="mr-2 h-5 w-5" /> Crie o Primeiro Grupo
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {groups.map(group => ( <GroupCard key={group.id} group={group} onEdit={handleOpenGroupDialog} onDelete={(g) => setGroupToDelete(g)} canManage={canManageGroups} /> ))}
-        </div>
+        <>
+          <div className="flex justify-end">
+            {canCreateGroups && (
+              <Button onClick={() => handleOpenGroupDialog()} className="btn-gradient btn-style-secondary">
+                <PlusCircle className="mr-2 h-5 w-5" /> Novo Grupo
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {groups.map(group => ( <GroupCard key={group.id} group={group} onEdit={handleOpenGroupDialog} onDelete={(g) => setGroupToDelete(g)} canManage={canManageGroups} /> ))}
+          </div>
+        </>
       )}
       <Dialog open={showGroupDialog} onOpenChange={(isOpen) => { if (!isOpen) { setEditingGroup(null); groupForm.reset(); } setShowGroupDialog(isOpen); }}>
         <GroupDialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col">
