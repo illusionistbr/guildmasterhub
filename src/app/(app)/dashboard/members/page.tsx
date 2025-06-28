@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -80,7 +80,7 @@ import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon,
-  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle, Lock, MoreHorizontal
+  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle, Lock, MoreHorizontal, FileDown
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -96,6 +96,8 @@ import { useForm, type SubmitHandler as GroupSubmitHandler, useFieldArray } from
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ComingSoon } from '@/components/shared/ComingSoon';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Types for Members List Tab
 type MemberManagementAction = "changeRole" | "kick" | "changeStatus";
@@ -572,8 +574,8 @@ function MembersListTabContent(
     if (guild?.game === "Throne and Liberty" && tlRoleFilter !== "all") { tempMembers = tempMembers.filter(member => member.tlRole === tlRoleFilter); }
     if (rankFilter !== "all") { tempMembers = tempMembers.filter(member => member.roleName === rankFilter); }
     if (statusFilter !== "all") { tempMembers = tempMembers.filter(member => member.status === statusFilter); }
-    if (gearSortOrder !== "default") { tempMembers.sort((a, b) => { const gearA = a.gearScore || 0; const gearB = b.gearScore || 0; return gearSortOrder === "asc" ? gearA - gearB : gearB - gearA; }); }
-    if (dkpSortOrder !== "default") { tempMembers.sort((a, b) => { const dkpA = a.dkpBalance || 0; const dkpB = b.dkpBalance || 0; return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - dkpA; }); }
+    if (gearSortOrder !== "default") { tempMembers.sort((a, b) => { const gearA = a.gearScore || 0; const gearB = b.gearScore || 0; return gearSortOrder === "asc" ? gearA - gearB : gearB - a; }); }
+    if (dkpSortOrder !== "default") { tempMembers.sort((a, b) => { const dkpA = a.dkpBalance || 0; const dkpB = b.dkpBalance || 0; return dkpSortOrder === "asc" ? dkpA - dkpB : dkpB - a; }); }
     return tempMembers;
   }, [members, usernameFilter, tlRoleFilter, rankFilter, statusFilter, gearSortOrder, dkpSortOrder, guild?.game]);
 
@@ -921,6 +923,8 @@ function GroupsTabContent(
   const [showGroupDialog, setShowGroupDialog] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GuildGroup | null>(null);
   const [groupToDelete, setGroupToDelete] = useState<GuildGroup | null>(null);
+  const groupsContainerRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const groupForm = useForm<GroupFormValues>({
     resolver: zodResolver(groupFormSchema),
@@ -1020,6 +1024,71 @@ function GroupsTabContent(
     } finally { setIsSubmittingGroup(false); }
   };
 
+  const handleExportToPdf = async () => {
+    const groupsContainer = groupsContainerRef.current;
+    if (!groupsContainer) {
+        toast({ title: "Erro", description: "Não foi possível encontrar a área dos grupos para exportar.", variant: "destructive" });
+        return;
+    }
+
+    setIsExporting(true);
+    toast({ title: 'Exportando PDF...', description: 'Aguarde enquanto o arquivo está sendo gerado.' });
+
+    try {
+        const canvas = await html2canvas(groupsContainer, {
+            backgroundColor: '#110D15', // Matches the app's dark background
+            useCORS: true,
+            scale: 2, // Higher resolution
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4',
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        // Add Title
+        pdf.setFontSize(22);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor('#9F4BFF'); // --primary color
+        pdf.text(`Grupos - ${guild?.name || ''}`, pdfWidth / 2, 40, { align: 'center' });
+
+        // Add Image of groups
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidth = pdfWidth - 80; // Margins
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+        let finalHeight = imgHeight;
+        
+        if (imgHeight > pdfHeight - 120) {
+            finalHeight = pdfHeight - 120; // Cap height
+        }
+        
+        pdf.addImage(imgData, 'PNG', 40, 70, imgWidth, finalHeight);
+
+        // Add Watermark Footer
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(150); // Gray color
+        const footerText = `Gerado por GuildMasterHub - ${new Date().toLocaleDateString('pt-BR')}`;
+        const textWidth = pdf.getStringUnitWidth(footerText) * pdf.getFontSize() / pdf.internal.scaleFactor;
+        const textX = (pdfWidth - textWidth) / 2;
+        pdf.text(footerText, textX, pdfHeight - 20);
+
+        pdf.save(`grupos_${guild?.name.replace(/\s+/g, '_') || 'guilda'}.pdf`);
+        toast({ title: 'Sucesso!', description: 'O PDF foi exportado com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao exportar PDF:", error);
+        toast({ title: 'Erro ao Exportar', description: 'Não foi possível gerar o PDF.', variant: "destructive" });
+    } finally {
+        setIsExporting(false);
+    }
+  };
+
+
   if (loadingGroups) {
     return <div className="flex justify-center items-center min-h-[calc(100vh-300px)]"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
@@ -1048,14 +1117,18 @@ function GroupsTabContent(
         </Card>
       ) : (
         <>
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={handleExportToPdf} disabled={isExporting}>
+              {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+              Exportar PDF
+            </Button>
             {canCreateGroups && (
               <Button onClick={() => handleOpenGroupDialog()} className="btn-gradient btn-style-secondary">
                 <PlusCircle className="mr-2 h-5 w-5" /> Novo Grupo
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div ref={groupsContainerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {groups.map(group => ( <GroupCard key={group.id} group={group} onEdit={handleOpenGroupDialog} onDelete={(g) => setGroupToDelete(g)} canManage={canManageGroups} guild={guild} /> ))}
           </div>
         </>
