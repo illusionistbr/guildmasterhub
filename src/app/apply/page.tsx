@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldEllipsis, User, Hash, ImageIcon, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide, Wand2 } from 'lucide-react';
+import { ShieldEllipsis, User, Hash, ImageIcon, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide, Wand2, MessageSquare } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
@@ -369,7 +369,7 @@ function ApplyPageContent() {
                 <FormField control={form.control} name="discordNick" render={({ field }) => ( <FormItem> <FormLabel>Seu Nick no Discord <span className="text-destructive">*</span></FormLabel> <div className="relative mt-1"> <MessageSquare className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="usuario#1234" className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
               </div>
               <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link para Screenshot do Gearscore (Ex: Imgur) <span className="text-destructive">*</span></FormLabel> <div className="relative mt-1"> <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://i.imgur.com/..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
-             
+
               {isTLGuild && (
                 <>
                   <FormField control={form.control} name="tlRole" render={({ field }) => (
@@ -423,7 +423,7 @@ function ApplyPageContent() {
                   </div>
                 </>
               )}
-             
+
             </CardContent>
             <CardFooter className="p-0 pt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
@@ -453,4 +453,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-
