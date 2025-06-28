@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Você pode adicionar mais administradores separando por vírgula:
         // Exemplo: const ADMIN_UIDS = ['UID_ADMIN_1', 'UID_ADMIN_2'];
         // ======================================================================
-        const ADMIN_UIDS = ['YOUR_ADMIN_UID_HERE'];
+        const ADMIN_UIDS = ['Y3W5w0EcrMQOtep8OzqxJnrbrdj2'];
         const isAdmin = ADMIN_UIDS.includes(currentFirebaseUser.uid);
         
         const userDocRef = doc(db, "users", currentFirebaseUser.uid);
