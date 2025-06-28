@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs, Timestamp, arrayUnion } from '@/lib/firebase';
 import type { Guild, GuildMember, UserProfile, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType, VODSubmission } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster';
+import { hasPermission, isGuildOwner } from '@/lib/permissions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -88,7 +89,6 @@ import type { DateRange } from "react-day-picker";
 import { cn } from '@/lib/utils';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Label } from '@/components/ui/label';
-import { hasPermission, isGuildOwner } from '@/lib/permissions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -529,7 +529,7 @@ function MembersListTabContent(
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
+  }, [filteredAndSortedMembers, currentPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
@@ -1366,13 +1366,17 @@ function MembersPageContainer() {
         const userProfileSnaps = await Promise.all(userProfilesPromises);
         const processedMembers: GuildMember[] = [];
         const processedGuildMembersForGroups: GuildMember[] = [];
+        
         for (let i = 0; i < memberIdsToFetch.length; i++) {
-          const userProfileSnap = userProfileSnaps[i];
           const uid = memberIdsToFetch[i];
+          const userProfileSnap = userProfileSnaps[i];
+          
+          let baseProfile: UserProfile;
+          const guildRoleInfo = guildData.roles?.[uid];
 
           if (userProfileSnap && userProfileSnap.exists()) {
             const firestoreData = userProfileSnap.data();
-            const baseProfile: UserProfile = {
+            baseProfile = {
               uid: uid,
               email: firestoreData.email || null,
               displayName: firestoreData.displayName || null,
@@ -1380,22 +1384,26 @@ function MembersPageContainer() {
               guilds: firestoreData.guilds || [],
               lastNotificationsCheckedTimestamp: firestoreData.lastNotificationsCheckedTimestamp || {},
             };
-            const roleInfoSource = guildData.roles?.[uid];
-            const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
-            processedMembers.push(enhancedMember);
-            
-            const simpleMemberProfile = {
-              uid: enhancedMember.uid,
-              displayName: enhancedMember.characterNickname || enhancedMember.displayName || "Membro",
-              photoURL: enhancedMember.photoURL,
-              subGuildId: enhancedMember.subGuildId,
-            } as GuildMember
-            processedGuildMembersForGroups.push(simpleMemberProfile);
-
           } else {
-            console.warn(`User profile not found for UID: ${uid}, skipping member.`);
-            continue;
+            console.warn(`User profile document not found for UID: ${uid}. Creating a fallback profile for display.`);
+            baseProfile = {
+              uid: uid,
+              email: null,
+              displayName: guildRoleInfo?.characterNickname || 'Membro Desconhecido',
+              photoURL: null,
+            };
           }
+          
+          const enhancedMember = enhanceMemberData(baseProfile, guildRoleInfo, guildData);
+          processedMembers.push(enhancedMember);
+          
+          const simpleMemberProfile = {
+            uid: enhancedMember.uid,
+            displayName: enhancedMember.characterNickname || enhancedMember.displayName || "Membro",
+            photoURL: enhancedMember.photoURL,
+            subGuildId: enhancedMember.subGuildId,
+          } as GuildMember
+          processedGuildMembersForGroups.push(simpleMemberProfile);
         }
         processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid));
         setMembers(processedMembers);
