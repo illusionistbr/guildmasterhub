@@ -8,9 +8,9 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
+import { db, doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, query as firestoreQuery, where, getDocs as getFirestoreDocs } from '@/lib/firebase';
 import type { Guild, Application } from '@/types/guildmaster';
-import { TLRole, TLWeapon, AuditActionType } from '@/types/guildmaster';
+import { TLRole, TLWeapon } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,10 +20,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldEllipsis, CheckCircle, AlertTriangle, Loader2, ArrowLeft, ArrowRight, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide } from 'lucide-react';
+import { ShieldEllipsis, CheckCircle, AlertTriangle, Loader2, ArrowLeft, ArrowRight, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide, Hourglass } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
+const playPeriods: Application['playPeriod'][] = ['Manhã', 'Tarde', 'Noite', 'Manhã e Tarde', 'Manhã e Noite', 'Tarde e Noite', 'Dia todo'];
 
 const applicationSchema = z.object({
   characterNickname: z.string().min(2, "Nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
@@ -34,11 +35,14 @@ const applicationSchema = z.object({
   tlRole: z.nativeEnum(TLRole, { required_error: "Função é obrigatória." }),
   tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
   tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
+  gameFocus: z.string().min(1, "O foco de jogo é obrigatório."),
+  playTimePerDay: z.string().min(1, "O tempo de jogo é obrigatório."),
+  playPeriod: z.enum(playPeriods, { required_error: "O período de jogo é obrigatório."}),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 8;
 
 function ApplyPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -50,6 +54,7 @@ function ApplyPageContent() {
   const [loadingGuildData, setLoadingGuildData] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [hasPendingApplication, setHasPendingApplication] = useState(false);
   
   const [step, setStep] = useState(1);
 
@@ -67,6 +72,9 @@ function ApplyPageContent() {
       tlRole: undefined,
       tlPrimaryWeapon: undefined,
       tlSecondaryWeapon: undefined,
+      gameFocus: "",
+      playTimePerDay: "",
+      playPeriod: undefined,
     },
   });
 
@@ -85,7 +93,19 @@ function ApplyPageContent() {
 
     const fetchGuildData = async () => {
       setLoadingGuildData(true);
+      setHasPendingApplication(false);
       try {
+        const applicationsRef = collection(db, `guilds/${guildId}/applications`);
+        const q = firestoreQuery(applicationsRef, 
+            where("applicantId", "==", currentUser.uid), 
+            where("status", "==", "pending")
+        );
+        const appSnapshot = await getFirestoreDocs(q);
+
+        if (!appSnapshot.empty) {
+          setHasPendingApplication(true);
+        }
+
         const guildDocRef = doc(db, "guilds", guildId);
         const guildSnap = await getDoc(guildDocRef);
         if (!guildSnap.exists()) {
@@ -121,6 +141,9 @@ function ApplyPageContent() {
       case 3: fieldsToValidate = ['gearScoreScreenshotUrl', 'gearBuildLink', 'skillBuildLink']; break;
       case 4: fieldsToValidate = ['tlRole']; break;
       case 5: fieldsToValidate = ['tlPrimaryWeapon', 'tlSecondaryWeapon']; break;
+      case 6: fieldsToValidate = ['gameFocus']; break;
+      case 7: fieldsToValidate = ['playTimePerDay']; break;
+      case 8: fieldsToValidate = ['playPeriod']; break;
     }
     
     const isValid = await form.trigger(fieldsToValidate);
@@ -165,6 +188,31 @@ function ApplyPageContent() {
     return <div className="min-h-screen flex items-center justify-center bg-landing-gradient text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><p className="text-xl text-foreground">Não foi possível carregar os dados.</p></div>;
   }
 
+  if (hasPendingApplication) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-landing-gradient text-center">
+        <Card className="w-full max-w-lg static-card-container">
+          <CardHeader>
+            <CardTitle className="text-3xl font-headline text-primary flex items-center justify-center">
+              <Hourglass className="mr-3 h-8 w-8 text-yellow-500"/>
+              Candidatura Pendente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg text-foreground">Você já possui uma candidatura para {guild.name} que está aguardando revisão.</p>
+            <p className="text-muted-foreground mt-2">
+              A liderança da guilda revisará sua aplicação em breve. Por favor, aguarde.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
+            <Button asChild className="w-full btn-gradient btn-style-primary"><Link href={`/dashboard`}>Ir para o Dashboard</Link></Button>
+            <Button asChild variant="outline" className="w-full"><Link href="/guilds">Explorar Outras Guildas</Link></Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   if (submissionStatus === 'success') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-landing-gradient text-center">
@@ -182,7 +230,7 @@ function ApplyPageContent() {
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
-            <Button asChild className="w-full btn-gradient btn-style-primary"><Link href={`/dashboard?guildId=${guild.id}`}>Ir para o Dashboard</Link></Button>
+            <Button asChild className="w-full btn-gradient btn-style-primary"><Link href={`/dashboard`}>Ir para o Dashboard</Link></Button>
             <Button asChild variant="outline" className="w-full"><Link href="/guilds">Explorar Outras Guildas</Link></Button>
           </CardFooter>
         </Card>
@@ -208,19 +256,32 @@ function ApplyPageContent() {
                     <CardTitle className="text-2xl font-headline text-primary">Candidatura para {guild.name}</CardTitle>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-6 min-h-[250px]">
+            <CardContent className="space-y-6 min-h-[250px] flex flex-col justify-center">
                 {step === 1 && <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Qual seu nick in-game?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? 0} /></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 3 && <div className="space-y-4">
-                    <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://imgur.com/..." /></FormControl><FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua build (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link das suas skills (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
                 </div>}
-                {step === 4 && <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Qual sua role?</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{Object.values(TLRole).map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
+                {step === 4 && <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Qual sua role?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{Object.values(TLRole).map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
                 {step === 5 && <div className="space-y-4">
-                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma primária</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
-                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma secundária</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
+                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma primária</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
+                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma secundária</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
                 </div>}
+                {step === 6 && <FormField control={form.control} name="gameFocus" render={({ field }) => (<FormItem><FormLabel>Qual seu foco no jogo?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>
+                    <SelectItem value="PvE Casual">PvE Casual</SelectItem>
+                    <SelectItem value="PvE Semi-hardcore">PvE Semi-hardcore</SelectItem>
+                    <SelectItem value="PvE Hardcore">PvE Hardcore</SelectItem>
+                    <SelectItem value="PvP Casual">PvP Casual</SelectItem>
+                    <SelectItem value="PvP Semi-hardcore">PvP Semi-hardcore</SelectItem>
+                    <SelectItem value="PvP Hardcore">PvP Hardcore</SelectItem>
+                    <SelectItem value="PvPe Casual">PvPe Casual</SelectItem>
+                    <SelectItem value="PvPe Semi-hardcore">PvPe Semi-hardcore</SelectItem>
+                    <SelectItem value="PvPe Hardcore">PvPe Hardcore</SelectItem>
+                </SelectContent></Select><FormMessage /></FormItem>)}/>}
+                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem><FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />}
+                {step === 8 && <FormField control={form.control} name="playPeriod" render={({ field }) => ( <FormItem><FormLabel>Período em que joga?</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{playPeriods.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>}
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
@@ -251,3 +312,5 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
+    
