@@ -61,11 +61,23 @@ function ApplyPageContent() {
   const [step, setStep] = useState(1);
 
   const guildId = searchParams.get('guildId');
-  const isTLGuild = useMemo(() => guild?.game === "Throne and Liberty", [guild]);
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
     mode: "onChange",
+    defaultValues: {
+      characterNickname: "",
+      gearScore: undefined,
+      gearScoreScreenshotUrl: "",
+      gearBuildLink: "",
+      skillBuildLink: "",
+      tlRole: undefined,
+      tlPrimaryWeapon: undefined,
+      tlSecondaryWeapon: undefined,
+      gameFocus: undefined,
+      playTimePerDay: "",
+      playPeriod: undefined,
+    },
   });
 
   useEffect(() => {
@@ -98,7 +110,9 @@ function ApplyPageContent() {
           return;
         }
         setGuild(guildData);
-        form.setValue("characterNickname", currentUser.displayName || "");
+        if (currentUser.displayName) {
+          form.setValue("characterNickname", currentUser.displayName);
+        }
       } catch (error) {
         console.error("Erro ao buscar dados da guilda:", error);
         toast({ title: "Erro ao Carregar Dados", variant: "destructive" });
@@ -210,12 +224,12 @@ function ApplyPageContent() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-6 min-h-[250px]">
-                {step === 1 && <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Qual seu nick in-game?</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /> </FormItem> )}/>}
-                {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /> </FormItem> )}/>}
+                {step === 1 && <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Qual seu nick in-game?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
+                {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 3 && <div className="space-y-4">
-                    <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua build (Opcional)</FormLabel><FormControl><Input {...field} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link das suas skills (Opcional)</FormLabel><FormControl><Input {...field} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua build (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link das suas skills (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
                 </div>}
                 {step === 4 && <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Qual sua role?</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{Object.values(TLRole).map(role => (<SelectItem key={role} value={role}>{role}</SelectItem>))}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
                 {step === 5 && <div className="space-y-4">
@@ -223,7 +237,7 @@ function ApplyPageContent() {
                      <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma secundária</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
                 </div>}
                 {step === 6 && <FormField control={form.control} name="gameFocus" render={({ field }) => ( <FormItem> <FormLabel>Qual seu foco no jogo?</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{gameFocusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
-                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem> <FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /> </FormItem> )}/>}
+                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem> <FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 8 && <FormField control={form.control} name="playPeriod" render={({ field }) => ( <FormItem> <FormLabel>Período em que joga</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{playPeriodOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
             </CardContent>
             <CardFooter className="flex justify-between">
@@ -255,3 +269,4 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
