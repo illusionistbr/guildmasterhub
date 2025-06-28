@@ -45,6 +45,8 @@ const getBaseApplicationSchema = (isTLGuild: boolean) => {
     characterNickname: z.string().min(2, "Nickname do personagem deve ter pelo menos 2 caracteres.").max(50),
     gearScore: z.coerce.number().min(0, "Gearscore deve ser um número positivo.").max(10000, "Gearscore improvável."),
     gearScoreScreenshotUrl: z.string().url("Por favor, insira uma URL válida para a screenshot.").min(10, "URL da screenshot muito curta."),
+    gearBuildLink: z.string().url("URL inválida para Gear Build.").max(250, "URL do Gear Build muito longa.").optional().or(z.literal('')),
+    skillBuildLink: z.string().url("URL inválida para Skill Build.").max(250, "URL do Skill Build muito longa.").optional().or(z.literal('')),
     discordNick: z.string().min(2, "Nick do Discord deve ter pelo menos 2 caracteres.").max(50),
     knowsSomeoneInGuild: z.string().max(100, "Limite de 100 caracteres atingido.").optional(),
     additionalNotes: z.string().max(500, "Limite de 500 caracteres atingido.").optional(),
@@ -108,6 +110,8 @@ function ApplyPageContent() {
       characterNickname: "",
       gearScore: 0,
       gearScoreScreenshotUrl: "",
+      gearBuildLink: "",
+      skillBuildLink: "",
       discordNick: "",
       knowsSomeoneInGuild: "",
       additionalNotes: "",
@@ -174,6 +178,8 @@ function ApplyPageContent() {
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
             gearScoreScreenshotUrl: "",
+            gearBuildLink: "",
+            skillBuildLink: "",
             discordNick: "",
             knowsSomeoneInGuild: "",
             additionalNotes: "",
@@ -227,6 +233,8 @@ function ApplyPageContent() {
       applicantName: data.characterNickname,
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
+      gearBuildLink: data.gearBuildLink || null,
+      skillBuildLink: data.skillBuildLink || null,
       discordNick: data.discordNick,
       knowsSomeoneInGuild: data.knowsSomeoneInGuild || "",
       additionalNotes: data.additionalNotes || "",
@@ -254,6 +262,8 @@ function ApplyPageContent() {
           characterNickname: data.characterNickname,
           gearScore: data.gearScore,
           gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
+          gearBuildLink: data.gearBuildLink || null,
+          skillBuildLink: data.skillBuildLink || null,
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0,
           status: 'Ativo',
@@ -421,6 +431,8 @@ function ApplyPageContent() {
                 <FormField control={form.control} name="discordNick" render={({ field }) => ( <FormItem> <FormLabel>Seu Nick no Discord <span className="text-destructive">*</span></FormLabel> <div className="relative mt-1"> <MessageSquare className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="usuario#1234" className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
               </div>
               <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link para Screenshot do Gearscore (Ex: Imgur) <span className="text-destructive">*</span></FormLabel> <div className="relative mt-1"> <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://i.imgur.com/..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
+               <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua Build de Equipamentos (Opcional)</FormLabel> <div className="relative mt-1"> <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
+               <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua Build de Habilidades (Opcional)</FormLabel> <div className="relative mt-1"> <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
 
               {isTLGuild && (
                 <>
@@ -430,18 +442,18 @@ function ApplyPageContent() {
                         <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                         <div className="relative mt-1">
                           <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                          <FormControl>
-                            <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
-                              <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlRegion ? 'border-destructive focus:border-destructive' : ''}`}>
+                           <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                            <FormControl>
+                                <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlRegion ? 'border-destructive focus:border-destructive' : ''}`}>
                                 <SelectValue placeholder="Selecione uma região" />
-                              </SelectTrigger>
-                              <SelectContent>
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
                                 {tlRegions.map(region => (
-                                  <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
+                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
                                 ))}
-                              </SelectContent>
+                            </SelectContent>
                             </Select>
-                          </FormControl>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -452,32 +464,65 @@ function ApplyPageContent() {
                           <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <div className="relative mt-1">
                             <ServerIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                            <FormControl>
-                              <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={!watchedApplicantRegion || (tlServers[watchedApplicantRegion]?.length === 0)}>
-                                <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlServer ? 'border-destructive focus:border-destructive' : ''}`}>
-                                  <SelectValue placeholder={tlServers[watchedApplicantRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
-                                </SelectTrigger>
+                            <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""} disabled={!watchedApplicantRegion || (tlServers[watchedApplicantRegion]?.length === 0)}>
+                                <FormControl>
+                                    <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlServer ? 'border-destructive focus:border-destructive' : ''}`}>
+                                    <SelectValue placeholder={tlServers[watchedApplicantRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
+                                    </SelectTrigger>
+                                </FormControl>
                                 <SelectContent>
-                                  {tlServers[watchedApplicantRegion]?.length > 0 ? (
+                                {tlServers[watchedApplicantRegion]?.length > 0 ? (
                                     tlServers[watchedApplicantRegion].map(server => (
-                                      <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
+                                    <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
                                     ))
-                                  ) : (
+                                ) : (
                                     <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
-                                  )}
+                                )}
                                 </SelectContent>
-                              </Select>
-                            </FormControl>
+                            </Select>
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}/>
                     )}
                   </div>
-                  <FormField control={form.control} name="tlRole" render={({ field }) => ( <FormItem> <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel> <FormControl> <Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger> <SelectValue placeholder="Selecione sua função principal..." /> </SelectTrigger> <SelectContent> {Object.values(TLRole).map(role => ( <SelectItem key={role} value={role}>{role}</SelectItem> ))} </SelectContent> </Select> </FormControl> <FormMessage /> </FormItem> )}/>
+                  <FormField control={form.control} name="tlRole" render={({ field }) => ( 
+                    <FormItem> 
+                        <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel> 
+                        <Select onValueChange={field.onChange} value={field.value || ""} > 
+                            <FormControl>
+                                <SelectTrigger> <SelectValue placeholder="Selecione sua função principal..." /> </SelectTrigger> 
+                            </FormControl>
+                            <SelectContent> {Object.values(TLRole).map(role => ( <SelectItem key={role} value={role}>{role}</SelectItem> ))} </SelectContent> 
+                        </Select> 
+                        <FormMessage /> 
+                    </FormItem> 
+                  )}/>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
-                    <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
+                    <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( 
+                        <FormItem> 
+                            <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> 
+                            <Select onValueChange={field.onChange} value={field.value || ""} >
+                                <FormControl>
+                                     <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> 
+                            </Select>
+                            <FormMessage /> 
+                        </FormItem> 
+                    )}/>
+                    <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( 
+                        <FormItem> 
+                            <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> 
+                             <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                    <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <FormMessage /> 
+                        </FormItem> 
+                    )}/>
                   </div>
                   <FormField
                       control={form.control}
