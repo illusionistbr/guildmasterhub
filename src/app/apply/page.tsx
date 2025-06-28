@@ -442,7 +442,7 @@ function ApplyPageContent() {
                         <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                         <div className="relative mt-1">
                           <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                           <Select onValueChange={field.onChange} value={field.value}>
+                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlRegion ? 'border-destructive focus:border-destructive' : ''}`}>
                                     <SelectValue placeholder="Selecione uma região" />
@@ -464,10 +464,10 @@ function ApplyPageContent() {
                           <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
                           <div className="relative mt-1">
                             <ServerIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!watchedApplicantRegion || (tlServers[watchedApplicantRegion]?.length === 0)}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedApplicantRegion || (tlServers[watchedApplicantRegion]?.length === 0)}>
                                 <FormControl>
                                     <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlServer ? 'border-destructive focus:border-destructive' : ''}`}>
-                                    <SelectValue placeholder={tlServers[watchedApplicantRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
+                                        <SelectValue placeholder={tlServers[watchedApplicantRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -489,7 +489,7 @@ function ApplyPageContent() {
                   <FormField control={form.control} name="tlRole" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger><SelectValue placeholder="Selecione sua função principal..." /></SelectTrigger>
                             </FormControl>
@@ -513,7 +513,7 @@ function ApplyPageContent() {
                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                      <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger>
                                 </FormControl>
@@ -525,7 +525,7 @@ function ApplyPageContent() {
                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel>
-                             <Select onValueChange={field.onChange} value={field.value}>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                     <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger>
                                 </FormControl>
@@ -583,5 +583,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-
-    
