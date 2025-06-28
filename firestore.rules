@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -6,7 +5,8 @@ service cloud.firestore {
 
     // Helper function to check if a user is a member of the guild
     function isGuildMember(guildId) {
-      return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.memberIds;
+      let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
+      return request.auth != null && (request.auth.uid == guildData.ownerId || request.auth.uid in guildData.memberIds);
     }
 
     // Helper function to check if a user has a specific permission for a guild
@@ -28,7 +28,7 @@ service cloud.firestore {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
       return request.auth != null &&
              (request.auth.uid == guildData.ownerId ||
-              hasGuildPermission(guildId, "MANAGE_ROLES_PERMISSIONS")); // Example of a high-level permission
+              hasGuildPermission(guildId, "MANAGE_ROLES_PERMISSIONS"));
     }
 
     match /users/{userId} {
@@ -41,7 +41,7 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
 
       allow update: if request.auth != null && (
-        // Condition 1: Guild Owner
+        // Condition 1: Guild Owner can do anything
         request.auth.uid == resource.data.ownerId ||
 
         // Condition 2: General Settings
@@ -50,28 +50,28 @@ service cloud.firestore {
           hasGuildPermission(guildId, "MANAGE_GUILD_SETTINGS_GENERAL")
         ) ||
 
-        // Condition 3: Recruitment Questions
-        (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recruitmentQuestions']) &&
-            hasGuildPermission(guildId, "MANAGE_RECRUITMENT_PROCESS_APPLICATIONS")
-        ) ||
-
-        // Condition 4: Appearance
+        // Condition 3: Appearance Settings
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bannerUrl', 'logoUrl']) &&
           hasGuildPermission(guildId, "MANAGE_GUILD_SETTINGS_APPEARANCE")
         ) ||
 
-        // Condition 5: DKP Settings
+        // Condition 4: DKP Settings
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dkpSystemEnabled', 'dkpRedemptionWindow', 'dkpDefaultsPerCategory']) &&
           hasGuildPermission(guildId, "MANAGE_DKP_SETTINGS")
         ) ||
 
-        // Condition 6: DKP Decay Settings
+        // Condition 5: DKP Decay Settings
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dkpDecayEnabled', 'dkpDecayPercentage', 'dkpDecayIntervalDays', 'dkpDecayInitialDate', 'lastDkpDecayTimestamp']) &&
           hasGuildPermission(guildId, "MANAGE_DKP_DECAY_SETTINGS")
+        ) ||
+        
+        // Condition 6: Sub-Guild Settings
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subGuildsEnabled', 'subGuilds']) &&
+          hasGuildPermission(guildId, "MANAGE_SUB_GUILDS")
         ) ||
 
         // Condition 7: Custom Roles / Permissions
@@ -80,7 +80,7 @@ service cloud.firestore {
           hasGuildPermission(guildId, "MANAGE_ROLES_PERMISSIONS")
         ) ||
 
-        // Condition 8: Adding a member
+        // Condition 8: Adding a member (application accept)
         (
           request.resource.data.memberCount == resource.data.memberCount + 1 &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'memberIds', 'roles']) &&
@@ -99,19 +99,27 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
           request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid]) &&
           request.resource.data.roles[request.auth.uid].diff(resource.data.roles[request.auth.uid]).affectedKeys().hasOnly([
-            'characterNickname', 'gearScore', 'gearScoreScreenshotUrl', 'gearBuildLink', 'skillBuildLink', 'tlRole', 'tlPrimaryWeapon', 'tlSecondaryWeapon'
+            'characterNickname', 'gearScore', 'gearScoreScreenshotUrl', 'gearBuildLink', 'skillBuildLink', 'tlRole', 'tlPrimaryWeapon', 'tlSecondaryWeapon',
+            'gearScreenshotUpdatedAt', 'gearScreenshotUpdateRequest'
           ])
         ) ||
         
-        // Condition 11: Admin updating OTHER member's profile (role, status, notes, dkp)
+        // Condition 11: Admin updating OTHER member's profile (role, status, notes, dkp, subguild)
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']) &&
           (
             hasGuildPermission(guildId, "MANAGE_MEMBERS_EDIT_ROLE") ||
             hasGuildPermission(guildId, "MANAGE_MEMBERS_EDIT_STATUS") ||
             hasGuildPermission(guildId, "MANAGE_MEMBERS_EDIT_NOTES") ||
-            hasGuildPermission(guildId, "MANAGE_MEMBER_DKP_BALANCE")
+            hasGuildPermission(guildId, "MANAGE_MEMBER_DKP_BALANCE") ||
+            hasGuildPermission(guildId, "MANAGE_MEMBERS_ASSIGN_SUB_GUILD")
           )
+        ) ||
+
+        // Condition 12: Updating auction count when creating an auction
+        (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['auctionCount']) &&
+            hasGuildPermission(guildId, "MANAGE_LOOT_AUCTIONS_CREATE")
         )
       );
 
@@ -119,7 +127,7 @@ service cloud.firestore {
 
       match /auditLogs/{logId} {
         allow read: if hasGuildPermission(guildId, "VIEW_AUDIT_LOG");
-        allow create: if isGuildAdminEquivalent(guildId);
+        allow create: if isGuildMember(guildId);
         allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
       }
 
@@ -133,7 +141,7 @@ service cloud.firestore {
       match /events/{eventId} {
         allow read: if isGuildMember(guildId);
         allow create: if hasGuildPermission(guildId, "MANAGE_EVENTS_CREATE");
-        allow update: if hasGuildPermission(guildId, "MANAGE_EVENTS_EDIT") || isGuildMember(guildId); // Member can update for RSVP
+        allow update: if hasGuildPermission(guildId, "MANAGE_EVENTS_EDIT") || isGuildMember(guildId); // Member can update for RSVP/PIN
         allow delete: if hasGuildPermission(guildId, "MANAGE_EVENTS_DELETE");
 
         match /manualConfirmations/{userId} {
@@ -153,7 +161,8 @@ service cloud.firestore {
 
       match /notifications/{notificationId} {
         allow read: if isGuildMember(guildId);
-        allow create, update: if isGuildAdminEquivalent(guildId);
+        allow create: if isGuildMember(guildId);
+        allow update: if isGuildAdminEquivalent(guildId);
         allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
       }
 
@@ -180,8 +189,15 @@ service cloud.firestore {
       match /rolls/{rollId} {
         allow read: if isGuildMember(guildId);
         allow create: if hasGuildPermission(guildId, "MANAGE_LOOT_ROLLS_CREATE");
-        allow update: if hasGuildPermission(guildId, "MANAGE_LOOT_ROLLS_MANAGE");
+        allow update: if hasGuildPermission(guildId, "MANAGE_LOOT_ROLLS_MANAGE") || isGuildMember(guildId);
         allow delete: if hasGuildPermission(guildId, "MANAGE_LOOT_SETTINGS");
+      }
+      
+      match /vods/{vodId} {
+        allow read: if isGuildMember(guildId);
+        allow create: if request.auth.uid == request.resource.data.submittedByUserId;
+        allow update: if hasGuildPermission(guildId, "MANAGE_VOD_REVIEWS");
+        allow delete: if request.auth.uid == get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId;
       }
     }
   }
