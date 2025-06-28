@@ -403,7 +403,6 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                         {app.playHoursPerDay && <p className="text-sm flex items-center gap-1.5"><Clock className="h-4 w-4"/> {app.playHoursPerDay} horas/dia</p>}
                         {app.playDaysOfWeek && app.playDaysOfWeek.length > 0 && <p className="text-sm flex items-center gap-1.5"><CalendarIconLucide className="h-4 w-4"/> {app.playDaysOfWeek.join(', ')}</p>}
                         {app.playPeriod && app.playPeriod.length > 0 && <p className="text-sm flex items-center gap-1.5"><PlayCircle className="h-4 w-4"/> {app.playPeriod.join(', ')}</p>}
-                        {app.applicantTlGameFocus && app.applicantTlGameFocus.length > 0 && <p className="text-sm flex items-center gap-1.5"><BrainCircuit className="h-4 w-4"/> Foco: {app.applicantTlGameFocus.join(', ')}</p>}
                     </div>
                   )}
 
@@ -620,3 +619,4 @@ export default function RecruitmentPageWrapper() {
     </Suspense>
   );
 }
+

@@ -203,7 +203,6 @@ export interface Application {
   reviewedAt?: Timestamp;
   applicantTlRegion?: string;
   applicantTlServer?: string;
-  applicantTlGameFocus?: string[];
   playHoursPerDay?: number;
   playDaysOfWeek?: string[];
   playPeriod?: string[];

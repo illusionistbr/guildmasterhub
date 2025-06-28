@@ -40,15 +40,6 @@ const tlServers: Record<string, Array<{ value: string; label: string }>> = {
   "Asia Pacific": [ { value: "Valkarg", label: "Valkarg" }, { value: "Sunstorm", label: "Sunstorm" }, { value: "Amethyst", label: "Amethyst" }, { value: "Titanspine", label: "Titanspine" }, ],
 };
 
-const tlGuildFocusOptions = [
-  { id: "pve", label: "PvE" },
-  { id: "pvp_semi_hardcore", label: "PvP Semi-Hardcore" },
-  { id: "pvp_hardcore", label: "PvP Hardcore" },
-  { id: "pvpve_semi_hardcore", label: "PvPvE Semi-Hardcore" },
-  { id: "pvpve_hardcore", label: "PvPvE Hardcore" },
-];
-
-
 const getBaseApplicationSchema = (isTLGuild: boolean) => {
   let schemaObject: any = {
     characterNickname: z.string().min(2, "Nickname do personagem deve ter pelo menos 2 caracteres.").max(50),
@@ -62,7 +53,6 @@ const getBaseApplicationSchema = (isTLGuild: boolean) => {
     tlSecondaryWeapon: z.nativeEnum(TLWeapon).optional(),
     applicantTlRegion: z.string().optional(),
     applicantTlServer: z.string().optional(),
-    applicantTlGameFocus: z.array(z.string()).optional(),
   };
 
   const baseSchema = z.object(schemaObject);
@@ -86,9 +76,6 @@ const getBaseApplicationSchema = (isTLGuild: boolean) => {
           message: "Servidor é obrigatório para esta região.",
           path: ["applicantTlServer"],
         });
-      }
-      if (!data.applicantTlGameFocus || data.applicantTlGameFocus.length === 0) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione pelo menos um foco de jogo.", path: ["applicantTlGameFocus"]});
       }
     });
   }
@@ -128,7 +115,6 @@ function ApplyPageContent() {
       tlSecondaryWeapon: undefined,
       applicantTlRegion: undefined,
       applicantTlServer: undefined,
-      applicantTlGameFocus: [],
     },
   });
 
@@ -194,7 +180,6 @@ function ApplyPageContent() {
             tlSecondaryWeapon: undefined,
             applicantTlRegion: undefined,
             applicantTlServer: undefined,
-            applicantTlGameFocus: [],
         };
 
         form.reset(defaultFormValues);
@@ -249,7 +234,6 @@ function ApplyPageContent() {
           tlSecondaryWeapon: data.tlSecondaryWeapon,
           applicantTlRegion: data.applicantTlRegion,
           applicantTlServer: data.applicantTlServer,
-          applicantTlGameFocus: data.applicantTlGameFocus,
       }),
     };
 
@@ -491,52 +475,6 @@ function ApplyPageContent() {
                     <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Primária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma primária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma Secundária <span className="text-destructive">*</span></FormLabel> <FormControl><Select onValueChange={field.onChange} value={field.value || ""} > <SelectTrigger><SelectValue placeholder="Arma secundária..." /></SelectTrigger> <SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent> </Select></FormControl> <FormMessage /> </FormItem> )}/>
                   </div>
-                   <FormField
-                    control={form.control}
-                    name="applicantTlGameFocus"
-                    render={() => (
-                      <FormItem>
-                        <div className="mb-2">
-                          <FormLabel className="text-base">Seu Foco de Jogo (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                          <FormDescription>Selecione um ou mais focos de jogo que te interessam.</FormDescription>
-                        </div>
-                        {tlGuildFocusOptions.map((item) => (
-                          <FormField
-                            key={item.id}
-                            control={form.control}
-                            name="applicantTlGameFocus"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(item.id)}
-                                      onCheckedChange={(checked) => {
-                                        const currentValues = field.value || [];
-                                        return checked
-                                          ? field.onChange([...currentValues, item.id])
-                                          : field.onChange(
-                                              currentValues.filter(
-                                                (value) => value !== item.id
-                                              )
-                                            );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer">
-                                    {item.label}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </>
               )}
               <FormField control={form.control} name="knowsSomeoneInGuild" render={({ field }) => ( <FormItem> <FormLabel>Conhece alguém na guilda? (Opcional)</FormLabel> <div className="relative mt-1"> <UsersIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="Nick do(s) amigo(s)" className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
