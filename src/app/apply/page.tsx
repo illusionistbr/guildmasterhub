@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import React, { useState, useEffect, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -10,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, addDoc, serverTimestamp, Timestamp } from '@/lib/firebase';
-import type { Guild, Application, PlayPeriod } from '@/types/guildmaster';
+import type { Guild, Application } from '@/types/guildmaster';
 import { TLRole, TLWeapon, AuditActionType } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -25,9 +24,6 @@ import { ShieldEllipsis, CheckCircle, AlertTriangle, Loader2, ArrowLeft, ArrowRi
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
-const gameFocusOptions = ["PvE Casual", "PvE semi-hardcore", "PvE Hardcore", "PvP Casual", "PvP Semi-hardcore", "PvP Hardcore", "PvPe Casual", "PvPe Semi-hardcore", "PvPe Hardcore"];
-const playPeriodOptions: PlayPeriod[] = ['Manhã', 'Tarde', 'Noite', 'Manhã e Tarde', 'Manhã e Noite', 'Tarde e Noite', 'Dia todo'];
-
 
 const applicationSchema = z.object({
   characterNickname: z.string().min(2, "Nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
@@ -38,14 +34,11 @@ const applicationSchema = z.object({
   tlRole: z.nativeEnum(TLRole, { required_error: "Função é obrigatória." }),
   tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
   tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
-  gameFocus: z.string({ required_error: "Foco de jogo é obrigatório." }),
-  playTimePerDay: z.string().min(1, "Tempo de jogo é obrigatório."),
-  playPeriod: z.enum(['Manhã', 'Tarde', 'Noite', 'Manhã e Tarde', 'Manhã e Noite', 'Tarde e Noite', 'Dia todo'], { required_error: "Período é obrigatório." }),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 5;
 
 function ApplyPageContent() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -67,16 +60,13 @@ function ApplyPageContent() {
     mode: "onChange",
     defaultValues: {
       characterNickname: "",
-      gearScore: undefined,
+      gearScore: 0,
       gearScoreScreenshotUrl: "",
       gearBuildLink: "",
       skillBuildLink: "",
       tlRole: undefined,
       tlPrimaryWeapon: undefined,
       tlSecondaryWeapon: undefined,
-      gameFocus: undefined,
-      playTimePerDay: "",
-      playPeriod: undefined,
     },
   });
 
@@ -131,9 +121,6 @@ function ApplyPageContent() {
       case 3: fieldsToValidate = ['gearScoreScreenshotUrl', 'gearBuildLink', 'skillBuildLink']; break;
       case 4: fieldsToValidate = ['tlRole']; break;
       case 5: fieldsToValidate = ['tlPrimaryWeapon', 'tlSecondaryWeapon']; break;
-      case 6: fieldsToValidate = ['gameFocus']; break;
-      case 7: fieldsToValidate = ['playTimePerDay']; break;
-      case 8: fieldsToValidate = ['playPeriod']; break;
     }
     
     const isValid = await form.trigger(fieldsToValidate);
@@ -158,15 +145,13 @@ function ApplyPageContent() {
         status: 'pending',
         submittedAt: serverTimestamp(),
       });
-      await logGuildActivity(guildId, currentUser.uid, data.characterNickname, AuditActionType.APPLICATION_SUBMITTED, {
-        targetUserDisplayName: data.characterNickname,
-      });
+      
       setSubmissionStatus('success');
       toast({ title: "Candidatura Enviada!", description: `Sua candidatura para ${guild.name} foi enviada com sucesso.` });
       form.reset();
     } catch (error) {
       console.error("Erro ao enviar candidatura:", error);
-      toast({ title: "Erro ao Enviar", variant: "destructive" });
+      toast({ title: "Erro ao Enviar", description: "Ocorreu um erro ao enviar sua candidatura. Verifique suas permissões e tente novamente.", variant: "destructive" });
       setSubmissionStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -225,7 +210,7 @@ function ApplyPageContent() {
             </CardHeader>
             <CardContent className="space-y-6 min-h-[250px]">
                 {step === 1 && <FormField control={form.control} name="characterNickname" render={({ field }) => ( <FormItem> <FormLabel>Qual seu nick in-game?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
-                {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
+                {step === 2 && <FormField control={form.control} name="gearScore" render={({ field }) => ( <FormItem> <FormLabel>Qual seu gearscore?</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? 0} /></FormControl><FormMessage /> </FormItem> )}/>}
                 {step === 3 && <div className="space-y-4">
                     <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link da screenshot do seu gear (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
                     <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua build (Opcional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} placeholder="https://questlog.gg" /></FormControl><FormMessage /> </FormItem> )}/>
@@ -236,9 +221,6 @@ function ApplyPageContent() {
                      <FormField control={form.control} name="tlPrimaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma primária</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`pri-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
                      <FormField control={form.control} name="tlSecondaryWeapon" render={({ field }) => ( <FormItem> <FormLabel>Arma secundária</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{tlWeaponsList.map(w => <SelectItem key={`sec-${w}`} value={w}>{w}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>
                 </div>}
-                {step === 6 && <FormField control={form.control} name="gameFocus" render={({ field }) => ( <FormItem> <FormLabel>Qual seu foco no jogo?</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{gameFocusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
-                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem> <FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /> </FormItem> )}/>}
-                {step === 8 && <FormField control={form.control} name="playPeriod" render={({ field }) => ( <FormItem> <FormLabel>Período em que joga</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{playPeriodOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /> </FormItem> )}/>}
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
@@ -269,4 +251,3 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
-
