@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info, Clock, PlayCircle, Sun, Moon, BrainCircuit } from 'lucide-react';
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info, Clock, PlayCircle, Sun, Moon, BrainCircuit, ImageIcon } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -255,16 +255,14 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
         }
 
         if (guild.memberIds?.includes(application.applicantId)) {
-           toast({ title: "Já é Membro", description: `${application.applicantName} já faz parte da guilda. Marcando como aprovada.`, variant: "default" });
+           toast({ title: "Já é Membro", description: `${application.characterNickname} já faz parte da guilda. Marcando como aprovada.`, variant: "default" });
            batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
         } else {
             const memberRoleInfo: GuildMemberRoleInfo = {
                 roleName: "Membro",
-                characterNickname: application.applicantName,
+                characterNickname: application.characterNickname,
                 gearScore: application.gearScore,
                 gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || null,
-                gearBuildLink: application.gearBuildLink || null,
-                skillBuildLink: application.skillBuildLink || null,
                 notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
@@ -280,21 +278,21 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
             batch.update(applicationRef, { status: 'approved', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
 
             await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.MEMBER_JOINED, {
-                targetUserId: application.applicantId, targetUserDisplayName: application.applicantName, details: {joinMethod: "application_approved"} as any
+                targetUserId: application.applicantId, targetUserDisplayName: application.characterNickname, details: {joinMethod: "application_approved"} as any
             });
         }
 
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_ACCEPTED, {
-            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName
+            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.characterNickname
         });
-        toast({ title: "Candidatura Aceita!", description: `${application.applicantName} agora é membro da guilda.` });
+        toast({ title: "Candidatura Aceita!", description: `${application.characterNickname} agora é membro da guilda.` });
 
       } else { // Reject
         batch.update(applicationRef, { status: 'rejected', reviewedBy: currentUser.uid, reviewedAt: serverTimestamp() });
         await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || 'Usuário', AuditActionType.APPLICATION_REJECTED, {
-            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.applicantName
+            applicationId: application.id, targetUserId: application.applicantId, targetUserDisplayName: application.characterNickname
         });
-        toast({ title: "Candidatura Rejeitada.", description: `A candidatura de ${application.applicantName} foi rejeitada.` });
+        toast({ title: "Candidatura Rejeitada.", description: `A candidatura de ${application.characterNickname} foi rejeitada.` });
       }
       await batch.commit();
     } catch (error) {
@@ -370,24 +368,24 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={app.applicantPhotoURL || `https://placehold.co/64x64.png?text=${app.applicantName.substring(0,1)}`} alt={app.applicantName} data-ai-hint="user avatar" />
-                      <AvatarFallback>{app.applicantName.substring(0,2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={app.applicantPhotoURL || `https://placehold.co/64x64.png?text=${app.characterNickname.substring(0,1)}`} alt={app.characterNickname} data-ai-hint="user avatar" />
+                      <AvatarFallback>{app.characterNickname.substring(0,2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-xl">{app.applicantName}</CardTitle>
+                      <CardTitle className="text-xl">{app.characterNickname}</CardTitle>
                       <CardDescription>Enviado {app.submittedAt ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : "Data indisponível"}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
-                  <p className="text-sm"><strong>GS:</strong> {app.gearScore}
+                  <p className="text-sm flex items-center gap-1.5"><strong>GS:</strong> {app.gearScore}
                     {app.gearScoreScreenshotUrl &&
-                      <Button variant="link" size="sm" asChild className="p-0 ml-1 h-auto"><Link href={app.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer">(Ver Print)</Link></Button>}
+                      <a href={app.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:underline">
+                        <ImageIcon className="h-4 w-4 mr-1"/>(Ver Print)
+                      </a>}
                   </p>
                   <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
-                   {app.knowsSomeoneInGuild && <p className="text-sm"><strong>Conhece:</strong> {app.knowsSomeoneInGuild}</p>}
-                   {app.additionalNotes && <p className="text-sm italic text-muted-foreground"><strong>Notas:</strong> "{app.additionalNotes}"</p>}
-
+                 
                   {guild?.game === "Throne and Liberty" && (
                     <div className="border-t border-border pt-3 mt-3 space-y-3">
                         <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
@@ -398,9 +396,6 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                                 {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span className="text-muted-foreground text-xs">N/A</span>}
                             </div>
                         </div>
-                        {app.gearBuildLink && <p className="text-sm"><strong>Build de Gear:</strong> <Button variant="link" size="sm" asChild className="p-0 h-auto"><Link href={app.gearBuildLink} target="_blank" rel="noopener noreferrer">Ver Link</Link></Button></p>}
-                        {app.skillBuildLink && <p className="text-sm"><strong>Build de Skill:</strong> <Button variant="link" size="sm" asChild className="p-0 h-auto"><Link href={app.skillBuildLink} target="_blank" rel="noopener noreferrer">Ver Link</Link></Button></p>}
-                        {app.playHoursPerDay && <p className="text-sm flex items-center gap-1.5"><Clock className="h-4 w-4"/> {app.playHoursPerDay} horas/dia</p>}
                     </div>
                   )}
 
@@ -428,11 +423,11 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={app.applicantPhotoURL || `https://placehold.co/64x64.png?text=${app.applicantName.substring(0,1)}`} alt={app.applicantName} data-ai-hint="user avatar"/>
-                      <AvatarFallback>{app.applicantName.substring(0,2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={app.applicantPhotoURL || `https://placehold.co/64x64.png?text=${app.characterNickname.substring(0,1)}`} alt={app.characterNickname} data-ai-hint="user avatar"/>
+                      <AvatarFallback>{app.characterNickname.substring(0,2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-xl">{app.applicantName}</CardTitle>
+                      <CardTitle className="text-xl">{app.characterNickname}</CardTitle>
                        <CardDescription>Revisado {app.reviewedAt ? formatDistanceToNowStrict(app.reviewedAt.toDate(), { addSuffix: true, locale: ptBR }) : (app.status === 'auto_approved' && app.submittedAt ? formatDistanceToNowStrict(app.submittedAt.toDate(), { addSuffix: true, locale: ptBR }) : 'N/A')}</CardDescription>
                     </div>
                   </div>
@@ -456,7 +451,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar {confirmationAction === 'accept' ? 'Aceitação' : 'Rejeição'}</AlertDialogTitle>
               <AlertDialogDescription>
-                Você tem certeza que deseja {confirmationAction === 'accept' ? 'aceitar' : 'rejeitar'} a candidatura de {applicationToConfirm.applicantName}?
+                Você tem certeza que deseja {confirmationAction === 'accept' ? 'aceitar' : 'rejeitar'} a candidatura de {applicationToConfirm.characterNickname}?
                 {confirmationAction === 'accept' && ` Isso o(a) adicionará à guilda (se já não for membro).`}
               </AlertDialogDescription>
             </AlertDialogHeader>

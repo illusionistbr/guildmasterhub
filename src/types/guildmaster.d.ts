@@ -186,26 +186,19 @@ export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
-  applicantName: string;
   applicantDisplayName: string;
   applicantPhotoURL?: string | null;
+  characterNickname: string;
   gearScore: number;
   gearScoreScreenshotUrl: string | null;
-  gearBuildLink?: string | null;
-  skillBuildLink?: string | null;
+  discordNick: string;
   tlRole?: TLRole;
   tlPrimaryWeapon?: TLWeapon;
   tlSecondaryWeapon?: TLWeapon;
-  discordNick: string;
   status: 'pending' | 'approved' | 'rejected' | 'auto_approved';
   submittedAt: Timestamp;
   reviewedBy?: string;
   reviewedAt?: Timestamp;
-  applicantTlRegion?: string;
-  applicantTlServer?: string;
-  playHoursPerDay?: number;
-  knowsSomeoneInGuild?: string;
-  additionalNotes?: string;
 }
 
 export interface UserProfile {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -7,35 +8,27 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, KeyRound, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft, Gamepad2, Wand2, Shield as ShieldIconLucide, Swords, Dices, Crosshair, Bot, Heart } from 'lucide-react';
+import { Search, Users, Loader2, UserPlus, CheckCircle, ShieldAlert, ArrowLeft, ServerIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, collection, query, getDocs as getFirestoreDocs, doc, updateDoc, arrayUnion, increment as firebaseIncrement, where, orderBy, writeBatch, serverTimestamp } from '@/lib/firebase';
+import { db, collection, query, getDocs as getFirestoreDocs, doc, writeBatch, arrayUnion, increment as firebaseIncrement, orderBy } from '@/lib/firebase';
 import type { Guild, AuditActionType, GuildMemberRoleInfo } from '@/types/guildmaster';
-import { TLRole, TLWeapon } from '@/types/guildmaster';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { logGuildActivity } from '@/lib/auditLogService';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm, type SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 
 const GUILDS_PER_PAGE = 15;
-
-const tlWeaponsList = Object.values(TLWeapon);
-
-const tlRoleWeaponSchema = z.object({
-  tlRole: z.nativeEnum(TLRole, { required_error: "Função é obrigatória." }),
-  tlPrimaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma primária é obrigatória." }),
-  tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
-});
-type TLRoleWeaponFormValues = z.infer<typeof tlRoleWeaponSchema>;
-
 
 function ExploreGuildsContent() {
   const { user } = useAuth();
@@ -46,10 +39,7 @@ function ExploreGuildsContent() {
   const [loadingGuilds, setLoadingGuilds] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const [selectedGuildForPassword, setSelectedGuildForPassword] = useState<Guild | null>(null);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [guildToConfirm, setGuildToConfirm] = useState<Guild | null>(null);
   const [isJoining, setIsJoining] = useState<string | null>(null);
 
   useEffect(() => {
@@ -124,9 +114,6 @@ function ExploreGuildsContent() {
         action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guildToJoin.id}`)}>Ver Dashboard</Button>
       });
 
-      setSelectedGuildForPassword(null);
-      setPasswordInput("");
-
       setAllGuilds(prevGuilds =>
         prevGuilds.map(g =>
           g.id === guildToJoin.id
@@ -143,36 +130,9 @@ function ExploreGuildsContent() {
     } catch (error) {
       console.error("Error joining guild:", error);
       toast({ title: "Erro ao Entrar na Guilda", description: "Não foi possível processar sua entrada.", variant: "destructive" });
-      if (selectedGuildForPassword) setPasswordError("Ocorreu um erro ao tentar entrar na guilda.");
     } finally {
       setIsJoining(null);
     }
-  };
-
-  const handleJoinAction = async (guild: Guild, guildPassword?: string) => {
-    if (!user) return;
-    setIsJoining(guild.id);
-    setPasswordError("");
-
-    if (guild.password && !guild.isOpen) {
-        if (guild.password !== guildPassword) {
-            setPasswordError("Senha incorreta.");
-            setIsJoining(null);
-            return;
-        }
-        router.push(`/apply?guildId=${guild.id}`);
-        setIsJoining(null);
-        setSelectedGuildForPassword(null);
-        return;
-    }
-
-    if (guild.game === "Throne and Liberty") {
-      router.push(`/apply?guildId=${guild.id}`);
-    } else {
-      await processGuildJoin(guild);
-    }
-    setIsJoining(null);
-    setSelectedGuildForPassword(null);
   };
 
   const handleApplyToGuild = (guild: Guild) => {
@@ -186,33 +146,21 @@ function ExploreGuildsContent() {
         return;
     }
 
-    if (guild.game === "Throne and Liberty" || (guild.password && !guild.isOpen)) {
+    if (guild.game === "Throne and Liberty") {
+      setGuildToConfirm(guild);
+    } else if (guild.isOpen === false) { 
       router.push(`/apply?guildId=${guild.id}`);
-    }
-    else {
+    } else {
       processGuildJoin(guild);
     }
   };
 
-  const handlePasswordDialogSubmit = () => {
-    if (selectedGuildForPassword) {
-      if (selectedGuildForPassword.password === passwordInput) {
-        router.push(`/apply?guildId=${selectedGuildForPassword.id}`);
-        setSelectedGuildForPassword(null);
-        setPasswordInput("");
-        setPasswordError("");
-      } else {
-        setPasswordError("Senha incorreta.");
-      }
-    }
-  };
 
   const renderGuildCard = (guild: Guild) => {
     const isUserMember = guild.memberIds?.includes(user?.uid || "");
     const isLoadingThisGuild = isJoining === guild.id;
-    const isPrivate = guild.password && !guild.isOpen;
-    const buttonText = isUserMember ? "Membro" : (isPrivate || guild.game === "Throne and Liberty" ? "Aplicar" : "Entrar");
-    const ButtonIcon = isUserMember ? CheckCircle : (isPrivate ? KeyRound : UserPlus);
+    const buttonText = isUserMember ? "Membro" : "Aplicar";
+    const ButtonIcon = isUserMember ? CheckCircle : UserPlus;
 
     return (
       <Card key={guild.id} className="static-card-container overflow-hidden">
@@ -238,7 +186,7 @@ function ExploreGuildsContent() {
           >
             {isLoadingThisGuild ? <Loader2 className="h-4 w-4 animate-spin" /> : <ButtonIcon className="h-4 w-4 sm:mr-1" />}
             <span className="hidden sm:inline">
-              {isLoadingThisGuild ? (isPrivate || guild.game === "Throne and Liberty" ? "Processando..." : "Entrando...") : buttonText}
+              {isLoadingThisGuild ? "Processando..." : buttonText}
             </span>
             {!isLoadingThisGuild && <span className="sm:hidden"><ButtonIcon className="h-4 w-4" /></span>}
           </Button>
@@ -298,61 +246,31 @@ function ExploreGuildsContent() {
         </div>
       )}
 
-      {selectedGuildForPassword && (
-        <Dialog open={!!selectedGuildForPassword} onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setSelectedGuildForPassword(null);
-            setPasswordInput("");
-            setPasswordError("");
-          }
-        }}>
-          <DialogContent className="sm:max-w-[425px] bg-card border-border">
-            <DialogHeader>
-              <DialogTitle className="font-headline text-2xl flex items-center text-primary">
-                <KeyRound className="mr-2 h-6 w-6"/> Guilda Protegida: {selectedGuildForPassword.name}
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Esta guilda requer uma senha para entrar. Insira a senha ou clique em "Aplicar via Formulário" para prosseguir.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="guildPasswordInput" className="text-right text-foreground">
-                  Senha
-                </Label>
-                <Input
-                  id="guildPasswordInput"
-                  type="password"
-                  value={passwordInput || ""}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="col-span-3 form-input"
-                  autoFocus
-                />
-              </div>
-              {passwordError && <p className="col-span-4 text-sm text-destructive text-center">{passwordError}</p>}
-            </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setSelectedGuildForPassword(null)}>Cancelar</Button>
-               <Button
-                  onClick={() => {
-                      if (selectedGuildForPassword) {
-                          router.push(`/apply?guildId=${selectedGuildForPassword.id}`);
-                          setSelectedGuildForPassword(null);
-                      }
-                  }}
-                  variant="outline"
-                  className="border-primary text-primary hover:bg-primary/10"
-              >
-                Aplicar via Formulário
-              </Button>
-              <Button onClick={handlePasswordDialogSubmit} disabled={isJoining === selectedGuildForPassword.id} className="btn-gradient btn-style-secondary">
-                 {isJoining === selectedGuildForPassword.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                Confirmar Senha
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {guildToConfirm && (
+         <AlertDialog open={!!guildToConfirm} onOpenChange={() => setGuildToConfirm(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <ServerIcon className="h-5 w-5 text-primary"/>
+                      Confirmação de Servidor
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                       Para se candidatar à guilda "{guildToConfirm.name}", você precisa estar no mesmo servidor. Você joga no servidor <strong>{guildToConfirm.server}</strong>?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => { setGuildToConfirm(null); toast({ title: "Aplicação Cancelada", description: "Para se candidatar, você precisa estar no mesmo servidor da guilda."})}}>Não</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => {
+                        router.push(`/apply?guildId=${guildToConfirm.id}`);
+                        setGuildToConfirm(null);
+                    }}>
+                        Sim, eu jogo neste servidor
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
       )}
+
     </div>
   );
 }
@@ -384,4 +302,3 @@ export default function GuildsPage() {
     </div>
   );
 }
-

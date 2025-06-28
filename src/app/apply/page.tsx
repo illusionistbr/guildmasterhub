@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -16,46 +17,24 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldEllipsis, User, Hash, ImageIcon, MessageSquare, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Globe, Server as ServerIcon, Users as UsersIcon, Clock, PlayCircle, Link2 as LinkIcon, Heart, Swords, Shield as ShieldIconLucide, Wand2 } from 'lucide-react';
+import { ShieldEllipsis, User, Hash, ImageIcon, CheckCircle, AlertTriangle, Loader2, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide, Wand2 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 
 const tlWeaponsList = Object.values(TLWeapon);
-
-const tlRegions = [
-  { value: "Korea", label: "Coreia" }, { value: "NA East", label: "América do Norte (Leste)" }, { value: "NA West", label: "América do Norte (Oeste)" }, { value: "Europe", label: "Europa" }, { value: "South America", label: "América do Sul" }, { value: "Asia Pacific", label: "Ásia-Pacífico" },
-];
-
-const tlServers: Record<string, Array<{ value: string; label: string }>> = {
-  "Korea": [ { value: "Belluatan", label: "Belluatan" }, { value: "Greedal", label: "Greedal" }, { value: "Kallis", label: "Kallis" }, { value: "Sienna", label: "Sienna" }, { value: "Solar", label: "Solar" }, { value: "Syleus", label: "Syleus" }, ],
-  "NA East": [ { value: "Snowburn", label: "Snowburn" }, { value: "Carnage", label: "Carnage" }, { value: "Adrenaline", label: "Adrenaline" }, { value: "Ivory", label: "Ivory" }, { value: "Stellarite", label: "Stellarite" }, { value: "Pippin", label: "Pippin" }, ],
-  "NA West": [ { value: "Oblivion", label: "Oblivion" }, { value: "Moonstone", label: "Moonstone" }, { value: "Invoker", label: "Invoker" }, { value: "Akidu", label: "Akidu" }, ],
-  "Europe": [ { value: "Judgment", label: "Judgment" }, { value: "Obsidian", label: "Obsidian" }, { value: "Talon", label: "Talon" }, { value: "Paola", label: "Paola" }, { value: "Zephyr", label: "Zephyr" }, { value: "Cascade", label: "Cascade" }, { value: "Rebellion", label: "Rebellion" }, { value: "Fortune", label: "Fortune" }, { value: "Destiny", label: "Destiny" }, { value: "Arcane", label: "Arcane" }, { value: "Emerald", label: "Emerald" }, { value: "Conviction", label: "Conviction" }, ],
-  "South America": [ { value: "Starlight", label: "Starlight" }, { value: "Resistance", label: "Resistance" }, { value: "Eldritch", label: "Eldritch" }, { value: "Chamir", label: "Chamir" }, ],
-  "Asia Pacific": [ { value: "Valkarg", label: "Valkarg" }, { value: "Sunstorm", label: "Sunstorm" }, { value: "Amethyst", label: "Amethyst" }, { value: "Titanspine", label: "Titanspine" }, ],
-};
 
 const getBaseApplicationSchema = (isTLGuild: boolean) => {
   let schemaObject: any = {
     characterNickname: z.string().min(2, "Nickname do personagem deve ter pelo menos 2 caracteres.").max(50),
     gearScore: z.coerce.number().min(0, "Gearscore deve ser um número positivo.").max(10000, "Gearscore improvável."),
     gearScoreScreenshotUrl: z.string().url("Por favor, insira uma URL válida para a screenshot.").min(10, "URL da screenshot muito curta."),
-    gearBuildLink: z.string().url("URL inválida para Gear Build.").max(250, "URL do Gear Build muito longa.").optional().or(z.literal('')),
-    skillBuildLink: z.string().url("URL inválida para Skill Build.").max(250, "URL do Skill Build muito longa.").optional().or(z.literal('')),
     discordNick: z.string().min(2, "Nick do Discord deve ter pelo menos 2 caracteres.").max(50),
-    knowsSomeoneInGuild: z.string().max(100, "Limite de 100 caracteres atingido.").optional(),
-    additionalNotes: z.string().max(500, "Limite de 500 caracteres atingido.").optional(),
-    playHoursPerDay: z.coerce.number().min(0, "Deve ser um número positivo.").optional(),
     tlRole: z.nativeEnum(TLRole).optional(),
     tlPrimaryWeapon: z.nativeEnum(TLWeapon).optional(),
     tlSecondaryWeapon: z.nativeEnum(TLWeapon).optional(),
-    applicantTlRegion: z.string().optional(),
-    applicantTlServer: z.string().optional(),
   };
 
   const baseSchema = z.object(schemaObject);
@@ -70,15 +49,6 @@ const getBaseApplicationSchema = (isTLGuild: boolean) => {
       }
       if (!data.tlSecondaryWeapon) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Arma secundária é obrigatória.", path: ["tlSecondaryWeapon"]});
-      }
-      if (!data.applicantTlRegion) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Região é obrigatória.", path: ["applicantTlRegion"] });
-      } else if (data.applicantTlRegion && tlServers[data.applicantTlRegion as string]?.length > 0 && !data.applicantTlServer) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Servidor é obrigatório para esta região.",
-          path: ["applicantTlServer"],
-        });
       }
     });
   }
@@ -110,34 +80,18 @@ function ApplyPageContent() {
       characterNickname: "",
       gearScore: 0,
       gearScoreScreenshotUrl: "",
-      gearBuildLink: "",
-      skillBuildLink: "",
       discordNick: "",
-      knowsSomeoneInGuild: "",
-      additionalNotes: "",
-      playHoursPerDay: undefined,
       tlRole: undefined,
       tlPrimaryWeapon: undefined,
       tlSecondaryWeapon: undefined,
-      applicantTlRegion: undefined,
-      applicantTlServer: undefined,
     },
   });
-
-  const watchedApplicantRegion = form.watch("applicantTlRegion");
 
   useEffect(() => {
     if (currentUser?.displayName && !form.getValues("characterNickname")) {
       form.setValue("characterNickname", currentUser.displayName);
     }
   }, [currentUser, form]);
-
-  useEffect(() => {
-    if (watchedApplicantRegion && isTLGuild) {
-      form.setValue("applicantTlServer", undefined);
-    }
-  }, [watchedApplicantRegion, form, isTLGuild]);
-
 
   useEffect(() => {
     if (authLoading) return;
@@ -178,17 +132,10 @@ function ApplyPageContent() {
             characterNickname: currentUser?.displayName || "",
             gearScore: 0,
             gearScoreScreenshotUrl: "",
-            gearBuildLink: "",
-            skillBuildLink: "",
             discordNick: "",
-            knowsSomeoneInGuild: "",
-            additionalNotes: "",
-            playHoursPerDay: undefined,
             tlRole: undefined,
             tlPrimaryWeapon: undefined,
             tlSecondaryWeapon: undefined,
-            applicantTlRegion: undefined,
-            applicantTlServer: undefined,
         };
 
         form.reset(defaultFormValues);
@@ -230,22 +177,15 @@ function ApplyPageContent() {
     const applicationBaseData: Omit<Application, 'id' | 'submittedAt' | 'applicantDisplayName' | 'applicantPhotoURL'> = {
       guildId: guildId,
       applicantId: currentUser.uid,
-      applicantName: data.characterNickname,
+      characterNickname: data.characterNickname,
       gearScore: data.gearScore,
       gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
-      gearBuildLink: data.gearBuildLink || null,
-      skillBuildLink: data.skillBuildLink || null,
       discordNick: data.discordNick,
-      knowsSomeoneInGuild: data.knowsSomeoneInGuild || "",
-      additionalNotes: data.additionalNotes || "",
-      playHoursPerDay: data.playHoursPerDay,
       status: 'pending',
       ...(isTLGuild && {
           tlRole: data.tlRole,
           tlPrimaryWeapon: data.tlPrimaryWeapon,
           tlSecondaryWeapon: data.tlSecondaryWeapon,
-          applicantTlRegion: data.applicantTlRegion,
-          applicantTlServer: data.applicantTlServer,
       }),
     };
 
@@ -262,8 +202,6 @@ function ApplyPageContent() {
           characterNickname: data.characterNickname,
           gearScore: data.gearScore,
           gearScoreScreenshotUrl: data.gearScoreScreenshotUrl || null,
-          gearBuildLink: data.gearBuildLink || null,
-          skillBuildLink: data.skillBuildLink || null,
           notes: `Entrou via formulário público. Discord: ${data.discordNick}`,
           dkpBalance: 0,
           status: 'Ativo',
@@ -431,61 +369,9 @@ function ApplyPageContent() {
                 <FormField control={form.control} name="discordNick" render={({ field }) => ( <FormItem> <FormLabel>Seu Nick no Discord <span className="text-destructive">*</span></FormLabel> <div className="relative mt-1"> <MessageSquare className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="usuario#1234" className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
               </div>
               <FormField control={form.control} name="gearScoreScreenshotUrl" render={({ field }) => ( <FormItem> <FormLabel>Link para Screenshot do Gearscore (Ex: Imgur) <span className="text-destructive">*</span></FormLabel> <div className="relative mt-1"> <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://i.imgur.com/..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
-               <FormField control={form.control} name="gearBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua Build de Equipamentos (Opcional)</FormLabel> <div className="relative mt-1"> <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
-               <FormField control={form.control} name="skillBuildLink" render={({ field }) => ( <FormItem> <FormLabel>Link da sua Build de Habilidades (Opcional)</FormLabel> <div className="relative mt-1"> <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="https://..." className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
-
+             
               {isTLGuild && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="applicantTlRegion" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Região (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                        <div className="relative mt-1">
-                          <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                           <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlRegion ? 'border-destructive focus:border-destructive' : ''}`}>
-                                    <SelectValue placeholder="Selecione uma região" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {tlRegions.map(region => (
-                                <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                            </Select>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
-                    {watchedApplicantRegion && tlServers[watchedApplicantRegion]?.length > 0 && (
-                      <FormField control={form.control} name="applicantTlServer" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Servidor (Throne and Liberty) <span className="text-destructive">*</span></FormLabel>
-                          <div className="relative mt-1">
-                            <ServerIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!watchedApplicantRegion || (tlServers[watchedApplicantRegion]?.length === 0)}>
-                                <FormControl>
-                                    <SelectTrigger className={`pl-10 ${form.formState.errors.applicantTlServer ? 'border-destructive focus:border-destructive' : ''}`}>
-                                        <SelectValue placeholder={tlServers[watchedApplicantRegion]?.length > 0 ? "Selecione um servidor" : "Nenhum servidor para esta região"} />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {tlServers[watchedApplicantRegion]?.length > 0 ? (
-                                    tlServers[watchedApplicantRegion].map(server => (
-                                    <SelectItem key={server.value} value={server.value}>{server.label}</SelectItem>
-                                    ))
-                                ) : (
-                                    <SelectItem value="no-servers" disabled>Nenhum servidor listado</SelectItem>
-                                )}
-                                </SelectContent>
-                            </Select>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}/>
-                    )}
-                  </div>
                   <FormField control={form.control} name="tlRole" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Sua Função (Tank/Healer/DPS) <span className="text-destructive">*</span></FormLabel>
@@ -535,25 +421,9 @@ function ApplyPageContent() {
                         </FormItem>
                     )}/>
                   </div>
-                  <FormField
-                      control={form.control}
-                      name="playHoursPerDay"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Horas de Jogo / Dia (Opcional)</FormLabel>
-                          <div className="relative mt-1">
-                            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                            <FormControl><Input type="number" {...field} placeholder="Ex: 4" className="pl-10"/></FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                 </>
               )}
-              <FormField control={form.control} name="knowsSomeoneInGuild" render={({ field }) => ( <FormItem> <FormLabel>Conhece alguém na guilda? (Opcional)</FormLabel> <div className="relative mt-1"> <UsersIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" /> <FormControl> <Input {...field} placeholder="Nick do(s) amigo(s)" className="pl-10"/> </FormControl> </div> <FormMessage /> </FormItem> )}/>
-              <FormField control={form.control} name="additionalNotes" render={({ field }) => ( <FormItem> <FormLabel>Algo mais a acrescentar? (Opcional)</FormLabel> <FormControl> <Textarea {...field} placeholder="Qualquer informação adicional que queira compartilhar..." rows={3}/> </FormControl> <FormMessage /> </FormItem> )}/>
-
+             
             </CardContent>
             <CardFooter className="p-0 pt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
@@ -583,3 +453,4 @@ export default function ApplyPage() {
       </Suspense>
     );
   }
+
