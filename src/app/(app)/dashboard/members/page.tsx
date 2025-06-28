@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs, Timestamp } from '@/lib/firebase';
+import { db, doc, getDoc, updateDoc, arrayRemove, increment as firebaseIncrement, deleteField as firestoreDeleteField, collection, query as firestoreQuery, where, onSnapshot, addDoc, deleteDoc as firestoreDeleteDoc, serverTimestamp, orderBy, writeBatch, getDocs as getFirestoreDocs, Timestamp, arrayUnion } from '@/lib/firebase';
 import type { Guild, GuildMember, UserProfile, GuildMemberRoleInfo, MemberStatus, CustomRole, GuildGroup, GuildGroupMember, GroupIconType, VODSubmission } from '@/types/guildmaster';
 import { AuditActionType, GuildPermission, TLWeapon as TLWeaponEnum, TLRole } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -320,7 +320,6 @@ function MembersListTabContent(
         if (subGuildId) {
             updatePayload[fieldPath] = subGuildId;
         } else {
-            // Firestore SDK uses the sentinel value directly, not within an object
             updatePayload[fieldPath] = firestoreDeleteField();
         }
 
@@ -527,7 +526,7 @@ function MembersListTabContent(
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
+  }, [filteredAndSortedMembers, currentPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
@@ -677,7 +676,7 @@ function MembersListTabContent(
             ) : (
               <TableRow key="no-members-row">
                 <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
-                  {(filteredAndSortedMembers.length === 0 && members.length > 0) ? "Nenhum membro encontrado com os filtros aplicados." : "Nenhum membro nesta guilda."}
+                  {filteredAndSortedMembers.length === 0 && members.length > 0 ? "Nenhum membro encontrado com os filtros aplicados." : "Nenhum membro nesta guilda."}
                 </TableCell>
               </TableRow>
             )}
@@ -947,7 +946,7 @@ function GroupsTabContent(
   return (
     <div className="space-y-6 pt-6">
       {groups.length === 0 ? (
-        <Card className="card-bg text-center py-10 max-w-lg mx-auto">
+        <Card className="static-card-container text-center py-10 max-w-lg mx-auto">
           <CardHeader>
             <UsersRound className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <CardTitle className="text-2xl">Nenhum Grupo Criado</CardTitle>
@@ -1317,11 +1316,7 @@ function MembersPageContainer() {
       setGuild(guildData);
       setHeaderTitle(`Membros: ${guildData.name}`);
 
-      const memberIdSet = new Set(guildData.memberIds || []);
-      if (guildData.ownerId) {
-        memberIdSet.add(guildData.ownerId);
-      }
-      const memberIdsToFetch = Array.from(memberIdSet);
+      const memberIdsToFetch = [...new Set(guildData.memberIds || [])];
 
       if (memberIdsToFetch.length > 0) {
         const userProfilesPromises = memberIdsToFetch.map(uid => getDoc(doc(db, "users", uid)));
@@ -1329,13 +1324,11 @@ function MembersPageContainer() {
         const processedMembers: GuildMember[] = [];
         const processedGuildMembersForGroups: GuildMember[] = [];
         for (let i = 0; i < memberIdsToFetch.length; i++) {
-          const uid = memberIdsToFetch[i];
           const userProfileSnap = userProfileSnaps[i];
-          let baseProfile: UserProfile;
 
           if (userProfileSnap && userProfileSnap.exists()) {
             const firestoreData = userProfileSnap.data();
-            baseProfile = {
+            const baseProfile: UserProfile = {
               uid: userProfileSnap.id,
               email: firestoreData.email || null,
               displayName: firestoreData.displayName || null,
@@ -1343,48 +1336,23 @@ function MembersPageContainer() {
               guilds: firestoreData.guilds || [],
               lastNotificationsCheckedTimestamp: firestoreData.lastNotificationsCheckedTimestamp || {},
             };
-          } else if (uid === guildData.ownerId && currentUser && uid === currentUser.uid) {
-            baseProfile = {
-              uid: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
-              photoURL: currentUser.photoURL,
-              guilds: [],
-              lastNotificationsCheckedTimestamp: {}
-            };
+            const roleInfoSource = guildData.roles?.[baseProfile.uid];
+            const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
+            processedMembers.push(enhancedMember);
+            processedGuildMembersForGroups.push({
+              ...baseProfile,
+            } as GuildMember);
           } else {
-            console.warn(`User profile not found for UID: ${uid}, skipping member.`);
+            console.warn(`User profile not found for UID: ${memberIdsToFetch[i]}, skipping member.`);
             continue;
           }
-          
-          const roleInfoSource = guildData.roles?.[uid];
-          const enhancedMember = enhanceMemberData(baseProfile, roleInfoSource, guildData);
-          processedMembers.push(enhancedMember);
-          processedGuildMembersForGroups.push({
-            uid: baseProfile.uid,
-            displayName: baseProfile.displayName || 'Desconhecido',
-            photoURL: baseProfile.photoURL,
-            email: baseProfile.email
-          } as GuildMember);
         }
         processedMembers.sort((a, b) => (a.characterNickname || a.displayName || a.uid).localeCompare(b.characterNickname || b.displayName || b.uid));
         setMembers(processedMembers);
         setGuildMembersForGroups(processedGuildMembersForGroups.sort((a, b) => (a.displayName || "").localeCompare(b.displayName || "")));
-      } else {
-         if (guildData.ownerId === currentUser.uid) {
-            const ownerRoleInfoSource = guildData.roles?.[currentUser.uid];
-            const ownerBaseProfile: UserProfile = {
-              uid: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName || `Owner (${currentUser.uid.substring(0,6)})`,
-              photoURL: currentUser.photoURL,
-              guilds: [],
-              lastNotificationsCheckedTimestamp: {}
-            };
-            const ownerEnhanced = enhanceMemberData(ownerBaseProfile, ownerRoleInfoSource, guildData);
-            setMembers([ownerEnhanced]);
-            setGuildMembersForGroups([ownerEnhanced]);
-         } else { setMembers([]); setGuildMembersForGroups([]); }
+      } else { 
+        setMembers([]); 
+        setGuildMembersForGroups([]); 
       }
     } catch (error) {
       console.error("Erro ao buscar dados da guilda e membros:", error);
