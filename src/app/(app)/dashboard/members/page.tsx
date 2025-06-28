@@ -316,15 +316,17 @@ function MembersListTabContent(
     try {
       const guildRef = doc(db, "guilds", guildId);
       const fieldPath = `roles.${member.uid}.subGuildId`;
-      const updatePayload: { [key: string]: any } = {};
-
+      
+      const existingRoleInfo = guild.roles?.[member.uid] || { roleName: member.roleName, status: 'Ativo', dkpBalance: 0 };
+      let updatedRoleInfoPayload: GuildMemberRoleInfo = { ...existingRoleInfo };
+      
       if (subGuildId) {
-          updatePayload[fieldPath] = subGuildId;
+          updatedRoleInfoPayload.subGuildId = subGuildId;
       } else {
-          updatePayload[fieldPath] = firestoreDeleteField();
+          delete updatedRoleInfoPayload.subGuildId;
       }
-
-      await updateDoc(guildRef, updatePayload);
+      
+      await updateDoc(guildRef, { [`roles.${member.uid}`]: updatedRoleInfoPayload });
       
       await logGuildActivity(guildId, currentUser.uid, currentUser.displayName || "", AuditActionType.MEMBER_ASSIGNED_TO_SUB_GUILD, {
         targetUserId: member.uid,
@@ -526,8 +528,8 @@ function MembersListTabContent(
 
   const paginatedMembers = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredAndSortedMembers.slice(startIndex, startIndex + filteredAndSortedMembers.length);
-  }, [filteredAndSortedMembers, currentPage]);
+    return filteredAndSortedMembers.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredAndSortedMembers, currentPage, rowsPerPage]);
 
   const totalFilteredMembers = filteredAndSortedMembers.length;
   const totalPages = Math.ceil(totalFilteredMembers / rowsPerPage);
@@ -677,7 +679,7 @@ function MembersListTabContent(
             ) : (
               <TableRow>
                 <TableCell colSpan={isTLGuild ? (canManageMemberNotes ? 11 : 10) : (canManageMemberNotes ? 10 : 9)} className="text-center h-24">
-                  {filteredAndSortedMembers.length === 0 && members.length > 0 ? "Nenhum membro encontrado com os filtros aplicados." : "Nenhum membro nesta guilda."}
+                  Nenhum membro encontrado com os filtros aplicados.
                 </TableCell>
               </TableRow>
             )}
@@ -1247,7 +1249,7 @@ function ReviewVODsList({ guildId }: { guildId: string; }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, `guilds/${guildId}/vods`), orderBy("submittedAt", "desc"));
+    const q = firestoreQuery(collection(db, `guilds/${guildId}/vods`), orderBy("submittedAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setVods(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VODSubmission)));
       setLoading(false);
