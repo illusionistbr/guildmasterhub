@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, doc, getDoc, collection, query, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp, updateDoc } from '@/lib/firebase';
+import { db, doc, getDoc, collection, query as firestoreQuery, where, orderBy, onSnapshot, writeBatch, arrayUnion, increment as firebaseIncrement, serverTimestamp, Timestamp, updateDoc } from '@/lib/firebase';
 import type { Guild, Application, GuildMemberRoleInfo, UserProfile } from '@/types/guildmaster';
 import { AuditActionType, TLRole, TLWeapon, GuildPermission } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -17,12 +17,13 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info, Clock, PlayCircle, Sun, Moon, BrainCircuit, ImageIcon } from 'lucide-react';
+import { UserPlus, Link2 as LinkIcon, Copy, Loader2, FileText, CheckCircle, XCircle, Users, ShieldAlert, MessageSquare, CalendarIcon as CalendarIconLucide, Shield, Heart, Swords, Gamepad2, Info, Clock, PlayCircle, Sun, Moon, BrainCircuit, ImageIcon, User, Hash, HardHat, Footprints } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { logGuildActivity } from '@/lib/auditLogService';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,49 +61,33 @@ const getTLRoleIcon = (role?: TLRole) => {
     }
 };
 
-interface FixedFormFieldDisplay {
-  id: string;
-  text: string;
-  isTLSpecific?: boolean;
+const getFocusIcon = (focus: string) => {
+    if (focus.startsWith('PvE')) return <HardHat className="h-4 w-4 text-green-500"/>
+    if (focus.startsWith('PvP')) return <Swords className="h-4 w-4 text-red-500"/>
+    if (focus.startsWith('PvPe')) return <Footprints className="h-4 w-4 text-yellow-500"/>
+    return <Info className="h-4 w-4 text-muted-foreground"/>
 }
 
-const fixedApplicationFields: FixedFormFieldDisplay[] = [
-  { id: 'fixed_char_nick', text: 'Nick do Personagem' },
-  { id: 'fixed_gear_score', text: 'Gearscore' },
-  { id: 'fixed_gear_score_ss', text: 'Link para Screenshot do Gearscore' },
-  { id: 'fixed_discord_nick', text: 'Seu Nick no Discord' },
-  { id: 'fixed_tl_role', text: 'Sua Função (Tank/Healer/DPS)', isTLSpecific: true },
-  { id: 'fixed_tl_primary_weapon', text: 'Arma Primária', isTLSpecific: true },
-  { id: 'fixed_tl_secondary_weapon', text: 'Arma Secundária', isTLSpecific: true },
-];
+const getPlayPeriodIcon = (period: string) => {
+    if (period.includes('Manhã')) return <Sun className="h-4 w-4 text-amber-500"/>
+    if (period.includes('Noite')) return <Moon className="h-4 w-4 text-indigo-400"/>
+    if (period.includes('Tarde')) return <Clock className="h-4 w-4 text-cyan-500"/>
+    return <PlayCircle className="h-4 w-4 text-muted-foreground"/>
+}
 
 
 function RecruitmentQuestionnaireSettings({ guild }: { guild: Guild | null; }) {
-  const isTLGuild = guild?.game === "Throne and Liberty";
-
-  if (!guild) {
-    return <div className="text-center py-10">Carregando configurações do questionário...</div>;
-  }
-
+    if (!guild) {
+        return <div className="text-center py-10">Carregando configurações do questionário...</div>;
+    }
   return (
     <Card className="static-card-container mt-8">
       <CardHeader>
         <CardTitle className="flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" />Questionário de Recrutamento</CardTitle>
-        <CardDescription>Abaixo estão os campos padrão que os candidatos preencherão ao se candidatarem à sua guilda.</CardDescription>
+        <CardDescription>Os campos abaixo serão solicitados no formulário de recrutamento passo a passo.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <h4 className="text-lg font-semibold text-foreground mb-3">Campos Padrão do Formulário</h4>
-          <div className="space-y-2">
-            {fixedApplicationFields.filter(field => !field.isTLSpecific || isTLGuild).map(field => (
-              <div key={field.id} className="flex items-center p-3 bg-muted/30 rounded-md border border-input">
-                <Info className="mr-3 h-5 w-5 text-muted-foreground flex-shrink-0" />
-                <p className="text-sm text-foreground flex-1">{field.text}</p>
-              </div>
-            ))}
-          </div>
-           <p className="text-xs text-muted-foreground mt-3">Estes campos fazem parte do formulário de aplicação padrão e não podem ser removidos.</p>
-        </div>
+      <CardContent>
+          <p className="text-xs text-muted-foreground mt-3">Atualmente, as perguntas do formulário são fixas. A personalização de perguntas será adicionada no futuro.</p>
       </CardContent>
     </Card>
   );
@@ -134,7 +119,7 @@ function RecruitmentLinkTabContent({ guild, guildId, recruitmentLink, copyLinkTo
       <Card className="static-card-container">
         <CardHeader>
           <CardTitle className="flex items-center"><LinkIcon className="mr-2 h-5 w-5 text-primary" />Link de Recrutamento Único</CardTitle>
-          <CardDescription>Compartilhe este link com potenciais recrutas para que eles possam se candidatar à sua guilda. Guildas públicas permitirão entrada imediata após o preenchimento do formulário.</CardDescription>
+          <CardDescription>Compartilhe este link com potenciais recrutas para que eles possam se candidatar à sua guilda.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -217,7 +202,7 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
 
     setLoadingApplications(true);
     const applicationsRef = collection(db, `guilds/${guildId}/applications`);
-    const q = query(applicationsRef, orderBy("submittedAt", "desc"));
+    const q = firestoreQuery(applicationsRef, orderBy("submittedAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedApplications = querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Application));
@@ -263,7 +248,8 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                 characterNickname: application.characterNickname,
                 gearScore: application.gearScore,
                 gearScoreScreenshotUrl: application.gearScoreScreenshotUrl || null,
-                notes: `Aceito via candidatura. Discord: ${application.discordNick}`,
+                gearBuildLink: application.gearBuildLink || null,
+                skillBuildLink: application.skillBuildLink || null,
                 tlRole: application.tlRole,
                 tlPrimaryWeapon: application.tlPrimaryWeapon,
                 tlSecondaryWeapon: application.tlSecondaryWeapon,
@@ -378,27 +364,31 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
-                  <p className="text-sm flex items-center gap-1.5"><strong>GS:</strong> {app.gearScore}
-                    {app.gearScoreScreenshotUrl &&
-                      <a href={app.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:underline">
-                        <ImageIcon className="h-4 w-4 mr-1"/>(Ver Print)
-                      </a>}
-                  </p>
-                  <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
-                 
-                  {guild?.game === "Throne and Liberty" && (
-                    <div className="border-t border-border pt-3 mt-3 space-y-3">
-                        <p className="text-sm flex items-center gap-1"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
-                        <div className="text-sm"><strong>Armas:</strong>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon" />}
-                                {app.tlSecondaryWeapon && <Image src={getWeaponIconPath(app.tlSecondaryWeapon)} alt={app.tlSecondaryWeapon} width={20} height={20} data-ai-hint="weapon" />}
-                                {!app.tlPrimaryWeapon && !app.tlSecondaryWeapon && <span className="text-muted-foreground text-xs">N/A</span>}
-                            </div>
+                   <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger>Ver Detalhes da Aplicação</AccordionTrigger>
+                      <AccordionContent className="space-y-3 pt-2">
+                        <p className="text-sm flex items-center gap-2">
+                            <Hash className="h-4 w-4 text-muted-foreground"/> <strong>GS:</strong> {app.gearScore}
+                            {app.gearScoreScreenshotUrl && <a href={app.gearScoreScreenshotUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:underline"><ImageIcon className="h-4 w-4 mr-1"/>(Print)</a>}
+                        </p>
+                        {app.gearBuildLink && <p className="text-sm flex items-center gap-2"><LinkIcon className="h-4 w-4 text-muted-foreground"/> <strong>Build:</strong> <a href={app.gearBuildLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">Ver Link</a></p>}
+                        {app.skillBuildLink && <p className="text-sm flex items-center gap-2"><LinkIcon className="h-4 w-4 text-muted-foreground"/> <strong>Skills:</strong> <a href={app.skillBuildLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">Ver Link</a></p>}
+                        
+                        <div className="border-t border-border pt-3 mt-3 space-y-3">
+                          <p className="text-sm flex items-center gap-2"><strong>Função:</strong> {getTLRoleIcon(app.tlRole)} {app.tlRole || 'N/A'}</p>
+                          <p className="text-sm flex items-center gap-2"><strong>Foco:</strong> {getFocusIcon(app.gameFocus)} {app.gameFocus}</p>
+                          <p className="text-sm flex items-center gap-2"><strong>Período:</strong> {getPlayPeriodIcon(app.playPeriod)} {app.playPeriod} ({app.playTimePerDay})</p>
+                          <div className="text-sm flex items-center gap-2"><strong>Armas:</strong>
+                              <div className="flex items-center gap-1.5">
+                                  {app.tlPrimaryWeapon && <Image src={getWeaponIconPath(app.tlPrimaryWeapon)} alt={app.tlPrimaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
+                                  {app.tlSecondaryWeapon && <Image src={getWeaponIconPath(app.tlSecondaryWeapon)} alt={app.tlSecondaryWeapon} width={20} height={20} data-ai-hint="weapon"/>}
+                              </div>
+                          </div>
                         </div>
-                    </div>
-                  )}
-
+                      </AccordionContent>
+                    </AccordionItem>
+                   </Accordion>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => openConfirmationDialog(app, 'reject')} disabled={processingApplicationId === app.id || !canProcessApplications}>
@@ -434,7 +424,6 @@ function ApplicationsTabContent({ guild, guildId, currentUser }: { guild: Guild 
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">
                    <p className="text-sm"><strong>GS:</strong> {app.gearScore}</p>
-                   <p className="text-sm"><strong>Discord:</strong> {app.discordNick}</p>
                    <Badge variant={app.status === 'approved' || app.status === 'auto_approved' ? 'default' : 'destructive'} className={app.status === 'approved' || app.status === 'auto_approved' ? 'bg-green-600/80' : 'bg-red-600/80'}>
                     {app.status === 'approved' ? 'Aprovado' : (app.status === 'auto_approved' ? 'Entrada Automática' : 'Rejeitado')}
                   </Badge>

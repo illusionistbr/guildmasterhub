@@ -182,19 +182,28 @@ export interface Achievement {
   type: 'members' | 'auctions';
 }
 
+export type PlayPeriod = 'Manhã' | 'Tarde' | 'Noite' | 'Manhã e Tarde' | 'Manhã e Noite' | 'Tarde e Noite' | 'Dia todo';
+
 export interface Application {
   id: string;
   guildId: string;
   applicantId: string;
   applicantDisplayName: string;
   applicantPhotoURL?: string | null;
+  
+  // Form fields
   characterNickname: string;
   gearScore: number;
-  gearScoreScreenshotUrl: string | null;
-  discordNick: string;
-  tlRole?: TLRole;
-  tlPrimaryWeapon?: TLWeapon;
-  tlSecondaryWeapon?: TLWeapon;
+  gearScoreScreenshotUrl?: string | null;
+  gearBuildLink?: string | null;
+  skillBuildLink?: string | null;
+  tlRole: TLRole;
+  tlPrimaryWeapon: TLWeapon;
+  tlSecondaryWeapon: TLWeapon;
+  gameFocus: string; 
+  playTimePerDay: string;
+  playPeriod: PlayPeriod;
+
   status: 'pending' | 'approved' | 'rejected' | 'auto_approved';
   submittedAt: Timestamp;
   reviewedBy?: string;

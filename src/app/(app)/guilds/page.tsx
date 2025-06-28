@@ -73,68 +73,6 @@ function ExploreGuildsContent() {
 
   const totalPages = Math.ceil(filteredGuilds.length / GUILDS_PER_PAGE);
 
-  const processGuildJoin = async (guildToJoin: Guild) => {
-    if (!user) return;
-    setIsJoining(guildToJoin.id);
-
-    try {
-      const guildRef = doc(db, "guilds", guildToJoin.id);
-      const batch = writeBatch(db);
-
-      const memberRoleInfo: GuildMemberRoleInfo = {
-        roleName: "Membro",
-        notes: "Entrou diretamente (guilda pública, não-TL).",
-        dkpBalance: 0,
-        status: 'Ativo',
-      };
-
-      batch.update(guildRef, {
-        memberIds: arrayUnion(user.uid),
-        memberCount: firebaseIncrement(1),
-        [`roles.${user.uid}`]: memberRoleInfo
-      });
-
-      await batch.commit();
-
-      await logGuildActivity(
-        guildToJoin.id,
-        user.uid,
-        user.displayName,
-        AuditActionType.MEMBER_JOINED,
-        {
-          targetUserId: user.uid,
-          targetUserDisplayName: user.displayName || user.email || user.uid,
-          details: { joinMethod: 'direct_public_non_tl' } as any,
-        }
-      );
-
-      toast({
-        title: "Bem-vindo(a) à Guilda!",
-        description: `Você entrou na guilda ${guildToJoin.name}.`,
-        action: <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard?guildId=${guildToJoin.id}`)}>Ver Dashboard</Button>
-      });
-
-      setAllGuilds(prevGuilds =>
-        prevGuilds.map(g =>
-          g.id === guildToJoin.id
-            ? {
-                ...g,
-                memberIds: [...(g.memberIds || []), user.uid],
-                memberCount: (g.memberCount || 0) + 1,
-                roles: { ...(g.roles || {}), [user.uid]: memberRoleInfo }
-              }
-            : g
-        )
-      );
-
-    } catch (error) {
-      console.error("Error joining guild:", error);
-      toast({ title: "Erro ao Entrar na Guilda", description: "Não foi possível processar sua entrada.", variant: "destructive" });
-    } finally {
-      setIsJoining(null);
-    }
-  };
-
   const handleApplyToGuild = (guild: Guild) => {
     if (!user) {
       toast({ title: "Não Autenticado", description: "Você precisa estar logado para interagir com guildas.", variant: "destructive" });
@@ -146,12 +84,10 @@ function ExploreGuildsContent() {
         return;
     }
 
-    if (guild.game === "Throne and Liberty") {
+    if (guild.game === "Throne and Liberty" && guild.server) {
       setGuildToConfirm(guild);
-    } else if (guild.isOpen === false) { 
-      router.push(`/apply?guildId=${guild.id}`);
     } else {
-      processGuildJoin(guild);
+      router.push(`/apply?guildId=${guild.id}`);
     }
   };
 
