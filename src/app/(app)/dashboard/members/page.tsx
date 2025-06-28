@@ -80,7 +80,7 @@ import {
   Users, MoreVertical, UserCog, UserX, Loader2, Crown, Shield as ShieldIconLucide, BadgeCent, User,
   CalendarDays, Clock, Eye, FileText, ArrowUpDown, Search, SlidersHorizontal, Download, UserPlus,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ShieldAlert, Heart, Swords, Wand2, Gamepad2, Filter, UserCheck, UserMinus, Hourglass, Link2 as LinkIcon,
-  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle, Lock
+  UsersRound, PlusCircle, Edit2, Trash2, Save, Film, Image as ImageIconLucide, MinusCircle, PlusCircle as PlusCircleIconLucide, Coins, Send, Video, MessageCircle, Lock, MoreHorizontal
 } from 'lucide-react';
 import { logGuildActivity } from '@/lib/auditLogService';
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -210,6 +210,57 @@ const displayMemberStatus = (status?: MemberStatus): string => {
   if (status === 'Licenca') return 'Licença';
   return status || 'Desconhecido';
 };
+
+
+// --- Group Card Component ---
+function GroupCard({ group, onEdit, onDelete, canManage, guild }: { group: GuildGroup; onEdit: (group: GuildGroup) => void; onDelete: (group: GuildGroup) => void; canManage: boolean; guild: Guild | null; }) {
+  const IconComponent = iconMap[group.icon];
+  const subGuildName = guild?.subGuildsEnabled && group.subGuildId ? guild.subGuilds?.find(sg => sg.id === group.subGuildId)?.name : null;
+
+  return (
+    <Card className="static-card-container flex flex-col h-full">
+      <CardHeader className={cn("p-4 flex flex-row items-center justify-between text-white rounded-t-xl", group.headerColor)}>
+        <div className="flex items-center gap-2">
+          <IconComponent className="h-6 w-6" />
+          <CardTitle className="text-lg font-bold">{group.name}</CardTitle>
+        </div>
+        {canManage && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20">
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(group)}>
+                <Edit2 className="mr-2 h-4 w-4" /> Editar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onDelete(group)} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </CardHeader>
+      <CardContent className="p-4 space-y-3 flex-grow">
+        {subGuildName && <Badge variant="outline" className="mb-2">{subGuildName}</Badge>}
+        {group.members.map((member) => (
+          <div key={member.memberId} className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={member.photoURL || undefined} alt={member.displayName} data-ai-hint="user avatar" />
+              <AvatarFallback>{member.displayName.substring(0, 1).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium text-foreground">{member.displayName}</p>
+              {member.note && <p className="text-xs text-muted-foreground italic">{member.note}</p>}
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
 
 
 // --- MEMBERS LIST TAB CONTENT ---
