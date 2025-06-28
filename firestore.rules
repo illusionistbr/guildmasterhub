@@ -3,17 +3,33 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
     function isAdmin() {
-      // This UID should be replaced with the actual UID of the site administrator.
-      return request.auth != null && request.auth.uid == 'Y3W5w0EcrMQOtep8OzqxJnrbrdj2';
+      // ======================================================================
+      // INSTRUÇÃO IMPORTANTE PARA O ADMINISTRADOR
+      // Para ter acesso ao painel de administração, você precisa adicionar
+      // seu User ID (UID) do Firebase a esta lista.
+      //
+      // COMO FAZER:
+      // 1. Vá para o Firebase Console > Authentication > Users.
+      // 2. Encontre sua conta de usuário e copie o "User UID".
+      // 3. Cole o UID dentro das aspas abaixo, substituindo o texto de exemplo.
+      //
+      // Exemplo: const ADMIN_UIDS = ['AbCdeFgHiJkLmNoPqRsTuVwXyZ12345'];
+      // Você pode adicionar mais administradores separando por vírgula:
+      // Exemplo: const ADMIN_UIDS = ['UID_ADMIN_1', 'UID_ADMIN_2'];
+      // ======================================================================
+      return request.auth != null && request.auth.uid in [
+        'Y3W5w0EcrMQOtep8OzqxJnrbrdj2'
+      ];
     }
-
+    
+    // Helper function to check if a user is a member of the guild
     function isGuildMember(guildId) {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
       return request.auth != null && (request.auth.uid == guildData.ownerId || request.auth.uid in guildData.memberIds);
     }
 
+    // Helper function to check if a user has a specific permission for a guild
     function hasGuildPermission(guildId, permissionName) {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
       // Ensure customRoles, user's roleName, and its permissions list exist before trying to access
@@ -27,6 +43,7 @@ service cloud.firestore {
              permissionName in guildData.customRoles[guildData.roles[request.auth.uid].roleName].permissions;
     }
 
+    // Simplified check for owner or a user with a broad admin-like permission.
     function isGuildAdminEquivalent(guildId) {
       let guildData = get(/databases/$(database)/documents/guilds/$(guildId)).data;
       return request.auth != null &&
@@ -34,21 +51,22 @@ service cloud.firestore {
               hasGuildPermission(guildId, "MANAGE_ROLES_PERMISSIONS"));
     }
 
-    // Rules for users collection
+    // Admin can list all users
     match /users/{userId} {
-      // An admin can read any user's profile.
-      // A user can read their own profile.
-      allow get: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      
-      // Only an admin can list all users.
-      allow list: if request.auth != null && isAdmin();
-      
-      // A user can create or update their own profile.
-      allow update, create: if request.auth != null && request.auth.uid == userId;
+      // A user can read or update their own document
+      allow get, update: if request.auth != null && request.auth.uid == userId;
+      // A user can create their own document upon signup
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // An admin can list all users for the admin dashboard
+      allow list: if isAdmin();
     }
 
     match /guilds/{guildId} {
-      allow read: if request.auth != null;
+      // An admin can list all guilds
+      allow list: if isAdmin();
+      // An authenticated user can read a specific guild document (e.g., for application page)
+      allow get: if request.auth != null;
+      
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
       allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
 
