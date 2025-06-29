@@ -8,13 +8,20 @@ import { db, doc, getDoc } from '@/lib/firebase';
 import type { Guild } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Zap, Gem, CheckCircle, ExternalLink } from 'lucide-react';
+import { Loader2, Zap, Gem, CheckCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { loadStripe } from '@stripe/stripe-js';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+// Conditionally load Stripe to avoid crashing if the key is missing/a placeholder
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const isStripeConfigured = stripePublishableKey && !stripePublishableKey.includes("YOUR_");
+
+const stripePromise = isStripeConfigured
+  ? loadStripe(stripePublishableKey)
+  : Promise.resolve(null);
 
 function BillingPageContent() {
   const { user, loading: authLoading } = useAuth();
@@ -50,6 +57,10 @@ function BillingPageContent() {
   }, [guildId, user, toast, router]);
   
   const handleManageSubscription = async () => {
+    if (!isStripeConfigured) {
+      toast({ title: "Erro de Configuração", description: "As chaves do Stripe não estão configuradas corretamente no arquivo .env.", variant: "destructive" });
+      return;
+    }
     if (!guild || !guild.stripeCustomerId) {
       toast({ title: "Erro", description: "Informações de assinatura não encontradas.", variant: "destructive" });
       return;
@@ -72,6 +83,10 @@ function BillingPageContent() {
   };
 
   const handleUpgradeToPro = async () => {
+    if (!isStripeConfigured) {
+      toast({ title: "Erro de Configuração", description: "As chaves do Stripe não estão configuradas corretamente no arquivo .env.", variant: "destructive" });
+      return;
+    }
     if (!guild || !user) return;
     setIsProcessing(true);
     try {
@@ -82,8 +97,14 @@ function BillingPageContent() {
       });
       if (!res.ok) throw new Error(await res.text());
       const { sessionId } = await res.json();
+      
       const stripe = await stripePromise;
-      if (!stripe) throw new Error("Stripe.js failed to load.");
+      if (!stripe) {
+        toast({ title: "Erro", description: "Stripe.js falhou ao carregar. Verifique sua chave publicável no arquivo .env.", variant: "destructive" });
+        setIsProcessing(false);
+        return;
+      }
+
       const { error } = await stripe.redirectToCheckout({ sessionId });
       if (error) throw new Error(error.message);
     } catch (error: any) {
@@ -106,6 +127,17 @@ function BillingPageContent() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <PageTitle title="Plano e Cobrança" description={`Gerencie a assinatura para ${guild.name}`} icon={<Zap />} />
+      
+      {!isStripeConfigured && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Stripe não Configurado</AlertTitle>
+          <AlertDescription>
+            As funcionalidades de pagamento estão desabilitadas. Por favor, configure suas chaves de API do Stripe no arquivo .env para habilitá-las.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid md:grid-cols-2 gap-8">
         {/* Free Plan */}
         <Card className={cn(
@@ -161,11 +193,11 @@ function BillingPageContent() {
           </CardContent>
           <CardFooter>
             {isPro ? (
-               <Button onClick={handleManageSubscription} className="w-full btn-gradient btn-style-secondary" disabled={isProcessing}>
+               <Button onClick={handleManageSubscription} className="w-full btn-gradient btn-style-secondary" disabled={isProcessing || !isStripeConfigured}>
                 {isProcessing ? <Loader2 className="animate-spin" /> : <><ExternalLink className="mr-2 h-4 w-4"/> Gerenciar Assinatura</>}
               </Button>
             ) : (
-              <Button onClick={handleUpgradeToPro} className="w-full btn-gradient btn-style-primary" disabled={isProcessing}>
+              <Button onClick={handleUpgradeToPro} className="w-full btn-gradient btn-style-primary" disabled={isProcessing || !isStripeConfigured}>
                 {isProcessing ? <Loader2 className="animate-spin" /> : <><Zap className="mr-2 h-4 w-4"/> Upgrade para Pro</>}
               </Button>
             )}
