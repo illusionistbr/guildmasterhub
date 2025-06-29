@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -6,11 +7,11 @@ import type { Guild } from '@/types/guildmaster';
 import { headers } from 'next/headers';
 
 export async function POST(req: Request) {
-  const { guildId, userId } = await req.json();
+  const { guildId, userId, priceId } = await req.json();
   const origin = headers().get('origin') || 'http://localhost:3000';
 
-  if (!guildId || !userId) {
-    return new NextResponse('Missing guildId or userId', { status: 400 });
+  if (!guildId || !userId || !priceId) {
+    return new NextResponse('Missing guildId, userId, or priceId', { status: 400 });
   }
 
   try {
@@ -35,7 +36,6 @@ export async function POST(req: Request) {
       await updateDoc(guildDocRef, { stripeCustomerId });
     }
 
-    const priceId = process.env.STRIPE_PRO_PRICE_ID;
     if (!priceId) {
         throw new Error("Stripe Price ID is not configured.");
     }
