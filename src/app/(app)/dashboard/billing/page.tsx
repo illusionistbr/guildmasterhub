@@ -213,6 +213,14 @@ function BillingPageContent() {
                 <p className="text-lg text-muted-foreground line-through">R$239,70</p>
                 <p className="text-4xl font-bold">R$203,70 <span className="text-sm font-normal text-muted-foreground">/trimestre</span></p>
                 <p className="font-semibold text-primary">Equivalente a R$ 67,90/mês</p>
+                 <ul className="space-y-2 text-sm text-muted-foreground text-left pt-4 border-t border-border/20">
+                    <li className="flex items-center gap-2 font-semibold"><CheckCircle className="h-4 w-4 text-green-500"/>Tudo do plano Gratuito, mais:</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Sistema de Loot e Leilões (DKP)</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Galeria de Conquistas</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Log de Auditoria Detalhado</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>E um SUPER desconto</li>
+                </ul>
             </CardContent>
             <CardFooter>
                  {isPro && currentPriceId === quarterlyPriceId ? (
@@ -236,6 +244,14 @@ function BillingPageContent() {
                  <p className="text-lg text-muted-foreground line-through">R$958,80</p>
                 <p className="text-4xl font-bold">R$575,40 <span className="text-sm font-normal text-muted-foreground">/ano</span></p>
                 <p className="font-semibold text-primary">Equivalente a R$ 47,95/mês</p>
+                <ul className="space-y-2 text-sm text-muted-foreground text-left pt-4 border-t border-border/20">
+                    <li className="flex items-center gap-2 font-semibold"><CheckCircle className="h-4 w-4 text-green-500"/>Tudo do plano Gratuito, mais:</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Sistema de Loot e Leilões (DKP)</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Galeria de Conquistas</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Log de Auditoria Detalhado</li>
+                    <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>E um MEGA desconto</li>
+                </ul>
             </CardContent>
             <CardFooter>
                 {isPro && currentPriceId === annualPriceId ? (
