@@ -207,12 +207,11 @@ function BillingPageContent() {
         <Card className={cn( "flex flex-col text-center", isPro && currentPriceId === quarterlyPriceId && 'border-primary ring-2 ring-primary' )}>
             <CardHeader>
                 <CardTitle>Pro Trimestral</CardTitle>
-                <Badge variant="secondary">Economize 15%</Badge>
             </CardHeader>
             <CardContent className="flex-grow space-y-4">
                 <p className="text-lg text-muted-foreground line-through">R$239,70</p>
                 <p className="text-4xl font-bold">R$203,70 <span className="text-sm font-normal text-muted-foreground">/trimestre</span></p>
-                <p className="font-semibold text-primary">Equivalente a R$ 67,90/mês</p>
+                <p className="text-sm text-muted-foreground">Equivalente a R$ 67,90/mês <span className="font-semibold text-green-500">(Economize 15%)</span></p>
                  <ul className="space-y-2 text-sm text-muted-foreground text-left pt-4 border-t border-border/20">
                     <li className="flex items-center gap-2 font-semibold"><CheckCircle className="h-4 w-4 text-green-500"/>Tudo do plano Gratuito, mais:</li>
                     <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
@@ -238,12 +237,11 @@ function BillingPageContent() {
             <Badge className="absolute top-2 right-2 bg-yellow-400 text-yellow-950 hover:bg-yellow-400/90"><Star className="h-3 w-3 mr-1"/>Melhor Valor</Badge>
             <CardHeader>
                 <CardTitle>Pro Anual</CardTitle>
-                <Badge variant="secondary">Economize 40%</Badge>
             </CardHeader>
             <CardContent className="flex-grow space-y-4">
                  <p className="text-lg text-muted-foreground line-through">R$958,80</p>
                 <p className="text-4xl font-bold">R$575,40 <span className="text-sm font-normal text-muted-foreground">/ano</span></p>
-                <p className="font-semibold text-primary">Equivalente a R$ 47,95/mês</p>
+                <p className="text-sm text-muted-foreground">Equivalente a R$ 47,95/mês <span className="font-semibold text-green-500">(Economize 40%)</span></p>
                 <ul className="space-y-2 text-sm text-muted-foreground text-left pt-4 border-t border-border/20">
                     <li className="flex items-center gap-2 font-semibold"><CheckCircle className="h-4 w-4 text-green-500"/>Tudo do plano Gratuito, mais:</li>
                     <li className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-400"/>Calendário de Eventos Avançado</li>
