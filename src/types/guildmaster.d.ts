@@ -464,7 +464,7 @@ export interface Auction {
   id: string; // Firestore document ID
   guildId: string;
   item: Omit<BankItem, 'id' | 'status' | 'createdAt'>;
-  bankItemId?: string;
+  bankItemId: string;
   status: AuctionStatus;
   startingBid: number;
   minBidIncrement: number;

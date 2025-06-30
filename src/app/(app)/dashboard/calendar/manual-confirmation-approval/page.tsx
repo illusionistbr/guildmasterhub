@@ -45,6 +45,7 @@ function ManualConfirmationApprovalPageContent() {
   const [loadingData, setLoadingData] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [processingConfirmationId, setProcessingConfirmationId] = useState<string | null>(null);
+  const [confirmationAction, setConfirmationAction] = useState<'approve' | 'reject' | null>(null);
   
   const guildId = searchParams.get('guildId');
 
@@ -194,6 +195,7 @@ function ManualConfirmationApprovalPageContent() {
   ) => {
     if (!currentUser || !guild || !guildId || !canManageConfirmations) return;
     setProcessingConfirmationId(confirmation.id!);
+    setConfirmationAction(action);
 
     try {
       const batch = writeBatch(db);
@@ -237,6 +239,7 @@ function ManualConfirmationApprovalPageContent() {
       toast({ title: "Erro ao Processar", variant: "destructive" });
     } finally {
       setProcessingConfirmationId(null);
+      setConfirmationAction(null);
     }
   };
 

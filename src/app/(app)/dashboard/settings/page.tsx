@@ -555,7 +555,7 @@ function GuildSettingsPageContent() {
     setIsDeleting(true);
     console.log(`[GuildDelete] Iniciando exclusão da guilda: ${guild.id} por ${currentUser.uid}`);
     try {
-      const subcollections = ['auditLogs', 'applications', 'events', 'groups', 'notifications', 'dkpDecayLogs'];
+      const subcollections = ['auditLogs', 'applications', 'events', 'groups', 'notifications', 'dkpDecayLogs', 'bankItems', 'auctions', 'rolls', 'vods'];
       for (const subcoll of subcollections) {
         console.log(`[GuildDelete] Verificando subcoleção: ${subcoll}`);
         try {
@@ -1658,3 +1658,4 @@ export default function GuildSettingsPage() {
     </Suspense>
   );
 }
+

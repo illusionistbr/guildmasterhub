@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, query as firestoreQuery, where, getDocs as getFirestoreDocs } from '@/lib/firebase';
-import type { Guild, Application } from '@/types/guildmaster';
+import type { Guild, Application, PlayPeriod } from '@/types/guildmaster';
 import { TLRole, TLWeapon } from '@/types/guildmaster';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ShieldEllipsis, CheckCircle, AlertTriangle, Loader2, ArrowLeft, ArrowRight, UserPlus as UserPlusIcon, Heart, Swords, Shield as ShieldIconLucide, Hourglass } from 'lucide-react';
 
 const tlWeaponsList = Object.values(TLWeapon);
+const playPeriods: [PlayPeriod, ...PlayPeriod[]] = ['Manhã', 'Tarde', 'Noite', 'Manhã e Tarde', 'Manhã e Noite', 'Tarde e Noite', 'Dia todo'];
 
 const applicationSchema = z.object({
   characterNickname: z.string().min(2, "Nickname deve ter pelo menos 2 caracteres.").max(50, "Nickname muito longo."),
@@ -35,6 +36,7 @@ const applicationSchema = z.object({
   tlSecondaryWeapon: z.nativeEnum(TLWeapon, { required_error: "Arma secundária é obrigatória." }),
   gameFocus: z.string().min(1, "O foco de jogo é obrigatório."),
   playTimePerDay: z.string().min(1, "O tempo de jogo é obrigatório."),
+  playPeriod: z.enum(playPeriods, { required_error: "Período de jogo é obrigatório."}),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
@@ -71,6 +73,7 @@ function ApplyPageContent() {
       tlSecondaryWeapon: undefined,
       gameFocus: "",
       playTimePerDay: "",
+      playPeriod: undefined,
     },
   });
 
@@ -138,7 +141,8 @@ function ApplyPageContent() {
       case 4: fieldsToValidate = ['tlRole']; break;
       case 5: fieldsToValidate = ['tlPrimaryWeapon', 'tlSecondaryWeapon']; break;
       case 6: fieldsToValidate = ['gameFocus']; break;
-      case 7: fieldsToValidate = ['playTimePerDay']; break;
+      case 7: fieldsToValidate = ['playPeriod']; break;
+      case 8: fieldsToValidate = ['playTimePerDay']; break;
     }
     
     const isValid = await form.trigger(fieldsToValidate);
@@ -278,7 +282,13 @@ function ApplyPageContent() {
                         <SelectItem value="PvPe Hardcore">PvPe Hardcore</SelectItem>
                     </SelectContent>
                 </Select></FormControl><FormMessage /></FormItem>)}/>}
-                {step === 7 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem><FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />}
+                {step === 7 && <FormField control={form.control} name="playPeriod" render={({ field }) => (<FormItem><FormLabel>Em qual período você costuma jogar?</FormLabel><FormControl><Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger><SelectValue placeholder="Selecione um período..." /></SelectTrigger>
+                    <SelectContent>
+                        {playPeriods.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                </Select></FormControl><FormMessage /></FormItem>)}/>}
+                {step === 8 && <FormField control={form.control} name="playTimePerDay" render={({ field }) => ( <FormItem><FormLabel>Quanto tempo joga por dia?</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />}
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>

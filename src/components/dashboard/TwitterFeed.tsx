@@ -1,2 +1,5 @@
-// This file is being deleted as the TwitterFeed component is no longer used.
-// The presence of this comment ensures the file modification is registered for deletion.
+// This file is deprecated and its content has been removed.
+// The TwitterFeed component is no longer used in the application.
+export default function DeprecatedTwitterFeed() {
+  return null;
+}

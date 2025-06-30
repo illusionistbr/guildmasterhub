@@ -149,21 +149,6 @@ function AuctionPageContent() {
   }, [auction?.endTime, auction?.status]);
 
   useEffect(() => {
-    const runFinalizationCheck = async () => {
-        if (!canEditAuction || !guildId || !auctionId) return;
-
-        // Fetch the latest state of the auction to avoid race conditions
-        const currentAuctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
-        const auctionSnap = await getDoc(currentAuctionRef);
-        if (!auctionSnap.exists()) return;
-        
-        const currentAuctionData = auctionSnap.data() as Auction;
-        
-        if (currentAuctionData.status === 'active' && new Date() > currentAuctionData.endTime.toDate()) {
-            handleAutomaticFinalization(currentAuctionData);
-        }
-    };
-    
     const handleAutomaticFinalization = async (auctionToFinalize: Auction) => {
         if (!currentUser || !guild || !auctionToFinalize.bankItemId) return;
 
@@ -176,33 +161,40 @@ function AuctionPageContent() {
         const bankItemRef = doc(db, `guilds/${guildId as string}/bankItems`, auctionToFinalize.bankItemId);
 
         try {
-            if (auctionToFinalize.refundDkpToLosers) {
-                const bids = auctionToFinalize.bids || [];
-                const winnerId = auctionToFinalize.currentWinnerId;
-    
-                const highestBidsByBidder = bids.reduce((acc, bid) => {
-                    if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
-                        acc[bid.bidderId] = bid.amount;
-                    }
-                    return acc;
-                }, {} as Record<string, number>);
-    
-                for (const bidderId in highestBidsByBidder) {
-                    if (bidderId !== winnerId) {
-                        const refundAmount = highestBidsByBidder[bidderId];
-                        const bidderPath = `roles.${bidderId}.dkpBalance`;
-                        batch.update(guildRef, { [bidderPath]: increment(refundAmount) });
-                    }
-                }
-            }
+            const hasWinner = !!auctionToFinalize.currentWinnerId;
             
             batch.update(auctionRef, { status: 'ended', isDistributed: false });
-            batch.update(bankItemRef, { status: 'Encerrado' });
+            
+            if (hasWinner) {
+                if (auctionToFinalize.refundDkpToLosers) {
+                    const bids = auctionToFinalize.bids || [];
+                    const winnerId = auctionToFinalize.currentWinnerId;
+        
+                    const highestBidsByBidder = bids.reduce((acc, bid) => {
+                        if (!acc[bid.bidderId] || bid.amount > acc[bid.bidderId]) {
+                            acc[bid.bidderId] = bid.amount;
+                        }
+                        return acc;
+                    }, {} as Record<string, number>);
+        
+                    for (const bidderId in highestBidsByBidder) {
+                        if (bidderId !== winnerId) {
+                            const refundAmount = highestBidsByBidder[bidderId];
+                            const bidderPath = `roles.${bidderId}.dkpBalance`;
+                            batch.update(guildRef, { [bidderPath]: increment(refundAmount) });
+                        }
+                    }
+                }
+                batch.update(bankItemRef, { status: 'Encerrado' });
+            } else {
+                batch.update(bankItemRef, { status: 'Disponível' });
+            }
+
             await batch.commit();
 
             await logGuildActivity(
                 guildId as string,
-                'system', // Attributed to system as it's automatic
+                'system',
                 'Sistema',
                 'AUCTION_FINALIZED' as AuditActionType,
                 {
@@ -213,12 +205,31 @@ function AuctionPageContent() {
                 }
             );
             
-            toast({ title: "Leilão Finalizado!", description: auctionToFinalize.refundDkpToLosers ? "DKP dos perdedores foi reembolsado." : "O leilão terminou." });
+            if (hasWinner) {
+                toast({ title: "Leilão Finalizado!", description: auctionToFinalize.refundDkpToLosers ? "DKP dos perdedores foi reembolsado." : "O leilão terminou." });
+            } else {
+                toast({ title: "Leilão Encerrado", description: "Nenhum lance foi feito. O item retornou ao banco da guilda." });
+            }
         } catch (error) {
             console.error("Error finalizing auction:", error);
             toast({ title: "Erro ao Finalizar", description: "Ocorreu um erro ao finalizar o leilão.", variant: "destructive" });
         } finally {
             setIsFinalizing(false);
+        }
+    };
+    
+    const runFinalizationCheck = async () => {
+        if (!canEditAuction || !guildId || !auctionId) return;
+
+        // Fetch the latest state of the auction to avoid race conditions
+        const currentAuctionRef = doc(db, `guilds/${guildId}/auctions`, auctionId);
+        const auctionSnap = await getDoc(currentAuctionRef);
+        if (!auctionSnap.exists()) return;
+        
+        const currentAuctionData = auctionSnap.data() as Auction;
+        
+        if (currentAuctionData.status === 'active' && new Date() > currentAuctionData.endTime.toDate()) {
+            handleAutomaticFinalization(currentAuctionData);
         }
     };
     
